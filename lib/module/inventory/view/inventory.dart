@@ -24,7 +24,7 @@ class InventoryView extends GetView<InventroyController> {
     return CommonAppbar(
       appBarLabel:
           controller.flag == false && controller.navigate == 'loose'
-              ? 'Loose Inventory Product'
+              ? 'Loose Inventory'
               : controller.flag == true
               ? 'Inventory'
               : 'Sell Product',
@@ -51,10 +51,8 @@ class InventoryView extends GetView<InventroyController> {
                     if (controller.flag == true) {
                       await controller.stopCameraAfterDetect(barcodes);
                       String scannedValue = controller.barcodeValue.value;
-
                       bool isURL =
                           Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
-
                       if (!isURL) {
                         var exist = await controller.existingProductInfo(
                           controller.auth.currentUser!.uid,
@@ -81,7 +79,6 @@ class InventoryView extends GetView<InventroyController> {
                     } else {
                       await controller.stopCameraAfterDetect(barcodes);
                       String scannedValue = controller.barcodeValue.value;
-
                       bool isURL =
                           Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
                       if (!isURL) {
