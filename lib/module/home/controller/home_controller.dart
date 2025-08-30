@@ -267,15 +267,15 @@ class HomeController extends GetxController {
         numbers: double.parse(outOfStock.value.toString()),
       ),
       CustomGridModel(
-        icon: Icons.sell,
+        icon: CupertinoIcons.square_list_fill,
         routeName: AppRouteName.sell,
         label: 'Sell',
         numbers: double.parse(sellStock.value.toString()),
       ),
       CustomGridModel(
-        isTextRequired: true,
         routeName: AppRouteName.revenueView,
-        label: '\u{20B9}',
+        label: 'Revenue',
+        icon: Icons.paid,
         numbers: totalBusRevenue.value,
       ),
       CustomGridModel(
@@ -284,11 +284,12 @@ class HomeController extends GetxController {
         label: 'Expenses',
         numbers: double.parse(totalExpense.value.toString()),
       ),
-      // CustomGridModel(
-      //   routeName: AppRouteName.looseSell,
-      //   label: 'Loose Sell',
-      //   numbers: double.parse(looseStock.value.toString()),
-      // ),
+      CustomGridModel(
+        routeName: AppRouteName.looseSell,
+        label: 'Loose Stock',
+        icon: CupertinoIcons.app,
+        numbers: double.parse(looseStock.value.toString()),
+      ),
     ];
   }
 }

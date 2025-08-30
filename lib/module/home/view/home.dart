@@ -65,9 +65,6 @@ class HomeView extends GetView<HomeController> {
                               },
                               child: HomeGridContainer(
                                 customGridModel: controller.lis[index],
-                                isTextRequired:
-                                    controller.lis[index].isTextRequired ??
-                                    false,
                               ),
                             );
                           },
@@ -85,27 +82,31 @@ class HomeView extends GetView<HomeController> {
                           children: [
                             Text(
                               'Recent Activity',
-                              style: CustomTextStyle.customUbuntu(fontSize: 18,fontWeight: FontWeight.w300),
-                            ),
-                            InkWell(
-                              onTap: () async {
-                                var res =
-                                    await AppRoutes.futureNavigationToRoute(
-                                      routeName: AppRouteName.sell,
-                                    );
-                                if (res == true) {
-                                  controller.getRevenveAndStock();
-                                }
-                              },
-                              child: Text(
-                                'see more',
-                                style: CustomTextStyle.customNato(
-                                  decoration: TextDecoration.underline,
-                                  fontSize: 15,
-                                  color: Colors.grey.shade500,
-                                ),
+                              style: CustomTextStyle.customUbuntu(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w300,
                               ),
                             ),
+                            controller.sellsList.isNotEmpty
+                                ? InkWell(
+                                  onTap: () async {
+                                    var res =
+                                        await AppRoutes.futureNavigationToRoute(
+                                          routeName: AppRouteName.sell,
+                                        );
+                                    if (res == true) {
+                                      controller.getRevenveAndStock();
+                                    }
+                                  },
+                                  child: Text(
+                                    'see more',
+                                    style: CustomTextStyle.customNato(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                )
+                                : Container(),
                           ],
                         ),
                       ),
