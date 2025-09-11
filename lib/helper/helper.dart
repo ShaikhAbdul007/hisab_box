@@ -16,6 +16,16 @@ void showMessage({required String message, int seconds = 1}) {
   );
 }
 
+void showSnackBar({required String error}) {
+  Get.snackbar(
+    'Error',
+    error,
+    snackPosition: SnackPosition.TOP,
+    backgroundColor: AppColors.buttonRedColor,
+    colorText: AppColors.whiteColor,
+  );
+}
+
 void unfocus() {
   FocusManager.instance.primaryFocus?.unfocus();
 }
