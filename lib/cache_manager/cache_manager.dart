@@ -9,6 +9,10 @@ mixin class CacheManager {
     box.write(Key.userLoginIn.toString(), value);
   }
 
+  savePrinterAddress(String value) {
+    box.write(Key.printerAddress.toString(), value);
+  }
+
   saveInventoryScanValue(bool value) {
     box.write(Key.inventoryScan.toString(), value);
   }
@@ -33,6 +37,10 @@ mixin class CacheManager {
 
   String? retrieveEmployeeId() {
     return box.read(Key.employeeIdKey.toString());
+  }
+
+  String? retrievePrinterAddress() {
+    return box.read(Key.printerAddress.toString());
   }
 
   Future<bool> retrieveIsLoggedIn() async {
@@ -72,4 +80,5 @@ enum Key {
   shouldResetCacheModel,
   splashVideoValueKey,
   inventoryScan,
+  printerAddress,
 }
