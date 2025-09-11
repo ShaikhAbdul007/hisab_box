@@ -1,19 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
-import 'package:inventory/common_widget/common_switch.dart';
-
-import '../../../helper/textstyle.dart';
 
 class AppSettingText extends StatelessWidget {
-  final String label;
-  final bool value;
-  final void Function(bool) onChanged;
-  const AppSettingText({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
+  final Widget child;
+
+  const AppSettingText({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +17,7 @@ class AppSettingText extends StatelessWidget {
           borderRadius: BorderRadius.circular(5),
           color: AppColors.whiteColor,
         ),
-        child: CommonSwitch(label: label, value: value, onChanged: onChanged)
+        child: child,
       ),
     );
   }
