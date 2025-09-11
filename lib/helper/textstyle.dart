@@ -7,12 +7,14 @@ class CustomTextStyle {
     Color color = AppColors.blackColor,
     FontWeight fontWeight = FontWeight.normal,
     double fontSize = 15,
+    double letterSpacing = 0,
     TextDecoration? decoration,
   }) {
     return GoogleFonts.poppins(
       color: color,
       fontWeight: fontWeight,
       fontSize: fontSize,
+      letterSpacing: letterSpacing,
     );
   }
 
@@ -20,6 +22,7 @@ class CustomTextStyle {
     Color color = AppColors.blackColor,
     FontWeight fontWeight = FontWeight.normal,
     double fontSize = 15,
+    double letterSpacing = 0,
     TextDecoration? decoration,
   }) {
     return GoogleFonts.notoSansAnatolianHieroglyphs(
@@ -27,6 +30,7 @@ class CustomTextStyle {
       fontWeight: fontWeight,
       fontSize: fontSize,
       decoration: decoration,
+      letterSpacing: letterSpacing,
     );
   }
 
@@ -34,6 +38,7 @@ class CustomTextStyle {
     Color color = AppColors.blackColor,
     FontWeight fontWeight = FontWeight.normal,
     double fontSize = 15,
+    double letterSpacing = 0,
     TextDecoration? decoration,
   }) {
     return GoogleFonts.raleway(
@@ -41,6 +46,7 @@ class CustomTextStyle {
       fontWeight: fontWeight,
       fontSize: fontSize,
       decoration: decoration,
+      letterSpacing: letterSpacing,
     );
   }
 
@@ -48,6 +54,7 @@ class CustomTextStyle {
     Color color = AppColors.blackColor,
     FontWeight fontWeight = FontWeight.normal,
     double fontSize = 15,
+    double letterSpacing = 0,
     TextDecoration? decoration,
   }) {
     return GoogleFonts.ubuntu(
@@ -55,6 +62,23 @@ class CustomTextStyle {
       fontWeight: fontWeight,
       fontSize: fontSize,
       decoration: decoration,
+      letterSpacing: letterSpacing,
+    );
+  }
+
+  static TextStyle customMontserrat({
+    Color color = AppColors.blackColor,
+    FontWeight fontWeight = FontWeight.normal,
+    double fontSize = 15,
+    double letterSpacing = 0,
+    TextDecoration? decoration,
+  }) {
+    return GoogleFonts.montserrat(
+      color: color,
+      fontWeight: fontWeight,
+      fontSize: fontSize,
+      decoration: decoration,
+      letterSpacing: letterSpacing,
     );
   }
 }
