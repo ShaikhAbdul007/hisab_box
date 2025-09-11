@@ -42,11 +42,7 @@ class SettingView extends GetView<SettingController> {
               ),
             ),
           ),
-          // SettingItem(
-          //   label: 'Change Password',
-          //   trailing: Icon(CupertinoIcons.forward),
-          //   leading: SettingIconContainer(icon: CupertinoIcons.lock),
-          // ),
+
           SettingItem(
             label: 'Discounts',
             trailing: Icon(CupertinoIcons.forward),
@@ -71,14 +67,14 @@ class SettingView extends GetView<SettingController> {
               AppRoutes.navigateRoutes(routeName: AppRouteName.animalCategory);
             },
           ),
-          // SettingItem(
-          //   label: 'Loose Category',
-          //   trailing: Icon(CupertinoIcons.forward),
-          //   leading: SettingIconContainer(icon: CupertinoIcons.bag),
-          //   onTap: () {
-          //     AppRoutes.navigateRoutes(routeName: AppRouteName.looseCategory);
-          //   },
-          // ),
+          SettingItem(
+            label: 'Loose Category',
+            trailing: Icon(CupertinoIcons.forward),
+            leading: SettingIconContainer(icon: CupertinoIcons.bag),
+            onTap: () {
+              AppRoutes.navigateRoutes(routeName: AppRouteName.looseCategory);
+            },
+          ),
           SettingItem(
             label: 'App Settings',
             trailing: Icon(CupertinoIcons.forward),
@@ -158,3 +154,13 @@ class SettingView extends GetView<SettingController> {
     );
   }
 }
+
+
+
+
+
+// SettingItem(
+          //   label: 'Change Password',
+          //   trailing: Icon(CupertinoIcons.forward),
+          //   leading: SettingIconContainer(icon: CupertinoIcons.lock),
+          // ),
