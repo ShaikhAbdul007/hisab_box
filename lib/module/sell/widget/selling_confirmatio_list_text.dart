@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/size.dart';
 import '../../../common_widget/colors.dart';
+import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
 import '../../inventory/model/product_model.dart';
 
@@ -41,7 +42,7 @@ class SellingConfirmationListText extends StatelessWidget {
                     style: CustomTextStyle.customPoppin(),
                   ),
                   Text(
-                    inventoryModel.barcode ?? '',
+                    getStringLengthText(inventoryModel.barcode ?? ''),
                     style: CustomTextStyle.customRaleway(
                       color: AppColors.greyColor,
                     ),
@@ -68,7 +69,7 @@ class SellingConfirmationListText extends StatelessWidget {
                   InkWell(
                     onTap: minusOnTap,
                     child: CircleAvatar(
-                      radius: 15,
+                      radius: 18,
                       backgroundColor: AppColors.blackColor,
                       child: Text(
                         '-',
@@ -81,7 +82,7 @@ class SellingConfirmationListText extends StatelessWidget {
                   setWidth(width: 5),
                   Container(
                     height: 30,
-                    width: 40,
+                    width: 50,
                     decoration: BoxDecoration(
                       color: AppColors.blackColor,
                       borderRadius: BorderRadius.circular(8),
@@ -99,7 +100,7 @@ class SellingConfirmationListText extends StatelessWidget {
                   InkWell(
                     onTap: plusOnTap,
                     child: CircleAvatar(
-                      radius: 15,
+                      radius: 18,
                       backgroundColor: AppColors.blackColor,
                       child: Text(
                         '+',

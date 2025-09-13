@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:get/get.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/routes/routes.dart';
 
 class BottomNavigationController extends GetxController {
@@ -14,8 +16,8 @@ class BottomNavigationController extends GetxController {
 
   @override
   void onInit() {
-    checkInitialConnectivity();
-    subscription = Connectivity().onConnectivityChanged.listen((
+    //checkInitialConnectivity();
+    Connectivity().onConnectivityChanged.listen((
       List<ConnectivityResult> results,
     ) async {
       if (results.isEmpty || results.first == ConnectivityResult.none) {
@@ -28,6 +30,11 @@ class BottomNavigationController extends GetxController {
         AppRoutes.navigateRoutes(routeName: AppRouteName.nointernateConnection);
       }
     });
+
+    // first, check if bluetooth is supported by your hardware
+    // Note: The platform is initialized on the first call to any FlutterBluePlus method.
+
+    // cancel to prevent duplicate listeners
     super.onInit();
   }
 

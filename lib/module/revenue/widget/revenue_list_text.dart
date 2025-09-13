@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 
 import '../../sell/model/sell_model.dart';
@@ -91,7 +92,10 @@ class RevenueListText extends StatelessWidget {
                     ),
                     setWidth(width: 10),
                     Text(
-                      revenueModel.category,
+                      getshortStringLengthText(
+                        value: revenueModel.category,
+                        size: 5,
+                      ),
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),

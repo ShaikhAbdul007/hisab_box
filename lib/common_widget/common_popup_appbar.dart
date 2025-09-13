@@ -5,10 +5,12 @@ import '../helper/textstyle.dart';
 class CommonPopupAppbar extends StatelessWidget {
   final String label;
   final void Function() onPressed;
+  final double size;
   const CommonPopupAppbar({
     super.key,
     required this.label,
     required this.onPressed,
+    this.size = 15,
   });
 
   @override
@@ -19,7 +21,7 @@ class CommonPopupAppbar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(label, style: CustomTextStyle.customNato(fontSize: 15)),
+          Text(label, style: CustomTextStyle.customNato(fontSize: size)),
           IconButton(icon: Icon(CupertinoIcons.clear), onPressed: onPressed),
         ],
       ),

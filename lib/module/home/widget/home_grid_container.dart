@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/home/model/grid_model.dart';
@@ -35,11 +35,13 @@ class HomeGridContainer extends StatelessWidget {
                 ),
               ),
               setWidth(width: 5),
-              Text(
-                customGridModel.label ?? '',
-                style: CustomTextStyle.customNato(
-                  color: AppColors.blackColor,
-                  fontSize: 12,
+              Flexible(
+                child: Text(
+                  customGridModel.label ?? '',
+                  style: CustomTextStyle.customNato(
+                    color: AppColors.blackColor,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],

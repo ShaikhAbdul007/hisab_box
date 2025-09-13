@@ -16,12 +16,18 @@ class ProductModel {
   int? box;
   int? perpiece;
   bool? isLoosed;
+  String? id;
+  String? paymentMethod;
+  int? billNo;
+  bool? isLooseCategory;
 
   ProductModel({
     this.barcode,
     this.name,
     this.category,
     this.quantity,
+    this.billNo,
+    this.paymentMethod,
     this.purchasePrice,
     this.sellingPrice,
     this.createdDate,
@@ -29,15 +35,18 @@ class ProductModel {
     this.createdTime,
     this.updatedTime,
     this.color,
+    this.isLooseCategory,
     this.animalType,
     this.weight,
     this.flavor,
     this.box,
     this.perpiece,
     this.isLoosed,
+    this.id,
   });
 
   ProductModel.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
     barcode = json['barcode'];
     name = json['name'];
     category = json['category'];
@@ -55,10 +64,14 @@ class ProductModel {
     box = json['box'];
     perpiece = json['perpiece'];
     isLoosed = json['isLoose'];
+    billNo = json['billNo'];
+    paymentMethod = json['paymentMethod'];
+    isLooseCategory = json['isLooseCategory'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
     data['barcode'] = barcode;
     data['name'] = name;
     data['category'] = category;
@@ -76,6 +89,9 @@ class ProductModel {
     data['box'] = box;
     data['perpiece'] = perpiece;
     data['isLoose'] = isLoosed;
+    data['billNo'] = billNo;
+    data['paymentMethod'] = paymentMethod;
+    data['isLooseCategory'] = isLooseCategory;
     return data;
   }
 }

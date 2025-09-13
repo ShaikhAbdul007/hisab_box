@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 
@@ -112,7 +113,7 @@ class LooseInventroyListText extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      inventoryModel.barcode ?? '',
+                      getStringLengthText(inventoryModel.barcode ?? ''),
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),

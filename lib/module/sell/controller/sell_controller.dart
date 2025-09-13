@@ -1,9 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/helper/set_format_date.dart';
-
 import '../model/sell_model.dart';
 
 class SellController extends GetxController {

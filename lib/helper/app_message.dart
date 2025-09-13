@@ -46,3 +46,6 @@ const categorySaveSuccessfull = 'Category is save successful';
 const animalTypeCategorySaveSuccessfull = 'Animal category is save successful';
 const animalcategorydeleteSuccessMessage =
     'Animal category is deleted successful';
+const cashLabel = 'Cash';
+const onlineLabel = 'Online';
+const creditLabel = 'Credit';

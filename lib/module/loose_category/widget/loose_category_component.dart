@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/size.dart';
-import 'package:inventory/module/loose_category/model/loose_category_model.dart';
 import '../../../helper/textstyle.dart';
+import '../../inventory/model/product_model.dart';
 
 class LooseCategoryComponent extends StatelessWidget {
-  final LooseCategoryModel looseCategoryModel;
+  final ProductModel looseCategoryModel;
   final void Function()? onTap;
 
   const LooseCategoryComponent({
@@ -20,7 +20,7 @@ class LooseCategoryComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(
-        looseCategoryModel.name,
+        looseCategoryModel.name ?? '',
         style: CustomTextStyle.customNato(
           fontSize: 18,
           color: AppColors.blackColor,
@@ -31,12 +31,12 @@ class LooseCategoryComponent extends StatelessWidget {
           Row(
             children: [
               Text(
-                looseCategoryModel.price.toString(),
+                looseCategoryModel.weight ?? '',
                 style: CustomTextStyle.customNato(),
               ),
               setWidth(width: 25),
               Text(
-                looseCategoryModel.unit,
+                '\u{20B9} ${looseCategoryModel.sellingPrice}',
                 style: CustomTextStyle.customNato(),
               ),
             ],
@@ -44,12 +44,12 @@ class LooseCategoryComponent extends StatelessWidget {
           Row(
             children: [
               Text(
-                looseCategoryModel.createdAt,
+                looseCategoryModel.createdDate ?? '',
                 style: CustomTextStyle.customNato(),
               ),
               setWidth(width: 25),
               Text(
-                looseCategoryModel.time,
+                looseCategoryModel.createdTime ?? '',
                 style: CustomTextStyle.customNato(),
               ),
             ],

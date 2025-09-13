@@ -101,7 +101,7 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
                 CommonButton(
                   height: 20,
                   width: 40,
-                  bgColor: AppColors.redColor,
+                  bgColor: AppColors.buttonRedColor,
                   label: '-',
                   isbgReq: false,
                   radius: 4,

@@ -9,26 +9,27 @@ import '../../inventory/model/product_model.dart';
 
 class InvoicePrinterView extends StatelessWidget {
   final List<ProductModel> scannedProductDetails;
+  final String paymentMethod;
   final void Function(ReceiptController) onInitialized;
+  final double totalAmount;
+  final int discountPercentage;
+  final int billNo;
   const InvoicePrinterView({
     super.key,
     required this.scannedProductDetails,
     required this.onInitialized,
+    required this.paymentMethod,
+    required this.totalAmount,
+    required this.discountPercentage,
+    required this.billNo,
   });
 
   @override
   Widget build(BuildContext context) {
-    // 🕒 Current date-time
     final now = DateTime.now();
     final formattedDate = DateFormat('dd/MM/yyyy').format(now);
     final formattedTime = DateFormat('HH:mm:ss').format(now);
-
-    // 🧮 Total Calculation
-    double total = scannedProductDetails.fold(
-      0,
-      (sum, item) => sum + (item.sellingPrice ?? 0) * (item.quantity ?? 0),
-    );
-
+    double total = totalAmount;
     return Receipt(
       backgroundColor: AppColors.whiteColor,
       builder:
@@ -39,7 +40,7 @@ class InvoicePrinterView extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    radius: 40,
+                    radius: 50,
                     backgroundColor: AppColors.blackColor,
                     child: Image.asset(
                       'assets/goldenpets logo.png',
@@ -70,12 +71,40 @@ class InvoicePrinterView extends StatelessWidget {
                   ),
                 ],
               ),
-              const Divider(color: AppColors.blackColor),
-              Text(
-                "Shop No :06, Plotno: 61/62, Sector 19,\nTaj Avenue, Ulwe,Navi Mumbai",
-                style: CustomTextStyle.customMontserrat(fontSize: 18),
+              setHeight(height: 5),
+              const Divider(color: AppColors.blackColor), setHeight(height: 10),
+              Flexible(
+                child: Text(
+                  "Shop No :06, Plotno: 61/62, Sector 19,Taj Avenue, Ulwe, Navi Mumbai",
+                  style: CustomTextStyle.customMontserrat(
+                    fontSize: 18,
+                    letterSpacing: 1.5,
+                  ),
+                ),
               ),
+              setHeight(height: 10),
               const Divider(color: AppColors.blackColor),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Bill No',
+                      style: CustomTextStyle.customMontserrat(fontSize: 18),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      '$billNo',
+                      style: CustomTextStyle.customMontserrat(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              setHeight(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -126,7 +155,7 @@ class InvoicePrinterView extends StatelessWidget {
                   ),
                   Expanded(
                     child: Text(
-                      'Cash',
+                      paymentMethod,
                       style: CustomTextStyle.customMontserrat(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -135,6 +164,7 @@ class InvoicePrinterView extends StatelessWidget {
                   ),
                 ],
               ),
+              setHeight(height: 10),
               const Divider(color: AppColors.blackColor),
               ...scannedProductDetails.map((item) {
                 final itemTotal =
@@ -152,15 +182,15 @@ class InvoicePrinterView extends StatelessWidget {
                               item.name ?? "No Name",
                               style: CustomTextStyle.customMontserrat(
                                 fontWeight: FontWeight.w500,
-                                fontSize: 20,
+                                fontSize: 24,
                               ),
                             ),
-                            setHeight(height: 5),
+                            setHeight(height: 10),
                             Text(
                               "${item.quantity} x ${item.sellingPrice}",
                               style: CustomTextStyle.customMontserrat(
                                 fontWeight: FontWeight.w500,
-                                fontSize: 15,
+                                fontSize: 18,
                               ),
                             ),
                           ],
@@ -169,7 +199,7 @@ class InvoicePrinterView extends StatelessWidget {
                       Expanded(
                         flex: 3,
                         child: Text(
-                          "$itemTotal",
+                          "₹ $itemTotal",
                           textAlign: TextAlign.right,
                           style: CustomTextStyle.customMontserrat(
                             fontWeight: FontWeight.bold,
@@ -182,6 +212,35 @@ class InvoicePrinterView extends StatelessWidget {
                 );
               }),
               const Divider(color: AppColors.blackColor),
+              if (discountPercentage != 0.0) ...{
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        "Discount",
+                        style: CustomTextStyle.customMontserrat(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: SizedBox()),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        '₹ $discountPercentage',
+                        textAlign: TextAlign.right,
+                        style: CustomTextStyle.customMontserrat(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                setHeight(height: 10),
+              },
               Row(
                 children: [
                   Expanded(
@@ -198,9 +257,9 @@ class InvoicePrinterView extends StatelessWidget {
                   Expanded(
                     flex: 3,
                     child: Text(
-                      "$total",
+                      "₹ $total",
                       textAlign: TextAlign.right,
-                      style: CustomTextStyle.customMontserrat(
+                      style: CustomTextStyle.customPoppin(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
                       ),
@@ -208,14 +267,7 @@ class InvoicePrinterView extends StatelessWidget {
                   ),
                 ],
               ),
-              const Divider(color: AppColors.blackColor),
-              setHeight(height: 20),
-              Center(
-                child: Text(
-                  "Scan barcode to give review !",
-                  style: CustomTextStyle.customNato(fontSize: 26),
-                ),
-              ),
+
               // setHeight(height: 20),
               // BarcodeWidget(
               //   barcode: Barcode.qrCode(),
@@ -225,25 +277,69 @@ class InvoicePrinterView extends StatelessWidget {
               //   drawText: false,
               // ),
               setHeight(height: 20),
-              Center(
-                child: Text(
-                  "Thank you for shopping !",
-                  style: CustomTextStyle.customNato(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+              Column(
+                children: [
+                  // Center(
+                  //   child: Text(
+                  //     "Thank you for shopping!",
+                  //     style: CustomTextStyle.customNato(
+                  //       fontSize: 20,
+                  //       fontWeight: FontWeight.bold,
+                  //     ),
+                  //   ),
+                  // ),
+                  // setHeight(height: 10),
+                  // Center(
+                  //   child: Text(
+                  //     "Visit again!",
+                  //     style: CustomTextStyle.customNato(
+                  //       fontSize: 20,
+                  //       fontWeight: FontWeight.bold,
+                  //     ),
+                  //   ),
+                  // ),
+                  // setHeight(height: 20),
+                  // Divider(thickness: 1),
+                  setHeight(height: 20),
+                  Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: CustomTextStyle.customNato(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.blackColor,
+                        ),
+                        children: [
+                          const TextSpan(text: "★ You saved "),
+                          TextSpan(
+                            text: "₹ $discountPercentage",
+                            style: CustomTextStyle.customNato(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.blackColor,
+                            ),
+                          ),
+                          const TextSpan(text: " on this order ★"),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              setHeight(height: 10),
-              Center(
-                child: Text(
-                  "Visit again !",
-                  style: CustomTextStyle.customNato(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+
+                  setHeight(height: 25),
+                  Center(
+                    child: Text(
+                      "✔ Keep shopping to save more !",
+                      style: CustomTextStyle.customPoppin(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blackColor,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
+
               setHeight(height: 150),
             ],
           ),

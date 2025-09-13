@@ -26,7 +26,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
       appBarLabel: 'Loose Sell Category',
       firstActionChild: InkWell(
         onTap: () {
-          addNewDiscount(disountKey);
+          addNewCategory(disountKey);
         },
         child: CommonContainer(
           height: 50,
@@ -54,7 +54,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
                                   ? null
                                   : () async {
                                     await controller.deleteLooseCategory(
-                                      list.id,
+                                      list.id ?? '',
                                     );
                                   },
                         );
@@ -84,7 +84,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
     );
   }
 
-  void addNewDiscount(GlobalKey<FormState> disountKey) {
+  void addNewCategory(GlobalKey<FormState> disountKey) {
     commonBottomSheet(
       label: 'Set Loose Category',
       onPressed: () {
@@ -96,31 +96,52 @@ class LooseCategory extends GetView<LooseCategoryController> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CommonTextField(
-              hintText: 'Item Name',
-              label: 'Item Name',
-              contentPadding: EdgeInsets.symmetric(horizontal: 10),
-              controller: controller.name,
-              validator: (val) {
-                if (val!.isEmpty) {
-                  return emptyLooseCatagoryName;
-                } else {
-                  return null;
-                }
-              },
+            Row(
+              children: [
+                Flexible(
+                  child: CommonTextField(
+                    hintText: 'Item Name',
+                    label: 'Item Name',
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    controller: controller.name,
+                    validator: (val) {
+                      if (val!.isEmpty) {
+                        return emptyLooseCatagoryName;
+                      } else {
+                        return null;
+                      }
+                    },
+                  ),
+                ),
+                Flexible(
+                  child: CommonTextField(
+                    hintText: 'Flavor',
+                    label: 'Flavor',
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    controller: controller.flavor,
+                    // validator: (val) {
+                    //   if (val!.isEmpty) {
+                    //     return emptyLooseCatagoryName;
+                    //   } else {
+                    //     return null;
+                    //   }
+                    // },
+                  ),
+                ),
+              ],
             ),
             setHeight(height: 10),
             Row(
               children: [
                 Flexible(
                   child: CommonTextField(
-                    hintText: 'Unit',
-                    label: 'Unit',
+                    hintText: 'Weight',
+                    label: 'Weight',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 5,
                     ),
-                    controller: controller.unit,
+                    controller: controller.weight,
                     validator: (val) {
                       if (val!.isEmpty) {
                         return emptyLooseCatagoryUnit;
@@ -152,6 +173,21 @@ class LooseCategory extends GetView<LooseCategoryController> {
                 ),
               ],
             ),
+            // setHeight(height: 10),
+            // CommonTextField(
+            //   hintText: 'Quantity',
+            //   label: 'Quantity',
+            //   contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            //   controller: controller.quantity,
+            //   keyboardType: TextInputType.number,
+            //   validator: (val) {
+            //     if (val!.isEmpty) {
+            //       return emptyProductQuantity;
+            //     } else {
+            //       return null;
+            //     }
+            //   },
+            // ),
             setHeight(height: 30),
             Obx(
               () => CommonButton(
@@ -159,7 +195,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
                 label: saveButton,
                 onTap: () async {
                   if (disountKey.currentState!.validate()) {
-                    await controller.addDiscount();
+                    await controller.addLooseProduct();
                   }
                 },
               ),

@@ -12,18 +12,13 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../helper/helper.dart';
 
 class InventroyController extends GetxController {
-  var data = Get.arguments;
-  bool? flag;
-  String? navigate;
   final FirebaseAuth auth = FirebaseAuth.instance;
   RxList<ProductModel> scannedProductDetails = <ProductModel>[].obs;
   List<CategoryModel> categoryList = [];
   List<CategoryModel> animalTypeList = [];
-  double totalAmount = 0.0;
-  RxString barcodeValue = ''.obs;
-  RxString existProductName = ''.obs;
-  RxInt stockqty = 0.obs;
-  bool isLoose = false;
+  RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
+  RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
+  RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
   RxBool isTreatSelected = false.obs;
   RxBool isCameraStop = false.obs;
   RxBool isSaveLoading = false.obs;
@@ -31,7 +26,7 @@ class InventroyController extends GetxController {
   RxBool isLooseProductSave = false.obs;
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isScannedQtyOutOfStock = false.obs;
-  RxInt scannedQty = 0.obs;
+  RxBool isDoneButtonReq = false.obs;
   late MobileScannerController mobileScannerController;
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
@@ -45,18 +40,92 @@ class InventroyController extends GetxController {
   TextEditingController quantity = TextEditingController();
   TextEditingController barcode = TextEditingController();
   TextEditingController loooseProductName = TextEditingController();
+  double totalAmount = 0.0;
+  RxInt scannedQty = 0.obs;
+  RxString barcodeValue = ''.obs;
+  String? selectedManuallySell;
+  int looseOldQty = 0;
+  RxString existProductName = ''.obs;
+  RxInt stockqty = 0.obs;
+  bool isLoose = false;
+  var data = Get.arguments;
+  bool? flag;
+  String? navigate;
 
   @override
-  void onInit() {
-    getCategoryData();
-    flag = data['flag'];
-    navigate = data['navigate'];
+  void onInit() async {
     mobileScannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
       formats: [BarcodeFormat.all],
     );
+    await fetchfullLooseSellingList();
+    getCategoryData();
+    flag = data['flag'];
+    navigate = data['navigate'];
 
     super.onInit();
+  }
+
+  fetchfullLooseSellingList() async {
+    var fetchLooseCategorys = await fetchLooseCategory();
+    var fetchLooseInventorys = await fetchLooseInventory();
+    fullLooseSellingList.addAll(fetchLooseCategorys);
+    fullLooseSellingList.addAll(fetchLooseInventorys);
+    for (var lis in fullLooseSellingList) {
+      print('fullLooseSellingList is ${lis.name}');
+      print('fullLooseSellingList is ${lis.sellingPrice}');
+    }
+  }
+
+  Future<List<ProductModel>> fetchLooseCategory() async {
+    final uid = auth.currentUser?.uid;
+
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('looseSellCategory')
+              .get();
+
+      looseCatogorieList.value =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return ProductModel.fromJson(data);
+          }).toList();
+      return looseCatogorieList;
+    } on FirebaseAuthException catch (e) {
+      showMessage(message: e.toString());
+      return [];
+    }
+  }
+
+  Future<List<ProductModel>> fetchLooseInventory() async {
+    final uid = auth.currentUser?.uid;
+
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('looseProducts')
+              .get();
+
+      looseInventoryLis.value =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            looseOldQty = data['quantity'];
+
+            return ProductModel.fromJson(data);
+          }).toList();
+
+      return looseInventoryLis;
+    } on FirebaseAuthException catch (e) {
+      showMessage(message: e.toString());
+      return [];
+    }
   }
 
   cameraStart() {
@@ -178,52 +247,6 @@ class InventroyController extends GetxController {
     return (false, product);
   }
 
-  Future<void> fetchCategories() async {
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('categories')
-              .get();
-
-      categoryList =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return CategoryModel.fromJson(data);
-          }).toList();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    }
-  }
-
-  Future<void> fetchAnimalCategories() async {
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('animalCategories')
-              .get();
-
-      animalTypeList =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return CategoryModel.fromJson(data);
-          }).toList();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    }
-  }
-
   Future<void> fetchProductByBarcode({
     required String barcode,
     required Function()? elseFun,
@@ -265,6 +288,8 @@ class InventroyController extends GetxController {
     if (doc.exists) {
       final data = doc.data();
       final isLoose = data?['isLoose'] ?? false;
+      existProductName.value = data?['name'] ?? false;
+      loooseProductName.text = data?['name'] ?? false;
       if (isLoose) {
         return true;
       }
@@ -316,24 +341,21 @@ class InventroyController extends GetxController {
     }
   }
 
-  void handleLooseScan({
-    required ProductModel product,
-    void Function()? afterProductAdding,
-  }) {
+  void handleLooseScan({required ProductModel product}) {
     if (product.barcode == null || product.barcode!.isEmpty) {
       return;
     }
-    double pricePerPiece =
-        (product.sellingPrice ?? 0.0) / (product.perpiece ?? 1);
+    double sellingPrices = (product.sellingPrice ?? 0.0);
+    int looseQuantitys = int.tryParse(looseQuantity.text) ?? 0;
+
     ProductModel scanned = ProductModel(
       barcode: product.barcode,
       name: product.name,
-      sellingPrice: pricePerPiece,
-      quantity: 1,
+      sellingPrice: sellingPrices,
+      quantity: looseQuantitys,
+      isLoosed: product.isLoosed,
     );
     scannedProductDetails.add(scanned);
-    totalAmount += pricePerPiece;
-    afterProductAdding!();
   }
 
   Future<void> saveNewLooseProduct({required String barcode}) async {
@@ -410,5 +432,51 @@ class InventroyController extends GetxController {
     barcodeValue.value = barcodes.barcodes.first.rawValue.toString();
     barcode.text = barcodeValue.value;
     mobileScannerController.stop();
+  }
+
+  Future<void> fetchCategories() async {
+    final uid = auth.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('categories')
+              .get();
+
+      categoryList =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return CategoryModel.fromJson(data);
+          }).toList();
+    } on FirebaseAuthException catch (e) {
+      showMessage(message: e.toString());
+    }
+  }
+
+  Future<void> fetchAnimalCategories() async {
+    final uid = auth.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('animalCategories')
+              .get();
+
+      animalTypeList =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return CategoryModel.fromJson(data);
+          }).toList();
+    } on FirebaseAuthException catch (e) {
+      showMessage(message: e.toString());
+    }
   }
 }

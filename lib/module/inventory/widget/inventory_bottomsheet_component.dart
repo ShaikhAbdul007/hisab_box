@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_switch.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/inventory/controller/inventroy_controller.dart';
@@ -278,6 +279,84 @@ class LooseInventoryBottomsheetComponent extends StatelessWidget {
     );
   }
 }
+
+class ManuallyInventoryBottomsheetComponent extends StatelessWidget {
+  final GlobalKey<FormState> formkeys;
+  final InventroyController controller;
+  final List<dynamic> listItems;
+
+  final dynamic Function(dynamic) notifyParent;
+  final void Function() manuallyInventoryOnTap;
+  final void Function() addInventoryOnTap;
+  const ManuallyInventoryBottomsheetComponent({
+    super.key,
+    required this.formkeys,
+    required this.controller,
+    required this.listItems,
+    required this.notifyParent,
+    required this.manuallyInventoryOnTap,
+    required this.addInventoryOnTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: formkeys,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 10,
+        children: [
+          CommonDropDown(
+            // selectedDropDownItem: controller.selectedManuallySell,
+            listItems: listItems,
+            hintText: 'Select',
+            notifyParent: notifyParent,
+          ),
+          CommonTextField(
+            validator: (v) {
+              if (v!.isEmpty) {
+                return emptyProductQuantity;
+              } else {
+                return null;
+              }
+            },
+            contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+            inputLength: 3,
+            keyboardType: TextInputType.number,
+            hintText: 'Quantity',
+            label: 'Quantity',
+            controller: controller.looseQuantity,
+          ),
+
+          Obx(
+            () => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                CommonButton(
+                  bgColor: AppColors.buttonGreenColor,
+                  width: 170,
+                  isLoading: controller.isLooseProductSave.value,
+                  label: 'Add More',
+                  onTap: addInventoryOnTap,
+                ),
+                controller.isDoneButtonReq.value
+                    ? CommonButton(
+                      width: 170,
+                      isLoading: controller.isLooseProductSave.value,
+                      label: 'Save',
+                      onTap: manuallyInventoryOnTap,
+                    )
+                    : Container(),
+              ],
+            ),
+          ),
+          setHeight(height: 50),
+        ],
+      ),
+    );
+  }
+}
+
 
 
 

@@ -1,24 +1,27 @@
-import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_radio_button.dart';
 import 'package:inventory/common_widget/size.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
-import 'package:printing/printing.dart';
+import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/helper.dart';
+import 'package:inventory/module/sell/widget/invoice_printer.dart';
+import 'package:inventory/routes/routes.dart';
+import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
+import '../../../common_widget/common_dialogue.dart';
+import '../../../common_widget/common_popup_appbar.dart';
 import '../../../helper/textstyle.dart';
 import '../../loose_sell/widget/loose_sell_bottomsheet_component.dart';
 import '../controller/sell_list_after_scan_controller.dart';
 import '../widget/selling_confirmatio_list_text.dart';
-import 'package:pdf/widgets.dart' as pw;
 
 class SellListAfterScan extends GetView<SellListAfterScanController> {
   const SellListAfterScan({super.key});
@@ -47,42 +50,52 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                         child: ListView.builder(
                           itemCount: controller.productList.length,
                           itemBuilder: (context, index) {
-                            return SellingConfirmationListText(
-                              sellingPrices: Obx(
-                                () => Text(
-                                  controller
-                                      .getSellingPriceAsPerQuantity(
-                                        controller.productList[index],
-                                        index,
-                                      )
-                                      .toString(),
-                                  style: CustomTextStyle.customPoppin(
-                                    color: AppColors.whiteColor,
+                            return Obx(
+                              () => SellingConfirmationListText(
+                                sellingPrices: Obx(
+                                  () => Text(
+                                    controller
+                                        .getSellingPriceAsPerQuantity(
+                                          controller.productList[index],
+                                          index,
+                                        )
+                                        .toString(),
+                                    style: CustomTextStyle.customPoppin(
+                                      color: AppColors.whiteColor,
+                                    ),
                                   ),
                                 ),
+                                removeOnTap: () {
+                                  controller.productList.remove(
+                                    controller.productList[index],
+                                  );
+                                },
+                                minusOnTap: () {
+                                  controller.updateQuantity(
+                                    controller.productList[index],
+                                    false,
+                                    index,
+                                    controller.productList[index].barcode ?? '',
+                                  );
+                                },
+                                plusOnTap:
+                                    controller.isStockOver.value
+                                        ? () {
+                                          print('isstockover');
+                                        }
+                                        : () {
+                                          controller.updateQuantity(
+                                            controller.productList[index],
+                                            true,
+                                            index,
+                                            controller
+                                                    .productList[index]
+                                                    .barcode ??
+                                                '',
+                                          );
+                                        },
+                                inventoryModel: controller.productList[index],
                               ),
-                              removeOnTap: () {
-                                controller.productList.remove(
-                                  controller.productList[index],
-                                );
-                              },
-                              minusOnTap: () {
-                                controller.updateQuantity(
-                                  controller.productList[index],
-                                  false,
-                                  index,
-                                  controller.productList[index].barcode ?? '',
-                                );
-                              },
-                              plusOnTap: () {
-                                controller.updateQuantity(
-                                  controller.productList[index],
-                                  true,
-                                  index,
-                                  controller.productList[index].barcode ?? '',
-                                );
-                              },
-                              inventoryModel: controller.productList[index],
                             );
                           },
                         ),
@@ -142,6 +155,9 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                                                     .value = false;
                                                 controller.discountValue.value =
                                                     0;
+                                                controller
+                                                        .discountDifferenceAmount =
+                                                    0.0;
                                                 controller.amount.text =
                                                     controller.totalAmount.value
                                                         .toString();
@@ -197,27 +213,13 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                           ],
                         ),
                       ),
-
                       Divider(endIndent: 10, indent: 10),
                       Obx(
                         () => CommonButton(
                           isLoading: controller.isSaleLoading.value,
                           label: 'Sell',
                           onTap: () async {
-                            print(
-                              'controller.productList is quantity ${controller.productList[0].quantity}',
-                            );
-                            print(
-                              'controller.productList is barcode ${controller.productList[0].barcode}',
-                            );
-                            print(
-                              'controller.productList is sellingPrice ${controller.productList[0].sellingPrice}',
-                            );
-                            print(
-                              'controller.productList is name ${controller.productList[0].name}',
-                            );
-                            // await controller.confirmSale();
-                            printInvoice(controller.scannedProductDetails);
+                            showPaymentMethod(context);
                           },
                         ),
                       ),
@@ -242,89 +244,252 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
     );
   }
 
-  void printInvoice(List<ProductModel> scannedProductDetails) async {
-    final pdf = pw.Document();
-
-    // 🕒 Get current date and time
-    final now = DateTime.now();
-    final formattedDate = DateFormat('dd/MM/yyyy HH:mm:ss').format(now);
-
-    // 🖼️ Load image from assets
-    final Uint8List imageData = await rootBundle
-        .load('assets/goldenpets logo.png')
-        .then((value) => value.buffer.asUint8List());
-    final logo = pw.MemoryImage(imageData);
-
-    double total = scannedProductDetails.fold(
-      0,
-      (sum, item) => sum + (item.sellingPrice ?? 0) * item.quantity!,
-    );
-
-    pdf.addPage(
-      pw.Page(
-        build:
-            (context) => pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                // 🖼️ Logo at the top
-                pw.Center(child: pw.Image(logo, height: 80)),
-                pw.SizedBox(height: 10),
-
-                // 🕒 Date/time
-                pw.Align(
-                  alignment: pw.Alignment.centerRight,
-                  child: pw.Text(
-                    'Date: $formattedDate',
-                    style: pw.TextStyle(fontSize: 12),
-                  ),
-                ),
-                pw.SizedBox(height: 20),
-
-                // 🧾 Invoice title
-                pw.Text(
-                  "🧾 Invoice",
-                  style: pw.TextStyle(
-                    fontSize: 24,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.SizedBox(height: 20),
-
-                // 📦 Product Table
-                pw.TableHelper.fromTextArray(
-                  headers: ['Item', 'Qty', 'Price', 'Total'],
-                  data:
-                      scannedProductDetails.map((p) {
-                        return [
-                          p.name,
-                          p.quantity.toString(),
-                          (p.sellingPrice! * p.quantity!).toStringAsFixed(2),
-                          (p.sellingPrice! * p.quantity!).toStringAsFixed(2),
-                        ];
-                      }).toList(),
-                  cellAlignment: pw.Alignment.centerLeft,
-                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  border: pw.TableBorder.all(),
-                ),
-                pw.SizedBox(height: 20),
-
-                // 💸 Total
-                pw.Align(
-                  alignment: pw.Alignment.centerRight,
-                  child: pw.Text(
-                    "Grand Total: ₹${total.toStringAsFixed(2)}",
-                    style: pw.TextStyle(
-                      fontSize: 16,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+  showPaymentMethod(BuildContext context) {
+    commonDialogBox(
+      context: context,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CommonPopupAppbar(
+            label: 'Payment Method',
+            onPressed: () {
+              Get.back();
+            },
+          ),
+          Divider(),
+          Text(
+            'Choose a payment method',
+            style: CustomTextStyle.customUbuntu(
+              fontSize: 15,
+              color: AppColors.greyColor,
             ),
+          ),
+          setHeight(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              CommonButton(
+                width: 120,
+                label: cashLabel,
+                onTap: () {
+                  Get.back();
+                  controller.billNo.value++;
+                  givePrint(
+                    billNo: controller.billNo.value,
+                    discountPercentage:
+                        controller.discountDifferenceAmount.toInt(),
+                    context: context,
+                    paymentMethod: cashLabel,
+                    totalAmount:
+                        controller.isDiscountGiven.value
+                            ? controller.discountPrice.value
+                            : controller.getTotalAmount().toDouble(),
+                  );
+                },
+              ),
+              CommonButton(
+                isbgReq: true,
+                bgColor: AppColors.greenColor,
+                width: 120,
+                label: onlineLabel,
+                onTap: () {
+                  Get.back();
+                  controller.billNo.value++;
+                  givePrint(
+                    billNo: controller.billNo.value,
+                    discountPercentage:
+                        controller.discountDifferenceAmount.toInt(),
+                    totalAmount:
+                        controller.isDiscountGiven.value
+                            ? controller.discountPrice.value
+                            : controller.getTotalAmount().toDouble(),
+                    context: context,
+                    paymentMethod: onlineLabel,
+                  );
+                },
+              ),
+            ],
+          ),
+          setHeight(height: 20),
+          CommonButton(
+            isbgReq: true,
+            bgColor: AppColors.redColor,
+            width: 250,
+            label: creditLabel,
+            onTap: () {
+              Get.back();
+              controller.billNo.value++;
+              givePrint(
+                billNo: controller.billNo.value,
+                discountPercentage: controller.discountDifferenceAmount.toInt(),
+                context: context,
+                paymentMethod: creditLabel,
+                totalAmount:
+                    controller.isDiscountGiven.value
+                        ? controller.discountPrice.value
+                        : controller.getTotalAmount().toDouble(),
+              );
+            },
+          ),
+          setHeight(height: 20),
+        ],
       ),
     );
+  }
 
-    await Printing.layoutPdf(onLayout: (format) => pdf.save());
+  givePrint({
+    required BuildContext context,
+    required String paymentMethod,
+    required double totalAmount,
+    required int discountPercentage,
+    required int billNo,
+  }) {
+    commonDialogBox(
+      context: context,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CommonPopupAppbar(
+              label: 'Invoice Preview',
+              onPressed: () {
+                Get.back();
+                controller.billNo.value--;
+              },
+            ),
+            InvoicePrinterView(
+              billNo: billNo,
+              totalAmount: totalAmount,
+              paymentMethod: paymentMethod,
+              onInitialized: (p0) => controller.setReceiptController(p0),
+              scannedProductDetails: controller.scannedProductDetails,
+              discountPercentage: discountPercentage,
+            ),
+            Obx(
+              () => CommonButton(
+                isLoading: controller.isPrintingLoading.value,
+                label: "Print Invoice",
+                onTap: () async {
+                  bool checkBluetooth =
+                      await controller.checkBluetoothConnectivity();
+                  if (checkBluetooth == true) {
+                    if (controller.receiptController.value != null) {
+                      await printReceipt(
+                        rController: controller.receiptController.value!,
+                        context: context,
+                        paymentMethod: paymentMethod,
+                      );
+                    }
+                  } else {
+                    showMessage(message: 'Bluetooth is off, please on it.');
+                  }
+                },
+              ),
+            ),
+            setHeight(height: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> printReceipt({
+    required ReceiptController rController,
+    required BuildContext context,
+    required String paymentMethod,
+  }) async {
+    controller.isPrintingLoading.value = true;
+    String? device = controller.retrievePrinterAddress();
+
+    if (device != null) {
+      if (paymentMethod == 'Credit') {
+        var res = await rController.print(address: device, delayTime: 0);
+        if (res == true) {
+          controller.isPrintingLoading.value = false;
+          Get.back();
+        }
+      } else {
+        bool saleConfirm = await controller.confirmSale(
+          paymentMethod: paymentMethod,
+        );
+        if (saleConfirm == true) {
+          var res = await rController.print(address: device, delayTime: 0);
+          if (res == true) {
+            controller.isPrintingLoading.value = false;
+            AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
+          }
+        } else {
+          controller.isPrintingLoading.value = false;
+          Get.back();
+        }
+      }
+    } else {
+      controller.isPrintingLoading.value = false;
+      commonDialogBox(
+        context: context,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CommonPopupAppbar(
+              label: 'Bluetooth Info',
+              onPressed: () {
+                Get.back();
+              },
+            ),
+            const Divider(),
+            RichText(
+              text: TextSpan(
+                style: CustomTextStyle.customMontserrat(),
+                children: [
+                  TextSpan(
+                    text:
+                        'Please connect your printer before printing the invoice.\nSteps to set up the printer:\n',
+                  ),
+                  TextSpan(
+                    text: '1. ',
+                    style: CustomTextStyle.customUbuntu(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(text: 'Go to Settings\n'),
+                  TextSpan(
+                    text: '2. ',
+                    style: CustomTextStyle.customUbuntu(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(text: 'Click on App Settings\n'),
+                  TextSpan(
+                    text: '3. ',
+                    style: CustomTextStyle.customUbuntu(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(text: 'Select Printer Option\n'),
+                  TextSpan(
+                    text: '4. ',
+                    style: CustomTextStyle.customUbuntu(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(text: 'Save your preferred printer'),
+                ],
+              ),
+            ),
+
+            setHeight(height: 8),
+            CommonButton(
+              label: 'ok',
+              onTap: () {
+                Get.back();
+                AppRoutes.navigateRoutes(routeName: AppRouteName.appsetting);
+              },
+            ),
+            setHeight(height: 15),
+          ],
+        ),
+      );
+    }
   }
 }
 
@@ -341,13 +506,42 @@ class DiscountRadioButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RadioListTile(
-      activeColor: AppColors.blackColor,
-      contentPadding: EdgeInsets.zero,
-      title: Text(label, style: CustomTextStyle.customPoppin()),
-      value: int.parse(label),
+    return CommonRadioButton(
+      label: label,
       groupValue: groupValue,
       onChanged: onChanged,
     );
   }
 }
+ // final upiDetails = UPIDetails(
+                  //   upiID: "8892359294@ybl",
+                  //   payeeName: "GoldenPets",
+                  //   amount: 100,
+                  // );
+                  // commonBottomSheet(
+                  //   label: 'Scan Qr Code',
+                  //   onPressed: () {
+                  //     Get.back();
+                  //   },
+                  //   child: Column(
+                  //     mainAxisSize: MainAxisSize.min,
+                  //     children: [
+                  //       UPIPaymentQRCode(
+                  //         upiDetails: upiDetails,
+                  //         size: 200,
+                  //         eyeStyle: const QrEyeStyle(
+                  //           eyeShape: QrEyeShape.square,
+                  //           color: AppColors.greyColor,
+                  //         ),
+                  //       ),
+                  //       setHeight(height: 50),
+                  //       CommonButton(
+                  //         label: 'Print',
+                  //         onTap: () {
+                           
+                  //         },
+                  //       ),
+                  //       setHeight(height: 20),
+                  //     ],
+                  //   ),
+                  // );
