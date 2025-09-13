@@ -311,27 +311,27 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
             ],
           ),
           setHeight(height: 20),
-          CommonButton(
-            isbgReq: true,
-            bgColor: AppColors.redColor,
-            width: 250,
-            label: creditLabel,
-            onTap: () {
-              Get.back();
-              controller.billNo.value++;
-              givePrint(
-                billNo: controller.billNo.value,
-                discountPercentage: controller.discountDifferenceAmount.toInt(),
-                context: context,
-                paymentMethod: creditLabel,
-                totalAmount:
-                    controller.isDiscountGiven.value
-                        ? controller.discountPrice.value
-                        : controller.getTotalAmount().toDouble(),
-              );
-            },
-          ),
-          setHeight(height: 20),
+          // CommonButton(
+          //   isbgReq: true,
+          //   bgColor: AppColors.redColor,
+          //   width: 250,
+          //   label: creditLabel,
+          //   onTap: () {
+          //     Get.back();
+          //     controller.billNo.value++;
+          //     givePrint(
+          //       billNo: controller.billNo.value,
+          //       discountPercentage: controller.discountDifferenceAmount.toInt(),
+          //       context: context,
+          //       paymentMethod: creditLabel,
+          //       totalAmount:
+          //           controller.isDiscountGiven.value
+          //               ? controller.discountPrice.value
+          //               : controller.getTotalAmount().toDouble(),
+          //     );
+          //   },
+          // ),
+          // setHeight(height: 20),
         ],
       ),
     );
