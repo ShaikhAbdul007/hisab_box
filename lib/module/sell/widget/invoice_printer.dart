@@ -301,32 +301,43 @@ class InvoicePrinterView extends StatelessWidget {
                   // setHeight(height: 20),
                   // Divider(thickness: 1),
                   setHeight(height: 20),
-                  Center(
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: CustomTextStyle.customNato(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.blackColor,
-                        ),
-                        children: [
-                          const TextSpan(text: "★ You saved "),
-                          TextSpan(
-                            text: "₹ $discountPercentage",
+                  discountPercentage > 0
+                      ? Center(
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
                             style: CustomTextStyle.customNato(
                               fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w500,
                               color: AppColors.blackColor,
                             ),
+                            children: [
+                              const TextSpan(text: "★ You saved "),
+                              TextSpan(
+                                text: "₹ $discountPercentage",
+                                style: CustomTextStyle.customNato(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.blackColor,
+                                ),
+                              ),
+                              const TextSpan(text: " on this order ★"),
+                            ],
                           ),
-                          const TextSpan(text: " on this order ★"),
-                        ],
+                        ),
+                      )
+                      : Center(
+                        child: Text(
+                          "★ Add more items to unlock exciting discounts! ★",
+                          textAlign: TextAlign.center,
+                          style: CustomTextStyle.customPoppin(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.blackColor,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-
-                  setHeight(height: 25),
+                  setHeight(height: 35),
                   Center(
                     child: Text(
                       "✔ Keep shopping to save more !",
@@ -337,9 +348,29 @@ class InvoicePrinterView extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // discountPercentage > 0
+                  //     ? Center(
+                  //       child: Text(
+                  //         "✔ Keep shopping to save more !",
+                  //         style: CustomTextStyle.customPoppin(
+                  //           fontSize: 20,
+                  //           fontWeight: FontWeight.bold,
+                  //           color: AppColors.blackColor,
+                  //         ),
+                  //       ),
+                  //     )
+                  //     : Center(
+                  //       child: Text(
+                  //         "✔ Bigger cart = Bigger savings",
+                  //         style: CustomTextStyle.customPoppin(
+                  //           fontSize: 18,
+                  //           fontWeight: FontWeight.w500,
+                  //           color: AppColors.blackColor,
+                  //         ),
+                  //       ),
+                  //     ),
                 ],
               ),
-
               setHeight(height: 150),
             ],
           ),
