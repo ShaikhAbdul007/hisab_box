@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
+import '../model/user_model.dart';
 
 class SettingController extends GetxController with CacheManager {
   RxBool isUserlogout = false.obs;
@@ -25,14 +26,13 @@ class SettingController extends GetxController with CacheManager {
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (doc.exists) {
         var data = doc.data() as Map<String, dynamic>;
-        storeName.value = data['name'];
-        email.value = data['email'];
-      } else {
-        print("User not found");
-      }
-    } catch (e) {
-      print("Error: $e");
-    }
+        final userDatas = InventoryUserModel.fromJson(data);
+        saveUserData(userDatas);
+        var user = retrieveUserDetail();
+        storeName.value = user.name ?? '';
+        email.value = user.email ?? '';
+      } else {}
+    } catch (e) {}
   }
 
   Future<void> userlogout() async {

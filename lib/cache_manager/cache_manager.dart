@@ -1,4 +1,5 @@
 import 'package:get_storage/get_storage.dart';
+import 'package:inventory/module/setting/model/user_model.dart';
 
 mixin class CacheManager {
   final box = GetStorage();
@@ -7,6 +8,14 @@ mixin class CacheManager {
 
   saveUserLoggedIn(bool value) {
     box.write(Key.userLoginIn.toString(), value);
+  }
+
+  savebillNo(int billNo) {
+    box.write(Key.billNo.toString(), billNo);
+  }
+
+  saveUserData(InventoryUserModel userModels) {
+    box.write(Key.userModels.toString(), userModels.toJson());
   }
 
   savePrinterAddress(String value) {
@@ -43,6 +52,10 @@ mixin class CacheManager {
     return box.read(Key.printerAddress.toString());
   }
 
+  int retrieveBillNo() {
+    return box.read(Key.billNo.toString());
+  }
+
   Future<bool> retrieveIsLoggedIn() async {
     box.writeIfNull(Key.userLoginIn.toString(), false);
     return box.read(Key.userLoginIn.toString());
@@ -51,6 +64,14 @@ mixin class CacheManager {
   Future<bool> retrieveInventoryScan() async {
     box.writeIfNull(Key.inventoryScan.toString(), false);
     return box.read(Key.inventoryScan.toString());
+  }
+
+  InventoryUserModel retrieveUserDetail() {
+    final user = box.read(Key.userModels.toString());
+    if (user != null) {
+      return InventoryUserModel.fromJson(user);
+    }
+    return InventoryUserModel();
   }
 
   //----------------- Remove all the value------------------------------------------------------------------------------
@@ -81,4 +102,6 @@ enum Key {
   splashVideoValueKey,
   inventoryScan,
   printerAddress,
+  billNo,
+  userModels,
 }

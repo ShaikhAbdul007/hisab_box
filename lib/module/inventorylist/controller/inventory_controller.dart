@@ -19,6 +19,8 @@ class InventoryListController extends GetxController with CacheManager {
   RxBool isSaveLoading = false.obs;
   RxBool isInventoryScanSelected = false.obs;
   RxBool isSea = false.obs;
+  RxBool isLoose = false.obs;
+  RxBool isFlavorAndWeightNotRequired = false.obs;
   RxString searchText = ''.obs;
   TextEditingController updateQuantity = TextEditingController();
   TextEditingController name = TextEditingController();
@@ -129,12 +131,16 @@ class InventoryListController extends GetxController with CacheManager {
   }
 
   setQuantitydata(int index) {
+    isFlavorAndWeightNotRequired.value =
+        productList[index].isFlavorAndWeightNotRequired ?? false;
     name.text = productList[index].name ?? '';
     updateQuantity.text = productList[index].quantity.toString();
     sellingPrice.text = productList[index].sellingPrice.toString();
     purchasePrice.text = productList[index].purchasePrice.toString();
     flavor.text = productList[index].flavor ?? '';
     weight.text = productList[index].weight.toString();
+    print(productList[index].isLoosed);
+    isLoose.value = productList[index].isLoosed ?? false;
   }
 
   updateProductQuantity({required String barcode}) async {
@@ -160,6 +166,7 @@ class InventoryListController extends GetxController with CacheManager {
           'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
           'name': name.text,
           'flavours': flavor.text,
+          'isLoose': isLoose.value,
           'updatedDate': formatDate,
           'updatedTime': DateFormat('hh:mm a').format(now),
         });

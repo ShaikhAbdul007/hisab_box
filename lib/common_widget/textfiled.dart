@@ -52,7 +52,6 @@ class CommonTextField extends StatelessWidget {
         autocorrect: true,
         cursorHeight: 15,
         cursorColor: AppColors.blackColor,
-      
         style: CustomTextStyle.customUbuntu(fontSize: 15),
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9@./&\s]')),
@@ -74,6 +73,10 @@ class CommonTextField extends StatelessWidget {
           hintStyle: CustomTextStyle.customNato(
             fontSize: 12,
             color: AppColors.greyColor,
+          ),
+          errorStyle: CustomTextStyle.customNato(
+            fontSize: 10,
+            color: AppColors.redColor,
           ),
         ),
       ),

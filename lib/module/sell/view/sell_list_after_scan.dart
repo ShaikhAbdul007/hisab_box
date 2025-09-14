@@ -276,6 +276,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                 onTap: () {
                   Get.back();
                   controller.billNo.value++;
+                  controller.savebillNo(controller.billNo.value);
                   givePrint(
                     billNo: controller.billNo.value,
                     discountPercentage:
@@ -297,6 +298,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                 onTap: () {
                   Get.back();
                   controller.billNo.value++;
+                  controller.savebillNo(controller.billNo.value);
                   givePrint(
                     billNo: controller.billNo.value,
                     discountPercentage:
@@ -354,10 +356,14 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
           children: [
             CommonPopupAppbar(
               label: 'Invoice Preview',
-              onPressed: () {
-                Get.back();
-                controller.billNo.value--;
-              },
+              onPressed:
+                  controller.isPrintingLoading.value
+                      ? () {}
+                      : () {
+                        Get.back();
+                        controller.billNo.value--;
+                        controller.savebillNo(controller.billNo.value);
+                      },
             ),
             InvoicePrinterView(
               billNo: billNo,

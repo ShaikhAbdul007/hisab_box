@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
 
 import '../../inventory/model/product_model.dart';
 
-class InvoicePrinterView extends StatelessWidget {
+class InvoicePrinterView extends StatelessWidget with CacheManager {
   final List<ProductModel> scannedProductDetails;
   final String paymentMethod;
   final void Function(ReceiptController) onInitialized;
   final double totalAmount;
   final int discountPercentage;
   final int billNo;
-  const InvoicePrinterView({
+  InvoicePrinterView({
     super.key,
     required this.scannedProductDetails,
     required this.onInitialized,
@@ -26,9 +27,12 @@ class InvoicePrinterView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var user = retrieveUserDetail();
     final now = DateTime.now();
     final formattedDate = DateFormat('dd/MM/yyyy').format(now);
     final formattedTime = DateFormat('HH:mm:ss').format(now);
+    int billNo = retrieveBillNo();
+
     double total = totalAmount;
     return Receipt(
       backgroundColor: AppColors.whiteColor,
@@ -53,7 +57,7 @@ class InvoicePrinterView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Golden Pets",
+                        '${user.name}',
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -61,7 +65,7 @@ class InvoicePrinterView extends StatelessWidget {
                       ),
                       setHeight(height: 2),
                       Text(
-                        '9768858160/8898359294',
+                        '${user.mobileNo}/${user.alternateMobileNo}',
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -75,7 +79,7 @@ class InvoicePrinterView extends StatelessWidget {
               const Divider(color: AppColors.blackColor), setHeight(height: 10),
               Flexible(
                 child: Text(
-                  "Shop No :06, Plotno: 61/62, Sector 19,Taj Avenue, Ulwe, Navi Mumbai",
+                  "${user.address},${user.city},${user.pincode}",
                   style: CustomTextStyle.customMontserrat(
                     fontSize: 18,
                     letterSpacing: 1.5,

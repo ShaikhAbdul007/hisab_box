@@ -15,17 +15,18 @@ class InventoryView extends GetView<InventroyController> {
 
   @override
   Widget build(BuildContext context) {
+    controller.flag = controller.data['flag'];
+
+    controller.navigate = controller.data['navigate'];
     final inventoryScanKey = GlobalKey<FormState>();
     return CommonAppbar(
       appBarLabel:
-          controller.flag == false && controller.navigate == 'loose'
+          (controller.flag == false && controller.navigate == 'loose')
               ? 'Loose Inventory'
-              : controller.flag == true
-              ? 'Inventory'
-              : 'Sell Product',
+              : (controller.flag == true ? 'Inventory' : 'Sell Product'),
       firstActionChild:
-          controller.flag == false && controller.navigate == 'loose' ||
-                  controller.flag == true
+          ((controller.flag == false && controller.navigate == 'loose') ||
+                  controller.flag == true)
               ? Container()
               : InkWell(
                 onTap: () {

@@ -43,6 +43,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     checkBluetoothConnectivity();
     productList = data['productList'];
     scannedProductDetails = productList;
+    billNo.value = retrieveBillNo();
     super.onInit();
   }
 

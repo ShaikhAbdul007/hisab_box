@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/routes/routes.dart';
@@ -6,44 +5,48 @@ import '../../../../common_widget/colors.dart';
 import '../../../../common_widget/commom_aminatedtext.dart';
 import '../../../../common_widget/common_button.dart';
 import '../../../../common_widget/size.dart';
-import '../../../../common_widget/textfiled.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/textstyle.dart';
+
 import '../controller/signup_controller.dart';
+import 'shop_details.dart';
 
 class SignupView extends GetView<SignupController> {
   const SignupView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final signUpkey = GlobalKey<FormState>();
+    final shopDetails = GlobalKey<FormState>();
+    final shopAddress = GlobalKey<FormState>();
+
     return Scaffold(
-      body: Form(
-        key: signUpkey,
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 15.0),
+              padding: const EdgeInsets.only(left: 15.0, top: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CommonButton(
-                    width: 40,
-                    height: 40,
-                    radius: 60,
-                    isIconReq: true,
-                    label: '',
-                    onTap: () {
-                      Get.back();
-                    },
-                  ),
-                  setHeight(height: 20),
-                  CommomAminatedtext(
-                    label: 'Create Account',
-                    fontSize: 25,
-                    fontWeight: FontWeight.w900,
+                  Row(
+                    children: [
+                      CommonButton(
+                        width: 40,
+                        height: 40,
+                        radius: 60,
+                        isIconReq: true,
+                        label: '',
+                        onTap: () {
+                          Get.back();
+                        },
+                      ),
+                      setWidth(width: 15),
+                      CommomAminatedtext(
+                        label: 'Create Account',
+                        fontSize: 25,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ],
                   ),
                   setHeight(height: 10),
                   Text(
@@ -55,97 +58,110 @@ class SignupView extends GetView<SignupController> {
                 ],
               ),
             ),
-            setHeight(height: 25),
-            CommonTextField(
-              hintText: 'Shop Name',
-              label: 'Shop Name',
-              controller: controller.name,
-              suffixIcon: Icon(CupertinoIcons.person, size: 18),
-              validator: (shopNameValue) {
-                if (shopNameValue!.isEmpty) {
-                  return emptyShopName;
-                } else {
-                  return null;
-                }
-              },
-            ),
-            setHeight(height: 15),
-            CommonTextField(
-              hintText: 'Email',
-              label: 'Email',
-              controller: controller.email,
-              suffixIcon: Icon(CupertinoIcons.mail, size: 18),
-              validator: (emailValue) {
-                if (emailValue!.isEmpty) {
-                  return emptyEmail;
-                }
-                if (!GetUtils.isEmail(emailValue)) {
-                  return invalidEmail;
-                } else {
-                  return null;
-                }
-              },
-            ),
-            setHeight(height: 15),
-            CommonTextField(
-              obscureText: true,
-              hintText: 'Password',
-              label: 'Password',
-              controller: controller.password,
-              suffixIcon: Icon(CupertinoIcons.padlock, size: 18),
-              validator: (passwordValue) {
-                if (passwordValue!.isEmpty) {
-                  return emptyPassword;
-                } else if (passwordValue.length < 6) {
-                  return shortPassword;
-                } else {
-                  return null;
-                }
-              },
-            ),
-            setHeight(height: 15),
-            Obx(
-              () => CommonTextField(
-                obscureText: controller.obscureTextValue.value,
-                hintText: 'Password',
-                label: 'COnfirm Password',
-                controller: controller.confirmpassword,
-                suffixIcon: InkWell(
-                  onTap: () => controller.setobscureTextValue(),
-                  child: Icon(
-                    controller.obscureTextValue.value
-                        ? CupertinoIcons.padlock
-                        : CupertinoIcons.lock_open,
-                    size: 18,
-                  ),
+            Expanded(
+              child: Obx(
+                () => Stepper(
+                  type: StepperType.horizontal,
+                  elevation: 0,
+                  currentStep: controller.currentStepperIndex.value,
+                  onStepTapped: (int index) {
+                    controller.currentStepperIndex.value = index;
+                  },
+                  onStepCancel: () {
+                    if (controller.currentStepperIndex.value > 0) {
+                      controller.currentStepperIndex.value -= 1;
+                    }
+                  },
+                  onStepContinue: () {
+                    if (controller.currentStepperIndex.value < 1) {
+                      if (shopDetails.currentState!.validate()) {
+                        controller.currentStepperIndex.value += 1;
+                      }
+                    } else {
+                      if (shopAddress.currentState!.validate()) {}
+                    }
+                  },
+                  controlsBuilder: (context, details) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          CommonButton(
+                            bgColor: AppColors.buttonRedColor,
+                            width: 120,
+                            label: 'Cancel',
+                            onTap: details.onStepCancel!,
+                          ),
+                          if (controller.currentStepperIndex.value == 1) ...{
+                            Obx(
+                              () => CommonButton(
+                                isLoading: controller.signUpLoading.value,
+                                width: 120,
+                                label: 'Save',
+                                onTap: () {
+                                  if (shopAddress.currentState!.validate()) {
+                                    controller.signUpUser();
+                                  }
+                                },
+                              ),
+                            ),
+                          } else ...{
+                            CommonButton(
+                              width: 120,
+                              label: 'Continue',
+                              onTap: details.onStepContinue!,
+                            ),
+                          },
+                        ],
+                      ),
+                    );
+                  },
+                  steps: [
+                    Step(
+                      state:
+                          controller.currentStepperIndex.value == 0
+                              ? StepState.editing
+                              : StepState.indexed,
+                      isActive: controller.currentStepperIndex.value >= 0,
+                      title: Text('Shop Details'),
+                      content: Form(
+                        key: shopDetails,
+                        child: ShopDetails(
+                          password: controller.password,
+                          confirmpassword: controller.confirmpassword,
+                          mobileNo: controller.mobileNo,
+                          email: controller.email,
+                          alternateMobileNo: controller.alternateMobileNo,
+                          obscureText: controller.obscureTextValue.value,
+                          onTap: () {
+                            controller.setobscureTextValue();
+                          },
+                        ),
+                      ),
+                    ),
+                    Step(
+                      state:
+                          controller.currentStepperIndex.value == 1
+                              ? StepState.editing
+                              : StepState.complete,
+                      isActive: controller.currentStepperIndex.value >= 1,
+                      title: Text('Shop Address'),
+                      content: Form(
+                        key: shopAddress,
+                        child: ShopAddress(
+                          address: controller.address,
+                          city: controller.city,
+                          pincode: controller.pincode,
+                          shopName: controller.name,
+                          state: controller.state,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                validator: (passwordValue) {
-                  if (passwordValue!.isEmpty) {
-                    return emptyPassword;
-                  } else if (passwordValue.length < 6) {
-                    return shortPassword;
-                  } else if (controller.password.text !=
-                      controller.confirmpassword.text) {
-                    return passwordMismatch;
-                  } else {
-                    return null;
-                  }
-                },
               ),
             ),
-            setHeight(height: 15),
-            Obx(
-              () => CommonButton(
-                isLoading: controller.signUpLoading.value,
-                label: signup,
-                onTap: () async {
-                  if (signUpkey.currentState!.validate()) {
-                    await controller.signUpUser();
-                  }
-                },
-              ),
-            ),
-            setHeight(height: 20),
             InkWell(
               onTap: () {
                 AppRoutes.navigateRoutes(routeName: AppRouteName.login);
@@ -176,6 +192,7 @@ class SignupView extends GetView<SignupController> {
                 ),
               ),
             ),
+            setHeight(height: 20),
           ],
         ),
       ),

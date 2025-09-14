@@ -60,9 +60,6 @@ class InventroyController extends GetxController {
     );
     await fetchfullLooseSellingList();
     getCategoryData();
-    flag = data['flag'];
-    navigate = data['navigate'];
-
     super.onInit();
   }
 
@@ -212,10 +209,9 @@ class InventroyController extends GetxController {
         'createdTime': formaTime,
         'updatedTime': formaTime,
         'color': getRandomHexColor(),
+        'isFlavorAndWeightNotRequired': isFlavorAndWeightNotRequired.value,
       });
-
       showMessage(message: scannerDataSave);
-
       Future.delayed(Duration(milliseconds: 500), () {
         clear();
         cameraStart();

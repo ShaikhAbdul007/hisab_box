@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_dropdown.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_popup_appbar.dart';
 import '../../../common_widget/size.dart';
@@ -124,47 +125,58 @@ class InventoryUpdatePopupComponent extends StatelessWidget {
             ],
           ),
           setHeight(height: 10),
-          Row(
-            children: [
-              Flexible(
-                flex: 4,
-                child: CommonTextField(
-                  label: 'Flavor',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
+          controller.isFlavorAndWeightNotRequired.value
+              ? Row(
+                children: [
+                  Flexible(
+                    flex: 4,
+                    child: CommonTextField(
+                      label: 'Flavor',
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 5,
+                        horizontal: 5,
+                      ),
+                      hintText: 'Flavor',
+                      controller: controller.flavor,
+                      validator: (flavor) {
+                        if (flavor!.isEmpty) {
+                          return emptyflavor;
+                        } else {
+                          return null;
+                        }
+                      },
+                    ),
                   ),
-                  hintText: 'Flavor',
-                  controller: controller.flavor,
-                  validator: (flavor) {
-                    if (flavor!.isEmpty) {
-                      return emptyflavor;
-                    } else {
-                      return null;
-                    }
-                  },
-                ),
-              ),
-              Flexible(
-                flex: 2,
-                child: CommonTextField(
-                  label: 'Weight',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
+                  Flexible(
+                    flex: 2,
+                    child: CommonTextField(
+                      label: 'Weight',
+                      contentPadding: EdgeInsets.symmetric(
+                        vertical: 5,
+                        horizontal: 5,
+                      ),
+                      hintText: 'Weight',
+                      controller: controller.weight,
+                      validator: (weight) {
+                        if (weight!.isEmpty) {
+                          return emptyWeight;
+                        } else {
+                          return null;
+                        }
+                      },
+                    ),
                   ),
-                  hintText: 'Weight',
-                  controller: controller.weight,
-                  validator: (weight) {
-                    if (weight!.isEmpty) {
-                      return emptyWeight;
-                    } else {
-                      return null;
-                    }
-                  },
-                ),
-              ),
-            ],
+                ],
+              )
+              : Container(),
+          setHeight(height: 10),
+          CustomDropDown(
+            selectedDropDownItem: controller.isLoose.value,
+            listItems: [true, false],
+            hintText: 'Select isLoose',
+            notifyParent: (val) {
+              controller.isLoose.value = val;
+            },
           ),
           setHeight(height: 10),
           Obx(

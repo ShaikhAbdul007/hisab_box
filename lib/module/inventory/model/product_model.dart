@@ -20,6 +20,7 @@ class ProductModel {
   String? paymentMethod;
   int? billNo;
   bool? isLooseCategory;
+  bool? isFlavorAndWeightNotRequired;
 
   ProductModel({
     this.barcode,
@@ -43,6 +44,7 @@ class ProductModel {
     this.perpiece,
     this.isLoosed,
     this.id,
+    this.isFlavorAndWeightNotRequired,
   });
 
   ProductModel.fromJson(Map<String, dynamic> json) {
@@ -67,6 +69,7 @@ class ProductModel {
     billNo = json['billNo'];
     paymentMethod = json['paymentMethod'];
     isLooseCategory = json['isLooseCategory'];
+    isFlavorAndWeightNotRequired = json['isFlavorAndWeightNotRequired'];
   }
 
   Map<String, dynamic> toJson() {
@@ -92,6 +95,7 @@ class ProductModel {
     data['billNo'] = billNo;
     data['paymentMethod'] = paymentMethod;
     data['isLooseCategory'] = isLooseCategory;
+    data['isFlavorAndWeightNotRequired'] = isFlavorAndWeightNotRequired;
     return data;
   }
 }
