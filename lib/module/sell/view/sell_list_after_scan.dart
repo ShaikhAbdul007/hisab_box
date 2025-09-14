@@ -1,3 +1,4 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
@@ -11,6 +12,7 @@ import 'package:inventory/common_widget/common_radio_button.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/module/app_settings/view/app_setting_view.dart';
 import 'package:inventory/module/sell/widget/invoice_printer.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
@@ -381,7 +383,36 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                       );
                     }
                   } else {
-                    showMessage(message: 'Bluetooth is off, please on it.');
+                    commonDialogBox(
+                      context: context,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CommonPopupAppbar(
+                            label: 'Bluetooth Info',
+                            onPressed: () {
+                              Get.back();
+                            },
+                          ),
+                          Divider(),
+                          Text(
+                            'Bluetooth is off, please on it.',
+                            style: CustomTextStyle.customMontserrat(),
+                          ),
+                          setHeight(height: 20),
+                          CommonButton(
+                            label: 'Open Setting',
+                            onTap: () {
+                              Get.back();
+                              AppSettings.openAppSettings(
+                                type: AppSettingsType.bluetooth,
+                              );
+                            },
+                          ),
+                          setHeight(height: 20),
+                        ],
+                      ),
+                    );
                   }
                 },
               ),

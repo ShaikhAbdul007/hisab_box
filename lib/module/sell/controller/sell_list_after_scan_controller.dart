@@ -40,25 +40,26 @@ class SellListAfterScanController extends GetxController with CacheManager {
   @override
   void onInit() {
     fetchDiscounts();
-
+    checkBluetoothConnectivity();
     productList = data['productList'];
     scannedProductDetails = productList;
     super.onInit();
   }
 
   Future<bool> checkBluetoothConnectivity() async {
-    bool isBluetooth = false;
+    // Check pehle supported hai ya nahi
     if (await FlutterBluePlus.isSupported == false) {
-      isBluetooth = false;
+      return false;
     }
-    FlutterBluePlus.adapterState.listen((BluetoothAdapterState state) {
-      if (state == BluetoothAdapterState.on) {
-        isBluetooth = true;
-      } else {
-        isBluetooth = false;
-      }
-    });
-    return isBluetooth;
+
+    // Abhi current adapter state ka ek hi baar ka value lo
+    BluetoothAdapterState state = await FlutterBluePlus.adapterState.first;
+
+    if (state == BluetoothAdapterState.on) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void setReceiptController(ReceiptController controller) {

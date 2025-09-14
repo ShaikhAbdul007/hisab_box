@@ -57,6 +57,7 @@ dependencies:
   upi_payment_qrcode_generator: ^1.6.0
   barcode_widget: ^2.0.4
   flutter_blue_plus: ^1.35.12
+  app_settings: ^6.1.1
 
 
 dev_dependencies:
