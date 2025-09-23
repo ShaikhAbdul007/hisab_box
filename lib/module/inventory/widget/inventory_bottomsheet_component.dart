@@ -47,21 +47,25 @@ class InventoryBottomsheetComponent extends StatelessWidget {
           Row(
             children: [
               Flexible(
-                child: CommonDropDown(
-                  listItems: controller.categoryList,
-                  hintText: 'Select Category',
-                  notifyParent: (val) {
-                    controller.category.text = val;
-                  },
+                child: Obx(
+                  () => CommonDropDown(
+                    listItems: controller.categoryList.value,
+                    hintText: 'Select Category',
+                    notifyParent: (val) {
+                      controller.category.text = val;
+                    },
+                  ),
                 ),
               ),
               Flexible(
-                child: CommonDropDown(
-                  hintText: 'Select Animal Type',
-                  listItems: controller.animalTypeList,
-                  notifyParent: (val) {
-                    controller.animalType.text = val;
-                  },
+                child: Obx(
+                  () => CommonDropDown(
+                    hintText: 'Select Animal Type',
+                    listItems: controller.animalTypeList.value,
+                    notifyParent: (val) {
+                      controller.animalType.text = val;
+                    },
+                  ),
                 ),
               ),
             ],

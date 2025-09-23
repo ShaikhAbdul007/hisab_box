@@ -8,12 +8,7 @@ import '../../inventory/model/product_model.dart';
 class OutOfStockInventoryListText extends StatelessWidget {
   final ProductModel inventoryModel;
 
-
-  const OutOfStockInventoryListText({
-    super.key,
-    required this.inventoryModel,
-    
-  });
+  const OutOfStockInventoryListText({super.key, required this.inventoryModel});
 
   @override
   Widget build(BuildContext context) {

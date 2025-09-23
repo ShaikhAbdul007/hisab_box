@@ -190,7 +190,7 @@ class InventoryListController extends GetxController with CacheManager {
             .collection('users')
             .doc(uid)
             .collection('products')
-            .where('quantity', isGreaterThan: 0)
+            .where('quantity')
             .get();
     productList.value =
         productSnapshot.docs

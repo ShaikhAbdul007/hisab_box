@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_appbar.dart';
+import '../../../common_widget/common_progressbar.dart';
 import '../../../helper/helper.dart';
 import '../../../routes/routes.dart';
 import '../controller/inventroy_controller.dart';
 import '../widget/inventory_bottom_sheets.dart';
+import '../widget/inventory_bottomsheet_component.dart';
 import '../widget/show_dialog_boxs.dart';
 
 class InventoryView extends GetView<InventroyController> {
@@ -30,6 +34,7 @@ class InventoryView extends GetView<InventroyController> {
               ? Container()
               : InkWell(
                 onTap: () {
+                  controller.mobileScannerController.stop();
                   openManualySell(inventoryScanKey: inventoryScanKey);
                 },
 
@@ -246,50 +251,72 @@ class InventoryView extends GetView<InventroyController> {
 
   openManualySell({required GlobalKey<FormState> inventoryScanKey}) {
     openManuallySellBottomSheet(
-      controller: controller,
-      addInventoryOnTap: () {
-        if (inventoryScanKey.currentState!.validate()) {
-          ProductModel selectedProduct = controller.fullLooseSellingList
-              .firstWhere((p) => p.id == controller.selectedManuallySell);
-          unfocus();
-          if (selectedProduct.isLooseCategory == true) {
-            controller.handleLooseScan(product: selectedProduct);
-            controller.selectedManuallySell = null;
-            controller.looseQuantity.clear();
-            controller.isDoneButtonReq.value = true;
-          } else {
-            if (controller.looseOldQty >
-                int.parse(controller.looseQuantity.text)) {
-              print('object');
-              controller.handleLooseScan(product: selectedProduct);
-              controller.selectedManuallySell = null;
-              controller.looseQuantity.clear();
-              controller.isDoneButtonReq.value = true;
-            } else {
-              showSnackBar(
-                error:
-                    "Product is out of stock\nYou cannot add more than available stock.",
-              );
-            }
-          }
-        }
-      },
-      manuallyInventoryOnTap: () async {
-        if (controller.scannedProductDetails.isNotEmpty) {
-          Get.back();
-          AppRoutes.navigateRoutes(
-            routeName: AppRouteName.sellListAfterScan,
-            data: {'productList': controller.scannedProductDetails},
-          );
-        } else {
-          showMessage(message: 'Please scan the product first');
-        }
+      onPressedOnTap: () {
+        controller.clear();
+        controller.cameraStart();
       },
       formkeys: inventoryScanKey,
-      listItems: controller.fullLooseSellingList,
-      notifyParent: (np) {
-        controller.selectedManuallySell = np;
-      },
+      child: Obx(
+        () =>
+            controller.isfullLooseSellingListLoading.value
+                ? CommonProgressbar(color: AppColors.blackColor)
+                : controller.fullLooseSellingList.isEmpty
+                ? Column(
+                  children: [
+                    CommonNodatafound(message: 'No Loose Data Found', size: 15),
+                    setHeight(height: 30),
+                  ],
+                )
+                : ManuallyInventoryBottomsheetComponent(
+                  controller: controller,
+                  formkeys: inventoryScanKey,
+                  addInventoryOnTap: () {
+                    if (inventoryScanKey.currentState!.validate()) {
+                      ProductModel selectedProduct = controller
+                          .fullLooseSellingList
+                          .firstWhere(
+                            (p) => p.id == controller.selectedManuallySell,
+                          );
+                      unfocus();
+                      if (selectedProduct.isLooseCategory == true) {
+                        controller.handleLooseScan(product: selectedProduct);
+                        controller.selectedManuallySell = null;
+                        controller.looseQuantity.clear();
+                        controller.isDoneButtonReq.value = true;
+                      } else {
+                        if (controller.looseOldQty >
+                            int.parse(controller.looseQuantity.text)) {
+                          controller.handleLooseScan(product: selectedProduct);
+                          controller.selectedManuallySell = null;
+                          controller.looseQuantity.clear();
+                          controller.isDoneButtonReq.value = true;
+                        } else {
+                          showSnackBar(
+                            error:
+                                "Product is out of stock\nYou cannot add more than available stock.",
+                          );
+                        }
+                      }
+                    }
+                  },
+                  listItems: controller.fullLooseSellingList,
+                  notifyParent: (np) {
+                    controller.selectedManuallySell = np;
+                  },
+
+                  manuallyInventoryOnTap: () async {
+                    if (controller.scannedProductDetails.isNotEmpty) {
+                      Get.back();
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.sellListAfterScan,
+                        data: {'productList': controller.scannedProductDetails},
+                      );
+                    } else {
+                      showMessage(message: 'Please scan the product first');
+                    }
+                  },
+                ),
+      ),
     );
   }
 }

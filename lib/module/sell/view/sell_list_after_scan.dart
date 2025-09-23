@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_container.dart';
@@ -11,11 +10,8 @@ import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_radio_button.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/app_message.dart';
-import 'package:inventory/helper/helper.dart';
-import 'package:inventory/module/app_settings/view/app_setting_view.dart';
 import 'package:inventory/module/sell/widget/invoice_printer.dart';
 import 'package:inventory/routes/routes.dart';
-import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_dialogue.dart';
@@ -33,10 +29,24 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
     final form = GlobalKey<FormState>();
     return CommonAppbar(
       appBarLabel: 'Selling Product',
-      // firstActionChild: AddExpensesButton(
-      //   onTap: () {
-      //     openManuallySaleBottomSheet(formkeys: form);
+      // firstActionChild: InkWell(
+      //   onTap: () async {
+      //     controller.saveProductList(controller.productList);
+      //     AppRoutes.navigateRoutes(
+      //       routeName: AppRouteName.inventoryView,
+      //       data: {'flag': false},
+      //     );
       //   },
+      //   child: CommonContainer(
+      //     height: 40,
+      //     width: 40,
+      //     radius: 10,
+      //     color: AppColors.whiteColor,
+      //     child: Icon(
+      //       CupertinoIcons.barcode_viewfinder,
+      //       color: AppColors.blackColor,
+      //     ),
+      //   ),
       // ),
       body: Obx(
         () =>
@@ -80,22 +90,14 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                                     controller.productList[index].barcode ?? '',
                                   );
                                 },
-                                plusOnTap:
-                                    controller.isStockOver.value
-                                        ? () {
-                                          print('isstockover');
-                                        }
-                                        : () {
-                                          controller.updateQuantity(
-                                            controller.productList[index],
-                                            true,
-                                            index,
-                                            controller
-                                                    .productList[index]
-                                                    .barcode ??
-                                                '',
-                                          );
-                                        },
+                                plusOnTap: () {
+                                  controller.updateQuantity(
+                                    controller.productList[index],
+                                    true,
+                                    index,
+                                    controller.productList[index].barcode ?? '',
+                                  );
+                                },
                                 inventoryModel: controller.productList[index],
                               ),
                             );
@@ -218,6 +220,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                       Divider(endIndent: 10, indent: 10),
                       Obx(
                         () => CommonButton(
+                          //  width: 120,
                           isLoading: controller.isSaleLoading.value,
                           label: 'Sell',
                           onTap: () async {
@@ -225,6 +228,34 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                           },
                         ),
                       ),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      //   children: [
+                      //     Obx(
+                      //       () => CommonButton(
+                      //         bgColor: AppColors.amberColorShade100,
+                      //         isbgReq: true,
+                      //         textColor: AppColors.blackColor,
+                      //         width: 200,
+                      //         isLoading: controller.isSaleLoading.value,
+                      //         label: 'Sell WithOut Bill',
+                      //         onTap: () async {
+                      //           showPaymentMethod(context);
+                      //         },
+                      //       ),
+                      //     ),
+                      //     Obx(
+                      //       () => CommonButton(
+                      //         width: 120,
+                      //         isLoading: controller.isSaleLoading.value,
+                      //         label: 'Sell',
+                      //         onTap: () async {
+                      //           showPaymentMethod(context);
+                      //         },
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 )

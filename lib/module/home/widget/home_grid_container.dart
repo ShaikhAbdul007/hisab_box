@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/home/model/grid_model.dart';
@@ -12,7 +11,6 @@ class HomeGridContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 500,
       padding: EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,

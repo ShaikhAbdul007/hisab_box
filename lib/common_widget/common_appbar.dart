@@ -12,6 +12,8 @@ class CommonAppbar extends StatelessWidget {
   final Widget? firstActionChild;
   final Widget? secondActionChild;
   final bool isleadingButtonRequired;
+  final Future<void> Function(BuildContext context)? onBack;
+  final List<Widget>? persistentFooterButtons;
   const CommonAppbar({
     super.key,
     required this.appBarLabel,
@@ -19,14 +21,29 @@ class CommonAppbar extends StatelessWidget {
     this.isleadingButtonRequired = true,
     this.firstActionChild,
     this.secondActionChild,
+    this.onBack,
+    this.persistentFooterButtons,
   });
 
   @override
   Widget build(BuildContext context) {
+    Future<void> handleBack(BuildContext context) async {
+      if (onBack != null) {
+        await onBack!(context);
+      }
+      Get.back();
+    }
+
     return PopScope(
       canPop: false,
+      // onPopInvokedWithResult: (didPop, backpop) async {
+      //   if (!didPop) {
+      //     await handleBack(context);
+      //   }
+      // },
       child: Scaffold(
         backgroundColor: AppColors.greyColorShade100,
+        persistentFooterButtons: persistentFooterButtons,
         appBar: AppBar(
           actionsPadding: EdgeInsets.only(right: 20),
           actions: [
@@ -34,6 +51,7 @@ class CommonAppbar extends StatelessWidget {
             setWidth(width: 15),
             secondActionChild ?? Container(),
           ],
+
           backgroundColor: AppColors.greyColorShade100,
           title: Text(
             appBarLabel,
@@ -44,13 +62,14 @@ class CommonAppbar extends StatelessWidget {
               isleadingButtonRequired
                   ? IconButton(
                     onPressed: () {
+                      print('back pressed');
                       Get.back(result: true);
                     },
                     icon: Icon(CupertinoIcons.back),
                   )
                   : null,
         ),
-      
+
         body: body,
       ),
     );

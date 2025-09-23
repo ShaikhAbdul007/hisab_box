@@ -10,6 +10,7 @@ class CommonButton extends StatelessWidget {
   final double radius;
   final String label;
   final Color bgColor;
+  final Color textColor;
   final VoidCallback onTap;
   final bool isIconReq;
   final bool isbgReq;
@@ -25,6 +26,7 @@ class CommonButton extends StatelessWidget {
     this.width = 250,
     this.radius = 15,
     this.isLoading = false,
+    this.textColor = AppColors.whiteColor,
   });
 
   @override
@@ -53,10 +55,7 @@ class CommonButton extends StatelessWidget {
                             label,
                             style: CustomTextStyle.customRaleway(
                               fontSize: 15,
-                              color:
-                                  isbgReq
-                                      ? AppColors.whiteColor
-                                      : AppColors.blackColor,
+                              color: isbgReq ? textColor : AppColors.blackColor,
                             ),
                           ),
                 ),

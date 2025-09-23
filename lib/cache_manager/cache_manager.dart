@@ -1,4 +1,5 @@
 import 'package:get_storage/get_storage.dart';
+import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 
 mixin class CacheManager {
@@ -30,6 +31,10 @@ mixin class CacheManager {
     box.write(Key.tenantValue.toString(), value);
   }
 
+  saveProductList(List<ProductModel> product) {
+    box.write(Key.product.toString(), product);
+  }
+
   //----------------- checking expire token------------------------------------------------------------------------------
 
   bool isTokenExpired(int expireInSeconds, DateTime loginTime) {
@@ -53,6 +58,7 @@ mixin class CacheManager {
   }
 
   int retrieveBillNo() {
+    box.writeIfNull(Key.billNo.toString(), 0);
     return box.read(Key.billNo.toString());
   }
 
@@ -72,6 +78,11 @@ mixin class CacheManager {
       return InventoryUserModel.fromJson(user);
     }
     return InventoryUserModel();
+  }
+
+  List<ProductModel> retrieveProductList() {
+    final productList = box.read(Key.product.toString());
+    return productList;
   }
 
   //----------------- Remove all the value------------------------------------------------------------------------------
@@ -104,4 +115,5 @@ enum Key {
   printerAddress,
   billNo,
   userModels,
+  product,
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_progressbar.dart';
 import '../controller/inventroy_controller.dart';
 import '../widget/inventory_bottomsheet_component.dart';
 
@@ -40,29 +42,12 @@ openLooseInventoryBottomSheet({
 
 void openManuallySellBottomSheet({
   required GlobalKey<FormState> formkeys,
-  required List<dynamic> listItems,
-
-  required void Function() addInventoryOnTap,
-  required dynamic Function(dynamic) notifyParent,
-  required void Function() manuallyInventoryOnTap,
-  required InventroyController controller,
+  required void Function() onPressedOnTap,
+  required Widget child,
 }) {
   commonBottomSheet(
     label: 'Add Manual Product',
-    onPressed: () {
-      controller.clear();
-      controller.cameraStart();
-    },
-    child:
-        listItems.isEmpty
-            ? CommonNodatafound(message: 'No loose product found')
-            : ManuallyInventoryBottomsheetComponent(
-              addInventoryOnTap: addInventoryOnTap,
-              listItems: listItems,
-              notifyParent: notifyParent,
-              formkeys: formkeys,
-              controller: controller,
-              manuallyInventoryOnTap: manuallyInventoryOnTap,
-            ),
+    onPressed: onPressedOnTap,
+    child: child,
   );
 }

@@ -5,17 +5,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../helper/helper.dart';
 
-class InventroyController extends GetxController {
+class InventroyController extends GetxController with CacheManager {
   final FirebaseAuth auth = FirebaseAuth.instance;
   RxList<ProductModel> scannedProductDetails = <ProductModel>[].obs;
-  List<CategoryModel> categoryList = [];
-  List<CategoryModel> animalTypeList = [];
+  RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
+  RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
   RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
@@ -27,6 +28,7 @@ class InventroyController extends GetxController {
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isScannedQtyOutOfStock = false.obs;
   RxBool isDoneButtonReq = false.obs;
+  RxBool isfullLooseSellingListLoading = false.obs;
   late MobileScannerController mobileScannerController;
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
@@ -63,11 +65,28 @@ class InventroyController extends GetxController {
     super.onInit();
   }
 
+  @override
+  void dispose() {
+    barcode.dispose();
+    productName.dispose();
+    looseQuantity.dispose();
+    looseSellingPrice.dispose();
+    category.dispose();
+    sellingPrice.dispose();
+    purchasePrice.dispose();
+    flavor.dispose();
+    weight.dispose();
+    quantity.dispose();
+    super.dispose();
+  }
+
   fetchfullLooseSellingList() async {
+    isfullLooseSellingListLoading.value = true;
     var fetchLooseCategorys = await fetchLooseCategory();
     var fetchLooseInventorys = await fetchLooseInventory();
     fullLooseSellingList.addAll(fetchLooseCategorys);
     fullLooseSellingList.addAll(fetchLooseInventorys);
+    isfullLooseSellingListLoading.value = false;
     for (var lis in fullLooseSellingList) {
       print('fullLooseSellingList is ${lis.name}');
       print('fullLooseSellingList is ${lis.sellingPrice}');
@@ -301,6 +320,7 @@ class InventroyController extends GetxController {
     required Function() qtyIsNotEnough,
   }) {
     // Check ki barcode valid hai ya nahi
+    // var storeList = retrieveProductList();
     if (product.barcode == null || product.barcode!.isEmpty) return;
 
     final index = scannedProductDetails.indexWhere(
@@ -442,7 +462,7 @@ class InventroyController extends GetxController {
               .collection('categories')
               .get();
 
-      categoryList =
+      categoryList.value =
           snapshot.docs.map((doc) {
             final data = doc.data();
             data['id'] = doc.id;
@@ -465,7 +485,7 @@ class InventroyController extends GetxController {
               .collection('animalCategories')
               .get();
 
-      animalTypeList =
+      animalTypeList.value =
           snapshot.docs.map((doc) {
             final data = doc.data();
             data['id'] = doc.id;

@@ -254,6 +254,12 @@ class HomeController extends GetxController {
 
   getDashBoardList() {
     lis = [
+      // CustomGridModel(
+      //   routeName: AppRouteName.generateBarcode,
+      //   label: 'Barcode',
+      //   icon: CupertinoIcons.barcode,
+      //   numbers: double.parse(looseStock.value.toString()),
+      // ),
       CustomGridModel(
         routeName: AppRouteName.inventroyList,
         label: 'Stock',

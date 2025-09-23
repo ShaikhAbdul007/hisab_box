@@ -13,6 +13,7 @@ import 'package:inventory/module/category/view/animal_category.dart';
 import 'package:inventory/module/category/view/category.dart';
 import 'package:inventory/module/expense/binding/expense_binding.dart';
 import 'package:inventory/module/expense/view/expense.dart';
+import 'package:inventory/module/generate_barcode/view/generate_barcode.dart';
 import 'package:inventory/module/inventory/binding/inventory_binding.dart';
 import 'package:inventory/module/inventory/view/inventory.dart';
 import 'package:inventory/module/inventorylist/binding/inventorylist_binding.dart';
@@ -35,6 +36,7 @@ import '../module/bottom_navigation/binding/bottom_navigation_binding.dart';
 import '../module/bottom_navigation/view/bottom_navigation.dart';
 import '../module/discount/binding/discount_binding.dart';
 import '../module/discount/view/discount.dart';
+import '../module/generate_barcode/binding/generate_barcode_binding.dart';
 import '../module/home/binding/home_binding.dart';
 import '../module/home/view/home.dart';
 import '../module/loose_category/binding/loose_category_binding.dart';
@@ -60,6 +62,11 @@ class AppRoutes {
     GetPage(name: AppRouteName.home, page: () => HomeView()),
     GetPage(
       name: AppRouteName.inventoryView,
+      page: () => InventoryView(),
+      binding: InventoryBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.inventoryViewFormSell,
       page: () => InventoryView(),
       binding: InventoryBinding(),
     ),
@@ -152,6 +159,11 @@ class AppRoutes {
       page: () => OutOfStockView(),
       binding: OutOfStockBinding(),
     ),
+    GetPage(
+      name: AppRouteName.generateBarcode,
+      page: () => GenerateBarcode(),
+      binding: GenerateBarcodeBinding(),
+    ),
   ];
 
   static Future<dynamic> futureNavigationToRoute({
@@ -168,6 +180,9 @@ class AppRoutes {
         break;
       case AppRouteName.inventoryView:
         Get.toNamed(AppRouteName.inventoryView, arguments: data);
+        break;
+      case AppRouteName.inventoryViewFormSell:
+        Get.offNamed(AppRouteName.inventoryViewFormSell, arguments: data);
         break;
       case AppRouteName.bottomNavigation:
         Get.offAllNamed(AppRouteName.bottomNavigation, arguments: data);
@@ -218,6 +233,8 @@ class AppRoutes {
         break;
       case AppRouteName.outOfStock:
         Get.toNamed(AppRouteName.outOfStock, arguments: data);
+      case AppRouteName.generateBarcode:
+        Get.toNamed(AppRouteName.generateBarcode, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);
@@ -228,6 +245,7 @@ class AppRoutes {
 class AppRouteName {
   static const String bottomNavigation = '/bottomNavigation';
   static const String inventoryView = '/inventoryView';
+  static const String inventoryViewFormSell = '/inventoryViewFormSell';
   static const String home = '/home';
   static const String setting = '/setting';
   static const String inventroyList = '/inventroyList';
@@ -248,4 +266,5 @@ class AppRouteName {
   static const String looseCategory = '/looseCategory';
   static const String appsetting = '/appsetting';
   static const String outOfStock = '/outOfStock';
+  static const String generateBarcode = '/generateBarcode';
 }
