@@ -22,38 +22,21 @@ class OutOfStockInventoryListText extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            height: 100,
-            width: 70,
+            margin: EdgeInsets.symmetric(horizontal: 5),
+            height: 40,
+            width: 40,
             decoration: BoxDecoration(
-              color: Color(color),
+              color: AppColors.greyColorShade100,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(5),
                 bottomLeft: Radius.circular(5),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Quantity',
-                  style: CustomTextStyle.customPoppin(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.whiteColor,
-                  ),
-                ),
-                Text(
-                  inventoryModel.quantity.toString(),
-                  style: CustomTextStyle.customPoppin(
-                    color: AppColors.whiteColor,
-                  ),
-                ),
-              ],
-            ),
+            child: Icon(CupertinoIcons.cube),
           ),
           setWidth(width: 5),
           Expanded(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -61,73 +44,120 @@ class OutOfStockInventoryListText extends StatelessWidget {
                   inventoryModel.name ?? '',
                   style: CustomTextStyle.customPoppin(),
                 ),
-                setHeight(height: 5),
-                Row(
-                  children: [
-                    Text(
-                      inventoryModel.category ?? '',
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                    setWidth(width: 10),
-                    Text(
-                      inventoryModel.weight ?? '',
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                    setWidth(width: 10),
-                    Text(
-                      inventoryModel.animalType ?? '',
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                    setWidth(width: 10),
-                    Text(
-                      '\u{20B9} ${inventoryModel.sellingPrice}',
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.blackColor,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-                setHeight(height: 5),
-                Padding(
-                  padding: const EdgeInsets.only(right: 15.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        inventoryModel.flavor ?? '',
-                        style: CustomTextStyle.customPoppin(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
-                      inventoryModel.isLoosed ?? false
-                          ? Text(
-                            'loosed : ${inventoryModel.isLoosed}',
-                            style: CustomTextStyle.customPoppin(
-                              color: AppColors.redColor,
-                            ),
-                          )
-                          : Container(),
-                    ],
+                setHeight(height: 2),
+                Text(
+                  inventoryModel.flavor ?? '',
+                  style: CustomTextStyle.customUbuntu(
+                    color: AppColors.greyColor,
+                    fontSize: 13,
                   ),
                 ),
-                setHeight(height: 5),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      inventoryModel.barcode ?? '',
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
+                    RichText(
+                      text: TextSpan(
+                        text: '${inventoryModel.animalType} ',
+                        style: CustomTextStyle.customUbuntu(
+                          color: AppColors.greyColor,
+                          fontSize: 13,
+                        ),
+
+                        children: [
+                          TextSpan(
+                            text: '${inventoryModel.weight} ',
+                            style: CustomTextStyle.customUbuntu(
+                              color: AppColors.blackColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '${inventoryModel.category}  ',
+                            style: CustomTextStyle.customUbuntu(
+                              color: AppColors.greyColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    inventoryModel.isLoosed ?? false
+                        ? Text(
+                          'Loosed : ${inventoryModel.isLoosed}',
+                          style: CustomTextStyle.customUbuntu(
+                            color: AppColors.redColor,
+                            fontSize: 13,
+                          ),
+                        )
+                        : Container(),
                   ],
+                ),
+                setHeight(height: 5),
+                // inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10 ||
+                //         inventoryModel.quantity! == 0
+                //     ? Container(
+                //       height: 25,
+                //       width: 130,
+                //       padding: EdgeInsets.symmetric(horizontal: 5),
+                //       decoration: BoxDecoration(
+                //         color: getColor(),
+                //         borderRadius: BorderRadius.circular(5),
+                //       ),
+                //       child: Row(
+                //         spacing: 5,
+                //         children: [
+                //           Icon(
+                //             Icons.info,
+                //             size: 15,
+                //             color: AppColors.whiteColor,
+                //           ),
+                //           Expanded(
+                //             child: Text(
+                //               getText(),
+                //               style: CustomTextStyle.customUbuntu(
+                //                 color: AppColors.whiteColor,
+                //               ),
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     )
+                //     : SizedBox(),
+                // inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10 ||
+                //         inventoryModel.quantity! == 0
+                //     ? setHeight(height: 5)
+                //     : SizedBox(),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  '\u{20B9} ${inventoryModel.sellingPrice}',
+                  style: CustomTextStyle.customPoppin(
+                    color: AppColors.blackColor,
+                    fontSize: 18,
+                  ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    text: inventoryModel.quantity.toString(),
+                    style: CustomTextStyle.customUbuntu(
+                      color: AppColors.redColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: ' in stock',
+                        style: CustomTextStyle.customUbuntu(
+                          color: AppColors.greyColor,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -135,5 +165,27 @@ class OutOfStockInventoryListText extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String getText() {
+    String? text;
+    if (inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10) {
+      text = 'Low Stock';
+    } else if (inventoryModel.quantity! == 0) {
+      text = 'Out of Stock';
+    }
+    return text ?? '';
+  }
+
+  Color getColor() {
+    Color? colors;
+    if (inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10) {
+      colors = AppColors.greyColor;
+    } else if (inventoryModel.quantity! == 0) {
+      colors = AppColors.redColor;
+    } else {
+      colors = AppColors.blackColor;
+    }
+    return colors;
   }
 }

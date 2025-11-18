@@ -14,13 +14,13 @@ import '../../../common_widget/size.dart';
 import '../../../common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
+import '../../../keys/keys.dart';
 
 class AnimalCategory extends GetView<AnimalTypeController> {
   const AnimalCategory({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final categoryKey = GlobalKey<FormState>();
     return CommonAppbar(
       firstActionChild: CommonContainer(
         height: 40,
@@ -34,7 +34,8 @@ class AnimalCategory extends GetView<AnimalTypeController> {
           child: Icon(CupertinoIcons.add),
         ),
       ),
-      appBarLabel: 'Animal Category',
+      appBarLabel:
+          controller.data == 'petShop' ? 'Animal Category' : 'Size Category',
       body: Obx(
         () =>
             controller.isFetchAnimalCategory.value
@@ -48,7 +49,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                         var list = controller.animalTypeList[index];
                         return ListTile(
                           title: Text(
-                            list.name,
+                            list.name ?? '',
                             style: CustomTextStyle.customNato(
                               fontSize: 18,
                               color: AppColors.blackColor,
@@ -57,12 +58,12 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                           subtitle: Row(
                             children: [
                               Text(
-                                list.createdAt,
+                                list.createdAt ?? '',
                                 style: CustomTextStyle.customNato(),
                               ),
                               setWidth(width: 25),
                               Text(
-                                list.time,
+                                list.time ?? '',
                                 style: CustomTextStyle.customNato(),
                               ),
                             ],
@@ -74,7 +75,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                                       ? null
                                       : () async {
                                         await controller.deleteAnimalCategory(
-                                          list.id,
+                                          list.id ?? '',
                                         );
                                       },
                               child: CommonContainer(

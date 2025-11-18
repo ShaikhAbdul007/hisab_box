@@ -17,7 +17,7 @@ class SellController extends GetxController {
     super.onInit();
   }
 
-  setSellList() async {
+  void setSellList() async {
     sellsList.value = await fetchSales();
   }
 
@@ -42,6 +42,8 @@ class SellController extends GetxController {
       if (salesByBarcode.containsKey(barcode)) {
         final existingSale = salesByBarcode[barcode]!;
         salesByBarcode[barcode] = SaleModel(
+          sellingPrice: existingSale.sellingPrice,
+          animalType: existingSale.animalType,
           barcode: existingSale.barcode,
           quantity: (existingSale.quantity) + (sale.quantity),
           soldAt: existingSale.soldAt,

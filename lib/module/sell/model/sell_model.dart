@@ -5,13 +5,19 @@ class SaleModel {
   final String category;
   final String soldAt;
   final String time;
+  final String billNo;
   final double amount;
   final String weight;
   final String flavor;
   final double discountPercentage;
+  final double sellingPrice;
   final double amountAfterDiscount;
+  final String animalType;
 
   SaleModel({
+    this.billNo = '0',
+    required this.sellingPrice,
+    required this.animalType,
     required this.barcode,
     required this.name,
     required this.quantity,
@@ -34,10 +40,13 @@ class SaleModel {
       soldAt: data['soldAt'] ?? '',
       time: data['time'] ?? '',
       amount: (data['amount'] ?? 0).toDouble(),
+      billNo: data['billNo'] ?? 0,
       flavor: data['flavor'] ?? '',
       weight: data['weight'] ?? '',
       discountPercentage: (data['discountValue'] ?? 0).toDouble(),
       amountAfterDiscount: (data['finalAmount'] ?? 0).toDouble(),
+      sellingPrice: (data['finalAmount'] ?? 0).toDouble(),
+      animalType: data['animalType'] ?? '',
     );
   }
 }

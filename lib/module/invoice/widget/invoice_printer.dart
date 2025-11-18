@@ -5,24 +5,17 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
-
-import '../../inventory/model/product_model.dart';
+import 'package:inventory/module/sell/model/print_model.dart';
 
 class InvoicePrinterView extends StatelessWidget with CacheManager {
-  final List<ProductModel> scannedProductDetails;
+  final List<PrintModel> scannedProductDetails;
   final String paymentMethod;
   final void Function(ReceiptController) onInitialized;
-  final double totalAmount;
-  final int discountPercentage;
-  final int billNo;
   InvoicePrinterView({
     super.key,
     required this.scannedProductDetails,
     required this.onInitialized,
     required this.paymentMethod,
-    required this.totalAmount,
-    required this.discountPercentage,
-    required this.billNo,
   });
 
   @override
@@ -32,8 +25,9 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
     final formattedDate = DateFormat('dd/MM/yyyy').format(now);
     final formattedTime = DateFormat('HH:mm:ss').format(now);
     int billNo = retrieveBillNo();
-
-    double total = totalAmount;
+    double total = 0;
+    double savedAmount = 0;
+    int discountPercentage = 0;
     return Receipt(
       backgroundColor: AppColors.whiteColor,
       builder:
@@ -171,8 +165,10 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               setHeight(height: 10),
               const Divider(color: AppColors.blackColor),
               ...scannedProductDetails.map((item) {
-                final itemTotal =
-                    (item.sellingPrice ?? 0) * (item.quantity ?? 0);
+                discountPercentage = item.discount ?? 0;
+                total += (item.finalPrice ?? 0);
+                savedAmount =
+                    (item.originalPrice ?? 0) - (item.finalPrice ?? 0);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10.0),
                   child: Row(
@@ -189,12 +185,46 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                 fontSize: 24,
                               ),
                             ),
-                            setHeight(height: 10),
-                            Text(
-                              "${item.quantity} x ${item.sellingPrice}",
-                              style: CustomTextStyle.customMontserrat(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 18,
+                            if (item.flavours!.isNotEmpty) ...{
+                              setHeight(height: 5),
+                              Text(
+                                item.flavours ?? "",
+                                style: CustomTextStyle.customMontserrat(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            },
+                            setHeight(height: 5),
+                            RichText(
+                              text: TextSpan(
+                                text:
+                                    "${item.quantity} x ${item.originalPrice}",
+                                style: CustomTextStyle.customMontserrat(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 18,
+                                ),
+                                children:
+                                    item.discount! > 0
+                                        ? [
+                                          TextSpan(
+                                            text: " @ ",
+                                            style:
+                                                CustomTextStyle.customMontserrat(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 15,
+                                                ),
+                                          ),
+                                          TextSpan(
+                                            text: "${item.discount} %",
+                                            style:
+                                                CustomTextStyle.customMontserrat(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 18,
+                                                ),
+                                          ),
+                                        ]
+                                        : [],
                               ),
                             ),
                           ],
@@ -203,7 +233,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                       Expanded(
                         flex: 3,
                         child: Text(
-                          "₹ $itemTotal",
+                          "₹ ${item.finalPrice}",
                           textAlign: TextAlign.right,
                           style: CustomTextStyle.customMontserrat(
                             fontWeight: FontWeight.bold,
@@ -283,27 +313,6 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               setHeight(height: 20),
               Column(
                 children: [
-                  // Center(
-                  //   child: Text(
-                  //     "Thank you for shopping!",
-                  //     style: CustomTextStyle.customNato(
-                  //       fontSize: 20,
-                  //       fontWeight: FontWeight.bold,
-                  //     ),
-                  //   ),
-                  // ),
-                  // setHeight(height: 10),
-                  // Center(
-                  //   child: Text(
-                  //     "Visit again!",
-                  //     style: CustomTextStyle.customNato(
-                  //       fontSize: 20,
-                  //       fontWeight: FontWeight.bold,
-                  //     ),
-                  //   ),
-                  // ),
-                  // setHeight(height: 20),
-                  // Divider(thickness: 1),
                   setHeight(height: 20),
                   discountPercentage > 0
                       ? Center(
@@ -318,7 +327,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             children: [
                               const TextSpan(text: "★ You saved "),
                               TextSpan(
-                                text: "₹ $discountPercentage",
+                                text: "₹ ${savedAmount.floor()}",
                                 style: CustomTextStyle.customNato(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -341,7 +350,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                           ),
                         ),
                       ),
-                  setHeight(height: 35),
+                  setHeight(height: 25),
                   Center(
                     child: Text(
                       "✔ Keep shopping to save more !",
@@ -352,27 +361,17 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                       ),
                     ),
                   ),
-                  // discountPercentage > 0
-                  //     ? Center(
-                  //       child: Text(
-                  //         "✔ Keep shopping to save more !",
-                  //         style: CustomTextStyle.customPoppin(
-                  //           fontSize: 20,
-                  //           fontWeight: FontWeight.bold,
-                  //           color: AppColors.blackColor,
-                  //         ),
-                  //       ),
-                  //     )
-                  //     : Center(
-                  //       child: Text(
-                  //         "✔ Bigger cart = Bigger savings",
-                  //         style: CustomTextStyle.customPoppin(
-                  //           fontSize: 18,
-                  //           fontWeight: FontWeight.w500,
-                  //           color: AppColors.blackColor,
-                  //         ),
-                  //       ),
-                  //     ),
+                  setHeight(height: 25),
+                  Center(
+                    child: Text(
+                      "Visit again !",
+                      style: CustomTextStyle.customPoppin(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blackColor,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               setHeight(height: 150),

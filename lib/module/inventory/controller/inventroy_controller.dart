@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:math';
-import 'package:intl/intl.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -22,26 +19,11 @@ class InventroyController extends GetxController with CacheManager {
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
   RxBool isTreatSelected = false.obs;
   RxBool isCameraStop = false.obs;
-  RxBool isSaveLoading = false.obs;
   RxBool isProductSaving = false.obs;
-  RxBool isLooseProductSave = false.obs;
-  RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isScannedQtyOutOfStock = false.obs;
   RxBool isDoneButtonReq = false.obs;
   RxBool isfullLooseSellingListLoading = false.obs;
   late MobileScannerController mobileScannerController;
-  TextEditingController productName = TextEditingController();
-  TextEditingController looseQuantity = TextEditingController();
-  TextEditingController looseSellingPrice = TextEditingController();
-  TextEditingController category = TextEditingController();
-  TextEditingController animalType = TextEditingController();
-  TextEditingController sellingPrice = TextEditingController();
-  TextEditingController purchasePrice = TextEditingController();
-  TextEditingController flavor = TextEditingController();
-  TextEditingController weight = TextEditingController();
-  TextEditingController quantity = TextEditingController();
-  TextEditingController barcode = TextEditingController();
-  TextEditingController loooseProductName = TextEditingController();
   double totalAmount = 0.0;
   RxInt scannedQty = 0.obs;
   RxString barcodeValue = ''.obs;
@@ -53,34 +35,30 @@ class InventroyController extends GetxController with CacheManager {
   var data = Get.arguments;
   bool? flag;
   String? navigate;
+  AudioPlayer? player;
 
   @override
   void onInit() async {
+    flag = data['flag'];
+    navigate = data['navigate'];
     mobileScannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
-      formats: [BarcodeFormat.all],
+      formats: [
+        BarcodeFormat.code128,
+        BarcodeFormat.code39,
+        BarcodeFormat.ean13,
+        BarcodeFormat.ean8,
+        BarcodeFormat.dataMatrix,
+        BarcodeFormat.codabar,
+      ],
     );
+    player = AudioPlayer();
+
     await fetchfullLooseSellingList();
-    getCategoryData();
     super.onInit();
   }
 
-  @override
-  void dispose() {
-    barcode.dispose();
-    productName.dispose();
-    looseQuantity.dispose();
-    looseSellingPrice.dispose();
-    category.dispose();
-    sellingPrice.dispose();
-    purchasePrice.dispose();
-    flavor.dispose();
-    weight.dispose();
-    quantity.dispose();
-    super.dispose();
-  }
-
-  fetchfullLooseSellingList() async {
+  Future<void> fetchfullLooseSellingList() async {
     isfullLooseSellingListLoading.value = true;
     var fetchLooseCategorys = await fetchLooseCategory();
     var fetchLooseInventorys = await fetchLooseInventory();
@@ -144,104 +122,9 @@ class InventroyController extends GetxController with CacheManager {
     }
   }
 
-  cameraStart() {
+  void cameraStart() {
     mobileScannerController.start();
     Get.back();
-  }
-
-  getCategoryData() async {
-    await fetchCategories();
-    await fetchAnimalCategories();
-  }
-
-  calculatePurchasePrice() {
-    if (sellingPrice.text.isNotEmpty) {
-      double sellingPrices = double.tryParse(sellingPrice.text) ?? 0;
-      double purchasePrices = sellingPrices - (sellingPrices * 0.20);
-      purchasePrice.text = purchasePrices.toStringAsFixed(2);
-    }
-  }
-
-  clear() {
-    barcode.clear();
-    productName.clear();
-    looseQuantity.clear();
-    looseSellingPrice.clear();
-    category.clear();
-    sellingPrice.clear();
-    purchasePrice.clear();
-    flavor.clear();
-    weight.clear();
-    quantity.clear();
-  }
-
-  String getRandomHexColor() {
-    final random = Random();
-    final color = (random.nextDouble() * 0xFFFFFF).toInt();
-    return '0xff${color.toRadixString(16).padLeft(6, '0')}';
-  }
-
-  Future<void> saveNewProduct({required String barcode}) async {
-    isSaveLoading.value = true;
-
-    try {
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
-
-      final now = DateTime.now();
-      final String formatDate = DateFormat('dd-MM-yyyy').format(now);
-      final String formaTime = DateFormat('hh:mm a').format(now);
-
-      final productRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('products')
-          .doc(barcode);
-      final aminalTypeData = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('animalCategories')
-          .doc(animalType.text);
-      final categoriesData = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('categories')
-          .doc(category.text);
-
-      final animalexistingDoc = await aminalTypeData.get();
-      final categories = await categoriesData.get();
-
-      int quantityOnly = int.tryParse(quantity.text) ?? 0;
-      await productRef.set({
-        'barcode': barcode,
-        'name': productName.text,
-        'category': categories['name'],
-        'animalType': animalexistingDoc['name'],
-        'isLoose': isLoose,
-        'quantity': quantityOnly,
-        'purchasePrice': double.tryParse(purchasePrice.text) ?? 0,
-        'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
-        'flavours': flavor.text,
-        'weight': weight.text,
-        'createdDate': formatDate,
-        'updatedDate': formatDate,
-        'createdTime': formaTime,
-        'updatedTime': formaTime,
-        'color': getRandomHexColor(),
-        'isFlavorAndWeightNotRequired': isFlavorAndWeightNotRequired.value,
-      });
-      showMessage(message: scannerDataSave);
-      Future.delayed(Duration(milliseconds: 500), () {
-        clear();
-        cameraStart();
-      });
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.message ?? '');
-    } catch (e) {
-      showMessage(message: somethingWentMessage);
-    } finally {
-      isSaveLoading.value = false;
-    }
   }
 
   Future<(bool existProductOrNot, ProductModel productModels)>
@@ -256,7 +139,7 @@ class InventroyController extends GetxController with CacheManager {
     if (existingDoc.exists) {
       stockqty.value = product.quantity ?? 0;
       existProductName.value = product.name ?? '';
-      loooseProductName.text = product.name ?? '';
+      //loooseProductName.text = product.name ?? '';
       return (true, product);
     }
     return (false, product);
@@ -304,7 +187,7 @@ class InventroyController extends GetxController with CacheManager {
       final data = doc.data();
       final isLoose = data?['isLoose'] ?? false;
       existProductName.value = data?['name'] ?? false;
-      loooseProductName.text = data?['name'] ?? false;
+      // loooseProductName.text = data?['name'] ?? false;
       if (isLoose) {
         return true;
       }
@@ -314,45 +197,147 @@ class InventroyController extends GetxController with CacheManager {
     }
   }
 
+  // void handleScan({
+  //   required ProductModel product,
+  //   required Function() afterProductAdding,
+  //   required Function() qtyIsNotEnough,
+  // }) {
+  //   if (product.barcode == null || product.barcode!.isEmpty) return;
+  //   final index = scannedProductDetails.indexWhere(
+  //     (p) => p.barcode == product.barcode,
+  //   );
+  //   if (index != -1) {
+  //     // Product already scanned → qty badhane ka logic
+  //     if (scannedProductDetails[index].quantity! < (product.quantity ?? 0)) {
+  //       scannedProductDetails[index].quantity =
+  //           (scannedProductDetails[index].quantity ?? 0) + 1;
+  //       scannedQty.value = scannedProductDetails[index].quantity!;
+  //       afterProductAdding();
+  //     } else {
+  //       // Database ki quantity se zyada scan nahi kar sakte
+  //       qtyIsNotEnough();
+  //     }
+  //   } else {
+  //     // naya product hai → list me add karo with qty = 1
+  //     if ((product.quantity ?? 0) > 0) {
+  //       ProductModel scanned = ProductModel(
+  //         barcode: product.barcode,
+  //         name: product.name,
+  //         sellingPrice: product.sellingPrice,
+  //         quantity: 1,
+  //       );
+  //       scannedProductDetails.add(scanned);
+  //       saveProductList(scannedProductDetails);
+  //       afterProductAdding();
+  //     } else {
+  //       // Agar database me stock hi khatam hai
+  //       qtyIsNotEnough();
+  //     }
+  //   }
+  // }
+
   void handleScan({
     required ProductModel product,
     required Function() afterProductAdding,
     required Function() qtyIsNotEnough,
-  }) {
-    // Check ki barcode valid hai ya nahi
-    // var storeList = retrieveProductList();
-    if (product.barcode == null || product.barcode!.isEmpty) return;
+  }) async {
+    // 🔹 Retrieve cache list
+    var cacheList = await retrieveCartProductList();
 
-    final index = scannedProductDetails.indexWhere(
-      (p) => p.barcode == product.barcode,
-    );
+    // 🔹 If cache has data, use cache logic
+    if (cacheList.isNotEmpty) {
+      final index = cacheList.indexWhere((p) => p.barcode == product.barcode);
 
-    if (index != -1) {
-      // Product already scanned → qty badhane ka logic
-      if (scannedProductDetails[index].quantity! < (product.quantity ?? 0)) {
-        scannedProductDetails[index].quantity =
-            (scannedProductDetails[index].quantity ?? 0) + 1;
-        scannedQty.value = scannedProductDetails[index].quantity!;
-        afterProductAdding();
+      if (index != -1) {
+        // Already in cache → increase qty
+        if (cacheList[index].quantity! < (product.quantity ?? 0)) {
+          cacheList[index].quantity = (cacheList[index].quantity ?? 0) + 1;
+          saveCartProductList(cacheList);
+          afterProductAdding();
+        } else {
+          qtyIsNotEnough();
+        }
       } else {
-        // Database ki quantity se zyada scan nahi kar sakte
-        qtyIsNotEnough();
+        if ((product.quantity ?? 0) > 0) {
+          ProductModel scanned = ProductModel(
+            barcode: product.barcode,
+            name: product.name,
+            sellingPrice: product.sellingPrice,
+            quantity: 1,
+            animalType: product.animalType,
+            billNo: product.billNo,
+            box: product.box,
+            category: product.category,
+            color: product.color,
+            createdDate: product.createdDate,
+            createdTime: product.createdTime,
+            discount: product.discount,
+            expireDate: product.expireDate,
+            flavor: product.flavor,
+            isFlavorAndWeightNotRequired: product.isFlavorAndWeightNotRequired,
+            id: product.id,
+            isLooseCategory: product.isLooseCategory,
+            isLoosed: product.isLoosed,
+            location: product.location,
+            purchasePrice: product.purchasePrice,
+          );
+
+          cacheList.add(scanned);
+          saveCartProductList(cacheList);
+          afterProductAdding();
+        } else {
+          qtyIsNotEnough();
+        }
       }
     } else {
-      // naya product hai → list me add karo with qty = 1
-      if ((product.quantity ?? 0) > 0) {
-        ProductModel scanned = ProductModel(
-          barcode: product.barcode,
-          name: product.name,
-          sellingPrice: product.sellingPrice,
-          quantity: 1,
-        );
-        scannedProductDetails.add(scanned);
+      if (product.barcode == null || product.barcode!.isEmpty) return;
 
-        afterProductAdding();
+      final index = scannedProductDetails.indexWhere(
+        (p) => p.barcode == product.barcode,
+      );
+
+      if (index != -1) {
+        if (scannedProductDetails[index].quantity! < (product.quantity ?? 0)) {
+          scannedProductDetails[index].quantity =
+              (scannedProductDetails[index].quantity ?? 0) + 1;
+
+          scannedQty.value = scannedProductDetails[index].quantity!;
+          saveCartProductList(scannedProductDetails);
+          afterProductAdding();
+        } else {
+          qtyIsNotEnough();
+        }
       } else {
-        // Agar database me stock hi khatam hai
-        qtyIsNotEnough();
+        if ((product.quantity ?? 0) > 0) {
+          ProductModel scanned = ProductModel(
+            barcode: product.barcode,
+            name: product.name,
+            sellingPrice: product.sellingPrice,
+            quantity: 1,
+            animalType: product.animalType,
+            billNo: product.billNo,
+            box: product.box,
+            category: product.category,
+            color: product.color,
+            createdDate: product.createdDate,
+            createdTime: product.createdTime,
+            discount: product.discount,
+            expireDate: product.expireDate,
+            flavor: product.flavor,
+            isFlavorAndWeightNotRequired: product.isFlavorAndWeightNotRequired,
+            id: product.id,
+            isLooseCategory: product.isLooseCategory,
+            isLoosed: product.isLoosed,
+            location: product.location,
+            purchasePrice: product.purchasePrice,
+          );
+
+          scannedProductDetails.add(scanned);
+          saveCartProductList(scannedProductDetails);
+          afterProductAdding();
+        } else {
+          qtyIsNotEnough();
+        }
       }
     }
   }
@@ -362,7 +347,8 @@ class InventroyController extends GetxController with CacheManager {
       return;
     }
     double sellingPrices = (product.sellingPrice ?? 0.0);
-    int looseQuantitys = int.tryParse(looseQuantity.text) ?? 0;
+    // int looseQuantitys = int.tryParse(looseQuantity.text) ?? 0;
+    int looseQuantitys = 0;
 
     ProductModel scanned = ProductModel(
       barcode: product.barcode,
@@ -374,125 +360,9 @@ class InventroyController extends GetxController with CacheManager {
     scannedProductDetails.add(scanned);
   }
 
-  Future<void> saveNewLooseProduct({required String barcode}) async {
-    isLooseProductSave.value = true;
-    final now = DateTime.now();
-    final String formatDate = DateFormat('dd-MM-yyyy').format(now);
-    final String formaTime = DateFormat('hh:mm a').format(now);
-    final uid = auth.currentUser?.uid;
-
-    final productRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('products')
-        .doc(barcode);
-
-    final looseCollectionRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('looseProducts')
-        .doc(barcode);
-
-    try {
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final productSnap = await transaction.get(productRef);
-        if (!productSnap.exists) {
-          throw Exception("Product not found");
-        }
-        final data = productSnap.data()!;
-        final quantity = (data['quantity'] ?? 0) as int;
-        if (quantity <= 0) {
-          throw Exception("Insufficient stock");
-        }
-        transaction.update(productRef, {'quantity': quantity - 1});
-      });
-      final looseSnap = await looseCollectionRef.get();
-      final productData = await productRef.get();
-
-      if (looseSnap.exists) {
-        throw Exception("Product already exists in loose stock");
-      }
-      await looseCollectionRef.set({
-        'barcode': barcode,
-        'name': productData['name'],
-        'category': productData['category'],
-        'animalType': productData['animalType'],
-        'isLoose': productData['isLoose'],
-        'quantity': int.tryParse(looseQuantity.text) ?? 0,
-        'purchasePrice': productData['purchasePrice'],
-        'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
-        'flavours': productData['flavours'],
-        'weight': productData['weight'],
-        'createdDate': formatDate,
-        'updatedDate': formatDate,
-        'createdTime': formaTime,
-        'updatedTime': formaTime,
-        'color': productData['color'],
-      });
-      clear();
-      Get.back();
-      mobileScannerController.start();
-      showMessage(message: 'Product added to loose stock');
-    } on FirebaseException catch (e) {
-      Get.back();
-      showMessage(message: e.message ?? "Firebase Error");
-    } catch (e) {
-      Get.back();
-      showMessage(message: e.toString());
-    } finally {
-      isLooseProductSave.value = false;
-    }
-  }
-
   Future<void> stopCameraAfterDetect(BarcodeCapture barcodes) async {
     barcodeValue.value = barcodes.barcodes.first.rawValue.toString();
-    barcode.text = barcodeValue.value;
+    //barcode.text = barcodeValue.value;
     mobileScannerController.stop();
-  }
-
-  Future<void> fetchCategories() async {
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('categories')
-              .get();
-
-      categoryList.value =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return CategoryModel.fromJson(data);
-          }).toList();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    }
-  }
-
-  Future<void> fetchAnimalCategories() async {
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('animalCategories')
-              .get();
-
-      animalTypeList.value =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return CategoryModel.fromJson(data);
-          }).toList();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    }
   }
 }

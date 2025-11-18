@@ -4,22 +4,20 @@ import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import '../controller/inventroy_controller.dart';
-import '../widget/inventory_bottomsheet_component.dart';
+import '../../../product_details/view/product_view.dart';
 
-openInventoryBottomSheet({
+void openInventoryBottomSheet({
   required GlobalKey<FormState> formkeys,
   required InventroyController controller,
 }) {
   commonBottomSheet(
     label: 'Product Info',
     onPressed: () {
-      controller.clear();
+      //  controller.clear();
       controller.cameraStart();
     },
-    child: InventoryBottomsheetComponent(
-      formkeys: formkeys,
-      controller: controller,
-    ),
+    child: Container(),
+    //ProductView(formkeys: formkeys, controller: controller),
   );
 }
 
@@ -30,13 +28,14 @@ openLooseInventoryBottomSheet({
   commonBottomSheet(
     label: 'Loose Product Info',
     onPressed: () {
-      controller.clear();
+      // controller.clear();
       controller.cameraStart();
     },
-    child: LooseInventoryBottomsheetComponent(
-      formkeys: formkeys,
-      controller: controller,
-    ),
+    child: Container(),
+    // LooseInventoryBottomsheetComponent(
+    //   formkeys: formkeys,
+    //   controller: controller,
+    // ),
   );
 }
 

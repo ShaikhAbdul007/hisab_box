@@ -41,6 +41,7 @@ class CommonTextField extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: TextFormField(
+        textCapitalization: TextCapitalization.words,
         onChanged: onChanged,
         readOnly: readOnly,
         obscureText: obscureText,
@@ -66,12 +67,12 @@ class CommonTextField extends StatelessWidget {
           label: Text(
             label ?? '',
             style: CustomTextStyle.customNato(
-              fontSize: 12,
+              fontSize: 15,
               color: AppColors.blackColor,
             ),
           ),
           hintStyle: CustomTextStyle.customNato(
-            fontSize: 12,
+            fontSize: 13,
             color: AppColors.greyColor,
           ),
           errorStyle: CustomTextStyle.customNato(

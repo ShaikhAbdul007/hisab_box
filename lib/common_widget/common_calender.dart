@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-customDatePicker({
+Future<String> customDatePicker({
   required BuildContext context,
   required DateTime selectedDate,
   required RxString controller,
@@ -28,6 +28,6 @@ customDatePicker({
     }
     return controller.value;
   } else {
-    return null;
+    return '';
   }
 }

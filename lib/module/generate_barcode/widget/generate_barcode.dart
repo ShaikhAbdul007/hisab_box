@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/size.dart';
-import 'package:inventory/module/inventory/widget/inventory_bottomsheep_component_text.dart';
+import 'package:inventory/product_details/widget/inventory_bottomsheep_component_text.dart';
 
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_dropdown.dart';
@@ -177,7 +177,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
           children: [
             Obx(
               () => CommonButton(
-                 width: 150,
+                width: 150,
                 isLoading: controller.isSaveLoading.value,
                 label: saveButton,
                 onTap: () async {
@@ -194,7 +194,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
               () => CommonButton(
                 isLoading: controller.isSaveLoading.value,
                 label: saveButton,
-                 width: 150,
+                width: 150,
                 onTap: () async {
                   // if (formkeys.currentState!.validate()) {
                   //   unfocus();

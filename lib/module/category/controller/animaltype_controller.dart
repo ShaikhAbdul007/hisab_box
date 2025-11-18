@@ -3,18 +3,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
 import '../model/category_model.dart';
 
-class AnimalTypeController extends GetxController {
+class AnimalTypeController extends GetxController with CacheManager {
   final _auth = FirebaseAuth.instance;
   TextEditingController animalCategory = TextEditingController();
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteAnimalCategory = false.obs;
   RxBool isFetchAnimalCategory = false.obs;
   RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
+  var data = Get.arguments;
 
   @override
   void onInit() {
@@ -22,7 +24,7 @@ class AnimalTypeController extends GetxController {
     super.onInit();
   }
 
-  getCategoryData() async {
+  void getCategoryData() async {
     await fetchCategories();
   }
 
@@ -75,6 +77,7 @@ class AnimalTypeController extends GetxController {
           snapshot.docs
               .map((doc) => CategoryModel.fromJson(doc.data()))
               .toList();
+      saveAnimalCategoryModel(animalTypeList.value);
     } on FirebaseException catch (e) {
       showMessage(message: e.toString());
     } finally {
@@ -103,7 +106,7 @@ class AnimalTypeController extends GetxController {
     }
   }
 
-  clear() {
+  void clear() {
     animalCategory.clear();
   }
 }

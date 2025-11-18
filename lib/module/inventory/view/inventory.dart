@@ -1,17 +1,17 @@
+import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/size.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../common_widget/colors.dart';
-import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_progressbar.dart';
 import '../../../helper/helper.dart';
+import '../../../helper/textstyle.dart';
+import '../../../keys/keys.dart';
 import '../../../routes/routes.dart';
 import '../controller/inventroy_controller.dart';
 import '../widget/inventory_bottom_sheets.dart';
-import '../widget/inventory_bottomsheet_component.dart';
 import '../widget/show_dialog_boxs.dart';
 
 class InventoryView extends GetView<InventroyController> {
@@ -19,101 +19,55 @@ class InventoryView extends GetView<InventroyController> {
 
   @override
   Widget build(BuildContext context) {
-    controller.flag = controller.data['flag'];
-
-    controller.navigate = controller.data['navigate'];
-    final inventoryScanKey = GlobalKey<FormState>();
-    return CommonAppbar(
-      appBarLabel:
-          (controller.flag == false && controller.navigate == 'loose')
-              ? 'Loose Inventory'
-              : (controller.flag == true ? 'Inventory' : 'Sell Product'),
-      firstActionChild:
-          ((controller.flag == false && controller.navigate == 'loose') ||
-                  controller.flag == true)
-              ? Container()
-              : InkWell(
-                onTap: () {
-                  controller.mobileScannerController.stop();
-                  openManualySell(inventoryScanKey: inventoryScanKey);
-                },
-
-                child: Icon(Icons.sell),
+    return AiBarcodeScanner(
+      appBarBuilder: (context, appController) {
+        return AppBar(
+          leading: InkWell(
+            onTap: () {
+              Get.back(result: true);
+            },
+            child: Icon(Icons.arrow_back),
+          ),
+          title: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                controller.flag == false && controller.navigate == 'loose'
+                    ? 'Loose Inventory'
+                    : (controller.flag == true ? 'Inventory' : 'Sell Product'),
+                style: CustomTextStyle.customNato(fontSize: 20),
               ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-              height: 600,
-              width: 400,
-              margin: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: AppColors.amberColorShade100,
-                  width: 8,
+              Text(
+                'Scan Product Barcode',
+                style: CustomTextStyle.customMontserrat(
+                  fontSize: 18,
+                  color: AppColors.greyColor,
                 ),
-                borderRadius: BorderRadius.circular(5),
               ),
-              child: MobileScanner(
-                controller: controller.mobileScannerController,
-                onDetect: (barcodes) async {
-                  if (barcodes.raw != null) {
-                    if (controller.flag == true) {
-                      await productInventory(
-                        barcodes,
-                        inventoryScanKey,
-                        context,
-                      );
-                    } else if (controller.flag == false &&
-                        controller.navigate == 'loose') {
-                      await controller.stopCameraAfterDetect(barcodes);
-                      String scannedValue = controller.barcodeValue.value;
-                      bool isURL =
-                          Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
-                      if (!isURL) {
-                        var fetchLooseProductByBarcode = await controller
-                            .fetchLooseProductByBarcode(
-                              barcode: controller.barcodeValue.value,
-                            );
-
-                        if (fetchLooseProductByBarcode == false) {
-                          String message =
-                              '${controller.barcodeValue.value}-${controller.existProductName.value} product does not mark as loose sell,\nPlease mark it as loose sell form stock';
-                          exisitngProductDialog(
-                            message: message,
-                            onPressed: () {
-                              Get.back();
-                              controller.mobileScannerController.start();
-                            },
-                          );
-                        } else {
-                          openLooseInventoryBottomSheet(
-                            controller: controller,
-                            formkeys: inventoryScanKey,
-                          );
-                        }
-                      } else {
-                        productNotAvailableDialog(
-                          context,
-                          "Scanned code contains a link, not a valid product number.Please check and scan again\n"
-                          "If two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
-                          onTap: () {
-                            Get.back();
-                            controller.mobileScannerController.start();
-                          },
-                        );
-                      }
-                    } else {
-                      await sellInventory(barcodes, context, inventoryScanKey);
-                    }
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        );
+      },
+      galleryButtonType: GalleryButtonType.none,
+      controller: controller.mobileScannerController,
+      overlayConfig: const ScannerOverlayConfig(
+        borderColor: AppColors.whiteColor,
+        successColor: Colors.teal,
+        errorColor: AppColors.redColor,
+        borderRadius: 24,
+        cornerLength: 58,
+        animateOnError: true,
       ),
+
+      onDetect: (BarcodeCapture capture) async {
+        //  await controller.player!.setSource(AssetSource('assets/beepsound.mp3'));
+        if (controller.flag == true) {
+          productInventory(capture, inventoryScanKey, context);
+        } else {
+          sellInventory(capture, context, inventoryScanKey);
+        }
+      },
     );
   }
 
@@ -146,15 +100,17 @@ class InventoryView extends GetView<InventroyController> {
                 controller.mobileScannerController.start();
               },
               scanccingDoneOnTap: () async {
-                if (controller.scannedProductDetails.isNotEmpty) {
-                  Get.back();
-                  AppRoutes.navigateRoutes(
-                    routeName: AppRouteName.sellListAfterScan,
-                    data: {'productList': controller.scannedProductDetails},
-                  );
-                } else {
-                  showMessage(message: 'Please scan the product first');
-                }
+                // if (controller.scannedProductDetails.isNotEmpty) {
+
+                // } else {
+                //   showMessage(message: 'Please scan the product first');
+                // }
+
+                Get.back();
+                AppRoutes.navigateRoutes(
+                  routeName: AppRouteName.sellListAfterScan,
+                  //    data: {'productList': controller.scannedProductDetails},
+                );
               },
             );
           },
@@ -215,6 +171,7 @@ class InventoryView extends GetView<InventroyController> {
   ) async {
     await controller.stopCameraAfterDetect(barcodes);
     String scannedValue = controller.barcodeValue.value;
+    print('scannedValue is $scannedValue');
     bool isURL = Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
     if (!isURL) {
       var exist = await controller.existingProductInfo(
@@ -232,10 +189,14 @@ class InventoryView extends GetView<InventroyController> {
           },
         );
       } else {
-        openInventoryBottomSheet(
-          formkeys: inventoryScanKey,
-          controller: controller,
+        controller.stopCameraAfterDetect(barcodes);
+        var res = await AppRoutes.futureNavigationToRoute(
+          routeName: AppRouteName.productView,
+          data: controller.barcodeValue.value,
         );
+        if (res == true) {
+          controller.mobileScannerController.start();
+        }
       }
     } else {
       productNotAvailableDialog(
@@ -252,7 +213,7 @@ class InventoryView extends GetView<InventroyController> {
   openManualySell({required GlobalKey<FormState> inventoryScanKey}) {
     openManuallySellBottomSheet(
       onPressedOnTap: () {
-        controller.clear();
+        // controller.clear();
         controller.cameraStart();
       },
       formkeys: inventoryScanKey,
@@ -267,55 +228,56 @@ class InventoryView extends GetView<InventroyController> {
                     setHeight(height: 30),
                   ],
                 )
-                : ManuallyInventoryBottomsheetComponent(
-                  controller: controller,
-                  formkeys: inventoryScanKey,
-                  addInventoryOnTap: () {
-                    if (inventoryScanKey.currentState!.validate()) {
-                      ProductModel selectedProduct = controller
-                          .fullLooseSellingList
-                          .firstWhere(
-                            (p) => p.id == controller.selectedManuallySell,
-                          );
-                      unfocus();
-                      if (selectedProduct.isLooseCategory == true) {
-                        controller.handleLooseScan(product: selectedProduct);
-                        controller.selectedManuallySell = null;
-                        controller.looseQuantity.clear();
-                        controller.isDoneButtonReq.value = true;
-                      } else {
-                        if (controller.looseOldQty >
-                            int.parse(controller.looseQuantity.text)) {
-                          controller.handleLooseScan(product: selectedProduct);
-                          controller.selectedManuallySell = null;
-                          controller.looseQuantity.clear();
-                          controller.isDoneButtonReq.value = true;
-                        } else {
-                          showSnackBar(
-                            error:
-                                "Product is out of stock\nYou cannot add more than available stock.",
-                          );
-                        }
-                      }
-                    }
-                  },
-                  listItems: controller.fullLooseSellingList,
-                  notifyParent: (np) {
-                    controller.selectedManuallySell = np;
-                  },
-
-                  manuallyInventoryOnTap: () async {
-                    if (controller.scannedProductDetails.isNotEmpty) {
-                      Get.back();
-                      AppRoutes.navigateRoutes(
-                        routeName: AppRouteName.sellListAfterScan,
-                        data: {'productList': controller.scannedProductDetails},
-                      );
-                    } else {
-                      showMessage(message: 'Please scan the product first');
-                    }
-                  },
-                ),
+                :
+                // ManuallyInventoryBottomsheetComponent(
+                //   controller: controller,
+                //   formkeys: inventoryScanKey,
+                //   addInventoryOnTap: () {
+                //     if (inventoryScanKey.currentState!.validate()) {
+                //       ProductModel selectedProduct = controller
+                //           .fullLooseSellingList
+                //           .firstWhere(
+                //             (p) => p.id == controller.selectedManuallySell,
+                //           );
+                //       unfocus();
+                //       if (selectedProduct.isLooseCategory == true) {
+                //         controller.handleLooseScan(product: selectedProduct);
+                //         controller.selectedManuallySell = null;
+                //         controller.looseQuantity.clear();
+                //         controller.isDoneButtonReq.value = true;
+                //       } else {
+                //         if (controller.looseOldQty >
+                //             int.parse(controller.looseQuantity.text)) {
+                //           controller.handleLooseScan(product: selectedProduct);
+                //           controller.selectedManuallySell = null;
+                //           controller.looseQuantity.clear();
+                //           controller.isDoneButtonReq.value = true;
+                //         } else {
+                //           showSnackBar(
+                //             error:
+                //                 "Product is out of stock\nYou cannot add more than available stock.",
+                //           );
+                //         }
+                //       }
+                //     }
+                //   },
+                //   listItems: controller.fullLooseSellingList,
+                //   notifyParent: (np) {
+                //     controller.selectedManuallySell = np;
+                //   },
+                //   manuallyInventoryOnTap: () async {
+                //     if (controller.scannedProductDetails.isNotEmpty) {
+                //       Get.back();
+                //       AppRoutes.navigateRoutes(
+                //         routeName: AppRouteName.sellListAfterScan,
+                //         data: {'productList': controller.scannedProductDetails},
+                //       );
+                //     } else {
+                //       showMessage(message: 'Please scan the product first');
+                //     }
+                //   },
+                // ),
+                SizedBox(),
       ),
     );
   }

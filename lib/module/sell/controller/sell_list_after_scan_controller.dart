@@ -1,70 +1,160 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
-import 'package:inventory/routes/routes.dart';
+import 'package:inventory/module/sell/model/print_model.dart';
+import '../../../common_widget/common_bottom_sheet.dart';
+import '../../../routes/routes.dart';
 import '../../discount/model/discount_model.dart';
 import '../../../helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
+import '../widget/invoic_confirmation_widget.dart';
 
 class SellListAfterScanController extends GetxController with CacheManager {
-  var data = Get.arguments;
-  late List<ProductModel> productList;
-  String? id;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  List<ProductModel> scannedProductDetails = [];
+  RxList<DiscountModel> discountList = <DiscountModel>[].obs;
+  RxList<DiscountModel> productDiscount = <DiscountModel>[].obs;
+  TextEditingController quantity = TextEditingController();
+  TextEditingController cashPaidController = TextEditingController(text: '0.0');
+  TextEditingController upiPaidController = TextEditingController(text: '0.0');
+  TextEditingController cardPaidController = TextEditingController(text: '0.0');
+  TextEditingController creditPaidController = TextEditingController(
+    text: '0.0',
+  );
+  TextEditingController name = TextEditingController();
+  RxList<TextEditingController> perProductDiscount =
+      <TextEditingController>[].obs;
+  TextEditingController amount = TextEditingController();
+  RxList<LooseCategoryModel> looseCategoryModelList =
+      <LooseCategoryModel>[].obs;
+  Rx<ReceiptController?> receiptController = Rx<ReceiptController?>(null);
+  RxList<ProductModel> productList = <ProductModel>[].obs;
   RxDouble totalAmount = 0.0.obs;
   RxDouble newSellingPrice = 0.0.obs;
   RxInt discountValue = 0.obs;
   RxInt billNo = 0.obs;
   RxDouble updateSellingPrice = 0.0.obs;
-  RxBool isSaleLoading = false.obs;
+  RxBool isCardLoading = false.obs;
+  RxBool isCashLoading = false.obs;
+  RxBool isPartailLoading = false.obs;
+  RxBool isOnlineLoading = false.obs;
+  RxBool isAmountValidCheck = false.obs;
   RxBool isStockOver = false.obs;
   RxBool isDiscountGiven = false.obs;
   RxBool isPrintingLoading = false.obs;
   RxBool isSaveLoading = false.obs;
-  TextEditingController amount = TextEditingController();
   double discountDifferenceAmount = 0.0;
-  TextEditingController quantity = TextEditingController();
-  TextEditingController name = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  List<ProductModel> scannedProductDetails = [];
-  RxList<DiscountModel> discountList = <DiscountModel>[].obs;
   RxDouble discountPrice = 0.0.obs;
-  RxList<LooseCategoryModel> looseCategoryModelList =
-      <LooseCategoryModel>[].obs;
-  Rx<ReceiptController?> receiptController = Rx<ReceiptController?>(null);
+  RxDouble paymentMethodTotalAmount = 0.0.obs;
+  RxDouble remainingAmount = 0.0.obs;
+  RxDouble upiPaid = 0.0.obs;
+  RxDouble cardPaid = 0.0.obs;
+  RxDouble creditPaid = 0.0.obs;
+  RxDouble cashPaid = 0.0.obs;
+  RxBool allEditable = false.obs;
+  var data = Get.arguments;
+  String? id;
+  RxBool discountPerProduct = false.obs;
+  RxString shopType = ''.obs;
+  var finalTotal = 0.0.obs;
+  var sellingPriceList = <double>[].obs;
+  List<PrintModel> printList = [];
+
   @override
   void onInit() {
+    setUserData();
     fetchDiscounts();
-    checkBluetoothConnectivity();
-    productList = data['productList'];
-    scannedProductDetails = productList;
-    billNo.value = retrieveBillNo();
+    setProductData();
     super.onInit();
   }
 
-  Future<bool> checkBluetoothConnectivity() async {
-    // Check pehle supported hai ya nahi
-    if (await FlutterBluePlus.isSupported == false) {
-      return false;
-    }
+  void setUserData() {
+    var user = retrieveUserDetail();
+    discountPerProduct.value = user.discountPerProduct ?? false;
+    shopType.value = user.shoptype ?? '';
+  }
 
-    // Abhi current adapter state ka ek hi baar ka value lo
-    BluetoothAdapterState state = await FlutterBluePlus.adapterState.first;
+  void setProductData() async {
+    var dataList = await retrieveCartProductList();
+    productList.value = dataList;
+    scannedProductDetails = productList;
+    perProductDiscount.value = List.generate(productList.length, (i) {
+      return TextEditingController(text: '0');
+    });
+    sellingPriceList.value = List.generate(productList.length, (i) {
+      return productList[i].sellingPrice!.toDouble() *
+          productList[i].quantity!.toDouble();
+    });
+    calculateTotalWithDiscount();
+  }
 
-    if (state == BluetoothAdapterState.on) {
-      return true;
+  void discountCalculateAsPerProduct(int index) {
+    double price = getSellingPriceAsPerQuantity(index);
+    sellingPriceList[index] = price;
+  }
+
+  double getSellingPriceAsPerQuantity(int index) {
+    double finalTotalAmount = 0;
+    var discountValue =
+        perProductDiscount[index].text.isNotEmpty
+            ? double.parse(perProductDiscount[index].text)
+            : 0;
+    double sellingPrice =
+        (productList[index].sellingPrice!) *
+        (productList[index].quantity!.toInt());
+    double discountAmount = (sellingPrice * discountValue) / 100;
+    finalTotalAmount = sellingPrice - discountAmount;
+    return finalTotalAmount;
+  }
+
+  void openPaymentDialog(double amount) {
+    paymentMethodTotalAmount.value = amount;
+    remainingAmount.value = amount;
+
+    // Initially only first field editable
+    allEditable.value = false;
+  }
+
+  void updateRemainingAmount() {
+    double paid =
+        (double.tryParse(cashPaidController.text) ?? 0) +
+        (double.tryParse(upiPaidController.text) ?? 0) +
+        (double.tryParse(cardPaidController.text) ?? 0) +
+        (double.tryParse(creditPaidController.text) ?? 0);
+
+    remainingAmount.value = (paymentMethodTotalAmount.value - paid).clamp(
+      0,
+      paymentMethodTotalAmount.value,
+    );
+    if (remainingAmount.value > 0) {
+      allEditable.value = false;
     } else {
-      return false;
+      allEditable.value = true;
     }
   }
 
-  void setReceiptController(ReceiptController controller) {
-    receiptController.value = controller;
+  bool isAmountValid(String value) {
+    bool valid;
+    if (value.isEmpty) return true;
+
+    double entered = double.tryParse(value) ?? 0;
+    double total = paymentMethodTotalAmount.value;
+
+    if (entered > total) {
+      isAmountValidCheck.value = false;
+      valid = false;
+      // invalid
+    } else {
+      isAmountValidCheck.value = true;
+      valid = true;
+    }
+    return valid;
   }
 
   void calculateDiscount() {
@@ -76,6 +166,13 @@ class SellListAfterScanController extends GetxController with CacheManager {
     amount.text = discountedAmount.floorToDouble().toString();
   }
 
+  void clear() {
+    cashPaidController.text = '0.0';
+    upiPaidController.text = '0.0';
+    cardPaidController.text = '0.0';
+    creditPaidController.text = '0.0';
+  }
+
   int getTotalAmount() {
     int total = 0;
     for (var product in productList) {
@@ -83,51 +180,48 @@ class SellListAfterScanController extends GetxController with CacheManager {
       int qty = (product.quantity ?? 0).toInt();
       total += price * qty;
     }
-    print("Total Amount: $total");
+    totalAmount.value = total.toDouble();
     return total;
   }
 
-  void updateQuantity(
-    ProductModel product,
-    bool isIncrement,
-    int index,
-    String barcode,
-  ) async {
+  void calculateTotalWithDiscount() {
+    finalTotal.value = 0; // reset first
+    if (sellingPriceList.length.isGreaterThan(0)) {
+      for (int i = 0; i < sellingPriceList.length; i++) {
+        finalTotal.value += sellingPriceList[i];
+      }
+    } else {
+      finalTotal.value = getTotalAmount().toDouble();
+    }
+
+    print('Total = ${finalTotal.value}');
+  }
+
+  void updateQuantity(bool isIncrement, int index) async {
     int? pexistingQty;
     int? existingLooseQty;
-
     final uid = _auth.currentUser?.uid;
     isStockOver.value = false;
-    // Normal product reference
     final productRef = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('products')
-        .doc(barcode);
-
-    // Loose product reference (yaha barcode based doc nahi, pura collection h)
+        .doc(productList[index].barcode);
     final looseProductRef = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('looseProducts')
-        .doc(
-          product.barcode,
-        ); // 👈 maan le tu product.id rakhta hai loose ke liye unique
-
+        .doc(productList[index].barcode);
     final existingDoc = await productRef.get();
     final existingLooseDoc = await looseProductRef.get();
-
     if (existingDoc.exists) {
       pexistingQty = existingDoc['quantity'];
     }
     if (existingLooseDoc.exists) {
       existingLooseQty = existingLooseDoc['quantity'];
     }
-
     var current = productList[index];
-
     if (isIncrement) {
-      // agar normal product hai
       if (pexistingQty != null) {
         if ((current.quantity ?? 0) < pexistingQty) {
           current.quantity = (current.quantity ?? 0) + 1;
@@ -138,9 +232,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
                 "Product is out of stock\nYou cannot add more than available stock.",
           );
         }
-      }
-      // agar loose product hai
-      else if (existingLooseQty != null) {
+      } else if (existingLooseQty != null) {
         if ((current.quantity ?? 0) < existingLooseQty) {
           current.quantity = (current.quantity ?? 0) + 1;
         } else {
@@ -152,47 +244,50 @@ class SellListAfterScanController extends GetxController with CacheManager {
         }
       }
     } else {
-      // Decrease qty but not below 1
       if ((current.quantity ?? 1) > 1) {
         current.quantity = (current.quantity ?? 1) - 1;
       }
     }
-
     productList[index] = current;
+    saveCartProductList(productList);
+    discountCalculateAsPerProduct(index);
+    calculateTotalWithDiscount();
   }
 
-  getSellingPriceAsPerQuantity(ProductModel product, int index) {
-    double sellingPrice =
-        (productList[index].sellingPrice!) *
-        (productList[index].quantity!.toInt());
-
-    print('sellingPrice is $sellingPrice');
-
-    return sellingPrice;
+  Future<void> saleConfirmAndPrintInvoice({
+    required String paymentMethod,
+    required RxBool isLoading,
+  }) async {
+    bool saleConfirm = await confirmSale(
+      paymentMethod: paymentMethod,
+      invoice: printList,
+      isLoading: isLoading,
+    );
+    AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
+    if (saleConfirm == true) {
+      removeCartProductList();
+      commonBottomSheet(
+        label: 'Print',
+        onPressed: () {
+          Get.back();
+        },
+        child: InvoicConfirmationWidget(
+          noOnTap: () {
+            Get.back();
+          },
+          yesOnTap: () async {
+            Get.back();
+            AppRoutes.navigateRoutes(
+              routeName: AppRouteName.invoicePrintView,
+              data: {'productList': printList, 'paymentMethod': paymentMethod},
+            );
+          },
+        ),
+      );
+    } else {
+      print('saleConfirm == true');
+    }
   }
-
-  // Future<void> fetchLooseCategory() async {
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-
-  //   try {
-  //     final snapshot =
-  //         await FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('looseSellCategory')
-  //             .get();
-
-  //     looseCategoryModelList.value =
-  //         snapshot.docs.map((doc) {
-  //           final data = doc.data();
-  //           data['id'] = doc.id;
-  //           return LooseCategoryModel.fromJson(data);
-  //         }).toList();
-  //   } on FirebaseAuthException catch (e) {
-  //     showMessage(message: e.toString());
-  //   } finally {}
-  // }
 
   Future<void> fetchDiscounts() async {
     final uid = _auth.currentUser?.uid;
@@ -205,7 +300,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
               .doc(uid)
               .collection('discounts')
               .get();
-
       discountList.value =
           snapshot.docs.map((doc) {
             final data = doc.data();
@@ -217,32 +311,30 @@ class SellListAfterScanController extends GetxController with CacheManager {
     }
   }
 
-  Future<bool> confirmSale({required String paymentMethod}) async {
-    isSaleLoading.value = false;
+  Future<bool> confirmSale({
+    required String paymentMethod,
+    required List<PrintModel> invoice,
+    required RxBool isLoading,
+  }) async {
+    isLoading.value = true;
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
-
     try {
       var now = DateTime.now();
       String formatDate = DateFormat('dd-MM-yyyy').format(now);
       String formatTime = DateFormat('hh:mm a').format(now);
-
-      List<Map<String, dynamic>> saleLogs = [];
       List<Map<String, dynamic>> productUpdates = [];
-
-      // 🔹 STEP 1: Sare products process karo
+      List<Map<String, dynamic>> items = []; // 👈 all items in one list
+      double totalAmount = 0;
+      double finalAmount = 0;
+      // 🔹 STEP 1: Process each scanned product
       for (var product in scannedProductDetails) {
-        print(product.name);
-        print(product.isLooseCategory);
-        print(product.isLoosed);
-        print(product.barcode);
         if (product.barcode == null && product.id == null) continue;
-
         DocumentReference? productRef;
         Map<String, dynamic> productData = {};
-
+        // 🔹 Fetch product details & update logic
         if (product.isLooseCategory == true || product.isLoosed == false) {
-          // 🔹 Loose Category (no stock check, no inventory update)
+          // Loose Category Product
           productData = {
             'name': product.name ?? "",
             'category': product.category ?? "Loose Category",
@@ -252,7 +344,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
           };
         } else if (product.isLoosed == true ||
             product.isLooseCategory == false) {
-          // 🔹 Loose Product
+          // Loose Product (from looseProducts)
           productRef = FirebaseFirestore.instance
               .collection('users')
               .doc(uid)
@@ -274,13 +366,13 @@ class SellListAfterScanController extends GetxController with CacheManager {
             return false;
           }
 
-          // 🔹 Update list me store karo
+          // Add update for transaction
           productUpdates.add({
             "ref": productRef,
             "newQty": currentQty - (product.quantity ?? 1),
           });
         } else {
-          // 🔹 Normal Product
+          // Normal Product (from products collection)
           final querySnapshot =
               await FirebaseFirestore.instance
                   .collection('users')
@@ -307,40 +399,43 @@ class SellListAfterScanController extends GetxController with CacheManager {
             return false;
           }
 
-          // 🔹 Update list me store karo
           productUpdates.add({
             "ref": productRef,
             "newQty": currentQty - (product.quantity ?? 1),
           });
         }
 
-        // 🔹 Sale log banao (sab me common)
-        saleLogs.add({
-          'billNo': billNo.value,
-          'paymentMethod': paymentMethod,
-          'barcode': product.barcode ?? "",
-          'name': productData['name'] ?? "",
-          'quantity': product.quantity ?? 1,
-          'category': productData['category'] ?? "",
-          'flavor': productData['flavours'] ?? "",
-          'weight': productData['weight'] ?? "0.0",
-          'soldAt': formatDate,
-          'time': formatTime,
-          'box': productData['box'] ?? "0.0",
-          'sellingPrice': product.sellingPrice ?? 0,
-          'amount': (product.sellingPrice ?? 0) * (product.quantity ?? 1),
-          'discount': isDiscountGiven.value,
-          'discountValue': discountValue.value,
-          'finalAmount':
-              isDiscountGiven.value
-                  ? discountPrice.value
-                  : (product.sellingPrice ?? 0) * (product.quantity ?? 1),
-          'isLoose': product.isLoosed ?? false,
-          'isLooseCategory': product.isLooseCategory ?? false,
-        });
+        // 🔹 Product line item
+        // final itemAmount =
+        //     (product.sellingPrice ?? 0) * (product.quantity ?? 1);
+        // totalAmount += itemAmount;
+        // items.add({
+        //   'barcode': product.barcode ?? "",
+        //   'name': productData['name'] ?? "",
+        //   'quantity': product.quantity ?? 1,
+        //   'category': productData['category'] ?? "",
+        //   'animalCategory': productData['animalCategory'] ?? "",
+        //   'flavour': productData['flavours'] ?? "",
+        //   'weight': productData['weight'] ?? "0.0",
+        //   'box': productData['box'] ?? "0.0",
+        //   'sellingPrice': product.sellingPrice ?? 0,
+        //   'amount': itemAmount,
+        //   'isLoose': product.isLoosed ?? false,
+        //   'isLooseCategory': product.isLooseCategory ?? false,
+        //   'discount': productData['discount'] ?? 0,
+        //   'location': productData['location'] ?? '',
+        //   'expireDate': productData['expireDate'] ?? '',
+        //   'purchaseDate': productData['purchaseDate'] ?? '',
+        //   'soldAt': formatDate,
+        //   'time': formatTime,
+        // });
       }
+      //  getPrintReadyList();
 
-      // 🔹 STEP 2: Transaction me sirf updates karo
+      // 🔹 Generate Bill Number
+      String newBillNo = await generateBillNo();
+
+      // 🔹 STEP 2: Update inventory in transaction
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         for (var update in productUpdates) {
           transaction.update(update['ref'], {
@@ -350,23 +445,333 @@ class SellListAfterScanController extends GetxController with CacheManager {
           });
         }
       });
-
-      // 🔹 STEP 3: Sale logs save karo
-      for (var log in saleLogs) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('sales')
-            .add(log);
+      for (var item in invoice) {
+        totalAmount += item.originalPrice ?? 0;
+        finalAmount += item.finalPrice ?? 0;
+        print('totalAmount is $totalAmount');
+        print('finalAmount is $finalAmount');
       }
 
+      // 🔹 STEP 3: Save final sale document
+      final paymentData = buildPaymentMap(
+        paymentMethod: paymentMethod,
+        totalAmount: totalAmount,
+        cashPaid: double.parse(cashPaidController.text),
+        upiPaid: double.parse(upiPaidController.text),
+        cardPaid: double.parse(cardPaidController.text),
+        creditPaid: double.parse(creditPaidController.text),
+      );
+
+      final saleData = {
+        'billNo': newBillNo,
+        'soldAt': formatDate,
+        'time': formatTime,
+        'totalAmount': totalAmount,
+        'discount': isDiscountGiven.value,
+        'discountValue': discountValue.value,
+        'finalAmount': finalAmount,
+        'itemsCount': items.length,
+        'items': invoice.map((e) => e.toJson()).toList(),
+        'payment': paymentData,
+      };
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('sales')
+          .add(saleData);
+      fetchAllProducts();
       scannedProductDetails.clear();
       return true;
     } catch (e) {
       showMessage(message: "❌ Error: ${e.toString()}");
       return false;
     } finally {
-      isSaleLoading.value = false;
+      isLoading.value = false;
     }
   }
+
+  Future<String> generateBillNo() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return "HBX0001";
+
+    final counterRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('bill')
+        .doc('billNo');
+
+    return FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(counterRef);
+
+      int newBillNo = 1;
+
+      if (snapshot.exists) {
+        newBillNo = (snapshot.data()?['lastBillNo'] ?? 0) + 1;
+      }
+
+      transaction.set(counterRef, {'lastBillNo': newBillNo});
+
+      return "HBX-$newBillNo";
+    });
+  }
+
+  Future<void> fetchAllProducts() async {
+    final uid = _auth.currentUser?.uid;
+    final productSnapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('products')
+            .where('quantity')
+            .get();
+    var productLists =
+        productSnapshot.docs
+            .map((doc) => ProductModel.fromJson(doc.data()))
+            .toList();
+    saveProductList(productLists);
+  }
+
+  Map<String, dynamic> buildPaymentMap({
+    required String paymentMethod,
+    required num totalAmount,
+    required num cashPaid,
+    required num upiPaid,
+    required num cardPaid,
+    required num creditPaid,
+  }) {
+    bool isPartial = paymentMethod == partialLabel;
+
+    return {
+      "type": paymentMethod,
+      "isPartial": isPartial,
+      "cash":
+          (!isPartial && paymentMethod == cashLabel)
+              ? totalAmount
+              : (isPartial ? cashPaid : 0),
+      "upi":
+          (!isPartial && paymentMethod == onlineLabel)
+              ? totalAmount
+              : (isPartial ? upiPaid : 0),
+      "card":
+          (!isPartial && paymentMethod == cardLabel)
+              ? totalAmount
+              : (isPartial ? cardPaid : 0),
+      "credit": isPartial ? creditPaid : 0,
+    };
+  }
+
+  List<PrintModel> getPrintReadyList() {
+    for (int i = 0; i < productList.length; i++) {
+      var p = productList[i];
+      int discount = int.parse(perProductDiscount[i].text);
+      printList.add(
+        PrintModel(
+          name: p.name,
+          quantity: p.quantity,
+          originalPrice: p.sellingPrice,
+          originalDiscount: p.discount,
+          discount: discount,
+          finalPrice: sellingPriceList[i],
+          category: p.category,
+          barcode: p.barcode.toString(),
+          id: p.id,
+          purchasePrice: p.purchasePrice,
+          weight: p.weight,
+          flavours: p.flavor,
+          animalType: p.animalType,
+          color: p.color,
+          box: p.box,
+          perpiece: p.perpiece,
+          isLoose: p.isLoosed,
+          isLooseCategory: p.isLooseCategory,
+          isFlavorAndWeightNotRequired: p.isFlavorAndWeightNotRequired,
+          exprieDate: p.expireDate,
+          location: p.location,
+        ),
+      );
+    }
+    return printList;
+  }
 }
+
+
+
+// Future<void> fetchLooseCategory() async {
+  //   final uid = _auth.currentUser?.uid;
+  //   if (uid == null) return;
+
+  //   try {
+  //     final snapshot =
+  //         await FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('looseSellCategory')
+  //             .get();
+
+  //     looseCategoryModelList.value =
+  //         snapshot.docs.map((doc) {
+  //           final data = doc.data();
+  //           data['id'] = doc.id;
+  //           return LooseCategoryModel.fromJson(data);
+  //         }).toList();
+  //   } on FirebaseAuthException catch (e) {
+  //     showMessage(message: e.toString());
+  //   } finally {}
+  // }
+
+
+// Future<bool> confirmSale({required String paymentMethod}) async {
+  //   isSaleLoading.value = false;
+  //   final uid = _auth.currentUser?.uid;
+  //   if (uid == null) return false;
+
+  //   try {
+  //     var now = DateTime.now();
+  //     String formatDate = DateFormat('dd-MM-yyyy').format(now);
+  //     String formatTime = DateFormat('hh:mm a').format(now);
+
+  //     List<Map<String, dynamic>> saleLogs = [];
+  //     List<Map<String, dynamic>> productUpdates = [];
+
+  //     // 🔹 STEP 1: Sare products process karo
+  //     for (var product in scannedProductDetails) {
+  //       print(product.name);
+  //       print(product.isLooseCategory);
+  //       print(product.isLoosed);
+  //       print(product.barcode);
+  //       if (product.barcode == null && product.id == null) continue;
+
+  //       DocumentReference? productRef;
+  //       Map<String, dynamic> productData = {};
+
+  //       if (product.isLooseCategory == true || product.isLoosed == false) {
+  //         // 🔹 Loose Category (no stock check, no inventory update)
+  //         productData = {
+  //           'name': product.name ?? "",
+  //           'category': product.category ?? "Loose Category",
+  //           'flavours': product.flavor ?? "",
+  //           'weight': product.weight ?? "0.0",
+  //           'box': product.box ?? "0.0",
+  //         };
+  //       } else if (product.isLoosed == true ||
+  //           product.isLooseCategory == false) {
+  //         // 🔹 Loose Product
+  //         productRef = FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('looseProducts')
+  //             .doc(product.barcode);
+
+  //         final snapshot = await productRef.get();
+  //         if (!snapshot.exists) {
+  //           showMessage(message: "❌ Loose product not found: ${product.id}");
+  //           return false;
+  //         }
+
+  //         productData = snapshot.data() as Map<String, dynamic>;
+  //         int currentQty = productData['quantity'] ?? 0;
+  //         if (currentQty < (product.quantity ?? 1)) {
+  //           showMessage(
+  //             message: "❌ Not enough stock for ${productData['name']}",
+  //           );
+  //           return false;
+  //         }
+
+  //         // 🔹 Update list me store karo
+  //         productUpdates.add({
+  //           "ref": productRef,
+  //           "newQty": currentQty - (product.quantity ?? 1),
+  //         });
+  //       } else {
+  //         // 🔹 Normal Product
+  //         final querySnapshot =
+  //             await FirebaseFirestore.instance
+  //                 .collection('users')
+  //                 .doc(uid)
+  //                 .collection('products')
+  //                 .where('barcode', isEqualTo: product.barcode)
+  //                 .limit(1)
+  //                 .get();
+
+  //         if (querySnapshot.docs.isEmpty) {
+  //           showMessage(message: "❌ Product not found: ${product.barcode}");
+  //           return false;
+  //         }
+
+  //         final snapshot = querySnapshot.docs.first;
+  //         productRef = snapshot.reference;
+  //         productData = snapshot.data();
+
+  //         int currentQty = productData['quantity'] ?? 0;
+  //         if (currentQty < (product.quantity ?? 1)) {
+  //           showMessage(
+  //             message: "❌ Not enough stock for ${productData['name']}",
+  //           );
+  //           return false;
+  //         }
+
+  //         // 🔹 Update list me store karo
+  //         productUpdates.add({
+  //           "ref": productRef,
+  //           "newQty": currentQty - (product.quantity ?? 1),
+  //         });
+  //       }
+  //       String newBillNo =
+  //           'HBX${billNo.value}${DateTime.now().millisecondsSinceEpoch}';
+
+  //       // 🔹 Sale log banao (sab me common)
+  //       saleLogs.add({
+  //         'billNo': newBillNo,
+  //         'paymentMethod': paymentMethod,
+  //         'barcode': product.barcode ?? "",
+  //         'name': productData['name'] ?? "",
+  //         'quantity': product.quantity ?? 1,
+  //         'category': productData['category'] ?? "",
+  //         'flavor': productData['flavours'] ?? "",
+  //         'weight': productData['weight'] ?? "0.0",
+  //         'soldAt': formatDate,
+  //         'time': formatTime,
+  //         'box': productData['box'] ?? "0.0",
+  //         'sellingPrice': product.sellingPrice ?? 0,
+  //         'amount': (product.sellingPrice ?? 0) * (product.quantity ?? 1),
+  //         'discount': isDiscountGiven.value,
+  //         'discountValue': discountValue.value,
+  //         'finalAmount':
+  //             isDiscountGiven.value
+  //                 ? discountPrice.value
+  //                 : (product.sellingPrice ?? 0) * (product.quantity ?? 1),
+  //         'isLoose': product.isLoosed ?? false,
+  //         'isLooseCategory': product.isLooseCategory ?? false,
+  //       });
+  //     }
+
+  //     // 🔹 STEP 2: Transaction me sirf updates karo
+  //     await FirebaseFirestore.instance.runTransaction((transaction) async {
+  //       for (var update in productUpdates) {
+  //         transaction.update(update['ref'], {
+  //           'quantity': update['newQty'],
+  //           'updatedDate': formatDate,
+  //           'updatedTime': formatTime,
+  //         });
+  //       }
+  //     });
+
+  //     // 🔹 STEP 3: Sale logs save karo
+  //     for (var log in saleLogs) {
+  //       await FirebaseFirestore.instance
+  //           .collection('users')
+  //           .doc(uid)
+  //           .collection('sales')
+  //           .add(log);
+  //     }
+
+  //     scannedProductDetails.clear();
+  //     return true;
+  //   } catch (e) {
+  //     showMessage(message: "❌ Error: ${e.toString()}");
+  //     return false;
+  //   } finally {
+  //     isSaleLoading.value = false;
+  //   }
+  // }

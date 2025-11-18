@@ -9,6 +9,7 @@ import '../../../common_widget/size.dart';
 import '../../../common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
+import '../../../keys/keys.dart';
 
 class LooseInventoryUpdatePopupComponent extends StatelessWidget {
   final LooseController controller;
@@ -21,7 +22,6 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final GlobalKey<FormState> formkeys = GlobalKey<FormState>();
     return Column(
       children: [
         CommonPopupAppbar(

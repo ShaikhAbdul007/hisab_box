@@ -8,6 +8,7 @@ import '../../../../common_widget/size.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/textstyle.dart';
 
+import '../../../../keys/keys.dart';
 import '../controller/signup_controller.dart';
 import 'shop_details.dart';
 
@@ -16,9 +17,6 @@ class SignupView extends GetView<SignupController> {
 
   @override
   Widget build(BuildContext context) {
-    final shopDetails = GlobalKey<FormState>();
-    final shopAddress = GlobalKey<FormState>();
-
     return Scaffold(
       body: SafeArea(
         child: Column(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'colors.dart';
 
-commonDialogBox({required BuildContext context, required Widget child}) {
+void commonDialogBox({required BuildContext context, required Widget child}) {
   showDialog(
     barrierDismissible: false,
     context: context,

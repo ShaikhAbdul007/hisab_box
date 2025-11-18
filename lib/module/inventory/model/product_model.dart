@@ -21,6 +21,10 @@ class ProductModel {
   int? billNo;
   bool? isLooseCategory;
   bool? isFlavorAndWeightNotRequired;
+  int? discount;
+  String? purchaseDate;
+  String? expireDate;
+  String? location;
 
   ProductModel({
     this.barcode,
@@ -45,6 +49,10 @@ class ProductModel {
     this.isLoosed,
     this.id,
     this.isFlavorAndWeightNotRequired,
+    this.location,
+    this.discount,
+    this.expireDate,
+    this.purchaseDate,
   });
 
   ProductModel.fromJson(Map<String, dynamic> json) {
@@ -70,6 +78,10 @@ class ProductModel {
     paymentMethod = json['paymentMethod'];
     isLooseCategory = json['isLooseCategory'];
     isFlavorAndWeightNotRequired = json['isFlavorAndWeightNotRequired'];
+    purchaseDate = json['purchaseDate'];
+    expireDate = json['exprieDate'];
+    location = json['location'];
+    discount = json['discount'];
   }
 
   Map<String, dynamic> toJson() {
@@ -96,6 +108,10 @@ class ProductModel {
     data['paymentMethod'] = paymentMethod;
     data['isLooseCategory'] = isLooseCategory;
     data['isFlavorAndWeightNotRequired'] = isFlavorAndWeightNotRequired;
+    data['purchaseDate'] = purchaseDate;
+    data['exprieDate'] = expireDate;
+    data['location'] = location;
+    data['discount'] = discount;
     return data;
   }
 }

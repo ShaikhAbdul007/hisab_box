@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
+import '../../revenue/model/revenue_model.dart';
 import '../model/sell_model.dart';
 
 class SellingListText extends StatelessWidget {
@@ -254,8 +256,8 @@ class SellingListText extends StatelessWidget {
 }
 
 class RecentActivitySellingListText extends StatelessWidget {
-  final SaleModel saleModel;
-  const RecentActivitySellingListText({super.key, required this.saleModel});
+  final BillModel billModel;
+  const RecentActivitySellingListText({super.key, required this.billModel});
 
   @override
   Widget build(BuildContext context) {
@@ -268,89 +270,116 @@ class RecentActivitySellingListText extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            height: 80,
-            width: 70,
+            margin: EdgeInsets.symmetric(horizontal: 5),
+            height: 70,
+            width: 40,
             decoration: BoxDecoration(
-              color: AppColors.blackColor,
+              color: AppColors.greyColorShade100,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(5),
                 bottomLeft: Radius.circular(5),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Quantity',
-                  style: CustomTextStyle.customPoppin(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.whiteColor,
-                  ),
-                ),
-                Text(
-                  saleModel.quantity.toString(),
-                  style: CustomTextStyle.customPoppin(
-                    color: AppColors.whiteColor,
-                  ),
-                ),
-              ],
-            ),
+            child: Icon(CupertinoIcons.cube, size: 30),
           ),
           setWidth(width: 5),
           Expanded(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(saleModel.name, style: CustomTextStyle.customPoppin()),
-
-                Row(
-                  children: [
-                    Text(
-                      saleModel.weight,
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                    setWidth(width: 10),
-                    Text(
-                      saleModel.category,
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                    setWidth(width: 10),
-                    Text(
-                      saleModel.flavor,
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                  ],
+                Text(
+                  billModel.billNo ?? '',
+                  style: CustomTextStyle.customPoppin(fontSize: 17),
                 ),
+                setHeight(height: 2),
+                Text(
+                  billModel.paymentMethod ?? '',
+                  style: CustomTextStyle.customUbuntu(
+                    color: AppColors.greyColor,
+                  ),
+                ),
+                // Row(
+                //   children: [
+                //     RichText(
+                //       text: TextSpan(
+                //         text: '${revenueModel.animalCategory} ',
+                //         style: CustomTextStyle.customUbuntu(
+                //           color: AppColors.greyColor,
+                //         ),
+                //         children: [
+                //           TextSpan(
+                //             text: '${revenueModel.weight} ',
+                //             style: CustomTextStyle.customUbuntu(
+                //               color: AppColors.greyColor,
+                //               fontWeight: FontWeight.w500,
+                //             ),
+                //           ),
+                //           TextSpan(
+                //             text: '${revenueModel.category}  ',
+                //             style: CustomTextStyle.customUbuntu(
+                //               color: AppColors.greyColor,
+                //             ),
+                //           ),
+                //           TextSpan(
+                //             text: '\u{20B9} ${revenueModel.amount}',
+                //             style: CustomTextStyle.customPoppin(
+                //               color: AppColors.blackColor,
+                //               fontSize: 16,
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 setHeight(height: 5),
                 Row(
                   children: [
                     Text(
-                      saleModel.soldAt,
+                      billModel.soldAt,
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),
                     ),
                     setWidth(width: 10),
                     Text(
-                      saleModel.time,
+                      billModel.time,
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),
                     ),
                   ],
                 ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Column(
+              children: [
                 Text(
-                  saleModel.barcode,
+                  '\u{20B9}${billModel.finalAmount}',
                   style: CustomTextStyle.customPoppin(
-                    color: AppColors.greyColor,
+                    color: AppColors.greenColor,
+                    fontSize: 18,
+                  ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    text: billModel.paymentMethod,
+                    style: CustomTextStyle.customUbuntu(
+                      color: AppColors.blackColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                    children: [
+                      // TextSpan(
+                      //   text: ' at ${revenueModel.discountPercentage}%',
+                      //   style: CustomTextStyle.customUbuntu(
+                      //     color: AppColors.deepPurple,
+                      //   ),
+                      // ),
+                    ],
                   ),
                 ),
               ],

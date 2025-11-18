@@ -44,6 +44,7 @@ class CustomTextStyle {
     return GoogleFonts.raleway(
       color: color,
       fontWeight: fontWeight,
+
       fontSize: fontSize,
       decoration: decoration,
       letterSpacing: letterSpacing,

@@ -47,7 +47,7 @@ class InventoryListController extends GetxController with CacheManager {
     addSubtractQty.clear();
   }
 
-  isInventoryScanSelectedValue() async {
+  void isInventoryScanSelectedValue() async {
     bool isInventoryScanSelecteds = await retrieveInventoryScan();
     isInventoryScanSelected.value = isInventoryScanSelecteds;
   }
@@ -118,85 +118,37 @@ class InventoryListController extends GetxController with CacheManager {
               .set(data);
         }
       }
-
       showMessage(message: "✅ Products uploaded successfully!");
     } else {
       showMessage(message: "❌ File picking cancelled");
     }
   }
 
-  searchProduct(String value) {
+  void searchProduct(String value) {
     searchText.value = value;
     searchController.text = searchText.value;
   }
 
-  setQuantitydata(int index) {
-    isFlavorAndWeightNotRequired.value =
-        productList[index].isFlavorAndWeightNotRequired ?? false;
-    name.text = productList[index].name ?? '';
-    updateQuantity.text = productList[index].quantity.toString();
-    sellingPrice.text = productList[index].sellingPrice.toString();
-    purchasePrice.text = productList[index].purchasePrice.toString();
-    flavor.text = productList[index].flavor ?? '';
-    weight.text = productList[index].weight.toString();
-    print(productList[index].isLoosed);
-    isLoose.value = productList[index].isLoosed ?? false;
-  }
-
-  updateProductQuantity({required String barcode}) async {
-    isSaveLoading.value = true;
-    try {
-      final now = DateTime.now();
-      final String formatDate = DateFormat('dd-MM-yyyy').format(now);
-      final uid = _auth.currentUser?.uid;
-      if (uid == null) return;
-      final productRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('products')
-          .doc(barcode);
-      final existingDoc = await productRef.get();
-
-      if (existingDoc.exists) {
-        // final prevQty = existingDoc['quantity'] ?? 0;
-        // final newQty = int.tryParse(addSubtractQty.text) ?? 0;
-        await productRef.update({
-          'quantity': int.parse(updateQuantity.text),
-          'purchasePrice': double.tryParse(purchasePrice.text) ?? 0.0,
-          'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
-          'name': name.text,
-          'flavours': flavor.text,
-          'isLoose': isLoose.value,
-          'updatedDate': formatDate,
-          'updatedTime': DateFormat('hh:mm a').format(now),
-        });
-        Get.back();
-        controllerClear();
-        showMessage(message: '✅ Product Info updated.');
-        await fetchAllProducts();
-      }
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    } finally {
-      isSaveLoading.value = false;
-    }
-  }
-
   Future<void> fetchAllProducts() async {
+    var cacheProductList = await retrieveProductList();
     isDataLoading.value = true;
-    final uid = _auth.currentUser?.uid;
-    final productSnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('products')
-            .where('quantity')
-            .get();
-    productList.value =
-        productSnapshot.docs
-            .map((doc) => ProductModel.fromJson(doc.data()))
-            .toList();
-
+    if (cacheProductList.isNotEmpty) {
+      productList.value = cacheProductList;
+    } else {
+      final uid = _auth.currentUser?.uid;
+      final productSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('products')
+              .where('quantity')
+              .get();
+      productList.value =
+          productSnapshot.docs
+              .map((doc) => ProductModel.fromJson(doc.data()))
+              .toList();
+      saveProductList(productList);
+    }
     isDataLoading.value = false;
   }
 }

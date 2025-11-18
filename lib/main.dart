@@ -33,6 +33,10 @@ class MyApp extends StatelessWidget {
         highlightColor: AppColors.transparent,
         splashColor: AppColors.transparent,
         splashFactory: NoSplash.splashFactory,
+        bottomAppBarTheme: BottomAppBarThemeData(color: AppColors.whiteColor),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: AppColors.greyColorShade100,
+        ),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
       ),
     );

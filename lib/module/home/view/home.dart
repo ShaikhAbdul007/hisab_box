@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
@@ -6,6 +7,8 @@ import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/home/controller/home_controller.dart';
 import 'package:inventory/module/home/widget/home_grid_container.dart';
+import 'package:inventory/module/home/widget/quick_action_component.dart';
+import 'package:inventory/module/revenue/widget/revenue_list_text.dart';
 import 'package:inventory/responsive_layout/responsive_tempate.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
@@ -137,7 +140,7 @@ class TabletScreen extends StatelessWidget {
                                   itemBuilder: (context, index) {
                                     var product = controller.sellsList[index];
                                     return RecentActivitySellingListText(
-                                      saleModel: product,
+                                      billModel: product,
                                     );
                                   },
                                 )
@@ -263,7 +266,7 @@ class DeskTopScreen extends StatelessWidget {
                                   itemBuilder: (context, index) {
                                     var product = controller.sellsList[index];
                                     return RecentActivitySellingListText(
-                                      saleModel: product,
+                                      billModel: product,
                                     );
                                   },
                                 )
@@ -290,102 +293,143 @@ class MobileScreen extends StatelessWidget {
         () =>
             controller.isListLoading.value
                 ? CommonProgressbar(color: AppColors.blackColor, size: 50)
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      // 👈 ye GridView ko full space dega
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 1.2,
-                                crossAxisSpacing: 3,
-                                mainAxisSpacing: 10,
-                              ),
-                          itemCount: controller.lis.length,
-                          itemBuilder: (context, index) {
-                            return InkWell(
-                              onTap: () async {
-                                if (controller.lis[index].routeName != null) {
-                                  var res =
-                                      await AppRoutes.futureNavigationToRoute(
+                : RefreshIndicator.adaptive(
+                  color: AppColors.blackColor,
+                  onRefresh: () {
+                    return controller.getRevenveAndStock();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 250,
+                            child: GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 3,
+                                    crossAxisSpacing: 0,
+                                    mainAxisSpacing: 10,
+                                  ),
+                              itemCount: controller.lis.length,
+                              itemBuilder: (context, index) {
+                                return InkWell(
+                                  onTap: () async {
+                                    if (controller.lis[index].routeName !=
+                                        null) {
+                                      AppRoutes.futureNavigationToRoute(
                                         routeName:
                                             controller.lis[index].routeName!,
                                       );
-                                  if (res == true) {
-                                    controller.getRevenveAndStock();
-                                  }
-                                }
+                                    }
+                                  },
+                                  child: HomeGridContainer(
+                                    customGridModel: controller.lis[index],
+                                  ),
+                                );
                               },
-                              child: HomeGridContainer(
-                                customGridModel: controller.lis[index],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    Divider(
-                      color: AppColors.blackColor,
-                      endIndent: 25,
-                      indent: 25,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Recent Activity',
-                            style: CustomTextStyle.customUbuntu(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w300,
                             ),
                           ),
-                          controller.sellsList.isNotEmpty
-                              ? InkWell(
-                                onTap: () async {
-                                  var res =
-                                      await AppRoutes.futureNavigationToRoute(
-                                        routeName: AppRouteName.sell,
-                                      );
-                                  if (res == true) {
-                                    controller.getRevenveAndStock();
-                                  }
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            child: Text(
+                              'Quick Actions',
+                              style: CustomTextStyle.customPoppin(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                          ),
+                          setHeight(height: 5),
+                          Row(
+                            children: [
+                              QuickActionComponent(
+                                onTap: () {
+                                  AppRoutes.navigateRoutes(
+                                    routeName: AppRouteName.inventroyList,
+                                  );
                                 },
-                                child: Text(
-                                  'see more',
-                                  style: CustomTextStyle.customNato(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade500,
+                                contentColor: AppColors.blackColor,
+                                bagGroundColor: AppColors.whiteColor,
+                                label: 'Add Product',
+                                icon: Icons.add,
+                              ),
+                              QuickActionComponent(
+                                onTap: () async {
+                                  var res = AppRoutes.futureNavigationToRoute(
+                                    routeName: AppRouteName.inventoryView,
+                                    data: {'flag': false},
+                                  );
+                                },
+                                label: 'Scan Product',
+                                icon: CupertinoIcons.barcode_viewfinder,
+                              ),
+                            ],
+                          ),
+                          setHeight(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Recent Activitys',
+                                  style: CustomTextStyle.customPoppin(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w300,
                                   ),
                                 ),
-                              )
-                              : Container(),
+                                controller.sellsList.isNotEmpty
+                                    ? InkWell(
+                                      onTap: () {
+                                        AppRoutes.navigateRoutes(
+                                          routeName: AppRouteName.revenueView,
+                                        );
+                                      },
+                                      child: Text(
+                                        'see more',
+                                        style: CustomTextStyle.customNato(
+                                          fontSize: 16,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    )
+                                    : Container(),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 400,
+                            child:
+                                controller.sellsList.isNotEmpty
+                                    ? ListView.builder(
+                                      itemCount:
+                                          controller.sellsList.length > 6
+                                              ? 6
+                                              : controller.sellsList.length,
+                                      itemBuilder: (context, index) {
+                                        var product =
+                                            controller.sellsList[index];
+                                        return RevenueListText(
+                                          billModel: product,
+                                        );
+                                      },
+                                    )
+                                    : CommonNodatafound(
+                                      message: 'No sell found',
+                                    ),
+                          ),
                         ],
                       ),
                     ),
-                    Expanded(
-                      child:
-                          controller.sellsList.isNotEmpty
-                              ? ListView.builder(
-                                itemCount:
-                                    controller.sellsList.length > 6
-                                        ? 6
-                                        : controller.sellsList.length,
-                                itemBuilder: (context, index) {
-                                  var product = controller.sellsList[index];
-                                  return RecentActivitySellingListText(
-                                    saleModel: product,
-                                  );
-                                },
-                              )
-                              : CommonNodatafound(message: 'No sell found'),
-                    ),
-                  ],
+                  ),
                 ),
       ),
     );

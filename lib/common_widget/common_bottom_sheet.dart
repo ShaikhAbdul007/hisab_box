@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'colors.dart';
 import 'common_popup_appbar.dart';
 
-commonBottomSheet({
+void commonBottomSheet({
   required String label,
   required void Function() onPressed,
   required Widget child,
@@ -21,7 +21,10 @@ commonBottomSheet({
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CommonPopupAppbar(label: label, onPressed: onPressed),
+                Padding(
+                  padding: const EdgeInsets.only(left: 18.0),
+                  child: CommonPopupAppbar(label: label, onPressed: onPressed),
+                ),
                 Divider(),
                 child,
               ],

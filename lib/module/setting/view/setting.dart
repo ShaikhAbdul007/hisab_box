@@ -2,11 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/module/setting/controller/setting_controller.dart';
+import 'package:inventory/module/setting/widget/customer_support.dart';
 import 'package:inventory/routes/routes.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
+import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
 import '../widget/setting_icon_container.dart';
 import '../widget/settingtem.dart';
@@ -23,10 +27,13 @@ class SettingView extends GetView<SettingController> {
         children: [
           Obx(
             () => SettingItem(
+              onTap: () {
+                AppRoutes.navigateRoutes(routeName: AppRouteName.userProfile);
+              },
               subtitleReq: true,
               label: controller.storeName.value,
               subtitle: controller.email.value,
-              // trailing: Icon(CupertinoIcons.square_pencil),
+              trailing: Icon(CupertinoIcons.forward),
               leading: CircleAvatar(
                 backgroundColor: AppColors.blackColor,
                 radius: 25,
@@ -42,14 +49,22 @@ class SettingView extends GetView<SettingController> {
               ),
             ),
           ),
-
-          SettingItem(
-            label: 'Discounts',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.percent),
-            onTap: () {
-              AppRoutes.navigateRoutes(routeName: AppRouteName.discount);
-            },
+          Obx(
+            () =>
+                controller.discountPerProduct.value
+                    ? SettingItem(
+                      label: 'Discounts',
+                      trailing: Icon(CupertinoIcons.forward),
+                      leading: SettingIconContainer(
+                        icon: CupertinoIcons.percent,
+                      ),
+                      onTap: () {
+                        AppRoutes.navigateRoutes(
+                          routeName: AppRouteName.discount,
+                        );
+                      },
+                    )
+                    : Container(),
           ),
           SettingItem(
             label: 'Category',
@@ -60,19 +75,17 @@ class SettingView extends GetView<SettingController> {
             },
           ),
           SettingItem(
-            label: 'Animal Category',
+            label:
+                controller.shoptype.value == 'petShop'
+                    ? 'Animal Category'
+                    : 'Size Category',
             trailing: Icon(CupertinoIcons.forward),
             leading: SettingIconContainer(icon: CupertinoIcons.circle_grid_3x3),
             onTap: () {
-              AppRoutes.navigateRoutes(routeName: AppRouteName.animalCategory);
-            },
-          ),
-          SettingItem(
-            label: 'Loose Category',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.bag),
-            onTap: () {
-              AppRoutes.navigateRoutes(routeName: AppRouteName.looseCategory);
+              AppRoutes.navigateRoutes(
+                routeName: AppRouteName.animalCategory,
+                data: controller.shoptype.value,
+              );
             },
           ),
           SettingItem(
@@ -81,6 +94,39 @@ class SettingView extends GetView<SettingController> {
             leading: SettingIconContainer(icon: CupertinoIcons.gear),
             onTap: () {
               AppRoutes.navigateRoutes(routeName: AppRouteName.appsetting);
+            },
+          ),
+          SettingItem(
+            label: 'Privacy Policy',
+            trailing: Icon(CupertinoIcons.forward),
+            leading: SettingIconContainer(icon: CupertinoIcons.lock),
+            onTap: () {
+              AppRoutes.navigateRoutes(routeName: AppRouteName.privacypolicy);
+            },
+          ),
+          SettingItem(
+            label: 'Terms & Conditions',
+            trailing: Icon(CupertinoIcons.forward),
+            leading: SettingIconContainer(icon: CupertinoIcons.hexagon),
+            onTap: () {
+              AppRoutes.navigateRoutes(routeName: AppRouteName.termandcodition);
+            },
+          ),
+          SettingItem(
+            label: 'Support',
+            trailing: Icon(CupertinoIcons.forward),
+            leading: SettingIconContainer(icon: CupertinoIcons.bag),
+            onTap: () {
+              commonBottomSheet(
+                label: ' Customer Support',
+                onPressed: () {
+                  Get.back();
+                },
+                child: CustomerSupport(
+                  emailOnTap: () => controller.emailLauncher(),
+                  phoneOnTap: () => controller.phoneluancher(),
+                ),
+              );
             },
           ),
           SettingItem(
@@ -122,7 +168,7 @@ class SettingView extends GetView<SettingController> {
           Divider(),
           Text(
             'Are you sure you want to log out ?',
-            style: CustomTextStyle.customPoppin(fontSize: 15),
+            style: CustomTextStyle.customPoppin(fontSize: 17),
           ),
           setHeight(height: 20),
           Row(

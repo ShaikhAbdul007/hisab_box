@@ -14,6 +14,7 @@ import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/module/loose_category/widget/loose_category_component.dart';
 import '../../../helper/textstyle.dart';
+import '../../../keys/keys.dart';
 import '../controller/loose_category_controller.dart';
 
 class LooseCategory extends GetView<LooseCategoryController> {
@@ -21,7 +22,6 @@ class LooseCategory extends GetView<LooseCategoryController> {
 
   @override
   Widget build(BuildContext context) {
-    final disountKey = GlobalKey<FormState>();
     return CommonAppbar(
       appBarLabel: 'Loose Sell Category',
       firstActionChild: InkWell(

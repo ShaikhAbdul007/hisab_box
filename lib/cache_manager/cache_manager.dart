@@ -1,4 +1,6 @@
 import 'package:get_storage/get_storage.dart';
+import 'package:inventory/module/category/model/category_model.dart';
+import 'package:inventory/module/category/view/animal_category.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 
@@ -7,32 +9,44 @@ mixin class CacheManager {
 
   //--------------------Save all the value------------------------------------------------------------------------------
 
-  saveUserLoggedIn(bool value) {
+  void saveUserLoggedIn(bool value) {
     box.write(Key.userLoginIn.toString(), value);
   }
 
-  savebillNo(int billNo) {
+  void savebillNo(int billNo) {
     box.write(Key.billNo.toString(), billNo);
   }
 
-  saveUserData(InventoryUserModel userModels) {
+  void saveUserData(InventoryUserModel userModels) {
     box.write(Key.userModels.toString(), userModels.toJson());
   }
 
-  savePrinterAddress(String value) {
+  void savePrinterAddress(String value) {
     box.write(Key.printerAddress.toString(), value);
   }
 
-  saveInventoryScanValue(bool value) {
+  void saveInventoryScanValue(bool value) {
     box.write(Key.inventoryScan.toString(), value);
   }
 
-  saveTenantName(String value) {
-    box.write(Key.tenantValue.toString(), value);
+  void saveCategoryModel(List<CategoryModel> category) {
+    final storeList = category.map((e) => e.toJson()).toList();
+    box.write(Key.categoryValue.toString(), storeList);
   }
 
-  saveProductList(List<ProductModel> product) {
-    box.write(Key.product.toString(), product);
+  void saveAnimalCategoryModel(List<CategoryModel> category) {
+    final storeList = category.map((e) => e.toJson()).toList();
+    box.write(Key.animalCategoryValue.toString(), storeList);
+  }
+
+  void saveProductList(List<ProductModel> product) {
+    final productList = product.map((e) => e.toJson()).toList();
+    box.write(Key.product.toString(), productList);
+  }
+
+  void saveCartProductList(List<ProductModel> product) {
+    final productList = product.map((e) => e.toJson()).toList();
+    box.write(Key.cartProduct.toString(), productList);
   }
 
   //----------------- checking expire token------------------------------------------------------------------------------
@@ -46,7 +60,7 @@ mixin class CacheManager {
   //----------------- Retrieve all the value------------------------------------------------------------------------------
 
   String retrieveTenantValue() {
-    return box.read(Key.tenantValue.toString());
+    return box.read(Key.categoryValue.toString());
   }
 
   String? retrieveEmployeeId() {
@@ -80,21 +94,52 @@ mixin class CacheManager {
     return InventoryUserModel();
   }
 
-  List<ProductModel> retrieveProductList() {
+  Future<List<CategoryModel>> retrieveCategoryModel() async {
+    final storedList = box.read(Key.categoryValue.toString());
+    if (storedList != null && storedList is List) {
+      return storedList.map((e) => CategoryModel.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  Future<List<CategoryModel>> retrieveAnimalCategoryModel() async {
+    final storedList = box.read(Key.animalCategoryValue.toString());
+    if (storedList != null && storedList is List) {
+      return storedList.map((e) => CategoryModel.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  Future<List<ProductModel>> retrieveProductList() async {
     final productList = box.read(Key.product.toString());
-    return productList;
+    if (productList != null && productList is List) {
+      return productList.map((e) => ProductModel.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  Future<List<ProductModel>> retrieveCartProductList() async {
+    final productList = box.read(Key.cartProduct.toString());
+    if (productList != null && productList is List) {
+      return productList.map((e) => ProductModel.fromJson(e)).toList();
+    }
+    return [];
   }
 
   //----------------- Remove all the value------------------------------------------------------------------------------
-  removeCacheModel() {
+  void removeCacheModel() {
     box.remove(Key.cacheModel.toString());
   }
 
-  removeResetCacheModel() {
+  void removeCartProductList() {
+    box.remove(Key.cartProduct.toString());
+  }
+
+  void removeResetCacheModel() {
     box.remove(Key.shouldResetCacheModel.toString());
   }
 
-  removeBox() {
+  void removeBox() {
     removeCacheModel();
     box.erase();
   }
@@ -103,10 +148,10 @@ mixin class CacheManager {
 enum Key {
   cacheModel,
   cacheEmployeeModel,
-  tenantValue,
+  categoryValue,
   userLoginIn,
   employeeIdKey,
-  otherEmployeeIdKey,
+  animalCategoryValue,
   otherEmployeeNoKey,
   otherEmployeeNameKey,
   shouldResetCacheModel,
@@ -116,4 +161,5 @@ enum Key {
   billNo,
   userModels,
   product,
+  cartProduct,
 }

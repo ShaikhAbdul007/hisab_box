@@ -5,13 +5,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/module/revenue/model/revenue_model.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../routes/routes.dart';
 import '../../sell/model/sell_model.dart';
 import '../model/grid_model.dart';
 
-class HomeController extends GetxController {
+class HomeController extends GetxController with CacheManager {
   final _auth = FirebaseAuth.instance;
   RxDouble totalBusRevenue = 0.0.obs;
   RxNum stock = RxNum(0);
@@ -23,7 +25,7 @@ class HomeController extends GetxController {
   RxBool isListLoading = false.obs;
   List<Map<String, dynamic>> chartData = [];
   final scrollController = ScrollController();
-  var sellsList = <SaleModel>[].obs;
+  var sellsList = <BillModel>[].obs;
 
   @override
   void onInit() {
@@ -31,22 +33,22 @@ class HomeController extends GetxController {
     super.onInit();
   }
 
-  getRevenveAndStock() async {
+  Future<void> getRevenveAndStock() async {
     isListLoading.value = true;
     await fetchPieChartData();
     await getTotalRevenue();
     await getTotalStock();
     await getOutOfStock();
     await getTotalLooseStock();
-    await getTotalSoldQuantity();
+    //await getTotalSoldQuantity();
     await getTotalExpenses();
     await getDashBoardList();
     await setSellList();
     isListLoading.value = false;
   }
 
-  setSellList() async {
-    sellsList.value = await fetchSales();
+  Future<void> setSellList() async {
+    sellsList.value = await fetchRevenueList();
   }
 
   Future<List<SaleModel>> fetchSales() async {
@@ -69,6 +71,8 @@ class HomeController extends GetxController {
       if (salesByBarcode.containsKey(barcode)) {
         final existingSale = salesByBarcode[barcode]!;
         salesByBarcode[barcode] = SaleModel(
+          animalType: existingSale.animalType,
+          sellingPrice: existingSale.sellingPrice,
           barcode: existingSale.barcode,
           quantity: (existingSale.quantity) + (sale.quantity),
           soldAt: existingSale.soldAt,
@@ -87,6 +91,43 @@ class HomeController extends GetxController {
     }
 
     return salesByBarcode.values.toList();
+  }
+
+  Future<List<BillModel>> fetchRevenueList() async {
+    try {
+      final today = setFormateDate();
+      final uid = _auth.currentUser?.uid;
+      if (uid == null) return [];
+
+      // 🔹 Fetch sales data from Firestore
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('sales')
+              .where('soldAt', isEqualTo: today)
+              .get();
+
+      // 🔹 Convert all docs to BillModel
+      final List<BillModel> bills =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            return BillModel.fromJson(data);
+          }).toList();
+
+      // Debug logs
+      print('✅ Total Bills Fetched: ${bills.length}');
+      if (bills.isNotEmpty) {
+        print(
+          'First Bill: ${bills.first.billNo} — ₹${bills.first.finalAmount}',
+        );
+      }
+
+      return bills;
+    } catch (e) {
+      showMessage(message: "❌ Error fetching revenue: ${e.toString()}");
+      return [];
+    }
   }
 
   Future<void> fetchPieChartData() async {
@@ -140,7 +181,7 @@ class HomeController extends GetxController {
           (doc['finalAmount'] ?? 0) > 0) {
         price = (doc['finalAmount'] ?? 0).toDouble();
       } else {
-        price = (doc['amount'] ?? 0).toDouble();
+        price = (doc['totalAmount'] ?? 0).toDouble();
       }
 
       totalRevenue += price;
@@ -179,11 +220,9 @@ class HomeController extends GetxController {
             .collection('products')
             .get();
 
-    num totalStock = 0;
-    for (var doc in snapshot.docs) {
-      totalStock += (doc['quantity'] ?? 0);
-    }
-    stock.value = totalStock;
+    int productCount = snapshot.docs.length;
+
+    stock.value = productCount;
   }
 
   Future getTotalLooseStock() async {
@@ -252,7 +291,7 @@ class HomeController extends GetxController {
     }
   }
 
-  getDashBoardList() {
+  Future<void> getDashBoardList() async {
     lis = [
       // CustomGridModel(
       //   routeName: AppRouteName.generateBarcode,
@@ -262,7 +301,7 @@ class HomeController extends GetxController {
       // ),
       CustomGridModel(
         routeName: AppRouteName.inventroyList,
-        label: 'Stock',
+        label: 'Total Products',
         icon: CupertinoIcons.cube_fill,
         numbers: double.parse(stock.value.toString()),
       ),
@@ -272,15 +311,15 @@ class HomeController extends GetxController {
         label: 'Out Of Stock',
         numbers: double.parse(outOfStock.value.toString()),
       ),
-      CustomGridModel(
-        icon: CupertinoIcons.square_list_fill,
-        routeName: AppRouteName.sell,
-        label: 'Sell',
-        numbers: double.parse(sellStock.value.toString()),
-      ),
+      // CustomGridModel(
+      //   icon: CupertinoIcons.square_list_fill,
+      //   routeName: AppRouteName.sell,
+      //   label: 'Sell',
+      //   numbers: double.parse(sellStock.value.toString()),
+      // ),
       CustomGridModel(
         routeName: AppRouteName.revenueView,
-        label: 'Revenue',
+        label: 'Today Sales',
         icon: Icons.paid,
         numbers: totalBusRevenue.value,
       ),
@@ -293,7 +332,7 @@ class HomeController extends GetxController {
       CustomGridModel(
         routeName: AppRouteName.looseSell,
         label: 'Loose Stock',
-        icon: CupertinoIcons.app,
+        icon: CupertinoIcons.info,
         numbers: double.parse(looseStock.value.toString()),
       ),
     ];

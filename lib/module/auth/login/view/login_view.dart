@@ -9,6 +9,7 @@ import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/routes/routes.dart';
+import '../../../../keys/keys.dart';
 import '../controller/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -16,7 +17,6 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
-    final loginkey = GlobalKey<FormState>();
     return Scaffold(
       body: Form(
         key: loginkey,

@@ -3,11 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/helper.dart';
+import '../../../setting/model/user_model.dart';
 
-class SignupController extends GetxController {
+class SignupController extends GetxController with CacheManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   TextEditingController email = TextEditingController();
   TextEditingController password = TextEditingController();
@@ -50,9 +52,17 @@ class SignupController extends GetxController {
         'pincode': pincode.text,
         'state': state.text,
         'mobileNo': mobileNo.text,
+        'shoptype': 'petShop',
         'alternateMobileNo': alternateMobileNo.text,
         "createdAt": formatCreatedAt,
       });
+      final newDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (newDoc.exists) {
+        final data = newDoc.data() as Map<String, dynamic>;
+        final userDatas = InventoryUserModel.fromJson(data);
+        saveUserData(userDatas);
+      }
       showMessage(message: singUpSuccessFul);
       signUpLoading.value = false;
       AppRoutes.navigateRoutes(routeName: AppRouteName.login);

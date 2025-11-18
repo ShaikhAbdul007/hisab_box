@@ -14,13 +14,13 @@ import '../../../common_widget/size.dart';
 import '../../../common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
+import '../../../keys/keys.dart';
 
 class Category extends GetView<CategoryController> {
   const Category({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final categoryKey = GlobalKey<FormState>();
     return CommonAppbar(
       firstActionChild: CommonContainer(
         height: 40,
@@ -48,7 +48,7 @@ class Category extends GetView<CategoryController> {
                         var list = controller.categoryList[index];
                         return ListTile(
                           title: Text(
-                            list.name,
+                            list.name ?? '',
                             style: CustomTextStyle.customNato(
                               fontSize: 18,
                               color: AppColors.blackColor,
@@ -57,12 +57,12 @@ class Category extends GetView<CategoryController> {
                           subtitle: Row(
                             children: [
                               Text(
-                                list.createdAt,
+                                list.createdAt ?? '',
                                 style: CustomTextStyle.customNato(),
                               ),
                               setWidth(width: 25),
                               Text(
-                                list.time,
+                                list.time ?? '',
                                 style: CustomTextStyle.customNato(),
                               ),
                             ],
@@ -74,7 +74,7 @@ class Category extends GetView<CategoryController> {
                                       ? null
                                       : () async {
                                         await controller.deleteCategory(
-                                          list.id,
+                                          list.id ?? '',
                                         );
                                       },
                               child: CommonContainer(

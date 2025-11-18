@@ -13,6 +13,7 @@ import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/expense/controller/expense_controller.dart';
+import '../../../keys/keys.dart';
 import '../model/expens_model.dart';
 import '../widget/add_expenses_button.dart';
 import '../widget/expension_text.dart';
@@ -22,7 +23,6 @@ class Expense extends GetView<ExpenseController> {
 
   @override
   Widget build(BuildContext context) {
-    final expenseKey = GlobalKey<FormState>();
     return CommonAppbar(
       appBarLabel: 'Expense',
       firstActionChild: AddExpensesButton(

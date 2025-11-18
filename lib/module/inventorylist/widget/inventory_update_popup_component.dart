@@ -7,197 +7,197 @@ import '../../../common_widget/size.dart';
 import '../../../common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
+import '../../../keys/keys.dart';
 import '../controller/inventory_controller.dart';
 
-class InventoryUpdatePopupComponent extends StatelessWidget {
-  final InventoryListController controller;
-  final int index;
-  const InventoryUpdatePopupComponent({
-    super.key,
-    required this.controller,
-    required this.index,
-  });
+// class InventoryUpdatePopupComponent extends StatelessWidget {
+//   final InventoryListController controller;
+//   final int index;
+//   const InventoryUpdatePopupComponent({
+//     super.key,
+//     required this.controller,
+//     required this.index,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    final GlobalKey<FormState> formkeys = GlobalKey<FormState>();
-    return Form(
-      key: formkeys,
-      child: Column(
-        children: [
-          CommonPopupAppbar(
-            label: 'Update Info',
-            onPressed: () {
-              Get.back();
-              controller.clear();
-            },
-          ),
-          Divider(),
-          Row(
-            children: [
-              Flexible(
-                child: CommonTextField(
-                  label: 'Name',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
-                  ),
-                  hintText: 'Enter product name',
-                  controller: controller.name,
-                  validator: (name) {
-                    if (name!.isEmpty) {
-                      return emptyProductName;
-                    } else {
-                      return null;
-                    }
-                  },
-                ),
-              ),
-              Flexible(
-                child: CommonTextField(
-                  label: 'Quantity',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
-                  ),
-                  inputLength: 5,
-                  keyboardType: TextInputType.numberWithOptions(
-                    signed: false,
-                    decimal: false,
-                  ),
-                  hintText: 'Enter product quantity',
-                  controller: controller.updateQuantity,
-                  validator: (quantity) {
-                    if (quantity!.isEmpty) {
-                      return emptyProductQuantity;
-                    } else {
-                      return null;
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          setHeight(height: 10),
-          Row(
-            children: [
-              Flexible(
-                child: CommonTextField(
-                  label: 'Selling Price',
-                  inputLength: 5,
-                  keyboardType: TextInputType.numberWithOptions(
-                    signed: false,
-                    decimal: false,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
-                  ),
-                  hintText: 'Selling Price (sp)',
-                  controller: controller.sellingPrice,
-                  validator: (sellingPrice) {
-                    if (sellingPrice!.isEmpty) {
-                      return emptyProductSellingPrice;
-                    } else {
-                      return null;
-                    }
-                  },
-                ),
-              ),
-              Flexible(
-                child: CommonTextField(
-                  label: 'Purchase Price',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
-                  ),
-                  hintText: 'Purchase Price',
-                  controller: controller.purchasePrice,
-                  validator: (purchasePrice) {
-                    if (purchasePrice!.isEmpty) {
-                      return emptyProductPurchasePrice;
-                    } else {
-                      return null;
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          setHeight(height: 10),
-          controller.isFlavorAndWeightNotRequired.value
-              ? Row(
-                children: [
-                  Flexible(
-                    flex: 4,
-                    child: CommonTextField(
-                      label: 'Flavor',
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
-                      hintText: 'Flavor',
-                      controller: controller.flavor,
-                      validator: (flavor) {
-                        if (flavor!.isEmpty) {
-                          return emptyflavor;
-                        } else {
-                          return null;
-                        }
-                      },
-                    ),
-                  ),
-                  Flexible(
-                    flex: 2,
-                    child: CommonTextField(
-                      label: 'Weight',
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
-                      hintText: 'Weight',
-                      controller: controller.weight,
-                      validator: (weight) {
-                        if (weight!.isEmpty) {
-                          return emptyWeight;
-                        } else {
-                          return null;
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              )
-              : Container(),
-          setHeight(height: 10),
-          CustomDropDown(
-            selectedDropDownItem: controller.isLoose.value,
-            listItems: [true, false],
-            hintText: 'Select isLoose',
-            notifyParent: (val) {
-              controller.isLoose.value = val;
-            },
-          ),
-          setHeight(height: 10),
-          Obx(
-            () => CommonButton(
-              isLoading: controller.isSaveLoading.value,
-              label: saveButton,
-              onTap: () {
-                if (formkeys.currentState!.validate()) {
-                  unfocus();
-                  controller.updateProductQuantity(
-                    barcode: controller.productList[index].barcode ?? '',
-                  );
-                }
-              },
-            ),
-          ),
-          setHeight(height: 10),
-        ],
-      ),
-    );
-  }
+//   @override
+//   Widget build(BuildContext context) {
+//     return Form(
+//       key: formkeys,
+//       child: Column(
+//         children: [
+//           CommonPopupAppbar(
+//             label: 'Update Info',
+//             onPressed: () {
+//               Get.back();
+//               controller.clear();
+//             },
+//           ),
+//           Divider(),
+//           Row(
+//             children: [
+//               Flexible(
+//                 child: CommonTextField(
+//                   label: 'Name',
+//                   contentPadding: EdgeInsets.symmetric(
+//                     vertical: 5,
+//                     horizontal: 5,
+//                   ),
+//                   hintText: 'Enter product name',
+//                   controller: controller.name,
+//                   validator: (name) {
+//                     if (name!.isEmpty) {
+//                       return emptyProductName;
+//                     } else {
+//                       return null;
+//                     }
+//                   },
+//                 ),
+//               ),
+//               Flexible(
+//                 child: CommonTextField(
+//                   label: 'Quantity',
+//                   contentPadding: EdgeInsets.symmetric(
+//                     vertical: 5,
+//                     horizontal: 5,
+//                   ),
+//                   inputLength: 5,
+//                   keyboardType: TextInputType.numberWithOptions(
+//                     signed: false,
+//                     decimal: false,
+//                   ),
+//                   hintText: 'Enter product quantity',
+//                   controller: controller.updateQuantity,
+//                   validator: (quantity) {
+//                     if (quantity!.isEmpty) {
+//                       return emptyProductQuantity;
+//                     } else {
+//                       return null;
+//                     }
+//                   },
+//                 ),
+//               ),
+//             ],
+//           ),
+//           setHeight(height: 10),
+//           Row(
+//             children: [
+//               Flexible(
+//                 child: CommonTextField(
+//                   label: 'Selling Price',
+//                   inputLength: 5,
+//                   keyboardType: TextInputType.numberWithOptions(
+//                     signed: false,
+//                     decimal: false,
+//                   ),
+//                   contentPadding: EdgeInsets.symmetric(
+//                     vertical: 5,
+//                     horizontal: 5,
+//                   ),
+//                   hintText: 'Selling Price (sp)',
+//                   controller: controller.sellingPrice,
+//                   validator: (sellingPrice) {
+//                     if (sellingPrice!.isEmpty) {
+//                       return emptyProductSellingPrice;
+//                     } else {
+//                       return null;
+//                     }
+//                   },
+//                 ),
+//               ),
+//               Flexible(
+//                 child: CommonTextField(
+//                   label: 'Purchase Price',
+//                   contentPadding: EdgeInsets.symmetric(
+//                     vertical: 5,
+//                     horizontal: 5,
+//                   ),
+//                   hintText: 'Purchase Price',
+//                   controller: controller.purchasePrice,
+//                   validator: (purchasePrice) {
+//                     if (purchasePrice!.isEmpty) {
+//                       return emptyProductPurchasePrice;
+//                     } else {
+//                       return null;
+//                     }
+//                   },
+//                 ),
+//               ),
+//             ],
+//           ),
+//           setHeight(height: 10),
+//           controller.isFlavorAndWeightNotRequired.value
+//               ? Row(
+//                 children: [
+//                   Flexible(
+//                     flex: 4,
+//                     child: CommonTextField(
+//                       label: 'Flavor',
+//                       contentPadding: EdgeInsets.symmetric(
+//                         vertical: 5,
+//                         horizontal: 5,
+//                       ),
+//                       hintText: 'Flavor',
+//                       controller: controller.flavor,
+//                       validator: (flavor) {
+//                         if (flavor!.isEmpty) {
+//                           return emptyflavor;
+//                         } else {
+//                           return null;
+//                         }
+//                       },
+//                     ),
+//                   ),
+//                   Flexible(
+//                     flex: 2,
+//                     child: CommonTextField(
+//                       label: 'Weight',
+//                       contentPadding: EdgeInsets.symmetric(
+//                         vertical: 5,
+//                         horizontal: 5,
+//                       ),
+//                       hintText: 'Weight',
+//                       controller: controller.weight,
+//                       validator: (weight) {
+//                         if (weight!.isEmpty) {
+//                           return emptyWeight;
+//                         } else {
+//                           return null;
+//                         }
+//                       },
+//                     ),
+//                   ),
+//                 ],
+//               )
+//               : Container(),
+//           setHeight(height: 10),
+//           CustomDropDown(
+//             selectedDropDownItem: controller.isLoose.value,
+//             listItems: [true, false],
+//             hintText: 'Select isLoose',
+//             notifyParent: (val) {
+//               controller.isLoose.value = val;
+//             },
+//           ),
+//           setHeight(height: 10),
+//           Obx(
+//             () => CommonButton(
+//               isLoading: controller.isSaveLoading.value,
+//               label: saveButton,
+//               onTap: () {
+//                 if (formkeys.currentState!.validate()) {
+//                   unfocus();
+//                   controller.updateProductQuantity(
+//                     barcode: controller.productList[index].barcode ?? '',
+//                   );
+//                 }
+//               },
+//             ),
+//           ),
+//           setHeight(height: 10),
+//         ],
+//       ),
+//     );
+//   }
 
   // void updateDataDialog({
   //   required bool add,
@@ -263,7 +263,7 @@ class InventoryUpdatePopupComponent extends StatelessWidget {
   //     ),
   //   );
   // }
-}
+//}
 
 
 // Column(

@@ -1,6 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../common_widget/textfiled.dart';
+import '../../common_widget/textfiled.dart';
 
 class InventoryBottomsheetComponentText extends StatelessWidget {
   final int flex1;
@@ -21,6 +22,8 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
   final String? Function(String?)? validator2;
   final Function(String)? onChanged2;
   final Function(String)? onChanged1;
+  final Widget? suffixIcon1;
+  final Widget? suffixIcon2;
   const InventoryBottomsheetComponentText({
     super.key,
     required this.controller1,
@@ -41,6 +44,8 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
     this.readOnly1 = false,
     this.onChanged2,
     this.onChanged1,
+    this.suffixIcon1,
+    this.suffixIcon2,
   });
 
   @override
@@ -50,6 +55,7 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
         Flexible(
           flex: flex1,
           child: CommonTextField(
+            suffixIcon: suffixIcon1,
             onChanged: onChanged1,
             readOnly: readOnly1,
             validator: validator1,
@@ -64,6 +70,7 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
         Flexible(
           flex: flex2,
           child: CommonTextField(
+            suffixIcon: suffixIcon2,
             onChanged: onChanged2,
             readOnly: readOnly2,
             validator: validator2,

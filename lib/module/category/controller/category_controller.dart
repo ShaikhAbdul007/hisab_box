@@ -3,12 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 
 import '../../../helper/app_message.dart';
 import '../model/category_model.dart';
 
-class CategoryController extends GetxController {
+class CategoryController extends GetxController with CacheManager {
   final _auth = FirebaseAuth.instance;
   TextEditingController category = TextEditingController();
   RxBool isSaveLoading = false.obs;
@@ -22,7 +23,7 @@ class CategoryController extends GetxController {
     super.onInit();
   }
 
-  getCategoryData() async {
+  void getCategoryData() async {
     await fetchCategories();
   }
 
@@ -71,10 +72,12 @@ class CategoryController extends GetxController {
               .doc(uid)
               .collection('categories')
               .get();
+
       categoryList.value =
           snapshot.docs
               .map((doc) => CategoryModel.fromJson(doc.data()))
               .toList();
+      saveCategoryModel(categoryList);
     } on FirebaseException catch (e) {
       showMessage(message: e.toString());
     } finally {
@@ -103,7 +106,7 @@ class CategoryController extends GetxController {
     }
   }
 
-  clear() {
+  void clear() {
     category.clear();
   }
 }

@@ -12,6 +12,7 @@ import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../helper/textstyle.dart';
+import '../../../keys/keys.dart';
 import '../controller/discount_controller.dart';
 
 class Discount extends GetView<DiscountController> {
@@ -19,7 +20,6 @@ class Discount extends GetView<DiscountController> {
 
   @override
   Widget build(BuildContext context) {
-    final disountKey = GlobalKey<FormState>();
     return Obx(
       () => CommonAppbar(
         appBarLabel: 'Discount',

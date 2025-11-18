@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/common_widget/textfiled.dart';
 import '../../../common_widget/colors.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
@@ -11,6 +13,8 @@ class SellingConfirmationListText extends StatelessWidget {
   final void Function()? minusOnTap;
   final void Function()? removeOnTap;
   final Widget sellingPrices;
+  final TextEditingController dicountController;
+  final void Function(String)? onDiscountChanged;
   const SellingConfirmationListText({
     super.key,
     required this.inventoryModel,
@@ -18,6 +22,8 @@ class SellingConfirmationListText extends StatelessWidget {
     this.minusOnTap,
     required this.sellingPrices,
     this.removeOnTap,
+    required this.dicountController,
+    this.onDiscountChanged,
   });
 
   @override
@@ -27,7 +33,7 @@ class SellingConfirmationListText extends StatelessWidget {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(10),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Column(
         children: [
@@ -70,11 +76,12 @@ class SellingConfirmationListText extends StatelessWidget {
                     onTap: minusOnTap,
                     child: CircleAvatar(
                       radius: 18,
-                      backgroundColor: AppColors.blackColor,
+                      backgroundColor: AppColors.greyColor,
                       child: Text(
                         '-',
                         style: CustomTextStyle.customPoppin(
                           color: AppColors.whiteColor,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -84,14 +91,16 @@ class SellingConfirmationListText extends StatelessWidget {
                     height: 30,
                     width: 50,
                     decoration: BoxDecoration(
-                      color: AppColors.blackColor,
+                      color: AppColors.greyColorShade100,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
                       child: Text(
                         inventoryModel.quantity.toString(),
                         style: CustomTextStyle.customPoppin(
-                          color: AppColors.whiteColor,
+                          color: AppColors.blackColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -106,6 +115,43 @@ class SellingConfirmationListText extends StatelessWidget {
                         '+',
                         style: CustomTextStyle.customPoppin(
                           color: AppColors.whiteColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  setWidth(width: 5),
+                  Container(
+                    height: 40,
+                    width: 80,
+                    padding: EdgeInsets.zero,
+                    decoration: BoxDecoration(
+                      color: AppColors.greyColorShade100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: TextFormField(
+                      keyboardType: TextInputType.number,
+                      controller: dicountController,
+                      onChanged: onDiscountChanged,
+                      cursorHeight: 15,
+                      cursorColor: AppColors.blackColor,
+                      style: CustomTextStyle.customUbuntu(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[a-zA-Z0-9@./&\s]'),
+                        ),
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      decoration: InputDecoration(
+                        contentPadding: EdgeInsets.only(left: 10, bottom: 15),
+                        border: InputBorder.none,
+                        label: Text('Discount'),
+                        labelStyle: CustomTextStyle.customMontserrat(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
