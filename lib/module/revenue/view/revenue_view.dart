@@ -9,6 +9,7 @@ import '../../../common_widget/common_calender.dart';
 import '../../../common_widget/common_nodatafound.dart';
 import '../../../common_widget/common_progressbar.dart';
 import '../../../common_widget/size.dart';
+import '../../../routes/route_name.dart';
 import '../controller/revenue_controller.dart';
 import '../widget/revenue_list_text.dart';
 
@@ -18,7 +19,7 @@ class RevenueView extends GetView<RevenueController> {
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
-      appBarLabel: 'Sells',
+      appBarLabel: 'Sell',
       firstActionChild: Obx(
         () => InkWell(
           onTap: () {
@@ -58,7 +59,7 @@ class RevenueView extends GetView<RevenueController> {
                       onTap: () {
                         AppRoutes.navigateRoutes(
                           routeName: AppRouteName.revenueDetailView,
-                          data: data.items,
+                          data: data,
                         );
                       },
                       child: RevenueListText(billModel: data),

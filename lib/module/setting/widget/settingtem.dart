@@ -31,15 +31,10 @@ class SettingItem extends StatelessWidget {
         onTap: onTap,
         leading: leading ?? SizedBox(height: 0, width: 0),
         title: Text(label, style: CustomTextStyle.customPoppin()),
-        subtitle:
-            subtitleReq
-                ? Text(
-                  subtitle,
-                  style: CustomTextStyle.customRaleway(
-                    color: AppColors.greyColor,
-                  ),
-                )
-                : null,
+        subtitle: Text(
+          subtitle,
+          style: CustomTextStyle.customRaleway(color: AppColors.greyColor),
+        ),
         trailing: trailing ?? SizedBox(height: 0, width: 0),
       ),
     );

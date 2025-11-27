@@ -6,7 +6,7 @@ import 'package:inventory/helper/textstyle.dart';
 import '../model/revenue_model.dart';
 
 class RevenueDetailList extends StatelessWidget {
-  final RevenueModel revenueModel;
+  final SellItem revenueModel;
   const RevenueDetailList({super.key, required this.revenueModel});
 
   @override
@@ -39,12 +39,12 @@ class RevenueDetailList extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  revenueModel.name,
+                  revenueModel.name ?? '',
                   style: CustomTextStyle.customPoppin(fontSize: 17),
                 ),
                 setHeight(height: 2),
                 Text(
-                  revenueModel.flavour,
+                  revenueModel.flavours ?? '',
                   style: CustomTextStyle.customUbuntu(
                     color: AppColors.greyColor,
                   ),
@@ -53,7 +53,7 @@ class RevenueDetailList extends StatelessWidget {
                   children: [
                     RichText(
                       text: TextSpan(
-                        text: '${revenueModel.animalCategory} ',
+                        text: '${revenueModel.animalType} ',
                         style: CustomTextStyle.customUbuntu(
                           color: AppColors.greyColor,
                         ),
@@ -72,7 +72,7 @@ class RevenueDetailList extends StatelessWidget {
                             ),
                           ),
                           TextSpan(
-                            text: '\u{20B9} ${revenueModel.amount}',
+                            text: '\u{20B9} ${revenueModel.finalPrice}',
                             style: CustomTextStyle.customPoppin(
                               color: AppColors.blackColor,
                               fontSize: 16,
@@ -84,23 +84,23 @@ class RevenueDetailList extends StatelessWidget {
                   ],
                 ),
                 setHeight(height: 5),
-                Row(
-                  children: [
-                    Text(
-                      revenueModel.soldAt,
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                    setWidth(width: 10),
-                    Text(
-                      revenueModel.time,
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   children: [
+                //     Text(
+                //       revenueModel.,
+                //       style: CustomTextStyle.customPoppin(
+                //         color: AppColors.greyColor,
+                //       ),
+                //     ),
+                //     setWidth(width: 10),
+                //     Text(
+                //       revenueModel.time,
+                //       style: CustomTextStyle.customPoppin(
+                //         color: AppColors.greyColor,
+                //       ),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           ),
@@ -108,7 +108,7 @@ class RevenueDetailList extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  '\u{20B9}${revenueModel.sellingPrice}',
+                  '\u{20B9}${revenueModel.finalPrice}',
                   style: CustomTextStyle.customPoppin(
                     color: AppColors.greenColor,
                     fontSize: 18,
@@ -124,7 +124,7 @@ class RevenueDetailList extends StatelessWidget {
                     ),
                     children: [
                       TextSpan(
-                        text: ' at ${revenueModel.discountPercentage}%',
+                        text: ' at ${revenueModel.discount}%',
                         style: CustomTextStyle.customUbuntu(
                           color: AppColors.deepPurple,
                         ),

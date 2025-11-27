@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:inventory/common_widget/colors.dart';
 
 class CommonContainer extends StatelessWidget {
   final double height;
   final double width;
   final double radius;
   final Widget child;
-  final Color color;
+  final Color? color;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
   const CommonContainer({
     super.key,
-    required this.height,
-    required this.width,
-    required this.radius,
-    required this.color,
     required this.child,
+    this.height = 0,
+    this.width = 0,
+    this.radius = 10,
+    this.color,
+    this.padding,
+    this.margin,
   });
 
   @override
@@ -20,9 +25,11 @@ class CommonContainer extends StatelessWidget {
     return Container(
       height: height,
       width: width,
+      padding: padding,
+      margin: margin,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        color: color,
+        color: color ?? AppColors.whiteColor,
       ),
       child: child,
     );

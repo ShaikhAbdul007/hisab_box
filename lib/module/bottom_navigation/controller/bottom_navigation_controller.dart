@@ -7,6 +7,8 @@ import 'package:get/get.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/routes/routes.dart';
 
+import '../../../routes/route_name.dart';
+
 class BottomNavigationController extends GetxController {
   RxInt index = 0.obs;
   StreamSubscription? subscription;

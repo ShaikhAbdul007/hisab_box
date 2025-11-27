@@ -8,6 +8,7 @@ import 'package:inventory/module/setting/view/setting.dart';
 import 'package:inventory/responsive_layout/responsive_layout.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
+import '../../../routes/route_name.dart';
 import '../../home/view/home.dart';
 import '../controller/bottom_navigation_controller.dart';
 

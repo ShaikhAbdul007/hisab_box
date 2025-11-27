@@ -7,12 +7,11 @@ import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_radio_button.dart';
 import 'package:inventory/common_widget/size.dart';
-import 'package:inventory/module/sell/model/print_model.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
-import '../../../routes/routes.dart';
+import '../../../routes/route_name.dart';
 import '../../loose_sell/widget/loose_sell_bottomsheet_component.dart';
 import '../controller/sell_list_after_scan_controller.dart';
 import '../widget/payment_method_widget.dart';
@@ -162,17 +161,6 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                             ),
                           ),
                         ),
-
-                        // Obx(
-                        //   () => Text(
-                        //     controller.discountPerProduct.value
-                        //         ? controller.finalTotal.value.toString()
-                        //         : controller.isDiscountGiven.value
-                        //         ? controller.discountPrice.value.toString()
-                        //         : controller.getTotalAmount().toString(),
-                        //     style: CustomTextStyle.customUbuntu(fontSize: 20),
-                        //   ),
-                        // ),
                         setHeight(height: 10),
                       ],
                     ),
@@ -214,7 +202,8 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                                   controller.perProductDiscount[index],
                               sellingPrices: Obx(
                                 () => Text(
-                                  controller.sellingPriceList[index].toString(),
+                                  controller.sellingPriceList[index]
+                                      .toStringAsFixed(2),
                                   style: CustomTextStyle.customPoppin(
                                     color: AppColors.whiteColor,
                                   ),
@@ -268,11 +257,12 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
     SellListAfterScanController controller,
   ) {
     commonBottomSheet(
-      label: 'Payment Method',
+      label: 'Payment',
       onPressed: () {
+        controller.clear();
         Get.back();
       },
-      child: PaymentMethodWidget(amount: amount, controller: controller),
+      child: PaymentMethodWidget(controller: controller),
     );
   }
 }
@@ -332,3 +322,14 @@ class DiscountRadioButton extends StatelessWidget {
                   //     ],
                   //   ),
                   // );
+
+                  // Obx(
+                        //   () => Text(
+                        //     controller.discountPerProduct.value
+                        //         ? controller.finalTotal.value.toString()
+                        //         : controller.isDiscountGiven.value
+                        //         ? controller.discountPrice.value.toString()
+                        //         : controller.getTotalAmount().toString(),
+                        //     style: CustomTextStyle.customUbuntu(fontSize: 20),
+                        //   ),
+                        // ),

@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
+import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/module/setting/controller/setting_controller.dart';
 import 'package:inventory/module/setting/widget/customer_support.dart';
 import 'package:inventory/routes/routes.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
+import '../../../common_widget/common_divider.dart';
 import '../../../common_widget/size.dart';
-import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
+import '../../../routes/route_name.dart';
 import '../widget/setting_icon_container.dart';
 import '../widget/settingtem.dart';
 
@@ -21,7 +22,7 @@ class SettingView extends GetView<SettingController> {
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
-      appBarLabel: 'Setting',
+      appBarLabel: 'Settings',
       isleadingButtonRequired: false,
       body: ListView(
         children: [
@@ -33,7 +34,6 @@ class SettingView extends GetView<SettingController> {
               subtitleReq: true,
               label: controller.storeName.value,
               subtitle: controller.email.value,
-              trailing: Icon(CupertinoIcons.forward),
               leading: CircleAvatar(
                 backgroundColor: AppColors.blackColor,
                 radius: 25,
@@ -49,91 +49,130 @@ class SettingView extends GetView<SettingController> {
               ),
             ),
           ),
-          Obx(
-            () =>
-                controller.discountPerProduct.value
-                    ? SettingItem(
-                      label: 'Discounts',
-                      trailing: Icon(CupertinoIcons.forward),
-                      leading: SettingIconContainer(
-                        icon: CupertinoIcons.percent,
-                      ),
-                      onTap: () {
-                        AppRoutes.navigateRoutes(
-                          routeName: AppRouteName.discount,
-                        );
-                      },
-                    )
-                    : Container(),
+          setHeight(height: 10),
+          CommonContainer(
+            height: 165,
+            margin: EdgeInsets.symmetric(horizontal: 15),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SettingItem(
+                    label: 'Category',
+                    subtitle: 'Manage your product categories',
+                    leading: SettingIconContainer(
+                      icon: CupertinoIcons.circle_grid_3x3,
+                    ),
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.category,
+                      );
+                    },
+                  ),
+                  CommonDivider(indent: 20, endIndent: 20),
+                  SettingItem(
+                    label:
+                        controller.shoptype.value == 'petShop'
+                            ? 'Animal Category'
+                            : 'Size Category',
+                    subtitle:
+                        controller.shoptype.value == 'petShop'
+                            ? 'Manage your animal categories'
+                            : 'Manage your size categories',
+                    leading: SettingIconContainer(
+                      icon: CupertinoIcons.circle_grid_3x3,
+                    ),
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.animalCategory,
+                        data: controller.shoptype.value,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-          SettingItem(
-            label: 'Category',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.circle_grid_3x3),
-            onTap: () {
-              AppRoutes.navigateRoutes(routeName: AppRouteName.category);
-            },
+          setHeight(height: 10),
+          CommonContainer(
+            height: 165,
+            margin: EdgeInsets.symmetric(horizontal: 15),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SettingItem(
+                    label: 'App Settings',
+                    subtitle: 'Manage your app settings',
+                    leading: SettingIconContainer(icon: CupertinoIcons.gear),
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.appsetting,
+                      );
+                    },
+                  ),
+                  CommonDivider(indent: 20, endIndent: 20),
+                  SettingItem(
+                    label: 'Support',
+                    subtitle: 'Get help & support',
+                    leading: SettingIconContainer(icon: CupertinoIcons.bag),
+                    onTap: () {
+                      commonBottomSheet(
+                        label: ' Customer Support',
+                        onPressed: () {
+                          Get.back();
+                        },
+                        child: CustomerSupport(
+                          emailOnTap: () => controller.emailLauncher(),
+                          phoneOnTap: () => controller.phoneluancher(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-          SettingItem(
-            label:
-                controller.shoptype.value == 'petShop'
-                    ? 'Animal Category'
-                    : 'Size Category',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.circle_grid_3x3),
-            onTap: () {
-              AppRoutes.navigateRoutes(
-                routeName: AppRouteName.animalCategory,
-                data: controller.shoptype.value,
-              );
-            },
+          setHeight(height: 10),
+          CommonContainer(
+            height: 165,
+            margin: EdgeInsets.symmetric(horizontal: 15),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SettingItem(
+                    label: 'Privacy Policy',
+                    subtitle: 'Read our privacy policy',
+                    leading: SettingIconContainer(icon: CupertinoIcons.lock),
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.privacypolicy,
+                      );
+                    },
+                  ),
+                  CommonDivider(indent: 20, endIndent: 20),
+                  SettingItem(
+                    label: 'Terms & Conditions',
+                    subtitle: 'Read our terms',
+                    leading: SettingIconContainer(icon: CupertinoIcons.hexagon),
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.termandcodition,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-          SettingItem(
-            label: 'App Settings',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.gear),
-            onTap: () {
-              AppRoutes.navigateRoutes(routeName: AppRouteName.appsetting);
-            },
-          ),
-          SettingItem(
-            label: 'Privacy Policy',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.lock),
-            onTap: () {
-              AppRoutes.navigateRoutes(routeName: AppRouteName.privacypolicy);
-            },
-          ),
-          SettingItem(
-            label: 'Terms & Conditions',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.hexagon),
-            onTap: () {
-              AppRoutes.navigateRoutes(routeName: AppRouteName.termandcodition);
-            },
-          ),
-          SettingItem(
-            label: 'Support',
-            trailing: Icon(CupertinoIcons.forward),
-            leading: SettingIconContainer(icon: CupertinoIcons.bag),
-            onTap: () {
-              commonBottomSheet(
-                label: ' Customer Support',
-                onPressed: () {
-                  Get.back();
-                },
-                child: CustomerSupport(
-                  emailOnTap: () => controller.emailLauncher(),
-                  phoneOnTap: () => controller.phoneluancher(),
-                ),
-              );
-            },
-          ),
+          setHeight(height: 10),
           SettingItem(
             onTap: () async {
               logoutDialog();
             },
             label: 'Log Out',
+            subtitle: 'Sign out from your account',
             leading: SettingIconContainer(icon: CupertinoIcons.power),
           ),
         ],
@@ -165,7 +204,7 @@ class SettingView extends GetView<SettingController> {
               ],
             ),
           ),
-          Divider(),
+          CommonDivider(indent: 20, endIndent: 20),
           Text(
             'Are you sure you want to log out ?',
             style: CustomTextStyle.customPoppin(fontSize: 17),
@@ -209,4 +248,22 @@ class SettingView extends GetView<SettingController> {
           //   label: 'Change Password',
           //   trailing: Icon(CupertinoIcons.forward),
           //   leading: SettingIconContainer(icon: CupertinoIcons.lock),
+          // ),
+
+           // Obx(
+          //   () =>
+          //       controller.discountPerProduct.value
+          //           ? SettingItem(
+          //             label: 'Discounts',
+          //             trailing: Icon(CupertinoIcons.forward),
+          //             leading: SettingIconContainer(
+          //               icon: CupertinoIcons.percent,
+          //             ),
+          //             onTap: () {
+          //               AppRoutes.navigateRoutes(
+          //                 routeName: AppRouteName.discount,
+          //               );
+          //             },
+          //           )
+          //           : Container(),
           // ),

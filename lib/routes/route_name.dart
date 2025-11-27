@@ -1,0 +1,35 @@
+class AppRouteName {
+  static const String bottomNavigation = '/bottomNavigation';
+  static const String inventoryView = '/inventoryView';
+  static const String productDetailView = '/productDetailView';
+  static const String inventoryViewFormSell = '/inventoryViewFormSell';
+  static const String home = '/home';
+  static const String barcodePrintView = '/barcodePrintView';
+  static const String setting = '/setting';
+  static const String inventroyList = '/inventroyList';
+  static const String reports = '/reports';
+  static const String sell = '/sell';
+  static const String login = '/login';
+  static const String userProfile = '/userProfile';
+  static const String productView = '/productView';
+  static const String signup = '/signup';
+  static const String splash = '/splash';
+  static const String unknwonroute = '/unknwonroute';
+  static const String privacypolicy = '/privacypolicy';
+  static const String orderView = '/orderView';
+  static const String termandcodition = '/termandcodition';
+  static const String sellListAfterScan = '/sellListAfterScan';
+  static const String nointernateConnection = '/nointernateConnection';
+  static const String expense = '/expense';
+  static const String discount = '/discount';
+  static const String category = '/category';
+  static const String animalCategory = '/animalCategory';
+  static const String looseSell = '/looseSell';
+  static const String revenueView = '/revenueView';
+  static const String looseCategory = '/looseCategory';
+  static const String appsetting = '/appsetting';
+  static const String outOfStock = '/outOfStock';
+  static const String generateBarcode = '/generateBarcode';
+  static const String revenueDetailView = '/revenueDetailView';
+  static const String invoicePrintView = '/invoicePrintView';
+}

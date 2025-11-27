@@ -11,6 +11,7 @@ class InventoryUserModel {
   final String? pincode;
   final bool? discountPerProduct;
   final String? shoptype;
+  final String? image;
 
   InventoryUserModel({
     this.id,
@@ -25,6 +26,7 @@ class InventoryUserModel {
     this.pincode,
     this.shoptype,
     this.discountPerProduct,
+    this.image,
   });
 
   factory InventoryUserModel.fromJson(Map<String, dynamic> json, {String? id}) {
@@ -41,6 +43,7 @@ class InventoryUserModel {
       pincode: json['pincode'] ?? '',
       discountPerProduct: json['discountPerProduct'] ?? '',
       shoptype: json['shoptype'] ?? '',
+      image: json['image'] ?? '',
     );
   }
 
@@ -57,6 +60,7 @@ class InventoryUserModel {
       "pincode": pincode,
       "shoptype": shoptype,
       "discountPerProduct": discountPerProduct,
+      "image": image,
     };
   }
 }

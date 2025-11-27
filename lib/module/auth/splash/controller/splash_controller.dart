@@ -2,8 +2,10 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/routes/routes.dart';
 
+import '../../../../routes/route_name.dart';
+
 class SplashController extends GetxController with CacheManager {
-  movetoNextScreen() {
+  void movetoNextScreen() {
     Future.delayed(Duration(seconds: 2), () async {
       bool isLoggedIn = await retrieveIsLoggedIn();
       if (isLoggedIn == true) {

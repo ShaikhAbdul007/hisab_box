@@ -34,10 +34,7 @@ class LooseSellBottomsheetComponent extends StatelessWidget {
                   return null;
                 }
               },
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 5,
-                horizontal: 5,
-              ),
+              contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
               inputLength: 5,
               keyboardType: TextInputType.numberWithOptions(),
               hintText: 'Enter quantity',
@@ -45,12 +42,13 @@ class LooseSellBottomsheetComponent extends StatelessWidget {
               controller: controller.quantity,
             ),
           ),
-      
+
           Row(
             children: [
               Flexible(
                 flex: 2,
                 child: CommonDropDown(
+                  errorText: 'Please select',
                   listItems: controller.looseCategoryModelList,
                   hintText: 'Select Item',
                   notifyParent: (v) {
@@ -60,8 +58,7 @@ class LooseSellBottomsheetComponent extends StatelessWidget {
                         controller.name.text = list[i].name;
                         controller.id = v;
                         int amot =
-                            list[i].price *
-                            int.parse(controller.quantity.text);
+                            list[i].price * int.parse(controller.quantity.text);
                         controller.amount.text = amot.toString();
                         print(v);
                       }
@@ -92,7 +89,7 @@ class LooseSellBottomsheetComponent extends StatelessWidget {
               ),
             ],
           ),
-      
+
           Obx(
             () => CommonButton(
               isLoading: controller.isSaveLoading.value,

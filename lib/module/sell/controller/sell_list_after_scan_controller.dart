@@ -6,14 +6,13 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
+import '../../../routes/route_name.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
-import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../routes/routes.dart';
 import '../../discount/model/discount_model.dart';
 import '../../../helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
-import '../widget/invoic_confirmation_widget.dart';
 
 class SellListAfterScanController extends GetxController with CacheManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -25,6 +24,9 @@ class SellListAfterScanController extends GetxController with CacheManager {
   TextEditingController upiPaidController = TextEditingController(text: '0.0');
   TextEditingController cardPaidController = TextEditingController(text: '0.0');
   TextEditingController creditPaidController = TextEditingController(
+    text: '0.0',
+  );
+  TextEditingController roundOffPaidController = TextEditingController(
     text: '0.0',
   );
   TextEditingController name = TextEditingController();
@@ -64,7 +66,8 @@ class SellListAfterScanController extends GetxController with CacheManager {
   RxString shopType = ''.obs;
   var finalTotal = 0.0.obs;
   var sellingPriceList = <double>[].obs;
-  List<PrintModel> printList = [];
+  List<SellItem> sellList = [];
+  var printInvoice = Rx<PrintInvoiceModel?>(null);
 
   @override
   void onInit() {
@@ -126,11 +129,11 @@ class SellListAfterScanController extends GetxController with CacheManager {
         (double.tryParse(cashPaidController.text) ?? 0) +
         (double.tryParse(upiPaidController.text) ?? 0) +
         (double.tryParse(cardPaidController.text) ?? 0) +
-        (double.tryParse(creditPaidController.text) ?? 0);
+        (double.tryParse(creditPaidController.text) ?? 0) +
+        (double.tryParse(roundOffPaidController.text) ?? 0);
 
-    remainingAmount.value = (paymentMethodTotalAmount.value - paid).clamp(
-      0,
-      paymentMethodTotalAmount.value,
+    remainingAmount.value = double.parse(
+      (paymentMethodTotalAmount.value - paid).toStringAsFixed(2),
     );
     if (remainingAmount.value > 0) {
       allEditable.value = false;
@@ -163,7 +166,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     discountDifferenceAmount = discount;
     double discountedAmount = originalAmount - discount;
     discountPrice.value = discountedAmount;
-    amount.text = discountedAmount.floorToDouble().toString();
+    amount.text = discountedAmount.toStringAsFixed(2);
   }
 
   void clear() {
@@ -171,6 +174,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     upiPaidController.text = '0.0';
     cardPaidController.text = '0.0';
     creditPaidController.text = '0.0';
+    roundOffPaidController.text = '0.0';
   }
 
   int getTotalAmount() {
@@ -193,8 +197,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
     } else {
       finalTotal.value = getTotalAmount().toDouble();
     }
-
-    print('Total = ${finalTotal.value}');
   }
 
   void updateQuantity(bool isIncrement, int index) async {
@@ -254,38 +256,20 @@ class SellListAfterScanController extends GetxController with CacheManager {
     calculateTotalWithDiscount();
   }
 
-  Future<void> saleConfirmAndPrintInvoice({
-    required String paymentMethod,
-    required RxBool isLoading,
-  }) async {
+  Future<void> saleConfirmed({required RxBool isLoading}) async {
     bool saleConfirm = await confirmSale(
-      paymentMethod: paymentMethod,
-      invoice: printList,
+      sellItems: sellList,
       isLoading: isLoading,
     );
-    AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
     if (saleConfirm == true) {
       removeCartProductList();
-      commonBottomSheet(
-        label: 'Print',
-        onPressed: () {
-          Get.back();
-        },
-        child: InvoicConfirmationWidget(
-          noOnTap: () {
-            Get.back();
-          },
-          yesOnTap: () async {
-            Get.back();
-            AppRoutes.navigateRoutes(
-              routeName: AppRouteName.invoicePrintView,
-              data: {'productList': printList, 'paymentMethod': paymentMethod},
-            );
-          },
-        ),
+      AppRoutes.navigateRoutes(
+        routeName: AppRouteName.orderView,
+        data: printInvoice.value,
       );
     } else {
-      print('saleConfirm == true');
+      Get.back();
+      showMessage(message: somethingWentMessage);
     }
   }
 
@@ -312,8 +296,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 
   Future<bool> confirmSale({
-    required String paymentMethod,
-    required List<PrintModel> invoice,
+    required List<SellItem> sellItems,
     required RxBool isLoading,
   }) async {
     isLoading.value = true;
@@ -322,7 +305,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     try {
       var now = DateTime.now();
       String formatDate = DateFormat('dd-MM-yyyy').format(now);
-      String formatTime = DateFormat('hh:mm a').format(now);
+      String formatTime = DateFormat('hh:mm:ss a').format(now);
       List<Map<String, dynamic>> productUpdates = [];
       List<Map<String, dynamic>> items = []; // 👈 all items in one list
       double totalAmount = 0;
@@ -342,36 +325,35 @@ class SellListAfterScanController extends GetxController with CacheManager {
             'weight': product.weight ?? "0.0",
             'box': product.box ?? "0.0",
           };
-        } else if (product.isLoosed == true ||
-            product.isLooseCategory == false) {
-          // Loose Product (from looseProducts)
-          productRef = FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('looseProducts')
-              .doc(product.barcode);
-
-          final snapshot = await productRef.get();
-          if (!snapshot.exists) {
-            showMessage(message: "❌ Loose product not found: ${product.id}");
-            return false;
-          }
-
-          productData = snapshot.data() as Map<String, dynamic>;
-          int currentQty = productData['quantity'] ?? 0;
-          if (currentQty < (product.quantity ?? 1)) {
-            showMessage(
-              message: "❌ Not enough stock for ${productData['name']}",
-            );
-            return false;
-          }
-
-          // Add update for transaction
-          productUpdates.add({
-            "ref": productRef,
-            "newQty": currentQty - (product.quantity ?? 1),
-          });
-        } else {
+        }
+        //  else if (product.isLoosed == true ||
+        //     product.isLooseCategory == false) {
+        //   // Loose Product (from looseProducts)
+        //   productRef = FirebaseFirestore.instance
+        //       .collection('users')
+        //       .doc(uid)
+        //       .collection('looseProducts')
+        //       .doc(product.barcode);
+        //   final snapshot = await productRef.get();
+        //   if (!snapshot.exists) {
+        //     showMessage(message: "❌ Loose product not found: ${product.id}");
+        //     return false;
+        //   }
+        //   productData = snapshot.data() as Map<String, dynamic>;
+        //   int currentQty = productData['quantity'] ?? 0;
+        //   if (currentQty < (product.quantity ?? 1)) {
+        //     showMessage(
+        //       message: "❌ Not enough stock for ${productData['name']}",
+        //     );
+        //     return false;
+        //   }
+        //   // Add update for transaction
+        //   productUpdates.add({
+        //     "ref": productRef,
+        //     "newQty": currentQty - (product.quantity ?? 1),
+        //   });
+        // }
+        else {
           // Normal Product (from products collection)
           final querySnapshot =
               await FirebaseFirestore.instance
@@ -404,33 +386,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
             "newQty": currentQty - (product.quantity ?? 1),
           });
         }
-
-        // 🔹 Product line item
-        // final itemAmount =
-        //     (product.sellingPrice ?? 0) * (product.quantity ?? 1);
-        // totalAmount += itemAmount;
-        // items.add({
-        //   'barcode': product.barcode ?? "",
-        //   'name': productData['name'] ?? "",
-        //   'quantity': product.quantity ?? 1,
-        //   'category': productData['category'] ?? "",
-        //   'animalCategory': productData['animalCategory'] ?? "",
-        //   'flavour': productData['flavours'] ?? "",
-        //   'weight': productData['weight'] ?? "0.0",
-        //   'box': productData['box'] ?? "0.0",
-        //   'sellingPrice': product.sellingPrice ?? 0,
-        //   'amount': itemAmount,
-        //   'isLoose': product.isLoosed ?? false,
-        //   'isLooseCategory': product.isLooseCategory ?? false,
-        //   'discount': productData['discount'] ?? 0,
-        //   'location': productData['location'] ?? '',
-        //   'expireDate': productData['expireDate'] ?? '',
-        //   'purchaseDate': productData['purchaseDate'] ?? '',
-        //   'soldAt': formatDate,
-        //   'time': formatTime,
-        // });
       }
-      //  getPrintReadyList();
 
       // 🔹 Generate Bill Number
       String newBillNo = await generateBillNo();
@@ -445,23 +401,25 @@ class SellListAfterScanController extends GetxController with CacheManager {
           });
         }
       });
-      for (var item in invoice) {
+      for (var item in sellItems) {
         totalAmount += item.originalPrice ?? 0;
         finalAmount += item.finalPrice ?? 0;
-        print('totalAmount is $totalAmount');
-        print('finalAmount is $finalAmount');
       }
 
       // 🔹 STEP 3: Save final sale document
       final paymentData = buildPaymentMap(
-        paymentMethod: paymentMethod,
         totalAmount: totalAmount,
+        roundOffPaid: double.parse(roundOffPaidController.text),
         cashPaid: double.parse(cashPaidController.text),
         upiPaid: double.parse(upiPaidController.text),
         cardPaid: double.parse(cardPaidController.text),
         creditPaid: double.parse(creditPaidController.text),
       );
 
+      double roundOffAmount = double.tryParse(roundOffPaidController.text) ?? 0;
+      double finalPayableAmount = double.parse(
+        (finalAmount - roundOffAmount).toStringAsFixed(2),
+      );
       final saleData = {
         'billNo': newBillNo,
         'soldAt': formatDate,
@@ -469,12 +427,12 @@ class SellListAfterScanController extends GetxController with CacheManager {
         'totalAmount': totalAmount,
         'discount': isDiscountGiven.value,
         'discountValue': discountValue.value,
-        'finalAmount': finalAmount,
+        'finalAmount': finalPayableAmount,
         'itemsCount': items.length,
-        'items': invoice.map((e) => e.toJson()).toList(),
+        'items': sellItems.map((e) => e.toJson()).toList(),
         'payment': paymentData,
       };
-
+      printInvoice.value = PrintInvoiceModel.fromJson(saleData);
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -533,40 +491,52 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 
   Map<String, dynamic> buildPaymentMap({
-    required String paymentMethod,
     required num totalAmount,
     required num cashPaid,
     required num upiPaid,
     required num cardPaid,
     required num creditPaid,
+    required num roundOffPaid,
   }) {
-    bool isPartial = paymentMethod == partialLabel;
+    int paymentCount = 0;
+    if (cashPaid > 0) paymentCount++;
+    if (upiPaid > 0) paymentCount++;
+    if (cardPaid > 0) paymentCount++;
+    if (creditPaid > 0) paymentCount++;
+    String type;
+    if (paymentCount > 1) {
+      type = "partial";
+    } else if (cashPaid > 0) {
+      type = "cash";
+    } else if (upiPaid > 0) {
+      type = "upi";
+    } else if (cardPaid > 0) {
+      type = "card";
+    } else if (creditPaid > 0) {
+      type = "credit";
+    } else {
+      type = "unknown";
+    }
+    bool isRoundOffApplied = roundOffPaid != 0;
 
     return {
-      "type": paymentMethod,
-      "isPartial": isPartial,
-      "cash":
-          (!isPartial && paymentMethod == cashLabel)
-              ? totalAmount
-              : (isPartial ? cashPaid : 0),
-      "upi":
-          (!isPartial && paymentMethod == onlineLabel)
-              ? totalAmount
-              : (isPartial ? upiPaid : 0),
-      "card":
-          (!isPartial && paymentMethod == cardLabel)
-              ? totalAmount
-              : (isPartial ? cardPaid : 0),
-      "credit": isPartial ? creditPaid : 0,
+      "type": type.capitalizeFirst,
+      "totalAmount": totalAmount,
+      "cash": cashPaid,
+      "upi": upiPaid,
+      "card": cardPaid,
+      "credit": creditPaid,
+      "roundOffAmount": roundOffPaid,
+      "isRoundOff": isRoundOffApplied,
     };
   }
 
-  List<PrintModel> getPrintReadyList() {
+  List<SellItem> getPrintReadyList() {
     for (int i = 0; i < productList.length; i++) {
       var p = productList[i];
-      int discount = int.parse(perProductDiscount[i].text);
-      printList.add(
-        PrintModel(
+      var discount = int.parse(perProductDiscount[i].text);
+      sellList.add(
+        SellItem(
           name: p.name,
           quantity: p.quantity,
           originalPrice: p.sellingPrice,
@@ -591,7 +561,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
         ),
       );
     }
-    return printList;
+    return sellList;
   }
 }
 

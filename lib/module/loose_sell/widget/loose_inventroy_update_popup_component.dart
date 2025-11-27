@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_divider.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/loose_sell/controller/loose_controller.dart';
 import '../../../common_widget/colors.dart';
@@ -30,7 +31,7 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
             Get.back();
           },
         ),
-        Divider(),
+        CommonDivider(),
         Row(
           children: [
             Flexible(
@@ -157,7 +158,7 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
                   controller.qtyClear();
                 },
               ),
-              Divider(),
+              CommonDivider(),
               Flexible(
                 child: CommonTextField(
                   label: 'Qauntity',

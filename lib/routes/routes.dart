@@ -1,6 +1,9 @@
 import 'package:get/get.dart';
 import 'package:inventory/module/invoice/binding/invoice_binding.dart';
+import 'package:inventory/module/invoice/view/barcode.dart';
 import 'package:inventory/module/invoice/view/invoice.dart';
+import 'package:inventory/module/order_complete/binding/order_binding.dart';
+import 'package:inventory/module/order_complete/view/order_view.dart';
 import 'package:inventory/module/revenue/view/revenue_detail_view.dart';
 import 'package:inventory/module/security/privacy_policy.dart';
 import 'package:inventory/module/security/term_and_condition.dart';
@@ -25,6 +28,7 @@ import '../module/inventory/binding/inventory_binding.dart';
 import '../module/inventory/view/inventory.dart';
 import '../module/inventorylist/binding/inventorylist_binding.dart';
 import '../module/inventorylist/view/inventroy_list.dart';
+import '../module/invoice/binding/barcode_binding.dart';
 import '../module/loose_sell/binding/loose_binding.dart';
 import '../module/loose_sell/view/loose_sell.dart';
 import '../module/out_of_stock/binding/out_of_stock_binding.dart';
@@ -54,6 +58,7 @@ import '../module/loose_category/view/loose_category.dart';
 import '../module/sell/binding/sell_list_after_scan_binding.dart';
 import '../module/unknown/view/unknown_route.dart';
 import '../module/user_profile/view/user_profile_view.dart';
+import 'route_name.dart';
 
 class AppRoutes {
   static final String initialRoute = AppRouteName.splash;
@@ -66,6 +71,11 @@ class AppRoutes {
     GetPage(name: AppRouteName.unknwonroute, page: () => UnknownRoute()),
     GetPage(name: AppRouteName.privacypolicy, page: () => PrivacyPolicy()),
     GetPage(name: AppRouteName.termandcodition, page: () => TermAndCondition()),
+    GetPage(
+      name: AppRouteName.orderView,
+      page: () => OrderView(),
+      binding: OrderBinding(),
+    ),
     GetPage(
       name: AppRouteName.bottomNavigation,
       page: () => BottomNavigation(),
@@ -137,6 +147,11 @@ class AppRoutes {
       name: AppRouteName.invoicePrintView,
       page: () => InvoicePrint(),
       binding: InvoiceBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.barcodePrintView,
+      page: () => BarcodeView(),
+      binding: BarcodeBinding(),
     ),
     GetPage(
       name: AppRouteName.nointernateConnection,
@@ -228,6 +243,9 @@ class AppRoutes {
       case AppRouteName.bottomNavigation:
         Get.offAllNamed(AppRouteName.bottomNavigation, arguments: data);
         break;
+      case AppRouteName.barcodePrintView:
+        Get.toNamed(AppRouteName.barcodePrintView, arguments: data);
+        break;
       case AppRouteName.splash:
         Get.toNamed(AppRouteName.splash, arguments: data);
         break;
@@ -295,42 +313,11 @@ class AppRoutes {
       case AppRouteName.revenueDetailView:
         Get.toNamed(AppRouteName.revenueDetailView, arguments: data);
         break;
+      case AppRouteName.orderView:
+        Get.offAllNamed(AppRouteName.orderView, arguments: data);
+        break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);
     }
   }
-}
-
-class AppRouteName {
-  static const String bottomNavigation = '/bottomNavigation';
-  static const String inventoryView = '/inventoryView';
-  static const String productDetailView = '/productDetailView';
-  static const String inventoryViewFormSell = '/inventoryViewFormSell';
-  static const String home = '/home';
-  static const String setting = '/setting';
-  static const String inventroyList = '/inventroyList';
-  static const String reports = '/reports';
-  static const String sell = '/sell';
-  static const String login = '/login';
-  static const String userProfile = '/userProfile';
-  static const String productView = '/productView';
-  static const String signup = '/signup';
-  static const String splash = '/splash';
-  static const String unknwonroute = '/unknwonroute';
-  static const String privacypolicy = '/privacypolicy';
-  static const String termandcodition = '/termandcodition';
-  static const String sellListAfterScan = '/sellListAfterScan';
-  static const String nointernateConnection = '/nointernateConnection';
-  static const String expense = '/expense';
-  static const String discount = '/discount';
-  static const String category = '/category';
-  static const String animalCategory = '/animalCategory';
-  static const String looseSell = '/looseSell';
-  static const String revenueView = '/revenueView';
-  static const String looseCategory = '/looseCategory';
-  static const String appsetting = '/appsetting';
-  static const String outOfStock = '/outOfStock';
-  static const String generateBarcode = '/generateBarcode';
-  static const String revenueDetailView = '/revenueDetailView';
-  static const String invoicePrintView = '/invoicePrintView';
 }

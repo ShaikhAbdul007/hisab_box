@@ -9,6 +9,7 @@ import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/helper.dart';
 import '../../../common_widget/search.dart';
+import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../controller/inventory_controller.dart';
 import '../widget/inventory_list_text.dart';

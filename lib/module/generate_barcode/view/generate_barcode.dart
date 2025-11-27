@@ -12,9 +12,7 @@ class GenerateBarcode extends GetView<GenerateBarcodeController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: 'Generate Barcode',
-      body: GenerateBarcodeComponent(
-        controller: controller,
-        categoryList: [], animalTypeList: []),
+      body: GenerateBarcodeComponent(controller: controller),
     );
   }
 }

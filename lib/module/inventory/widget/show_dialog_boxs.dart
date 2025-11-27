@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_dialogue.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
+import '../../../common_widget/common_divider.dart';
 import '../../../common_widget/common_popup_appbar.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/textstyle.dart';
@@ -22,7 +23,7 @@ void exisitngProductDialog({
       child: Column(
         children: [
           CommonPopupAppbar(label: '⚠️ Alert', onPressed: onPressed),
-          Divider(),
+          CommonDivider(endIndent: 0, indent: 0),
           Text(message, style: CustomTextStyle.customNato()),
         ],
       ),
@@ -99,12 +100,12 @@ void productNotWithScannedAvailableDialog(
             ],
           ),
           setHeight(height: 10),
-          CommonButton(
-            bgColor: AppColors.buttonGreenColor,
-            label: 'Manual Sell',
-            onTap: manualSellOnTap,
-          ),
-          setHeight(height: 10),
+          // CommonButton(
+          //   bgColor: AppColors.buttonGreenColor,
+          //   label: 'Manual Sell',
+          //   onTap: manualSellOnTap,
+          // ),
+          // setHeight(height: 10),
         ],
       ),
     ),
@@ -116,7 +117,7 @@ void productSavingDialog({
   required String label,
   required void Function() scanAgainOnTap,
   required void Function() scanccingDoneOnTap,
-  required void Function() manualSellOnTap,
+  // required void Function() manualSellOnTap,
 }) {
   commonDialogBox(
     context: context,
@@ -148,12 +149,12 @@ void productSavingDialog({
             ],
           ),
           setHeight(height: 10),
-          CommonButton(
-            bgColor: AppColors.buttonGreenColor,
-            label: 'Manual Sell',
-            onTap: manualSellOnTap,
-          ),
-          setHeight(height: 10),
+          // CommonButton(
+          //   bgColor: AppColors.buttonGreenColor,
+          //   label: 'Manual Sell',
+          //   onTap: manualSellOnTap,
+          // ),
+          // setHeight(height: 10),
         ],
       ),
     ),

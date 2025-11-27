@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_divider.dart';
 
 import 'colors.dart';
 import 'common_popup_appbar.dart';
@@ -25,7 +26,7 @@ void commonBottomSheet({
                   padding: const EdgeInsets.only(left: 18.0),
                   child: CommonPopupAppbar(label: label, onPressed: onPressed),
                 ),
-                Divider(),
+                CommonDivider(endIndent: 0, indent: 0),
                 child,
               ],
             ),

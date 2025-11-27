@@ -7,6 +7,7 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/helper.dart';
+import '../../../../routes/route_name.dart';
 import '../../../setting/model/user_model.dart';
 
 class SignupController extends GetxController with CacheManager {

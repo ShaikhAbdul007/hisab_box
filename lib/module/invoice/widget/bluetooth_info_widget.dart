@@ -5,6 +5,7 @@ import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_popup_appbar.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/textstyle.dart';
+import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 
 class BluetoothInfoWidget extends StatelessWidget {
@@ -15,13 +16,6 @@ class BluetoothInfoWidget extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CommonPopupAppbar(
-          label: 'Bluetooth Info',
-          onPressed: () {
-            Get.back();
-          },
-        ),
-        const Divider(),
         RichText(
           text: TextSpan(
             style: CustomTextStyle.customMontserrat(),

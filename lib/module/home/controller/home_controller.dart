@@ -9,7 +9,7 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/revenue/model/revenue_model.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
-import '../../../routes/routes.dart';
+import '../../../routes/route_name.dart';
 import '../../sell/model/sell_model.dart';
 import '../model/grid_model.dart';
 
@@ -25,7 +25,7 @@ class HomeController extends GetxController with CacheManager {
   RxBool isListLoading = false.obs;
   List<Map<String, dynamic>> chartData = [];
   final scrollController = ScrollController();
-  var sellsList = <BillModel>[].obs;
+  var sellsList = <SellsModel>[].obs;
 
   @override
   void onInit() {
@@ -93,7 +93,7 @@ class HomeController extends GetxController with CacheManager {
     return salesByBarcode.values.toList();
   }
 
-  Future<List<BillModel>> fetchRevenueList() async {
+  Future<List<SellsModel>> fetchRevenueList() async {
     try {
       final today = setFormateDate();
       final uid = _auth.currentUser?.uid;
@@ -107,15 +107,12 @@ class HomeController extends GetxController with CacheManager {
               .collection('sales')
               .where('soldAt', isEqualTo: today)
               .get();
-
-      // 🔹 Convert all docs to BillModel
-      final List<BillModel> bills =
+      final List<SellsModel> bills =
           snapshot.docs.map((doc) {
             final data = doc.data();
-            return BillModel.fromJson(data);
+            return SellsModel.fromJson(data);
           }).toList();
 
-      // Debug logs
       print('✅ Total Bills Fetched: ${bills.length}');
       if (bills.isNotEmpty) {
         print(
@@ -293,12 +290,12 @@ class HomeController extends GetxController with CacheManager {
 
   Future<void> getDashBoardList() async {
     lis = [
-      // CustomGridModel(
-      //   routeName: AppRouteName.generateBarcode,
-      //   label: 'Barcode',
-      //   icon: CupertinoIcons.barcode,
-      //   numbers: double.parse(looseStock.value.toString()),
-      // ),
+      CustomGridModel(
+        routeName: AppRouteName.generateBarcode,
+        label: 'Barcode',
+        icon: CupertinoIcons.barcode,
+        numbers: double.parse(looseStock.value.toString()),
+      ),
       CustomGridModel(
         routeName: AppRouteName.inventroyList,
         label: 'Total Products',

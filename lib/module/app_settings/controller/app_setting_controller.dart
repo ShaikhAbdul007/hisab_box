@@ -10,7 +10,7 @@ class AppSettingController extends GetxController with CacheManager {
     super.onInit();
   }
 
-  isInventoryScanSelectedValue() async {
+  void isInventoryScanSelectedValue() async {
     bool isInventoryScanSelecteds = await retrieveInventoryScan();
 
     isInventoryScanSelected.value = isInventoryScanSelecteds;

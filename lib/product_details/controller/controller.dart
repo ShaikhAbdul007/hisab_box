@@ -29,7 +29,7 @@ class ProductController extends GetxController with CacheManager {
   TextEditingController animalType = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController location = TextEditingController();
-  TextEditingController discount = TextEditingController();
+  TextEditingController discount = TextEditingController(text: '0');
   TextEditingController purchasePrice = TextEditingController();
   TextEditingController flavor = TextEditingController();
   TextEditingController weight = TextEditingController();
@@ -48,7 +48,7 @@ class ProductController extends GetxController with CacheManager {
   @override
   void onInit() async {
     dayDate.value = setFormateDate();
-    barcode.text = data;
+    barcode.text = data['barcode'];
     barcodeValue.value = barcode.text;
     getCategoryData();
     super.onInit();

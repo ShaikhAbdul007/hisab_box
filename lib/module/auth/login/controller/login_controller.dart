@@ -2,9 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/app_message.dart';
 
+import '../../../../helper/app_message.dart';
 import '../../../../helper/helper.dart';
+import '../../../../routes/route_name.dart';
 import '../../../../routes/routes.dart';
 
 class LoginController extends GetxController with CacheManager {
@@ -14,7 +15,7 @@ class LoginController extends GetxController with CacheManager {
   RxBool loginLoading = false.obs;
   RxBool obscureTextValue = true.obs;
 
-  setobscureTextValue() {
+  void setobscureTextValue() {
     obscureTextValue.value = !obscureTextValue.value;
   }
 

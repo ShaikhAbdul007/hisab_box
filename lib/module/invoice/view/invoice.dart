@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/module/invoice/controller/invoice_controller.dart';
 import '../../../common_widget/common_button.dart';
-import '../../../common_widget/common_dialogue.dart';
 import '../../../common_widget/size.dart';
+import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../widget/bluetooth_info_widget.dart';
 import '../widget/bluetooth_validate_widget.dart';
@@ -17,52 +19,64 @@ class InvoicePrint extends GetView<InvoiceController> {
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
-      appBarLabel: 'Print Invoice',
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            flex: 8,
-            child: InvoicePrinterView(
-              paymentMethod: controller.data['paymentMethod'],
-              onInitialized: (p0) => controller.setReceiptController(p0),
-              scannedProductDetails: controller.data['productList'],
+      appBarLabel: 'Invoice',
+      persistentFooterButtons: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Obx(
+              () => CommonButton(
+                bgColor: AppColors.deepPurple,
+                width: 180,
+                isLoading: controller.isShareReceiptLoading.value,
+                label: "Share",
+                onTap: () async {
+                  var res = await controller.shareReceiptAsPDF();
+                },
+              ),
             ),
-          ),
-          setHeight(height: 10),
-          Obx(
-            () => CommonButton(
-              isLoading: controller.isPrintingLoading.value,
-              label: "Print",
-              onTap: () async {
-                bool checkBluetooth =
-                    await controller.checkBluetoothConnectivity();
-                if (checkBluetooth == true) {
-                  if (controller.receiptController.value != null) {
-                    await printReceipt(
-                      rController: controller.receiptController.value!,
-                      context: context,
-                      paymentMethod: 'paymentMethod',
+            setWidth(width: 10),
+            Obx(
+              () => CommonButton(
+                width: 180,
+                isLoading: controller.isPrintingLoading.value,
+                label: "Print",
+                onTap: () async {
+                  bool checkBluetooth =
+                      await controller.checkBluetoothConnectivitys();
+                  if (checkBluetooth == true) {
+                    if (controller.receiptController.value != null) {
+                      await printReceipt(
+                        rController: controller.receiptController.value!,
+                        paymentMethod: 'paymentMethod',
+                      );
+                    }
+                  } else {
+                    commonBottomSheet(
+                      label: 'Bluetooth Info',
+                      onPressed: () {
+                        Get.back();
+                      },
+                      child: BluetoothValidateWidget(),
                     );
                   }
-                } else {
-                  commonDialogBox(
-                    context: context,
-                    child: BluetoothValidateWidget(),
-                  );
-                }
-              },
+                },
+              ),
             ),
-          ),
-          setHeight(height: 30),
-        ],
+          ],
+        ),
+      ],
+      body: InvoicePrinterView(
+        printInvoiceModel: controller.data,
+        paymentMethod: controller.data.payment.type ?? '',
+        onInitialized: (p0) => controller.setReceiptController(p0),
+        scannedProductDetails: controller.data.items,
       ),
     );
   }
 
   Future<void> printReceipt({
     required ReceiptController rController,
-    required BuildContext context,
     required String paymentMethod,
   }) async {
     controller.isPrintingLoading.value = true;
@@ -76,7 +90,13 @@ class InvoicePrint extends GetView<InvoiceController> {
       }
     } else {
       controller.isPrintingLoading.value = false;
-      commonDialogBox(context: context, child: BluetoothInfoWidget());
+      commonBottomSheet(
+        label: 'Bluetooth Info',
+        onPressed: () {
+          Get.back();
+        },
+        child: BluetoothInfoWidget(),
+      );
     }
   }
 }

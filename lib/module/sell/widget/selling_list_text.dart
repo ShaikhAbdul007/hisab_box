@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -256,7 +255,7 @@ class SellingListText extends StatelessWidget {
 }
 
 class RecentActivitySellingListText extends StatelessWidget {
-  final BillModel billModel;
+  final SellsModel billModel;
   const RecentActivitySellingListText({super.key, required this.billModel});
 
   @override
@@ -294,7 +293,7 @@ class RecentActivitySellingListText extends StatelessWidget {
                 ),
                 setHeight(height: 2),
                 Text(
-                  billModel.paymentMethod ?? '',
+                  billModel.payment?.type ?? '',
                   style: CustomTextStyle.customUbuntu(
                     color: AppColors.greyColor,
                   ),
@@ -337,14 +336,14 @@ class RecentActivitySellingListText extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      billModel.soldAt,
+                      billModel.soldAt ?? '',
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),
                     ),
                     setWidth(width: 10),
                     Text(
-                      billModel.time,
+                      billModel.time ?? '',
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),
@@ -366,7 +365,7 @@ class RecentActivitySellingListText extends StatelessWidget {
                 ),
                 RichText(
                   text: TextSpan(
-                    text: billModel.paymentMethod,
+                    text: billModel.payment?.type,
                     style: CustomTextStyle.customUbuntu(
                       color: AppColors.blackColor,
                       fontWeight: FontWeight.w600,

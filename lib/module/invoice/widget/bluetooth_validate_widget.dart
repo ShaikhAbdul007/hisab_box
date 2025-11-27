@@ -15,13 +15,6 @@ class BluetoothValidateWidget extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CommonPopupAppbar(
-          label: 'Bluetooth Info',
-          onPressed: () {
-            Get.back();
-          },
-        ),
-        Divider(),
         Text(
           'Bluetooth is off, please on it.',
           style: CustomTextStyle.customMontserrat(),

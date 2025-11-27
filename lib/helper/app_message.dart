@@ -1,4 +1,5 @@
-const String somethingWentMessage = "Something went wrong";
+const String somethingWentMessage =
+    "Something went wrong, please try again later";
 const String singUpSuccessFul = "Signup successful 🎉 You can now log in";
 const String loginSuccessFul =
     "Logged in successfully 🎉 Please wait while fecting your details";
@@ -22,7 +23,7 @@ const passwordMismatch = "Confirm password must be the same as your password.";
 const login = "Login";
 const signup = "Sign Up";
 const dontHaveAccount = "Don't have an account";
-const createAccount = "Create Account";
+const createAccount = "  Create Account";
 const createAccountSubtitle = "Enter valid information to create your account.";
 const loginSubtitle = "Enter your email and password to access your account.";
 const logout = "Log out successfully";
@@ -49,6 +50,7 @@ const emptyLooseCatagoryName = 'Enter the loose catagory name';
 const emptyLooseCatagoryUnit = 'Enter the unit';
 const emptyLooseCatagoryPrice = 'Enter the price';
 const saveButton = 'Save';
+const saveAndPrintButton = 'Save & Print';
 const expenseSaveSuccessMessage = 'Expense save successful';
 const discountSaveSuccessMessage = 'Discount percentage successful';
 const discountdeleteSuccessMessage = 'Discount is deleted successful';
@@ -64,3 +66,4 @@ const partialLabel = 'Partial';
 const customerCareNumber = '9768858160';
 const customerCareEmail = 'info@softwaresnip.com';
 const sellingProduct = 'Selling Product';
+const addCustomer = 'Add Customer';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/helper/app_message.dart';
+import '../../../routes/route_name.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
@@ -41,7 +41,7 @@ class PartailPaymentWidget extends StatelessWidget {
                 Spacer(),
                 Obx(
                   () => Text(
-                    'Remaining: ₹${controller.remainingAmount.value}',
+                    'Remaining: ₹${controller.remainingAmount.value.toStringAsFixed(2)}',
                     style: CustomTextStyle.customUbuntu(
                       fontSize: 16,
                       color:
@@ -57,6 +57,7 @@ class PartailPaymentWidget extends StatelessWidget {
           setHeight(height: 20),
           Obx(
             () => PartialpaymentWidget(
+              imageString: 'assets/cash.png',
               readOnly: controller.allEditable.value,
               inValid: controller.isAmountValidCheck.value,
               payOnTap: () {
@@ -65,7 +66,10 @@ class PartailPaymentWidget extends StatelessWidget {
               },
               onChangeds: (val) {
                 if (!controller.isAmountValid(val)) {
-                  showSnackBar(error: "Amount can't be greater than total!");
+                  showSnackBar(
+                    error:
+                        "Amount can't be greater than total or remaining amount!",
+                  );
                 }
               },
               label: 'Cash',
@@ -75,6 +79,7 @@ class PartailPaymentWidget extends StatelessWidget {
           setHeight(height: 10),
           Obx(
             () => PartialpaymentWidget(
+              imageString: 'assets/upiPayment.png',
               readOnly: controller.allEditable.value,
               inValid: controller.isAmountValidCheck.value,
               payOnTap: () {
@@ -83,7 +88,10 @@ class PartailPaymentWidget extends StatelessWidget {
               },
               onChangeds: (val) {
                 if (!controller.isAmountValid(val)) {
-                  showSnackBar(error: "Amount can't be greater than total!");
+                  showSnackBar(
+                    error:
+                        "Amount can't be greater than total or remaining amount!",
+                  );
                 }
               },
               label: 'UPI',
@@ -93,6 +101,7 @@ class PartailPaymentWidget extends StatelessWidget {
           setHeight(height: 10),
           Obx(
             () => PartialpaymentWidget(
+              imageString: 'assets/card.png',
               readOnly: controller.allEditable.value,
               inValid: controller.isAmountValidCheck.value,
               payOnTap: () {
@@ -101,10 +110,10 @@ class PartailPaymentWidget extends StatelessWidget {
               },
               onChangeds: (val) {
                 if (!controller.isAmountValid(val)) {
-                  showSnackBar(error: "Amount can't be greater than total!");
-                } else if (val.isEmpty) {
-                } else {
-                  //controller.updateRemainingAmount();
+                  showSnackBar(
+                    error:
+                        "Amount can't be greater than total or remaining amount!",
+                  );
                 }
               },
               label: 'Card',
@@ -114,6 +123,7 @@ class PartailPaymentWidget extends StatelessWidget {
           setHeight(height: 10),
           Obx(
             () => PartialpaymentWidget(
+              imageString: 'assets/creditamount.png',
               readOnly: controller.allEditable.value,
               inValid: controller.isAmountValidCheck.value,
               payOnTap: () {
@@ -122,11 +132,35 @@ class PartailPaymentWidget extends StatelessWidget {
               },
               onChangeds: (val) {
                 if (!controller.isAmountValid(val)) {
-                  showSnackBar(error: "Amount can't be greater than total!");
+                  showSnackBar(
+                    error:
+                        "Amount can't be greater than total or remaining amount!",
+                  );
                 }
               },
               label: 'Credit',
               textEditingController: controller.creditPaidController,
+            ),
+          ),
+          setHeight(height: 10),
+          Obx(
+            () => PartialpaymentWidget(
+              imageString: 'assets/roundoff.png',
+              readOnly: controller.allEditable.value,
+              inValid: controller.isAmountValidCheck.value,
+              payOnTap: () {
+                var amount = double.parse(
+                  controller.roundOffPaidController.text,
+                );
+                validationOnRemainingAmount(amount);
+              },
+              onChangeds: (val) {
+                if (!controller.isAmountValid(val)) {
+                  showSnackBar(error: "Amount can't be greater than total!");
+                }
+              },
+              label: 'Round Off',
+              textEditingController: controller.roundOffPaidController,
             ),
           ),
           setHeight(height: 20),
@@ -134,12 +168,12 @@ class PartailPaymentWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               CommonButton(
-                bgColor: AppColors.greenColorShade100,
-                textColor: AppColors.blackColor,
                 width: 150,
-                label: 'Edit',
+                label: 'Reset',
                 onTap: () async {
                   controller.allEditable.value = !controller.allEditable.value;
+                  controller.openPaymentDialog(controller.finalTotal.value);
+                  controller.clear();
                 },
               ),
               Obx(
@@ -155,9 +189,8 @@ class PartailPaymentWidget extends StatelessWidget {
                       );
                     } else {
                       controller.getPrintReadyList();
-                      await controller.saleConfirmAndPrintInvoice(
+                      await controller.saleConfirmed(
                         isLoading: controller.isPartailLoading,
-                        paymentMethod: partialLabel,
                       );
                       controller.clear();
                       Get.back();
@@ -190,6 +223,7 @@ class PartialpaymentWidget extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool inValid;
   final bool readOnly;
+  final String imageString;
   const PartialpaymentWidget({
     super.key,
     required this.label,
@@ -199,15 +233,20 @@ class PartialpaymentWidget extends StatelessWidget {
     this.validator,
     required this.inValid,
     required this.readOnly,
+    required this.imageString,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(Icons.payment),
+        Padding(
+          padding: const EdgeInsets.only(top: 28.0),
+          child: Image.asset(imageString, width: 30, height: 40),
+        ),
         Flexible(
           child: CommonTextField(
+            astraIsRequred: false,
             readOnly: readOnly,
             validator: validator,
             onChanged: onChangeds,
@@ -217,10 +256,13 @@ class PartialpaymentWidget extends StatelessWidget {
             controller: textEditingController,
           ),
         ),
-        CommonButton(
-          width: 50,
-          label: 'Pay',
-          onTap: inValid ? payOnTap : () {},
+        Padding(
+          padding: const EdgeInsets.only(top: 28.0),
+          child: CommonButton(
+            width: 70,
+            label: 'Pay',
+            onTap: inValid ? payOnTap : () {},
+          ),
         ),
         setWidth(width: 10),
       ],

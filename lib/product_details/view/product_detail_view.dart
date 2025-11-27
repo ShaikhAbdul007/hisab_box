@@ -1,19 +1,21 @@
+import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/helper/textstyle.dart';
-
 import '../../common_widget/colors.dart';
 import '../../common_widget/common_appbar.dart';
 import '../../common_widget/common_button.dart';
 import '../../common_widget/common_calender.dart';
 import '../../common_widget/common_dropdown.dart';
 import '../../common_widget/common_progressbar.dart';
-import '../../common_widget/common_switch.dart';
 import '../../common_widget/size.dart';
 import '../../common_widget/textfiled.dart';
 import '../../helper/app_message.dart';
 import '../../helper/helper.dart';
+import '../../routes/route_name.dart';
+import '../../routes/routes.dart';
 import '../controller/product_details_controller.dart';
 import '../widget/inventory_bottomsheep_component_text.dart';
 
@@ -22,18 +24,84 @@ class ProductDetailView extends GetView<ProductDetailsController> {
 
   @override
   Widget build(BuildContext context) {
-    print("Detail id: ${controller.data.name}");
     return CommonAppbar(
       isleadingButtonRequired: true,
       backgroundColor: AppColors.whiteColor,
-      firstActionChild: CommonButton(
-        width: 80,
-        label: 'Edit',
-        onTap: () {
-          controller.readOnly.value = !controller.readOnly.value;
-          controller.dropDownReadOnly.value =
-              !controller.dropDownReadOnly.value;
-        },
+      firstActionChild: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          InkWell(
+            onTap: () {
+              commonBottomSheet(
+                label: 'BarCode',
+                onPressed: () {
+                  Get.back();
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BarcodeWidget(
+                      barcode: Barcode.ean13(),
+                      data: controller.barcode.text,
+                      height: 50,
+                      width: 200,
+                      drawText: false,
+                    ),
+                    setHeight(height: 20),
+                    CommonButton(
+                      label: 'Generate Barcode',
+                      onTap: () {
+                        AppRoutes.navigateRoutes(
+                          routeName: AppRouteName.barcodePrintView,
+                          data: controller.data,
+                        );
+                      },
+                    ),
+                    setHeight(height: 100),
+                  ],
+                ),
+              );
+            },
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: AppColors.blackColor,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Icon(CupertinoIcons.barcode, color: AppColors.whiteColor),
+            ),
+          ),
+          setWidth(width: 10),
+          InkWell(
+            onTap: () {
+              controller.readOnly.value = !controller.readOnly.value;
+              controller.dropDownReadOnly.value =
+                  !controller.dropDownReadOnly.value;
+            },
+            child: Container(
+              width: 40,
+              height: 30,
+              decoration: BoxDecoration(
+                color: AppColors.blackColor,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Icon(
+                CupertinoIcons.square_pencil_fill,
+                color: AppColors.whiteColor,
+              ),
+            ),
+          ),
+
+          // CommonButton(
+          //   height: 30,
+          //   width: 70,
+          //   label: 'Edit',
+          //   onTap: () {
+          //
+          //   },
+          // ),
+        ],
       ),
       appBarLabel: 'Product Detail',
       body: Form(
@@ -116,6 +184,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                   ),
                                 )
                                 : CommonDropDown(
+                                  errorText: emptyCategory,
                                   enabled: controller.dropDownReadOnly.value,
                                   selectedDropDownItem: controller
                                       .getSelectedCategory(
@@ -139,6 +208,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                   ),
                                 )
                                 : CommonDropDown(
+                                  errorText: emptyAnimalCategory,
                                   enabled: controller.dropDownReadOnly.value,
                                   hintText: 'Animal Type',
                                   selectedDropDownItem: controller
@@ -182,6 +252,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                       ),
                       Flexible(
                         child: CommonDropDown(
+                          errorText: 'Please select',
                           enabled: controller.dropDownReadOnly.value,
                           selectedDropDownItem: controller.isLoose,
                           listItems: [true, false],

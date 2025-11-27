@@ -6,6 +6,7 @@ import 'package:inventory/routes/routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
+import '../../../routes/route_name.dart';
 import '../model/user_model.dart';
 
 class SettingController extends GetxController with CacheManager {

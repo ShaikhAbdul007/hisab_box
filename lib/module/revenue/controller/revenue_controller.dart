@@ -2,21 +2,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/set_format_date.dart';
-
 import '../../../helper/helper.dart';
-import '../../sell/model/sell_model.dart';
 import '../model/revenue_model.dart';
 
 class RevenueController extends GetxController {
   final _auth = FirebaseAuth.instance;
   RxBool isRevenueListLoading = false.obs;
-  var sellsList = <BillModel>[].obs;
+  var sellsList = <SellsModel>[].obs;
   RxString dayDate = ''.obs;
 
   @override
   void onInit() {
     dayDate.value = setFormateDate();
-    print(dayDate.value);
     setSellList();
     super.onInit();
   }
@@ -25,33 +22,12 @@ class RevenueController extends GetxController {
     sellsList.value = await fetchRevenueList();
   }
 
-  // Future<List<SaleModel>> fetchRevenue() async {
-  //   isRevenueListLoading.value = true;
-  //   final uid = _auth.currentUser?.uid;
-
-  //   if (uid == null) return [];
-
-  //   final snapshot =
-  //       await FirebaseFirestore.instance
-  //           .collection('users')
-  //           .doc(uid)
-  //           .collection('sales')
-  //           .orderBy('soldAt', descending: true)
-  //           .where('soldAt', isEqualTo: dayDate.value)
-  //           .get();
-  //   isRevenueListLoading.value = false;
-  //   return snapshot.docs.map((doc) {
-  //     return SaleModel.fromMap(doc.data());
-  //   }).toList();
-  // }
-
-  Future<List<BillModel>> fetchRevenueList() async {
+  Future<List<SellsModel>> fetchRevenueList() async {
     try {
       isRevenueListLoading.value = true;
       final uid = _auth.currentUser?.uid;
       if (uid == null) return [];
 
-      // 🔹 Fetch sales data from Firestore
       final snapshot =
           await FirebaseFirestore.instance
               .collection('users')
@@ -63,10 +39,10 @@ class RevenueController extends GetxController {
       isRevenueListLoading.value = false;
 
       // 🔹 Convert all docs to BillModel
-      final List<BillModel> bills =
+      final List<SellsModel> bills =
           snapshot.docs.map((doc) {
             final data = doc.data();
-            return BillModel.fromJson(data);
+            return SellsModel.fromJson(data);
           }).toList();
 
       // Debug logs

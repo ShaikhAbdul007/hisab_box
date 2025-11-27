@@ -32,7 +32,7 @@ import '../controller/inventory_controller.dart';
 //               controller.clear();
 //             },
 //           ),
-//           Divider(),
+//           CommonDivider(),
 //           Row(
 //             children: [
 //               Flexible(
@@ -221,7 +221,7 @@ import '../controller/inventory_controller.dart';
   //                 controller.qtyClear();
   //               },
   //             ),
-  //             Divider(),
+  //             CommonDivider(),
   //             Flexible(
   //               child: CommonTextField(
   //                 label: 'Qauntity',

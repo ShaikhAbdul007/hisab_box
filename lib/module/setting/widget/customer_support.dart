@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/helper/app_message.dart';
+import '../../../helper/app_message.dart';
+import '../../../routes/route_name.dart';
 
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
