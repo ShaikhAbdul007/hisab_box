@@ -8,11 +8,11 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_container.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
-import '../../../routes/route_name.dart';
 import 'package:inventory/module/loose_category/widget/loose_category_component.dart';
 import '../../../helper/textstyle.dart';
 import '../../../keys/keys.dart';
@@ -103,7 +103,8 @@ class LooseCategory extends GetView<LooseCategoryController> {
                   child: CommonTextField(
                     hintText: 'Item Name',
                     label: 'Item Name',
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    contentPadding:
+                        SymmetricPadding(horizontal: 10).getPadding(),
                     controller: controller.name,
                     validator: (val) {
                       if (val!.isEmpty) {
@@ -118,7 +119,8 @@ class LooseCategory extends GetView<LooseCategoryController> {
                   child: CommonTextField(
                     hintText: 'Flavor',
                     label: 'Flavor',
-                    contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                    contentPadding:
+                        SymmetricPadding(horizontal: 10).getPadding(),
                     controller: controller.flavor,
                     // validator: (val) {
                     //   if (val!.isEmpty) {
@@ -138,10 +140,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
                   child: CommonTextField(
                     hintText: 'Weight',
                     label: 'Weight',
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
+
                     controller: controller.weight,
                     validator: (val) {
                       if (val!.isEmpty) {
@@ -158,10 +157,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
                     hintText: 'Price',
                     label: 'Price',
                     inputLength: 5,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
+
                     controller: controller.price,
                     validator: (val) {
                       if (val!.isEmpty) {

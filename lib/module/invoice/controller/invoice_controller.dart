@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import '../../../cache_manager/cache_manager.dart';
+import '../../../helper/helper.dart';
 
 class InvoiceController extends GetxController
     with CacheManager, CommonBluetooth {
@@ -67,7 +68,7 @@ class InvoiceController extends GetxController
       }
       return receiptShared;
     } catch (e) {
-      print("PDF ERROR: $e");
+      customMessageOrErrorPrint(message: "PDF ERROR: $e");
       return false;
     } finally {
       isShareReceiptLoading.value = false;

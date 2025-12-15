@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
-import 'package:inventory/common_widget/common_nodatafound.dart';
-import 'package:inventory/common_widget/common_progressbar.dart';
 import '../controller/inventroy_controller.dart';
-import '../../../product_details/view/product_view.dart';
 
 void openInventoryBottomSheet({
   required GlobalKey<FormState> formkeys,
@@ -21,7 +17,7 @@ void openInventoryBottomSheet({
   );
 }
 
-openLooseInventoryBottomSheet({
+void openLooseInventoryBottomSheet({
   required GlobalKey<FormState> formkeys,
   required InventroyController controller,
 }) {

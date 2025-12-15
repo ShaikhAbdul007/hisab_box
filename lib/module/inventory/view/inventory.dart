@@ -1,9 +1,11 @@
-import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_progressbar.dart';
 import '../../../helper/helper.dart';
@@ -21,84 +23,86 @@ class InventoryView extends GetView<InventroyController> {
   @override
   Widget build(BuildContext context) {
     bool isloosedInventory = false;
+    isloosedInventory =
+        controller.flag == false && controller.navigate == 'loose';
     return PopScope(
       canPop: false,
-      child: AiBarcodeScanner(
-        appBarBuilder: (context, appController) {
-          isloosedInventory =
-              controller.flag == false && controller.navigate == 'loose';
-          return AppBar(
-            leading: InkWell(
-              onTap: () {
-                Get.back(result: true);
-              },
-              child: Icon(Icons.arrow_back),
-            ),
-            title: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isloosedInventory
-                      ? 'Loose Inventory'
-                      : (controller.flag == true
-                          ? 'Inventory'
-                          : 'Sell Product'),
-                  style: CustomTextStyle.customNato(fontSize: 20),
+      child: CommonAppbar(
+        backgroundColor: Colors.white,
+        appBarLabel:
+            isloosedInventory
+                ? 'Loose Inventory'
+                : (controller.flag == true ? 'Inventory' : 'Sell Product'),
+        body: ListView(
+          children: [
+            CustomPadding(
+              paddingOption: OnlyPadding(left: 18, top: 10),
+              child: Text(
+                controller.flag == true
+                    ? 'Scan product barcode to add the product.'
+                    : 'Scan product barcode to sell the product.',
+                style: CustomTextStyle.customOpenSans(
+                  fontSize: 17,
+                  color: AppColors.blackColor,
+                  letterSpacing: 1,
                 ),
-                Text(
-                  'Scan Product Barcode',
-                  style: CustomTextStyle.customMontserrat(
-                    fontSize: 18,
-                    color: AppColors.greyColor,
-                  ),
-                ),
-              ],
+              ),
             ),
-          );
-        },
-        galleryButtonType: GalleryButtonType.none,
-        controller: controller.mobileScannerController,
-        overlayConfig: const ScannerOverlayConfig(
-          borderColor: AppColors.whiteColor,
-          successColor: Colors.teal,
-          errorColor: AppColors.redColor,
-          borderRadius: 24,
-          cornerLength: 58,
-          animateOnError: true,
-        ),
+            Container(
+              height: 300.h,
+              width: 400.w,
+              margin: OnlyPadding(top: 100, right: 20, left: 20).getPadding(),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.blackColor, width: 5.w),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: MobileScanner(
+                controller: controller.mobileScannerController,
+                onDetect: (barcodes) async {
+                  if (barcodes.raw != null) {
+                    if (controller.flag == true) {
+                      await controller.stopCameraAfterDetect(barcodes);
+                      productInventory(
+                        barcodes,
+                        inventoryScanKey,
 
-        onDetect: (BarcodeCapture capture) async {
-          //  await controller.player!.setSource(AssetSource('assets/beepsound.mp3'));
-          if (controller.flag == true) {
-            productInventory(
-              capture,
-              inventoryScanKey,
-              context,
-              isloosedInventory,
-            );
-          } else if (isloosedInventory) {
-            var res = await controller.existingProductInfo(
-              controller.auth.currentUser!.uid,
-              controller.barcodeValue.value,
-            );
-            if (res.$1 == true) {
-            } else {
-              var barcode = await controller.fetchLooseProductByBarcode(
-                barcode: controller.barcodeValue.value,
-              );
-            }
-          } else {
-            sellInventory(capture, context, inventoryScanKey);
-          }
-        },
+                        isloosedInventory,
+                      );
+                    } else if (isloosedInventory) {
+                      String scannedValue = controller.barcodeValue.value;
+                      bool isURL =
+                          Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
+                      var res = await controller.existingProductInfo(
+                        controller.auth.currentUser!.uid,
+                        controller.barcodeValue.value,
+                      );
+                      if (res.$1 == true) {
+                      } else {
+                        var barcode = await controller
+                            .fetchLooseProductByBarcode(
+                              barcode: controller.barcodeValue.value,
+                            );
+                      }
+                    } else {
+                      await controller.stopCameraAfterDetect(barcodes);
+                      String scannedValue = controller.barcodeValue.value;
+                      sellInventory(barcodes, inventoryScanKey);
+                    }
+                  }
+                },
+
+                //// Ondetct end
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> sellInventory(
     BarcodeCapture barcodes,
-    BuildContext context,
+    // BuildContext context,
     GlobalKey<FormState> inventoryScanKey,
   ) async {
     await controller.stopCameraAfterDetect(barcodes);
@@ -114,7 +118,6 @@ class InventoryView extends GetView<InventroyController> {
           product: existproduct.$2,
           afterProductAdding: () {
             productSavingDialog(
-              context: context,
               label: 'Scanning Done, product added',
               // manualSellOnTap: () {
               //   Get.back();
@@ -138,7 +141,6 @@ class InventoryView extends GetView<InventroyController> {
                 Get.back();
                 openManualySell(inventoryScanKey: inventoryScanKey);
               },
-              context,
               '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
               scanAgainOnTap: () {
                 Get.back();
@@ -162,8 +164,7 @@ class InventoryView extends GetView<InventroyController> {
         );
       } else {
         productNotAvailableDialog(
-          context,
-          'Scanned product is not available in stock ',
+          label: 'Scanned product is not available in stock ',
           onTap: () {
             Get.back();
             controller.mobileScannerController.start();
@@ -172,8 +173,8 @@ class InventoryView extends GetView<InventroyController> {
       }
     } else {
       productNotAvailableDialog(
-        context,
-        "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
+        label:
+            "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
         onTap: () {
           Get.back();
           controller.mobileScannerController.start();
@@ -185,12 +186,12 @@ class InventoryView extends GetView<InventroyController> {
   Future<void> productInventory(
     BarcodeCapture barcodes,
     GlobalKey<FormState> inventoryScanKey,
-    BuildContext context,
+    // BuildContext context,
     bool isloosedInventory,
   ) async {
     await controller.stopCameraAfterDetect(barcodes);
     String scannedValue = controller.barcodeValue.value;
-    print('scannedValue is $scannedValue');
+    customMessageOrErrorPrint(message: 'scannedValue is $scannedValue');
     bool isURL = Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
     if (!isURL) {
       var exist = await controller.existingProductInfo(
@@ -222,8 +223,8 @@ class InventoryView extends GetView<InventroyController> {
       }
     } else {
       productNotAvailableDialog(
-        context,
-        "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
+        label:
+            "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
         onTap: () {
           Get.back();
           controller.mobileScannerController.start();
@@ -232,7 +233,7 @@ class InventoryView extends GetView<InventroyController> {
     }
   }
 
-  openManualySell({required GlobalKey<FormState> inventoryScanKey}) {
+  void openManualySell({required GlobalKey<FormState> inventoryScanKey}) {
     openManuallySellBottomSheet(
       onPressedOnTap: () {
         // controller.clear();

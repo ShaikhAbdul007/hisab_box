@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
+import '../../../common_widget/common_padding.dart';
 import '../../revenue/model/revenue_model.dart';
 import '../model/sell_model.dart';
 
@@ -17,7 +19,7 @@ class SellingListText extends StatelessWidget {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(5),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
       child: Row(
         children: [
           Container(
@@ -265,21 +267,21 @@ class RecentActivitySellingListText extends StatelessWidget {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(5),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
       child: Row(
         children: [
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 5),
-            height: 70,
-            width: 40,
+            margin: SymmetricPadding(horizontal: 5).getPadding(),
+            height: 70.h,
+            width: 40.w,
             decoration: BoxDecoration(
               color: AppColors.greyColorShade100,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(5),
-                bottomLeft: Radius.circular(5),
+                topLeft: Radius.circular(5.r),
+                bottomLeft: Radius.circular(5.r),
               ),
             ),
-            child: Icon(CupertinoIcons.cube, size: 30),
+            child: Icon(CupertinoIcons.cube, size: 30.sp),
           ),
           setWidth(width: 5),
           Expanded(
@@ -294,7 +296,7 @@ class RecentActivitySellingListText extends StatelessWidget {
                 setHeight(height: 2),
                 Text(
                   billModel.payment?.type ?? '',
-                  style: CustomTextStyle.customUbuntu(
+                  style: CustomTextStyle.customOpenSans(
                     color: AppColors.greyColor,
                   ),
                 ),
@@ -366,7 +368,7 @@ class RecentActivitySellingListText extends StatelessWidget {
                 RichText(
                   text: TextSpan(
                     text: billModel.payment?.type,
-                    style: CustomTextStyle.customUbuntu(
+                    style: CustomTextStyle.customOpenSans(
                       color: AppColors.blackColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,

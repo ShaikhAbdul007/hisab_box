@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/app_settings/controller/app_setting_controller.dart';
 import 'package:inventory/module/app_settings/widget/app_setting_text.dart';
@@ -29,7 +31,9 @@ class AppSettingView extends GetView<AppSettingController> {
                 onChanged: (v) {
                   controller.isInventoryScanSelected.value =
                       !controller.isInventoryScanSelected.value;
-                  print(controller.isInventoryScanSelected.value);
+                  customMessageOrErrorPrint(
+                    message: controller.isInventoryScanSelected.value,
+                  );
                   controller.saveInventoryScanValue(
                     controller.isInventoryScanSelected.value,
                   );
@@ -39,8 +43,8 @@ class AppSettingView extends GetView<AppSettingController> {
           ),
           setHeight(height: 10),
           AppSettingText(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 5),
+            child: CustomPadding(
+              paddingOption: SymmetricPadding(horizontal: 5),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -55,12 +59,12 @@ class AppSettingView extends GetView<AppSettingController> {
                         color: AppColors.blackColor,
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      height: 35,
-                      width: 40,
+                      height: 35.h,
+                      width: 40.w,
                       child: Icon(
                         CupertinoIcons.printer,
                         color: AppColors.whiteColor,
-                        size: 22,
+                        size: 22.sp,
                       ),
                     ),
                   ),

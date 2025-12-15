@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/home/controller/home_controller.dart';
@@ -39,13 +41,6 @@ class TabletScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: 'Home',
-      // firstActionChild: CommonContainer(
-      //   height: 50,
-      //   width: 50,
-      //   radius: 15,
-      //   color: AppColors.whiteColor,
-      //   child: Icon(Icons.notifications_none_outlined),
-      // ),
       isleadingButtonRequired: false,
       body: Obx(
         () =>
@@ -57,8 +52,10 @@ class TabletScreen extends StatelessWidget {
                     children: [
                       setHeight(height: 10),
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: 10),
-                        height: 220,
+                        decoration: BoxDecoration(
+                          color: AppColors.redColor,
+                          border: Border.all(),
+                        ),
                         child: GridView.builder(
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
@@ -67,6 +64,7 @@ class TabletScreen extends StatelessWidget {
                                 crossAxisSpacing: 3,
                                 mainAxisSpacing: 10,
                               ),
+
                           itemCount: controller.lis.length,
                           itemBuilder: (context, index) {
                             return InkWell(
@@ -91,19 +89,14 @@ class TabletScreen extends StatelessWidget {
                         ),
                       ),
 
-                      CommonDivider(
-                        color: AppColors.blackColor,
-                        endIndent: 25,
-                        indent: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                      CustomPadding(
+                        paddingOption: SymmetricPadding(horizontal: 15),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Recent Activity',
-                              style: CustomTextStyle.customUbuntu(
+                              style: CustomTextStyle.customOpenSans(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w300,
                               ),
@@ -133,7 +126,7 @@ class TabletScreen extends StatelessWidget {
                       ),
                       setHeight(height: 10),
                       SizedBox(
-                        height: 400,
+                        height: 400.h,
                         child:
                             controller.sellsList.isNotEmpty
                                 ? ListView.builder(
@@ -184,7 +177,7 @@ class DeskTopScreen extends StatelessWidget {
                     children: [
                       setHeight(height: 10),
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: 10),
+                        margin: SymmetricPadding(horizontal: 10).getPadding(),
                         height: 220,
                         child: GridView.builder(
                           gridDelegate:
@@ -222,14 +215,14 @@ class DeskTopScreen extends StatelessWidget {
                         endIndent: 25,
                         indent: 25,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                      CustomPadding(
+                        paddingOption: SymmetricPadding(horizontal: 15),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Recent Activity',
-                              style: CustomTextStyle.customUbuntu(
+                              style: CustomTextStyle.customOpenSans(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w300,
                               ),
@@ -259,7 +252,7 @@ class DeskTopScreen extends StatelessWidget {
                       ),
                       setHeight(height: 10),
                       SizedBox(
-                        height: 400,
+                        height: 400.h,
                         child:
                             controller.sellsList.isNotEmpty
                                 ? ListView.builder(
@@ -302,131 +295,110 @@ class MobileScreen extends StatelessWidget {
                   onRefresh: () {
                     return controller.getRevenveAndStock();
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  childAspectRatio: 3.5,
-                                  crossAxisSpacing: 0,
-                                  mainAxisSpacing: 10,
-                                ),
-                            itemCount: controller.lis.length,
-                            itemBuilder: (context, index) {
-                              return InkWell(
-                                onTap: () async {
-                                  if (controller.lis[index].routeName != null) {
-                                    AppRoutes.futureNavigationToRoute(
-                                      routeName:
-                                          controller.lis[index].routeName!,
-                                    );
-                                  }
-                                },
-                                child: HomeGridContainer(
-                                  customGridModel: controller.lis[index],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 10.0,
-                                    bottom: 5,
+                  child: CustomPadding(
+                    paddingOption: SymmetricPadding(horizontal: 10.0),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          setHeight(height: 5),
+                          SizedBox(
+                            height: 150.h,
+                            width: 500.w,
+                            child: GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 2.5,
+                                    crossAxisSpacing: 0,
+                                    mainAxisSpacing: 5,
                                   ),
-                                  child: Text(
-                                    'Quick Actions',
-                                    style: CustomTextStyle.customMontserrat(
-                                      fontSize: 17,
-                                      letterSpacing: 0.5,
-                                    ),
+                              itemCount: controller.lis.length,
+                              itemBuilder: (context, index) {
+                                return InkWell(
+                                  onTap: () async {
+                                    if (controller.lis[index].routeName !=
+                                        null) {
+                                      AppRoutes.futureNavigationToRoute(
+                                        routeName:
+                                            controller.lis[index].routeName!,
+                                      );
+                                    }
+                                  },
+                                  child: HomeGridContainer(
+                                    customGridModel: controller.lis[index],
                                   ),
-                                ),
-                                Row(
-                                  children: [
-                                    QuickActionComponent(
-                                      onTap: () {
-                                        AppRoutes.navigateRoutes(
-                                          routeName: AppRouteName.inventroyList,
-                                        );
-                                      },
-                                      contentColor: AppColors.blackColor,
-                                      bagGroundColor: AppColors.whiteColor,
-                                      label: 'Add Product',
-                                      icon: Icons.add,
-                                    ),
-                                    QuickActionComponent(
-                                      onTap: () async {
-                                        var res =
-                                            AppRoutes.futureNavigationToRoute(
-                                              routeName:
-                                                  AppRouteName.inventoryView,
-                                              data: {'flag': false},
-                                            );
-                                      },
-                                      label: 'Scan Product',
-                                      icon: CupertinoIcons.barcode_viewfinder,
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                );
+                              },
                             ),
                           ),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 10.0),
-                                child: Text(
-                                  'Recent Activites',
-                                  style: CustomTextStyle.customMontserrat(
-                                    fontSize: 17,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
+                          CustomPadding(
+                            paddingOption: OnlyPadding(left: 10.0, bottom: 5),
+                            child: Text(
+                              'Quick Actions',
+                              style: CustomTextStyle.customMontserrat(
+                                fontSize: 17,
+                                letterSpacing: 0.5,
                               ),
-                              Expanded(
-                                child:
-                                    controller.sellsList.isNotEmpty
-                                        ? ReportCommonContiner(
-                                          child: ListView.builder(
-                                            itemCount:
-                                                controller.sellsList.length,
-                                            itemBuilder: (context, index) {
-                                              var product =
-                                                  controller.sellsList[index];
-                                              return InkWell(
-                                                child: RevenueListText(
-                                                  billModel: product,
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        )
-                                        : CommonNodatafound(
-                                          message: 'No sell found',
-                                        ),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              QuickActionComponent(
+                                onTap: () {
+                                  AppRoutes.navigateRoutes(
+                                    routeName: AppRouteName.inventroyList,
+                                  );
+                                },
+                                contentColor: AppColors.blackColor,
+                                bagGroundColor: AppColors.whiteColor,
+                                label: 'Add Product',
+                                icon: Icons.add,
+                              ),
+                              QuickActionComponent(
+                                onTap: () async {
+                                  var res = AppRoutes.futureNavigationToRoute(
+                                    routeName: AppRouteName.inventoryView,
+                                    data: {'flag': false},
+                                  );
+                                },
+                                label: 'Scan Product',
+                                icon: CupertinoIcons.barcode_viewfinder,
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                          setHeight(height: 5),
+                          CustomPadding(
+                            paddingOption: OnlyPadding(left: 10.0),
+                            child: Text(
+                              'Recent Activites',
+                              style: CustomTextStyle.customMontserrat(
+                                fontSize: 17,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          controller.sellsList.isNotEmpty
+                              ? ReportCommonContiner(
+                                height: 400,
+                                width: 550,
+                                child: ListView.builder(
+                                  itemCount: controller.sellsList.length,
+                                  itemBuilder: (context, index) {
+                                    var product = controller.sellsList[index];
+                                    return InkWell(
+                                      child: RevenueListText(
+                                        //
+                                        // index: index,
+                                        billModel: product,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
+                              : CommonNodatafound(message: 'No sell found'),
+                        ],
+                      ),
                     ),
                   ),
                 ),

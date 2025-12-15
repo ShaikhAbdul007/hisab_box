@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../common_widget/colors.dart';
+import '../../../common_widget/common_padding.dart';
 import '../../../helper/textstyle.dart';
 
 class SettingItem extends StatelessWidget {
@@ -26,16 +27,18 @@ class SettingItem extends StatelessWidget {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(10),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      margin: SymmetricPadding(horizontal: 10, vertical: 5).getPadding(),
       child: ListTile(
         onTap: onTap,
         leading: leading ?? SizedBox(height: 0, width: 0),
         title: Text(label, style: CustomTextStyle.customPoppin()),
         subtitle: Text(
           subtitle,
-          style: CustomTextStyle.customRaleway(color: AppColors.greyColor),
+          style: CustomTextStyle.customRaleway(
+            color: AppColors.greyColor,
+            fontSize: 14,
+          ),
         ),
-        trailing: trailing ?? SizedBox(height: 0, width: 0),
       ),
     );
   }

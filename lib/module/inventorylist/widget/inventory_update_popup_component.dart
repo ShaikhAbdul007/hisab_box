@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:inventory/common_widget/common_dropdown.dart';
-import '../../../common_widget/common_button.dart';
-import '../../../common_widget/common_popup_appbar.dart';
-import '../../../common_widget/size.dart';
-import '../../../common_widget/textfiled.dart';
-import '../../../helper/app_message.dart';
-import '../../../helper/helper.dart';
-import '../../../keys/keys.dart';
-import '../controller/inventory_controller.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'package:inventory/common_widget/common_dropdown.dart';
+// import '../../../common_widget/common_button.dart';
+// import '../../../common_widget/common_popup_appbar.dart';
+// import '../../../common_widget/size.dart';
+// import '../../../common_widget/textfiled.dart';
+// import '../../../helper/app_message.dart';
+// import '../../../helper/helper.dart';
+// import '../../../keys/keys.dart';
+// import '../controller/inventory_controller.dart';
 
 // class InventoryUpdatePopupComponent extends StatelessWidget {
 //   final InventoryListController controller;

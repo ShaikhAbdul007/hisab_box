@@ -27,7 +27,7 @@ class InvoicePrint extends GetView<InvoiceController> {
             Obx(
               () => CommonButton(
                 bgColor: AppColors.deepPurple,
-                width: 180,
+                width: 150,
                 isLoading: controller.isShareReceiptLoading.value,
                 label: "Share",
                 onTap: () async {
@@ -38,7 +38,7 @@ class InvoicePrint extends GetView<InvoiceController> {
             setWidth(width: 10),
             Obx(
               () => CommonButton(
-                width: 180,
+                width: 150,
                 isLoading: controller.isPrintingLoading.value,
                 label: "Print",
                 onTap: () async {

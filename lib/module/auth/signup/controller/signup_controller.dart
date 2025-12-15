@@ -24,9 +24,9 @@ class SignupController extends GetxController with CacheManager {
   TextEditingController alternateMobileNo = TextEditingController();
   RxBool signUpLoading = false.obs;
   RxBool obscureTextValue = true.obs;
-  RxInt currentStepperIndex = 0.obs;
+  RxBool isShopDetailFilled = false.obs;
 
-  setobscureTextValue() {
+  void setobscureTextValue() {
     obscureTextValue.value = !obscureTextValue.value;
   }
 

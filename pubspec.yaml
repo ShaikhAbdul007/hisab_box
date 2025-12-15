@@ -52,21 +52,22 @@ dependencies:
   fl_chart: ^1.0.0
   excel: ^4.0.6
   file_picker: ^10.2.1
-  permission_handler: ^12.0.1
-  flutter_bluetooth_printer: ^2.19.0
+  flutter_bluetooth_printer: ^2.20.0
   upi_payment_qrcode_generator: ^1.6.0
   barcode_widget: ^2.0.4
   flutter_blue_plus: ^2.0.0
-  app_settings: ^6.1.1
+  app_settings: ^7.0.0
   audioplayers: ^6.5.1
-  ai_barcode_scanner: ^7.1.0
   animated_custom_dropdown: 3.1.1
   url_launcher: ^6.3.2
   share_plus: ^12.0.1
   path_provider: ^2.1.5
   pdf: ^3.11.3
-  smart_printer_flutter: ^0.2.0
   flutter_svg: ^2.2.3
+  open_file: ^3.5.10
+  flutter_screenutil: ^5.9.3
+  permission_handler: ^11.3.1
+  device_info_plus: ^12.3.0
 
 dev_dependencies:
   flutter_test:

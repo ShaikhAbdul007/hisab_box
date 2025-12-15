@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/common_widget/common_padding.dart';
+import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/order_complete/controller/order_controller.dart';
 
 import '../../../common_widget/colors.dart';
@@ -45,14 +49,14 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0),
+            CustomPadding(
+              paddingOption: OnlyPadding(left: 8.0),
               child: RichText(
                 text: TextSpan(
                   text: 'Mobile Number',
                   style: CustomTextStyle.customNato(
                     letterSpacing: 1,
-                    fontSize: 14,
+                    fontSize: 11,
                   ),
                   children: [
                     TextSpan(
@@ -65,20 +69,20 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
                 ),
               ),
             ),
+            setHeight(height: 5),
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 10),
+              margin: SymmetricPadding(horizontal: 10).getPadding(),
               decoration: BoxDecoration(
-                color: AppColors.greyColorShade100,
-                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.greyColor, width: 0.5.w),
+                borderRadius: BorderRadius.circular(10.r),
               ),
               child: TextFormField(
                 controller: textEditingController,
                 focusNode: focusNode,
                 autocorrect: true,
-                cursorHeight: 15,
+                cursorHeight: 14.sp,
                 cursorColor: AppColors.blackColor,
-                style: CustomTextStyle.customUbuntu(fontSize: 15),
-
+                style: CustomTextStyle.customOpenSans(fontSize: 15),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9s]')),
                   LengthLimitingTextInputFormatter(10),
@@ -93,13 +97,27 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
                   return null;
                 },
                 decoration: InputDecoration(
-                  contentPadding: EdgeInsets.only(top: 10, left: 15),
+                  contentPadding: OnlyPadding(top: 10, left: 15).getPadding(),
                   border: InputBorder.none,
                   hintText: 'Mobile No',
                   hintStyle: CustomTextStyle.customNato(
-                    fontSize: 13,
+                    fontSize: 11,
                     color: AppColors.greyColor,
                   ),
+                  // fillColor: AppColors.greyColorShade100,
+                  // filled: true,
+                  // errorBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: AppColors.greyColor),
+                  //   borderRadius: BorderRadius.circular(10.r),
+                  // ),
+                  // enabledBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: AppColors.greyColor),
+                  //   borderRadius: BorderRadius.circular(10.r),
+                  // ),
+                  // focusedBorder: OutlineInputBorder(
+                  //   borderSide: BorderSide(color: AppColors.greyColor),
+                  //   borderRadius: BorderRadius.circular(10.r),
+                  // ),
                   errorStyle: CustomTextStyle.customNato(
                     fontSize: 10,
                     color: AppColors.redColor,
@@ -107,7 +125,9 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
                 ),
                 onChanged: (val) {
                   controller.mobileNumber.text = val;
-                  print(controller.mobileNumber.text);
+                  customMessageOrErrorPrint(
+                    message: controller.mobileNumber.text,
+                  );
                 },
               ),
             ),
@@ -115,17 +135,17 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        return CustomPadding(
+          paddingOption: SymmetricPadding(horizontal: 16.0),
           child: Material(
             color: AppColors.greyColorShade100,
             elevation: 5,
             borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(10),
-              bottomRight: Radius.circular(10),
+              bottomLeft: Radius.circular(10.r),
+              bottomRight: Radius.circular(10.r),
             ),
             child: SizedBox(
-              height: 150,
+              height: 150.h,
               child: ListView.builder(
                 itemCount: options.length,
                 itemBuilder: (context, index) {
@@ -156,13 +176,13 @@ class CustomerDetailsMobileAutoCompleteOptionContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 700,
-      height: 40,
-      margin: const EdgeInsets.only(left: 5, bottom: 5, right: 5),
-      padding: const EdgeInsets.only(top: 5, left: 8.0, bottom: 5),
+      width: 700.w,
+      height: 40.h,
+      margin: OnlyPadding(left: 5, bottom: 5, right: 5, top: 8).getPadding(),
+      padding: OnlyPadding(top: 5, left: 8.0, bottom: 5).getPadding(),
       decoration: BoxDecoration(
         color: Colors.black12,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
       ),
       child: Text(mobile, style: CustomTextStyle.customMontserrat()),
     );

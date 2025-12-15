@@ -33,11 +33,11 @@ class LooseController extends GetxController with CacheManager {
     super.onInit();
   }
 
-  fetchLosseList() async {
+  void fetchLosseList() async {
     await fetchLooseProduct();
   }
 
-  isInventoryScanSelectedValue() async {
+  void isInventoryScanSelectedValue() async {
     bool isInventoryScanSelecteds = await retrieveInventoryScan();
     isInventoryScanSelected.value = isInventoryScanSelecteds;
   }
@@ -46,17 +46,20 @@ class LooseController extends GetxController with CacheManager {
     addSubtractQty.clear();
   }
 
-  searchProduct(String value) {
+  void searchProduct(String value) {
     searchText.value = value;
     searchController.text = searchText.value;
   }
 
-  setQuantitydata(int index) {
+  void setQuantitydata(int index) {
     sellingPrice.text = productList[index].sellingPrice.toString();
     updateQuantity.text = productList[index].quantity.toString();
   }
 
-  updateProductQuantity({required String barcode, required bool add}) async {
+  void updateProductQuantity({
+    required String barcode,
+    required bool add,
+  }) async {
     isSaveLoading.value = true;
     try {
       final now = DateTime.now();

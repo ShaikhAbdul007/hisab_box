@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/utils.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 
 import '../../../../common_widget/size.dart';
 import '../../../../common_widget/textfiled.dart';
@@ -34,6 +35,7 @@ class ShopDetails extends StatelessWidget {
           label: 'Email',
           controller: email,
           suffixIcon: Icon(CupertinoIcons.mail, size: 18),
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           validator: (emailValue) {
             if (emailValue!.isEmpty) {
               return emptyEmail;
@@ -45,12 +47,13 @@ class ShopDetails extends StatelessWidget {
             }
           },
         ),
-        setHeight(height: 10),
+        setHeight(height: 5),
         CommonTextField(
           hintText: 'Mobile No',
           label: 'Mobile No',
           controller: mobileNo,
           inputLength: 10,
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           keyboardType: TextInputType.number,
           suffixIcon: Icon(CupertinoIcons.phone, size: 18),
           validator: (mobileNo) {
@@ -63,8 +66,9 @@ class ShopDetails extends StatelessWidget {
             }
           },
         ),
-        setHeight(height: 10),
+        setHeight(height: 5),
         CommonTextField(
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           hintText: 'Alternate No',
           label: 'Alternate No',
           keyboardType: TextInputType.number,
@@ -72,12 +76,13 @@ class ShopDetails extends StatelessWidget {
           controller: alternateMobileNo,
           suffixIcon: Icon(CupertinoIcons.phone, size: 18),
         ),
-        setHeight(height: 10),
+        setHeight(height: 5),
         CommonTextField(
           obscureText: true,
           hintText: 'Password',
           label: 'Password',
           controller: password,
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           suffixIcon: Icon(CupertinoIcons.padlock, size: 18),
           validator: (passwordValue) {
             if (passwordValue!.isEmpty) {
@@ -89,8 +94,9 @@ class ShopDetails extends StatelessWidget {
             }
           },
         ),
-        setHeight(height: 10),
+        setHeight(height: 5),
         CommonTextField(
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           obscureText: obscureText,
           hintText: 'Confirm Password',
           label: 'Confirm Password',
@@ -109,100 +115,6 @@ class ShopDetails extends StatelessWidget {
               return shortPassword;
             } else if (password.text != confirmpassword.text) {
               return passwordMismatch;
-            } else {
-              return null;
-            }
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class ShopAddress extends StatelessWidget {
-  final TextEditingController shopName;
-  final TextEditingController address;
-  final TextEditingController city;
-  final TextEditingController state;
-  final TextEditingController pincode;
-
-  const ShopAddress({
-    super.key,
-    required this.shopName,
-    required this.address,
-    required this.city,
-    required this.state,
-    required this.pincode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CommonTextField(
-          hintText: 'Shop Name',
-          label: 'Shop Name',
-          controller: shopName,
-          suffixIcon: Icon(CupertinoIcons.person, size: 18),
-          validator: (shopNameValue) {
-            if (shopNameValue!.isEmpty) {
-              return emptyShopName;
-            } else {
-              return null;
-            }
-          },
-        ),
-        setHeight(height: 10),
-        CommonTextField(
-          hintText: 'Address',
-          label: 'Address',
-          controller: address,
-          suffixIcon: Icon(CupertinoIcons.location_solid, size: 18),
-          validator: (address) {
-            if (address!.isEmpty) {
-              return emptyAddress;
-            } else {
-              return null;
-            }
-          },
-        ),
-        setHeight(height: 10),
-        CommonTextField(
-          hintText: 'City',
-          label: 'City',
-          controller: city,
-          suffixIcon: Icon(CupertinoIcons.building_2_fill, size: 18),
-          validator: (city) {
-            if (city!.isEmpty) {
-              return emptyCity;
-            } else {
-              return null;
-            }
-          },
-        ),
-        setHeight(height: 10),
-        CommonTextField(
-          hintText: 'State',
-          label: 'State',
-          controller: state,
-          suffixIcon: Icon(Icons.business_outlined, size: 18),
-          validator: (state) {
-            if (state!.isEmpty) {
-              return emptyState;
-            } else {
-              return null;
-            }
-          },
-        ),
-        setHeight(height: 10),
-        CommonTextField(
-          hintText: 'Pincode',
-          label: 'Pincode',
-          controller: pincode,
-          suffixIcon: Icon(Icons.password, size: 18),
-          validator: (pincode) {
-            if (pincode!.isEmpty) {
-              return emptyPincode;
             } else {
               return null;
             }

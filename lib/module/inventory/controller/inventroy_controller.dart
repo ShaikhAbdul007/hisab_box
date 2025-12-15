@@ -44,12 +44,18 @@ class InventroyController extends GetxController with CacheManager {
     mobileScannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
       formats: [
-        BarcodeFormat.code128,
-        BarcodeFormat.code39,
-        BarcodeFormat.ean13,
-        BarcodeFormat.ean8,
-        BarcodeFormat.dataMatrix,
-        BarcodeFormat.codabar,
+        // BarcodeFormat.code128,
+        // BarcodeFormat.code39,
+        // BarcodeFormat.code93,
+        // BarcodeFormat.codabar,
+        // BarcodeFormat.ean13,
+        // BarcodeFormat.ean8,
+        // BarcodeFormat.aztec,
+        // BarcodeFormat.dataMatrix,
+        // BarcodeFormat.itf,
+        // BarcodeFormat.upcE,
+        // BarcodeFormat.pdf417,
+        BarcodeFormat.all,
       ],
     );
     player = AudioPlayer();
@@ -66,8 +72,10 @@ class InventroyController extends GetxController with CacheManager {
     fullLooseSellingList.addAll(fetchLooseInventorys);
     isfullLooseSellingListLoading.value = false;
     for (var lis in fullLooseSellingList) {
-      print('fullLooseSellingList is ${lis.name}');
-      print('fullLooseSellingList is ${lis.sellingPrice}');
+      customMessageOrErrorPrint(message: 'fullLooseSellingList is ${lis.name}');
+      customMessageOrErrorPrint(
+        message: 'fullLooseSellingList is ${lis.sellingPrice}',
+      );
     }
   }
 

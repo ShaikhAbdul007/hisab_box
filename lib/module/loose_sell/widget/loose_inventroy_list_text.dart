@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -25,7 +26,7 @@ class LooseInventroyListText extends StatelessWidget {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(5),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
       child: Row(
         children: [
           Container(
@@ -121,8 +122,8 @@ class LooseInventroyListText extends StatelessWidget {
                     isInventoryScanSelected
                         ? InkWell(
                           onTap: onTap,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 20.0),
+                          child: CustomPadding(
+                            paddingOption: OnlyPadding(right: 20.0),
                             child: Icon(CupertinoIcons.square_pencil),
                           ),
                         )

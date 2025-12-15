@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:inventory/module/sell/controller/sell_list_after_scan_controller.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_dropdown.dart';
+import '../../../common_widget/common_padding.dart';
 import '../../../common_widget/size.dart';
 import '../../../common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
@@ -34,7 +35,9 @@ class LooseSellBottomsheetComponent extends StatelessWidget {
                   return null;
                 }
               },
-              contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+              contentPadding:
+                  SymmetricPadding(horizontal: 5, vertical: 5).getPadding(),
+
               inputLength: 5,
               keyboardType: TextInputType.numberWithOptions(),
               hintText: 'Enter quantity',
@@ -60,7 +63,7 @@ class LooseSellBottomsheetComponent extends StatelessWidget {
                         int amot =
                             list[i].price * int.parse(controller.quantity.text);
                         controller.amount.text = amot.toString();
-                        print(v);
+                        customMessageOrErrorPrint(message: v);
                       }
                     }
                   },
@@ -76,10 +79,9 @@ class LooseSellBottomsheetComponent extends StatelessWidget {
                       return null;
                     }
                   },
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
-                  ),
+                  contentPadding:
+                      SymmetricPadding(horizontal: 5, vertical: 5).getPadding(),
+
                   inputLength: 5,
                   keyboardType: TextInputType.numberWithOptions(),
                   hintText: 'Amount',

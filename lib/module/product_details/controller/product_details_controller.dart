@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 
-import '../../helper/helper.dart';
-import '../../helper/set_format_date.dart';
-import '../../module/category/model/category_model.dart';
-import '../../module/inventory/model/product_model.dart';
+import '../../../helper/helper.dart';
+import '../../../helper/set_format_date.dart';
+import '../../category/model/category_model.dart';
+import '../../inventory/model/product_model.dart';
 
 class ProductDetailsController extends GetxController with CacheManager {
   final FirebaseAuth auth = FirebaseAuth.instance;
@@ -98,8 +98,8 @@ class ProductDetailsController extends GetxController with CacheManager {
       );
       var categoryName = categoryItem?.name ?? category.text;
       var animalCategoryName = animalCategoryItem?.name ?? animalType.text;
-      print(categoryName);
-      print(animalCategoryName);
+      customMessageOrErrorPrint(message: categoryName);
+      customMessageOrErrorPrint(message: animalCategoryName);
 
       final existingDoc = await productRef.get();
       int discounts = int.tryParse(discount.text) ?? 0;

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/helper.dart';
 
 import '../helper/app_message.dart';
 import '../helper/textstyle.dart';
@@ -31,13 +33,6 @@ class CommonAppbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Future<void> handleBack(BuildContext context) async {
-      if (onBack != null) {
-        await onBack!(context);
-      }
-      Get.back();
-    }
-
     return PopScope(
       canPop: false,
       // onPopInvokedWithResult: (didPop, backpop) async {
@@ -48,21 +43,21 @@ class CommonAppbar extends StatelessWidget {
       child: Scaffold(
         backgroundColor: backgroundColor ?? AppColors.greyColorShade100,
         persistentFooterButtons: persistentFooterButtons,
+        persistentFooterDecoration: BoxDecoration(),
         appBar: AppBar(
-          actionsPadding: EdgeInsets.only(right: 20),
+          actionsPadding: OnlyPadding(right: 20).getPadding(),
 
           actions: [
             firstActionChild ?? Container(),
             setWidth(width: 15),
             secondActionChild ?? Container(),
           ],
-
+          surfaceTintColor: AppColors.greyColorShade100,
           backgroundColor: AppColors.greyColorShade100,
           title: Text(
             appBarLabel,
-            style: CustomTextStyle.customNato(fontSize: 18),
+            style: CustomTextStyle.customNato(fontSize: 16),
           ),
-          //  automaticallyImplyLeading: true,
           leading:
               isleadingButtonRequired
                   ? IconButton(
@@ -74,7 +69,7 @@ class CommonAppbar extends StatelessWidget {
                           cacheProductList.isNotEmpty) {
                         cache.removeCartProductList();
                       }
-                      print('back pressed');
+                      customMessageOrErrorPrint(message: 'back pressed');
                       Get.back(result: true);
                     },
                     icon: Icon(CupertinoIcons.back),

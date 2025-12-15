@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
 import '../../inventory/model/product_model.dart';
@@ -28,13 +30,12 @@ class InventroyListText extends StatelessWidget {
             color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(5),
           ),
-          margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+          margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
           child: Row(
             children: [
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 5),
+                margin: SymmetricPadding(horizontal: 5).getPadding(),
                 decoration: BoxDecoration(
-                  color: AppColors.greyColorShade100,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(5),
                     bottomLeft: Radius.circular(5),
@@ -59,7 +60,7 @@ class InventroyListText extends StatelessWidget {
                         setHeight(height: 2),
                         Text(
                           inventoryModel.flavor ?? '',
-                          style: CustomTextStyle.customUbuntu(
+                          style: CustomTextStyle.customOpenSans(
                             color: AppColors.greyColor,
                           ),
                         ),
@@ -69,20 +70,20 @@ class InventroyListText extends StatelessWidget {
                           RichText(
                             text: TextSpan(
                               text: '${inventoryModel.animalType} ',
-                              style: CustomTextStyle.customUbuntu(
+                              style: CustomTextStyle.customOpenSans(
                                 color: AppColors.greyColor,
                               ),
                               children: [
                                 TextSpan(
                                   text: '${inventoryModel.weight} ',
-                                  style: CustomTextStyle.customUbuntu(
+                                  style: CustomTextStyle.customOpenSans(
                                     color: AppColors.greyColor,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 TextSpan(
                                   text: '${inventoryModel.category}  ',
-                                  style: CustomTextStyle.customUbuntu(
+                                  style: CustomTextStyle.customOpenSans(
                                     color: AppColors.greyColor,
                                   ),
                                 ),
@@ -92,7 +93,7 @@ class InventroyListText extends StatelessWidget {
                           inventoryModel.isLoosed ?? false
                               ? Text(
                                 'Loosed : ${inventoryModel.isLoosed}',
-                                style: CustomTextStyle.customUbuntu(
+                                style: CustomTextStyle.customOpenSans(
                                   color: AppColors.redColor,
                                 ),
                               )
@@ -104,19 +105,19 @@ class InventroyListText extends StatelessWidget {
                         children: [
                           Text(
                             inventoryModel.purchaseDate ?? '',
-                            style: CustomTextStyle.customUbuntu(
+                            style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
                           ),
                           Text(
                             ' - ',
-                            style: CustomTextStyle.customUbuntu(
+                            style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
                           ),
                           Text(
                             inventoryModel.expireDate ?? '',
-                            style: CustomTextStyle.customUbuntu(
+                            style: CustomTextStyle.customOpenSans(
                               color: AppColors.redColor,
                             ),
                           ),
@@ -127,25 +128,26 @@ class InventroyListText extends StatelessWidget {
                                   inventoryModel.quantity! < 10 ||
                               inventoryModel.quantity! == 0
                           ? Container(
-                            height: 25,
-                            width: 150,
-                            padding: EdgeInsets.symmetric(horizontal: 5),
+                            height: 25.h,
+                            width: 150.w,
+                            padding:
+                                SymmetricPadding(horizontal: 5).getPadding(),
                             decoration: BoxDecoration(
                               color: getColor(),
-                              borderRadius: BorderRadius.circular(5),
+                              borderRadius: BorderRadius.circular(5.r),
                             ),
                             child: Row(
                               spacing: 5,
                               children: [
                                 Icon(
                                   Icons.info,
-                                  size: 15,
+                                  size: 15.sp,
                                   color: AppColors.whiteColor,
                                 ),
                                 Expanded(
                                   child: Text(
                                     getText(),
-                                    style: CustomTextStyle.customUbuntu(
+                                    style: CustomTextStyle.customOpenSans(
                                       color: AppColors.whiteColor,
                                     ),
                                   ),
@@ -176,7 +178,7 @@ class InventroyListText extends StatelessWidget {
                     RichText(
                       text: TextSpan(
                         text: inventoryModel.quantity.toString(),
-                        style: CustomTextStyle.customUbuntu(
+                        style: CustomTextStyle.customOpenSans(
                           color: AppColors.blackColor,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -184,7 +186,7 @@ class InventroyListText extends StatelessWidget {
                         children: [
                           TextSpan(
                             text: ' in stock',
-                            style: CustomTextStyle.customUbuntu(
+                            style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
                           ),

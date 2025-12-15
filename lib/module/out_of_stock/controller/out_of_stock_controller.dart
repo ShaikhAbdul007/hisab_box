@@ -23,7 +23,7 @@ class OutOfStockController extends GetxController {
     searchText.value = '';
   }
 
-  searchProduct(String value) {
+  void searchProduct(String value) {
     searchText.value = value;
     searchController.text = searchText.value;
   }

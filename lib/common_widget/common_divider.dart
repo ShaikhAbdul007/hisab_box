@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 
 class CommonDivider extends StatelessWidget {
@@ -20,10 +21,10 @@ class CommonDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Divider(
-      indent: indent,
-      endIndent: endIndent,
-      height: height,
-      thickness: thickness,
+      indent: indent.sp,
+      endIndent: endIndent.sp,
+      height: height.h,
+      thickness: thickness.sp,
       color: color ?? AppColors.blackColor,
     );
   }

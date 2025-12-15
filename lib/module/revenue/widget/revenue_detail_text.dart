@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
 
+import '../../../common_widget/common_padding.dart';
 import '../model/revenue_model.dart';
 
 class RevenueDetailList extends StatelessWidget {
@@ -14,24 +16,13 @@ class RevenueDetailList extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(5.r),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
       child: Row(
         children: [
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 5),
-            height: 70,
-            width: 40,
-            decoration: BoxDecoration(
-              color: AppColors.greyColorShade100,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(5),
-                bottomLeft: Radius.circular(5),
-              ),
-            ),
-            child: Icon(CupertinoIcons.cube, size: 30),
-          ),
+          setWidth(width: 5),
+          Icon(CupertinoIcons.cube, size: 30.sp),
           setWidth(width: 5),
           Expanded(
             flex: 2,
@@ -45,7 +36,7 @@ class RevenueDetailList extends StatelessWidget {
                 setHeight(height: 2),
                 Text(
                   revenueModel.flavours ?? '',
-                  style: CustomTextStyle.customUbuntu(
+                  style: CustomTextStyle.customOpenSans(
                     color: AppColors.greyColor,
                   ),
                 ),
@@ -54,20 +45,20 @@ class RevenueDetailList extends StatelessWidget {
                     RichText(
                       text: TextSpan(
                         text: '${revenueModel.animalType} ',
-                        style: CustomTextStyle.customUbuntu(
+                        style: CustomTextStyle.customOpenSans(
                           color: AppColors.greyColor,
                         ),
                         children: [
                           TextSpan(
                             text: '${revenueModel.weight} ',
-                            style: CustomTextStyle.customUbuntu(
+                            style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           TextSpan(
                             text: '${revenueModel.category}  ',
-                            style: CustomTextStyle.customUbuntu(
+                            style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
                           ),
@@ -117,7 +108,7 @@ class RevenueDetailList extends StatelessWidget {
                 RichText(
                   text: TextSpan(
                     text: revenueModel.quantity.toString(),
-                    style: CustomTextStyle.customUbuntu(
+                    style: CustomTextStyle.customOpenSans(
                       color: AppColors.blackColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -125,7 +116,7 @@ class RevenueDetailList extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: ' at ${revenueModel.discount}%',
-                        style: CustomTextStyle.customUbuntu(
+                        style: CustomTextStyle.customOpenSans(
                           color: AppColors.deepPurple,
                         ),
                       ),

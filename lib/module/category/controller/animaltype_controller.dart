@@ -77,7 +77,7 @@ class AnimalTypeController extends GetxController with CacheManager {
           snapshot.docs
               .map((doc) => CategoryModel.fromJson(doc.data()))
               .toList();
-      saveAnimalCategoryModel(animalTypeList.value);
+      saveAnimalCategoryModel(animalTypeList);
     } on FirebaseException catch (e) {
       showMessage(message: e.toString());
     } finally {

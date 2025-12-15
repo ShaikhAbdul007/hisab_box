@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/reports/widget/report_common_continer.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_appbar.dart';
@@ -19,6 +20,39 @@ class RevenueView extends GetView<RevenueController> {
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
+      persistentFooterButtons: [
+        Obx(
+          () =>
+              controller.sellTotalAmount.value == 0.0
+                  ? Container()
+                  : RichText(
+                    text: TextSpan(
+                      text: 'Total',
+                      style: CustomTextStyle.customOpenSans(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 20,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: " : ",
+                          style: CustomTextStyle.customMontserrat(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '${controller.sellTotalAmount.value}',
+                          style: CustomTextStyle.customMontserrat(
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.greenColor,
+                            fontSize: 25,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+        ),
+        Container(width: 200),
+      ],
       appBarLabel: 'Sell',
       firstActionChild: Obx(
         () => InkWell(
@@ -46,27 +80,34 @@ class RevenueView extends GetView<RevenueController> {
           ),
         ),
       ),
-      body: Obx(
-        () =>
-            controller.isRevenueListLoading.value
-                ? CommonProgressbar(size: 50, color: AppColors.blackColor)
-                : controller.sellsList.isNotEmpty
-                ? ListView.builder(
-                  itemCount: controller.sellsList.length,
-                  itemBuilder: (context, index) {
-                    var data = controller.sellsList[index];
-                    return InkWell(
-                      onTap: () {
-                        AppRoutes.navigateRoutes(
-                          routeName: AppRouteName.revenueDetailView,
-                          data: data,
-                        );
-                      },
-                      child: RevenueListText(billModel: data),
-                    );
-                  },
-                )
-                : CommonNodatafound(message: 'No revenue found'),
+      body: ReportCommonContiner(
+        height: MediaQuery.sizeOf(context).height,
+        width: MediaQuery.sizeOf(context).width,
+        child: Obx(
+          () =>
+              controller.isRevenueListLoading.value
+                  ? CommonProgressbar(size: 50, color: AppColors.blackColor)
+                  : controller.sellsList.isNotEmpty
+                  ? ListView.builder(
+                    itemCount: controller.sellsList.length,
+                    itemBuilder: (context, index) {
+                      var data = controller.sellsList[index];
+                      return InkWell(
+                        onTap: () {
+                          AppRoutes.navigateRoutes(
+                            routeName: AppRouteName.revenueDetailView,
+                            data: data,
+                          );
+                        },
+                        child: RevenueListText(
+                          billModel: data,
+                          // index: index
+                        ),
+                      );
+                    },
+                  )
+                  : CommonNodatafound(message: 'No sell data found'),
+        ),
       ),
     );
   }

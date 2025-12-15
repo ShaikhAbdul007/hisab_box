@@ -1,8 +1,10 @@
 import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/helper/textstyle.dart';
 
 import 'colors.dart';
+import 'common_padding.dart';
 
 class CommonDropDown extends StatelessWidget {
   final List<dynamic> listItems;
@@ -27,12 +29,12 @@ class CommonDropDown extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 5),
+        CustomPadding(
+          paddingOption: OnlyPadding(left: 8.0, bottom: 5),
           child: RichText(
             text: TextSpan(
               text: hintText ?? '',
-              style: CustomTextStyle.customNato(letterSpacing: 1, fontSize: 14),
+              style: CustomTextStyle.customNato(letterSpacing: 1, fontSize: 10),
               children: [
                 TextSpan(
                   text: ' *',
@@ -43,11 +45,11 @@ class CommonDropDown extends StatelessWidget {
           ),
         ),
         Container(
-          margin: EdgeInsets.symmetric(horizontal: 10),
+          margin: SymmetricPadding(horizontal: 10).getPadding(),
           decoration: BoxDecoration(
             color: AppColors.greyColorShade100,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(width: 0.5, color: Colors.grey.shade100),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(color: AppColors.greyColor),
           ),
           child: CustomDropdown.search(
             enabled: enabled,
@@ -59,17 +61,13 @@ class CommonDropDown extends StatelessWidget {
                 fontSize: 10,
                 color: AppColors.redColor,
               ),
-              headerStyle: CustomTextStyle.customNato(
-                fontSize: 15,
-                color: AppColors.blackColor,
-              ),
             ),
             hintText: hintText,
             hintBuilder: (context, hintText, enabled) {
               return Text(
                 hintText,
                 style: CustomTextStyle.customNato(
-                  fontSize: 13,
+                  fontSize: 11,
                   color: AppColors.greyColor,
                 ),
               );
@@ -161,9 +159,9 @@ class CustomDropDown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10),
+      margin: SymmetricPadding(horizontal: 10).getPadding(),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(10.r),
         border: Border.all(width: 0.5, color: Colors.grey.shade100),
       ),
       child: DropdownButtonHideUnderline(
@@ -173,16 +171,17 @@ class CustomDropDown extends StatelessWidget {
             iconColor: AppColors.blackColor,
             filled: true,
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10.r),
               borderSide: BorderSide(color: Colors.transparent),
             ),
-            contentPadding: EdgeInsets.only(left: 10, right: 5, top: 15),
+            contentPadding:
+                OnlyPadding(left: 10, right: 5, top: 15).getPadding(),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10.r),
               borderSide: BorderSide(color: Colors.transparent),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(10.r),
               borderSide: BorderSide(color: Colors.transparent),
             ),
           ),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../common_widget/common_button.dart';
-import '../../../common_widget/common_popup_appbar.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
@@ -26,28 +24,28 @@ class BluetoothInfoWidget extends StatelessWidget {
               ),
               TextSpan(
                 text: '1. ',
-                style: CustomTextStyle.customUbuntu(
+                style: CustomTextStyle.customOpenSans(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               TextSpan(text: 'Go to Settings\n'),
               TextSpan(
                 text: '2. ',
-                style: CustomTextStyle.customUbuntu(
+                style: CustomTextStyle.customOpenSans(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               TextSpan(text: 'Click on App Settings\n'),
               TextSpan(
                 text: '3. ',
-                style: CustomTextStyle.customUbuntu(
+                style: CustomTextStyle.customOpenSans(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               TextSpan(text: 'Select Printer Option\n'),
               TextSpan(
                 text: '4. ',
-                style: CustomTextStyle.customUbuntu(
+                style: CustomTextStyle.customOpenSans(
                   fontWeight: FontWeight.bold,
                 ),
               ),

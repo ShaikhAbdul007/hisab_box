@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_radio_button.dart';
 import 'package:inventory/common_widget/size.dart';
 import '../../../common_widget/colors.dart';
@@ -44,15 +46,15 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
           ),
         ),
         persistentFooterButtons: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          CustomPadding(
+            paddingOption: SymmetricPadding(horizontal: 8.0),
             child: Column(
               children: [
                 controller.discountPerProduct.value
                     ? Row(
                       children: [
                         SizedBox(
-                          height: 50,
+                          height: 50.h,
                           width: MediaQuery.of(context).size.width / 1.5,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
@@ -60,7 +62,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                             itemBuilder: (context, index) {
                               var list = controller.discountList[index];
                               return SizedBox(
-                                width: 80,
+                                width: 80.w,
                                 child: Obx(
                                   () => DiscountRadioButton(
                                     label: list.label.toString(),
@@ -109,7 +111,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                         RichText(
                           text: TextSpan(
                             text: 'Actuall Price',
-                            style: CustomTextStyle.customUbuntu(
+                            style: CustomTextStyle.customOpenSans(
                               fontWeight: FontWeight.w500,
                               fontSize: 14,
                             ),
@@ -139,7 +141,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                           () => RichText(
                             text: TextSpan(
                               text: 'Total',
-                              style: CustomTextStyle.customUbuntu(
+                              style: CustomTextStyle.customOpenSans(
                                 fontWeight: FontWeight.w500,
                               ),
                               children: [

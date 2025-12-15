@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 
 class CommonContainer extends StatelessWidget {
@@ -23,12 +24,12 @@ class CommonContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: height,
-      width: width,
+      height: height.h,
+      width: width.w,
       padding: padding,
       margin: margin,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(radius.r),
         color: color ?? AppColors.whiteColor,
       ),
       child: child,

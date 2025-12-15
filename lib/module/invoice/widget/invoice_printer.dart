@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
+import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
 
 import '../../../common_widget/common_divider.dart';
 
@@ -24,6 +26,11 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
 
   @override
   Widget build(BuildContext context) {
+    final upiDetails = UPIDetails(
+      upiID: "UPI ID",
+      payeeName: "Payee Name",
+      amount: 1,
+    );
     var user = retrieveUserDetail();
     String userName =
         user.name?.isNotEmpty ?? false ? user.name!.substring(0, 1) : "HB";
@@ -81,7 +88,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                   ],
                 ),
-                setHeight(height: 5),
+                setHeight(height: 10),
                 CommonDivider(endIndent: 0, indent: 0),
                 setHeight(height: 10),
                 Flexible(
@@ -93,9 +100,9 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                   ),
                 ),
-                setHeight(height: 10),
+                setHeight(height: 20),
                 CommonDivider(endIndent: 0, indent: 0),
-
+                setHeight(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -177,6 +184,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 ),
                 setHeight(height: 10),
                 const CommonDivider(color: AppColors.blackColor),
+                setHeight(height: 10),
                 ...scannedProductDetails.map((item) {
                   discountPercentage = item.discount ?? 0;
                   total += (item.finalPrice ?? 0);
@@ -184,8 +192,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                       ((item.originalPrice ?? 0) * (item.quantity ?? 1)) -
                       (item.finalPrice ?? 0);
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10.0),
+                  return CustomPadding(
+                    paddingOption: OnlyPadding(bottom: 10.0),
                     child: Row(
                       children: [
                         Expanded(
@@ -261,35 +269,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                   );
                 }),
                 const CommonDivider(color: AppColors.blackColor),
-                // if (discountPercentage != 0.0) ...{
-                //   Row(
-                //     children: [
-                //       Expanded(
-                //         flex: 4,
-                //         child: Text(
-                //           "Discount",
-                //           style: CustomTextStyle.customMontserrat(
-                //             fontWeight: FontWeight.w500,
-                //             fontSize: 18,
-                //           ),
-                //         ),
-                //       ),
-                //       const Expanded(child: SizedBox()),
-                //       Expanded(
-                //         flex: 3,
-                //         child: Text(
-                //           '₹ $discountPercentage',
-                //           textAlign: TextAlign.right,
-                //           style: CustomTextStyle.customMontserrat(
-                //             fontWeight: FontWeight.bold,
-                //             fontSize: 20,
-                //           ),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                //   setHeight(height: 10),
-                // },
+
+                setHeight(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -316,15 +297,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                   ],
                 ),
+                setHeight(height: 10),
                 const CommonDivider(color: AppColors.blackColor),
-                // setHeight(height: 20),
-                // BarcodeWidget(
-                //   barcode: Barcode.qrCode(),
-                //   data: '',
-                //   height: 200,
-                //   width: 500,
-                //   drawText: false,
-                // ),
                 setHeight(height: 20),
                 Column(
                   children: [
@@ -389,6 +363,14 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                   ],
                 ),
+                setHeight(height: 20),
+
+                UPIPaymentQRCode(
+                  upiDetails: upiDetails,
+                  size: 200,
+                  embeddedImagePath: 'assets/images/logo.png',
+                  embeddedImageSize: const Size(60, 60),
+                ),
                 setHeight(height: 150),
               ],
             ),
@@ -409,7 +391,6 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
   @override
   Widget build(BuildContext context) {
     var user = retrieveUserDetail();
-
     return Receipt(
       defaultTextStyle: TextStyle(fontSize: 20),
       builder: (context) {
@@ -501,3 +482,34 @@ class BarcodeRichText extends StatelessWidget {
     );
   }
 }
+
+
+ // if (discountPercentage != 0.0) ...{
+                //   Row(
+                //     children: [
+                //       Expanded(
+                //         flex: 4,
+                //         child: Text(
+                //           "Discount",
+                //           style: CustomTextStyle.customMontserrat(
+                //             fontWeight: FontWeight.w500,
+                //             fontSize: 18,
+                //           ),
+                //         ),
+                //       ),
+                //       const Expanded(child: SizedBox()),
+                //       Expanded(
+                //         flex: 3,
+                //         child: Text(
+                //           '₹ $discountPercentage',
+                //           textAlign: TextAlign.right,
+                //           style: CustomTextStyle.customMontserrat(
+                //             fontWeight: FontWeight.bold,
+                //             fontSize: 20,
+                //           ),
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                //   setHeight(height: 10),
+                // },

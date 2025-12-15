@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/module/out_of_stock/controller/out_of_stock_controller.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_nodatafound.dart';
@@ -28,8 +29,8 @@ class OutOfStockView extends GetView<OutOfStockController> {
                     setHeight(height: 10),
                     Expanded(
                       flex: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: CustomPadding(
+                        paddingOption: SymmetricPadding(horizontal: 12),
                         child: CommonSearch(
                           icon: Obx(
                             () => InkWell(

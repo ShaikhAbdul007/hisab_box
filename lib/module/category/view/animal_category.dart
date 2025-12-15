@@ -7,6 +7,7 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/module/category/controller/animaltype_controller.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_progressbar.dart';
@@ -128,7 +129,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
             CommonTextField(
               hintText: 'Animal Category',
               label: 'Animal Category',
-              contentPadding: EdgeInsets.symmetric(horizontal: 10),
+              contentPadding: SymmetricPadding(horizontal: 10).getPadding(),
               controller: controller.animalCategory,
               validator: (val) {
                 if (val!.isEmpty) {

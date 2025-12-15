@@ -1,17 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/common_switch.dart';
 import 'package:inventory/helper/helper.dart';
-import '../../common_widget/common_button.dart';
-import '../../common_widget/common_calender.dart';
-import '../../common_widget/common_dropdown.dart';
-import '../../common_widget/size.dart';
-import '../../common_widget/textfiled.dart';
-import '../../helper/app_message.dart';
+import '../../../common_widget/common_button.dart';
+import '../../../common_widget/common_calender.dart';
+import '../../../common_widget/common_dropdown.dart';
+import '../../../common_widget/common_padding.dart';
+import '../../../common_widget/size.dart';
+import '../../../common_widget/textfiled.dart';
+import '../../../helper/app_message.dart';
 import '../controller/controller.dart';
 import '../widget/inventory_bottomsheep_component_text.dart';
 
@@ -34,8 +36,8 @@ class ProductView extends GetView<ProductController> {
   Widget productWidget(BuildContext context, GlobalKey<FormState> formkeys) {
     return Form(
       key: controller.inventoryScanKey,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: CustomPadding(
+        paddingOption: SymmetricPadding(horizontal: 10.0),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -70,7 +72,7 @@ class ProductView extends GetView<ProductController> {
                               )
                               : CommonDropDown(
                                 errorText: emptyCategory,
-                                listItems: controller.categoryList.value,
+                                listItems: controller.categoryList,
                                 hintText: 'Select Category',
                                 notifyParent: (val) {
                                   controller.category.text = val.id;
@@ -90,7 +92,7 @@ class ProductView extends GetView<ProductController> {
                               : CommonDropDown(
                                 errorText: emptyAnimalCategory,
                                 hintText: 'Animal Type',
-                                listItems: controller.animalTypeList.value,
+                                listItems: controller.animalTypeList,
                                 notifyParent: (val) {
                                   controller.animalType.text = val.id;
                                 },
@@ -110,10 +112,11 @@ class ProductView extends GetView<ProductController> {
                           return null;
                         }
                       },
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
                       inputLength: 5,
                       keyboardType: TextInputType.number,
                       hintText: 'Enter stock',
@@ -128,7 +131,9 @@ class ProductView extends GetView<ProductController> {
                       hintText: 'Select isLoose',
                       notifyParent: (val) {
                         controller.isLoose = val;
-                        print(' controller.isLoose ${controller.isLoose}');
+                        customMessageOrErrorPrint(
+                          message: ' controller.isLoose ${controller.isLoose}',
+                        );
                       },
                     ),
                   ),
@@ -213,10 +218,11 @@ class ProductView extends GetView<ProductController> {
                           return null;
                         }
                       },
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
                       hintText: 'dd-MM-yyyy',
                       label: 'Purchase Date',
                       controller: controller.purchaseDate,
@@ -246,10 +252,11 @@ class ProductView extends GetView<ProductController> {
                           return null;
                         }
                       },
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
 
                       hintText: 'dd-MM-yyyy',
                       label: 'Expire Date',
@@ -286,8 +293,8 @@ class ProductView extends GetView<ProductController> {
                         : Container(),
               ),
               Obx(
-                () => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                () => CustomPadding(
+                  paddingOption: SymmetricPadding(horizontal: 15.0),
                   child: CommonSwitch(
                     labelSize: 12,
                     label: "Flavor & Weight Required",
@@ -327,7 +334,7 @@ class ProductView extends GetView<ProductController> {
       key: formkeys,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        spacing: 10,
+        spacing: 10.h,
         children: [
           InventoryBottomsheetComponentText(
             readOnly1: true,

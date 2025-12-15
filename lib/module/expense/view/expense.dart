@@ -7,11 +7,11 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_dialogue.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
-import '../../../routes/route_name.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/expense/controller/expense_controller.dart';
 import '../../../keys/keys.dart';
@@ -55,15 +55,15 @@ class Expense extends GetView<ExpenseController> {
   ) {
     commonDialogBox(
       context: context,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      child: CustomPadding(
+        paddingOption: AllPadding(all: 16.0),
         child: Form(
           key: expenseKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              CustomPadding(
+                paddingOption: SymmetricPadding(horizontal: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -87,7 +87,7 @@ class Expense extends GetView<ExpenseController> {
               SizedBox(
                 height: 50,
                 child: CommonTextField(
-                  contentPadding: EdgeInsets.only(bottom: 5, left: 10),
+                  contentPadding: OnlyPadding(bottom: 5, left: 10).getPadding(),
                   hintText: 'Name',
                   label: 'Name',
                   controller: controller.expensionName,
@@ -103,7 +103,7 @@ class Expense extends GetView<ExpenseController> {
               SizedBox(
                 height: 50,
                 child: CommonTextField(
-                  contentPadding: EdgeInsets.only(bottom: 5, left: 10),
+                  contentPadding: OnlyPadding(bottom: 5, left: 10).getPadding(),
                   hintText: 'Amount',
                   label: 'Amount',
                   keyboardType: TextInputType.number,
@@ -121,7 +121,7 @@ class Expense extends GetView<ExpenseController> {
               SizedBox(
                 height: 50,
                 child: CommonTextField(
-                  contentPadding: EdgeInsets.only(bottom: 5, left: 10),
+                  contentPadding: OnlyPadding(bottom: 5, left: 10).getPadding(),
                   hintText: 'Notes',
                   label: 'Notes',
                   controller: controller.notes,

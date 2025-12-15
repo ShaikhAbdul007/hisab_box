@@ -10,6 +10,7 @@ import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_divider.dart';
+import '../../../common_widget/common_padding.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
@@ -24,36 +25,42 @@ class SettingView extends GetView<SettingController> {
     return CommonAppbar(
       appBarLabel: 'Settings',
       isleadingButtonRequired: false,
-      body: ListView(
-        children: [
-          Obx(
-            () => SettingItem(
-              onTap: () {
-                AppRoutes.navigateRoutes(routeName: AppRouteName.userProfile);
-              },
-              subtitleReq: true,
-              label: controller.storeName.value,
-              subtitle: controller.email.value,
-              leading: CircleAvatar(
-                backgroundColor: AppColors.blackColor,
-                radius: 25,
-                child: Text(
-                  controller.storeName.value.isNotEmpty
-                      ? controller.storeName.value.substring(0, 1)
-                      : 'H',
-                  style: CustomTextStyle.customRaleway(
-                    fontSize: 25,
-                    color: AppColors.whiteColor,
+      body: CustomPadding(
+        paddingOption: SymmetricPadding(horizontal: 15),
+        child: ListView(
+          children: [
+            Obx(
+              () => CommonContainer(
+                height: 80,
+                child: SettingItem(
+                  onTap: () {
+                    AppRoutes.navigateRoutes(
+                      routeName: AppRouteName.userProfile,
+                    );
+                  },
+                  subtitleReq: true,
+                  label: controller.storeName.value,
+                  subtitle: controller.email.value,
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.blackColor,
+                    radius: 25,
+                    child: Text(
+                      controller.storeName.value.isNotEmpty
+                          ? controller.storeName.value.substring(0, 1)
+                          : 'H',
+                      style: CustomTextStyle.customRaleway(
+                        fontSize: 25,
+                        color: AppColors.whiteColor,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          setHeight(height: 10),
-          CommonContainer(
-            height: 165,
-            margin: EdgeInsets.symmetric(horizontal: 15),
-            child: SingleChildScrollView(
+            setHeight(height: 5),
+            CommonContainer(
+              height: 170,
+
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -92,12 +99,10 @@ class SettingView extends GetView<SettingController> {
                 ],
               ),
             ),
-          ),
-          setHeight(height: 10),
-          CommonContainer(
-            height: 165,
-            margin: EdgeInsets.symmetric(horizontal: 15),
-            child: SingleChildScrollView(
+            setHeight(height: 5),
+            CommonContainer(
+              height: 170,
+
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -115,7 +120,7 @@ class SettingView extends GetView<SettingController> {
                   SettingItem(
                     label: 'Support',
                     subtitle: 'Get help & support',
-                    leading: SettingIconContainer(icon: CupertinoIcons.bag),
+                    leading: SettingIconContainer(icon: Icons.support_agent),
                     onTap: () {
                       commonBottomSheet(
                         label: ' Customer Support',
@@ -132,12 +137,9 @@ class SettingView extends GetView<SettingController> {
                 ],
               ),
             ),
-          ),
-          setHeight(height: 10),
-          CommonContainer(
-            height: 165,
-            margin: EdgeInsets.symmetric(horizontal: 15),
-            child: SingleChildScrollView(
+            setHeight(height: 5),
+            CommonContainer(
+              height: 170,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -165,17 +167,21 @@ class SettingView extends GetView<SettingController> {
                 ],
               ),
             ),
-          ),
-          setHeight(height: 10),
-          SettingItem(
-            onTap: () async {
-              logoutDialog();
-            },
-            label: 'Log Out',
-            subtitle: 'Sign out from your account',
-            leading: SettingIconContainer(icon: CupertinoIcons.power),
-          ),
-        ],
+            setHeight(height: 5),
+            CommonContainer(
+              height: 80,
+              child: SettingItem(
+                onTap: () async {
+                  logoutDialog();
+                },
+                label: 'Log Out',
+                subtitle: 'Sign out from your account',
+                leading: SettingIconContainer(icon: CupertinoIcons.power),
+              ),
+            ),
+            setHeight(height: 5),
+          ],
+        ),
       ),
     );
   }
@@ -188,8 +194,8 @@ class SettingView extends GetView<SettingController> {
       barrierDismissible: false,
       content: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5),
+          CustomPadding(
+            paddingOption: SymmetricPadding(horizontal: 5),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,

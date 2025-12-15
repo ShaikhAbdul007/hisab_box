@@ -7,8 +7,8 @@ import 'package:inventory/module/order_complete/view/order_view.dart';
 import 'package:inventory/module/revenue/view/revenue_detail_view.dart';
 import 'package:inventory/module/security/privacy_policy.dart';
 import 'package:inventory/module/security/term_and_condition.dart';
-import 'package:inventory/product_details/binding/product_details_binding.dart';
-import 'package:inventory/product_details/view/product_detail_view.dart';
+import 'package:inventory/module/product_details/binding/product_details_binding.dart';
+import 'package:inventory/module/product_details/view/product_detail_view.dart';
 import '../module/app_settings/binding/app_setting_binding.dart';
 import '../module/app_settings/view/app_setting_view.dart';
 import '../module/auth/login/binding/login_binding.dart';
@@ -44,8 +44,8 @@ import '../module/setting/binding/setting_binding.dart';
 import '../module/setting/view/setting.dart';
 import '../module/unknown/view/nointernate_connection.dart';
 import '../module/user_profile/binding/user_profile_bindings.dart';
-import '../product_details/binding/product_binding.dart';
-import '../product_details/view/product_view.dart';
+import '../module/product_details/binding/product_binding.dart';
+import '../module/product_details/view/product_view.dart';
 import '../module/bottom_navigation/binding/bottom_navigation_binding.dart';
 import '../module/bottom_navigation/view/bottom_navigation.dart';
 import '../module/discount/binding/discount_binding.dart';
@@ -187,6 +187,7 @@ class AppRoutes {
       page: () => RevenueView(),
       binding: RevenueBinding(),
     ),
+    // GetPage(name: AppRouteName.shopDetailView, page: () => ShopDetailsView()),
     GetPage(
       name: AppRouteName.revenueDetailView,
       page: () => RevenueDetailView(),
@@ -304,6 +305,9 @@ class AppRoutes {
       case AppRouteName.termandcodition:
         Get.toNamed(AppRouteName.termandcodition, arguments: data);
         break;
+      // case AppRouteName.shopDetailView:
+      //   Get.toNamed(AppRouteName.shopDetailView, arguments: data);
+      //   break;
       case AppRouteName.userProfile:
         Get.toNamed(AppRouteName.userProfile, arguments: data);
         break;

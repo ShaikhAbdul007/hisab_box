@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 
 import '../../../common_widget/colors.dart';
@@ -13,13 +15,13 @@ class OutStockScrollContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
-      padding: EdgeInsets.symmetric(horizontal: 5),
+      width: 150.w,
+      padding: SymmetricPadding(horizontal: 5).getPadding(),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(5),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      margin: SymmetricPadding(horizontal: 10, vertical: 5).getPadding(),
       child: Row(
         children: [
           Column(
@@ -57,8 +59,8 @@ class OutStockScrollContainer extends StatelessWidget {
                 ],
               ),
               setHeight(height: 5),
-              Padding(
-                padding: const EdgeInsets.only(right: 15.0),
+              CustomPadding(
+                paddingOption: OnlyPadding(right: 15.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

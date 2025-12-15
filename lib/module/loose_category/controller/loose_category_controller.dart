@@ -191,7 +191,7 @@ class LooseCategoryController extends GetxController {
     }
   }
 
-  clear() {
+  void clear() {
     name.clear();
     weight.clear();
     price.clear();

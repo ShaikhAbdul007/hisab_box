@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../common_widget/colors.dart';
 
 class SettingIconContainer extends StatelessWidget {
@@ -8,13 +9,13 @@ class SettingIconContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40,
-      width: 40,
+      height: 40.h,
+      width: 40.w,
       decoration: BoxDecoration(
         color: AppColors.blackColor,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(15.r),
       ),
-      child: Icon(icon, color: AppColors.whiteColor, size: 20),
+      child: Icon(icon, color: AppColors.whiteColor),
     );
   }
 }

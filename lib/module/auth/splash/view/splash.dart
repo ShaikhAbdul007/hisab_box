@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/auth/splash/controller/splash_controller.dart';
@@ -30,11 +31,11 @@ class SplashView extends GetView<SplashController> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20),
+          CustomPadding(
+            paddingOption: OnlyPadding(bottom: 20),
             child: Text(
               'App version: 1.0.0',
-              style: CustomTextStyle.customUbuntu(),
+              style: CustomTextStyle.customOpenSans(),
             ),
           ),
         ],

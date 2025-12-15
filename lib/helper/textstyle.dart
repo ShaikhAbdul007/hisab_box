@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:inventory/common_widget/colors.dart';
 
@@ -13,8 +14,8 @@ class CustomTextStyle {
     return GoogleFonts.poppins(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize,
-      letterSpacing: letterSpacing,
+      fontSize: fontSize.sp,
+      letterSpacing: letterSpacing.sp,
     );
   }
 
@@ -28,9 +29,9 @@ class CustomTextStyle {
     return GoogleFonts.notoSansAnatolianHieroglyphs(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize,
+      fontSize: fontSize.sp,
       decoration: decoration,
-      letterSpacing: letterSpacing,
+      letterSpacing: letterSpacing.sp,
     );
   }
 
@@ -45,23 +46,23 @@ class CustomTextStyle {
       color: color,
       fontWeight: fontWeight,
 
-      fontSize: fontSize,
+      fontSize: fontSize.sp,
       decoration: decoration,
-      letterSpacing: letterSpacing,
+      letterSpacing: letterSpacing.sp,
     );
   }
 
-  static TextStyle customUbuntu({
+  static TextStyle customOpenSans({
     Color color = AppColors.blackColor,
     FontWeight fontWeight = FontWeight.normal,
     double fontSize = 15,
     double letterSpacing = 0,
     TextDecoration? decoration,
   }) {
-    return GoogleFonts.ubuntu(
+    return GoogleFonts.openSans(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize,
+      fontSize: fontSize.sp,
       decoration: decoration,
       letterSpacing: letterSpacing,
     );
@@ -77,9 +78,9 @@ class CustomTextStyle {
     return GoogleFonts.montserrat(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize,
+      fontSize: fontSize.sp,
       decoration: decoration,
-      letterSpacing: letterSpacing,
+      letterSpacing: letterSpacing.sp,
     );
   }
 }

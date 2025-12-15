@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
@@ -26,8 +27,8 @@ class UserProfileView extends GetView<UserProfileController> {
       ),
       backgroundColor: AppColors.whiteColor,
       body: Obx(
-        () => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        () => CustomPadding(
+          paddingOption: SymmetricPadding(horizontal: 8.0),
           child:
               controller.isDataLoading.value
                   ? CommonProgressbar(color: AppColors.blackColor)
@@ -110,8 +111,8 @@ class UserProfileView extends GetView<UserProfileController> {
                           label: 'City',
                         ),
                         setHeight(height: 35),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                        CustomPadding(
+                          paddingOption: SymmetricPadding(horizontal: 28.0),
                           child: Obx(
                             () =>
                                 controller.readOnly.value

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../routes/route_name.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
@@ -16,8 +16,8 @@ class PartailPaymentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     controller.openPaymentDialog(controller.finalTotal.value);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+    return CustomPadding(
+      paddingOption: SymmetricPadding(horizontal: 20.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -26,14 +26,14 @@ class PartailPaymentWidget extends StatelessWidget {
               children: [
                 Text(
                   'Total Amount: ',
-                  style: CustomTextStyle.customUbuntu(
+                  style: CustomTextStyle.customOpenSans(
                     fontSize: 15,
                     color: AppColors.greyColor,
                   ),
                 ),
                 Text(
                   '${controller.paymentMethodTotalAmount.value}',
-                  style: CustomTextStyle.customUbuntu(
+                  style: CustomTextStyle.customOpenSans(
                     fontSize: 18,
                     color: AppColors.blackColor,
                   ),
@@ -42,7 +42,7 @@ class PartailPaymentWidget extends StatelessWidget {
                 Obx(
                   () => Text(
                     'Remaining: ₹${controller.remainingAmount.value.toStringAsFixed(2)}',
-                    style: CustomTextStyle.customUbuntu(
+                    style: CustomTextStyle.customOpenSans(
                       fontSize: 16,
                       color:
                           controller.remainingAmount.value > 0
@@ -240,8 +240,8 @@ class PartialpaymentWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 28.0),
+        CustomPadding(
+          paddingOption: OnlyPadding(top: 28.0),
           child: Image.asset(imageString, width: 30, height: 40),
         ),
         Flexible(
@@ -256,8 +256,8 @@ class PartialpaymentWidget extends StatelessWidget {
             controller: textEditingController,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 28.0),
+        CustomPadding(
+          paddingOption: OnlyPadding(top: 28.0),
           child: CommonButton(
             width: 70,
             label: 'Pay',

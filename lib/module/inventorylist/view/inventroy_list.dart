@@ -5,6 +5,7 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/helper.dart';
@@ -57,8 +58,8 @@ class InventroyList extends GetView<InventoryListController> {
                     setHeight(height: 10),
                     Expanded(
                       flex: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: CustomPadding(
+                        paddingOption: SymmetricPadding(horizontal: 12),
                         child: CommonSearch(
                           icon: Obx(
                             () => InkWell(
@@ -131,7 +132,10 @@ class InventroyList extends GetView<InventoryListController> {
                                           'herotag_${inventoryList.name ?? UniqueKey()}',
                                       child: InventroyListText(
                                         onTap: () async {
-                                          print("List id: ${inventoryList.id}");
+                                          customMessageOrErrorPrint(
+                                            message:
+                                                "List id: ${inventoryList.id}",
+                                          );
                                           var res =
                                               await AppRoutes.futureNavigationToRoute(
                                                 routeName:

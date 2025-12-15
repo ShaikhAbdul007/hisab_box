@@ -8,10 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
 
-import '../../helper/app_message.dart';
-import '../../helper/helper.dart';
-import '../../module/category/model/category_model.dart';
-import '../../module/inventory/model/product_model.dart';
+import '../../../helper/app_message.dart';
+import '../../../helper/helper.dart';
+import '../../category/model/category_model.dart';
+import '../../inventory/model/product_model.dart';
 
 class ProductController extends GetxController with CacheManager {
   final FirebaseAuth auth = FirebaseAuth.instance;
@@ -281,7 +281,7 @@ class ProductController extends GetxController with CacheManager {
         productSnapshot.docs
             .map((doc) => ProductModel.fromJson(doc.data()))
             .toList();
-    saveProductList(productList.value);
+    saveProductList(productList);
   }
 
   void clear() {

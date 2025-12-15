@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 
 class AppSettingText extends StatelessWidget {
   final Widget child;
@@ -8,10 +9,10 @@ class AppSettingText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+    return CustomPadding(
+      paddingOption: SymmetricPadding(horizontal: 18),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 5),
+        padding: SymmetricPadding(horizontal: 5).getPadding(),
         height: 50,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(5),

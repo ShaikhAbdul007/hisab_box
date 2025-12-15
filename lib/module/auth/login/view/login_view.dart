@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/commom_aminatedtext.dart';
 import 'package:inventory/common_widget/common_button.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -25,33 +26,36 @@ class LoginView extends GetView<LoginController> {
           mainAxisAlignment: MainAxisAlignment.center,
           //crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                CommomAminatedtext(
-                  label: welcomeBack,
-                  fontSize: 25,
-                  color: AppColors.greyColor,
-                  fontWeight: FontWeight.w900,
-                ),
-                CommomAminatedtext(
-                  label: backtoAppName,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w700,
-                ),
-                setHeight(height: 10),
-                Text(
-                  loginSubtitle,
-                  style: CustomTextStyle.customUbuntu(
+            CustomPadding(
+              paddingOption: OnlyPadding(left: 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  CommomAminatedtext(
+                    label: welcomeBack,
+                    fontSize: 25,
                     color: AppColors.greyColor,
+                    fontWeight: FontWeight.w900,
                   ),
-                ),
-              ],
+                  CommomAminatedtext(
+                    label: backtoAppName,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  setHeight(height: 10),
+                  Text(
+                    loginSubtitle,
+                    style: CustomTextStyle.customOpenSans(
+                      color: AppColors.greyColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            setHeight(height: 25),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            setHeight(height: 10),
+            CustomPadding(
+              paddingOption: SymmetricPadding(horizontal: 20.0),
               child: Column(
                 children: [
                   CommonTextField(
@@ -70,7 +74,7 @@ class LoginView extends GetView<LoginController> {
                       }
                     },
                   ),
-                  setHeight(height: 15),
+                  setHeight(height: 10),
                   Obx(
                     () => CommonTextField(
                       obscureText: controller.obscureTextValue.value,
@@ -120,21 +124,21 @@ class LoginView extends GetView<LoginController> {
               child: RichText(
                 text: TextSpan(
                   text: dontHaveAccount,
-                  style: CustomTextStyle.customUbuntu(
+                  style: CustomTextStyle.customOpenSans(
                     fontSize: 14,
                     color: Colors.grey,
                   ),
                   children: <TextSpan>[
                     TextSpan(
                       text: questionMark,
-                      style: CustomTextStyle.customUbuntu(
+                      style: CustomTextStyle.customOpenSans(
                         fontSize: 16,
                         color: AppColors.greyColor,
                       ),
                     ),
                     TextSpan(
                       text: createAccount,
-                      style: CustomTextStyle.customUbuntu(
+                      style: CustomTextStyle.customOpenSans(
                         fontSize: 18,
                         color: AppColors.blackColor,
                       ),

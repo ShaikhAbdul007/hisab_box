@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../common_widget/textfiled.dart';
+import '../../../common_widget/common_padding.dart';
+import '../../../common_widget/textfiled.dart';
 
 class InventoryBottomsheetComponentText extends StatelessWidget {
   final int flex1;
@@ -59,7 +60,8 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
             onChanged: onChanged1,
             readOnly: readOnly1,
             validator: validator1,
-            contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+            contentPadding:
+                SymmetricPadding(vertical: 5, horizontal: 5).getPadding(),
             inputLength: inputLength1,
             keyboardType: keyboardType1,
             hintText: hintText1,
@@ -74,7 +76,8 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
             onChanged: onChanged2,
             readOnly: readOnly2,
             validator: validator2,
-            contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+            contentPadding:
+                SymmetricPadding(vertical: 5, horizontal: 5).getPadding(),
             inputLength: inputLength2,
             keyboardType: keyboardType2,
             hintText: hintText2,

@@ -95,7 +95,7 @@ class DiscountController extends GetxController {
     }
   }
 
-  clear() {
+  void clear() {
     discountPercentage.clear();
   }
 }

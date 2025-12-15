@@ -26,7 +26,7 @@ class CommonSwitch extends StatelessWidget {
           value: value,
           onChanged: onChanged,
           activeTrackColor: AppColors.blackColor,
-          activeColor: AppColors.whiteColor,
+          activeThumbColor: AppColors.whiteColor,
           inactiveThumbColor: AppColors.whiteColor,
           inactiveTrackColor: AppColors.blackColor,
         ),

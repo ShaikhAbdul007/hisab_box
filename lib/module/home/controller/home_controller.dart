@@ -113,10 +113,13 @@ class HomeController extends GetxController with CacheManager {
             return SellsModel.fromJson(data);
           }).toList();
 
-      print('✅ Total Bills Fetched: ${bills.length}');
+      customMessageOrErrorPrint(
+        message: '✅ Total Bills Fetched: ${bills.length}',
+      );
       if (bills.isNotEmpty) {
-        print(
-          'First Bill: ${bills.first.billNo} — ₹${bills.first.finalAmount}',
+        customMessageOrErrorPrint(
+          message:
+              'First Bill: ${bills.first.billNo} — ₹${bills.first.finalAmount}',
         );
       }
 
@@ -290,12 +293,12 @@ class HomeController extends GetxController with CacheManager {
 
   Future<void> getDashBoardList() async {
     lis = [
-      CustomGridModel(
-        routeName: AppRouteName.generateBarcode,
-        label: 'Barcode',
-        icon: CupertinoIcons.barcode,
-        numbers: double.parse(looseStock.value.toString()),
-      ),
+      // CustomGridModel(
+      //   routeName: AppRouteName.generateBarcode,
+      //   label: 'Barcode',
+      //   icon: CupertinoIcons.barcode,
+      //   numbers: double.parse(looseStock.value.toString()),
+      // ),
       CustomGridModel(
         routeName: AppRouteName.inventroyList,
         label: 'Total Products',
@@ -320,12 +323,12 @@ class HomeController extends GetxController with CacheManager {
         icon: Icons.paid,
         numbers: totalBusRevenue.value,
       ),
-      CustomGridModel(
-        routeName: AppRouteName.expense,
-        icon: Icons.money,
-        label: 'Expenses',
-        numbers: double.parse(totalExpense.value.toString()),
-      ),
+      // CustomGridModel(
+      //   routeName: AppRouteName.expense,
+      //   icon: Icons.money,
+      //   label: 'Expenses',
+      //   numbers: double.parse(totalExpense.value.toString()),
+      // ),
       CustomGridModel(
         routeName: AppRouteName.looseSell,
         label: 'Loose Stock',

@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 
 import '../../sell/model/print_model.dart';

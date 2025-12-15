@@ -5,6 +5,7 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/loose_sell/controller/loose_controller.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
+import '../../../common_widget/common_padding.dart';
 import '../../../common_widget/common_popup_appbar.dart';
 import '../../../common_widget/size.dart';
 import '../../../common_widget/textfiled.dart';
@@ -43,10 +44,8 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
                   signed: false,
                   decimal: false,
                 ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 5,
-                  horizontal: 5,
-                ),
+                contentPadding:
+                    SymmetricPadding(horizontal: 5, vertical: 5).getPadding(),
                 hintText: 'Selling Price (sp)',
                 controller: controller.sellingPrice,
                 validator: (sellingPrice) {
@@ -62,10 +61,8 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
               child: CommonTextField(
                 readOnly: true,
                 label: 'Quantity',
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 5,
-                  horizontal: 5,
-                ),
+                contentPadding:
+                    SymmetricPadding(horizontal: 5, vertical: 5).getPadding(),
                 inputLength: 5,
                 keyboardType: TextInputType.numberWithOptions(
                   signed: false,
@@ -162,10 +159,8 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
               Flexible(
                 child: CommonTextField(
                   label: 'Qauntity',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
-                  ),
+                  contentPadding:
+                      SymmetricPadding(horizontal: 5, vertical: 5).getPadding(),
                   hintText: 'Qauntity',
                   controller: controller.addSubtractQty,
                   validator: (flavor) {
@@ -181,10 +176,10 @@ class LooseInventoryUpdatePopupComponent extends StatelessWidget {
               Flexible(
                 child: CommonTextField(
                   label: 'Selling Price',
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 5,
-                  ),
+
+                  contentPadding:
+                      SymmetricPadding(horizontal: 5, vertical: 5).getPadding(),
+
                   hintText: 'Selling Price',
                   controller: controller.sellingPrice,
                   validator: (flavor) {

@@ -9,6 +9,7 @@ class RevenueController extends GetxController {
   final _auth = FirebaseAuth.instance;
   RxBool isRevenueListLoading = false.obs;
   var sellsList = <SellsModel>[].obs;
+  RxDouble sellTotalAmount = 0.0.obs;
   RxString dayDate = ''.obs;
 
   @override
@@ -20,6 +21,14 @@ class RevenueController extends GetxController {
 
   void setSellList() async {
     sellsList.value = await fetchRevenueList();
+
+    double total = 0.0;
+
+    for (var bill in sellsList) {
+      total += (bill.finalAmount ?? 0).toDouble();
+    }
+
+    sellTotalAmount.value = total;
   }
 
   Future<List<SellsModel>> fetchRevenueList() async {
@@ -42,17 +51,21 @@ class RevenueController extends GetxController {
       final List<SellsModel> bills =
           snapshot.docs.map((doc) {
             final data = doc.data();
+
             return SellsModel.fromJson(data);
           }).toList();
 
       // Debug logs
-      print('✅ Total Bills Fetched: ${bills.length}');
+      customMessageOrErrorPrint(
+        message: '✅ Total Bills Fetched: ${bills.length}',
+      );
       if (bills.isNotEmpty) {
-        print(
-          'First Bill: ${bills.first.billNo} — ₹${bills.first.finalAmount}',
+        customMessageOrErrorPrint(
+          message:
+              'First Bill: ${bills.first.billNo} — ₹${bills.first.finalAmount}',
         );
       }
-      print(bills);
+      customMessageOrErrorPrint(message: bills);
 
       return bills;
     } catch (e) {

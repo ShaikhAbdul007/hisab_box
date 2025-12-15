@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
-import '../../../common_widget/common_popup_appbar.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/textstyle.dart';
 

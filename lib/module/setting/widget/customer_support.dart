@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import '../../../helper/app_message.dart';
-import '../../../routes/route_name.dart';
 
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
@@ -15,8 +15,8 @@ class CustomerSupport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    return CustomPadding(
+      paddingOption: SymmetricPadding(horizontal: 20),
       child: Column(
         children: [
           setHeight(height: 20),

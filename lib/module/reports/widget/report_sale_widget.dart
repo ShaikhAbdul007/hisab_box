@@ -13,29 +13,27 @@ class ReportSaleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ReportOverViewContainer(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              ReportOverViewContainer(
                 label: 'Total Revenue',
                 labelValue: controller.totalRevenue.value.toStringAsFixed(2),
               ),
-            ),
-            Expanded(
-              child: ReportOverViewContainer(
+              ReportOverViewContainer(
+                width: 170,
                 label: 'Total Profit',
                 labelValue: controller.totalProfit.value.toStringAsFixed(2),
               ),
-            ),
-          ],
-        ),
-        Expanded(
-          flex: 5,
-          child: ReportCommonContiner(
+            ],
+          ),
+          ReportCommonContiner(
+            height: 500,
+            width: 500,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -54,7 +52,10 @@ class ReportSaleWidget extends StatelessWidget {
                             itemCount: controller.sellsList.length,
                             itemBuilder: (context, index) {
                               var product = controller.sellsList[index];
-                              return RevenueListText(billModel: product);
+                              return RevenueListText(
+                                billModel: product,
+                                // index: index,
+                              );
                             },
                           )
                           : CommonNodatafound(message: 'No sell found'),
@@ -62,8 +63,8 @@ class ReportSaleWidget extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

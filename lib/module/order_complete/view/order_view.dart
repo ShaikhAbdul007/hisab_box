@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
@@ -25,18 +27,18 @@ class OrderView extends GetView<OrderController> {
       isleadingButtonRequired: false,
       appBarLabel: '',
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+        child: CustomPadding(
+          paddingOption: SymmetricPadding(horizontal: 15.0),
           child: Column(
             children: [
               Container(
-                height: 170,
-                width: 400,
+                height: 170.h,
+                width: 400.w,
                 decoration: BoxDecoration(
                   color: AppColors.greyColorShade100,
                   borderRadius: BorderRadius.only(
-                    bottomRight: Radius.circular(50),
-                    bottomLeft: Radius.circular(50),
+                    bottomRight: Radius.circular(50.r),
+                    bottomLeft: Radius.circular(50.r),
                   ),
                 ),
                 child: Image.asset('assets/verify.png'),
@@ -88,8 +90,8 @@ class OrderView extends GetView<OrderController> {
               InkWell(
                 onTap: () {
                   commonBottomSheet(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
+                    child: CustomPadding(
+                      paddingOption: AllPadding(all: 8.0),
                       child: Form(
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         key: inventoryScanKey,
@@ -190,30 +192,26 @@ class OrderView extends GetView<OrderController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Expanded(
-                    child: CommonButton(
-                      width: 180,
-                      label: 'Home',
-                      onTap: () {
-                        AppRoutes.navigateRoutes(
-                          routeName: AppRouteName.bottomNavigation,
-                        );
-                      },
-                    ),
+                  CommonButton(
+                    width: 150,
+                    label: 'Home',
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.bottomNavigation,
+                      );
+                    },
                   ),
-                  Expanded(
-                    child: CommonButton(
-                      bgColor: AppColors.redColor,
-                      textColor: AppColors.whiteColor,
-                      width: 180,
-                      label: 'Print',
-                      onTap: () {
-                        AppRoutes.navigateRoutes(
-                          routeName: AppRouteName.invoicePrintView,
-                          data: controller.data,
-                        );
-                      },
-                    ),
+                  CommonButton(
+                    bgColor: AppColors.redColor,
+                    textColor: AppColors.whiteColor,
+                    width: 150,
+                    label: 'Print',
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.invoicePrintView,
+                        data: controller.data,
+                      );
+                    },
                   ),
                 ],
               ),

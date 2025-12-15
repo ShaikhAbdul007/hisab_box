@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/helper/textstyle.dart';
 
 import 'colors.dart';
@@ -35,31 +37,31 @@ class CommonSearch extends StatelessWidget {
       decoration: InputDecoration(
         suffixIcon: icon,
         isDense: true,
-        contentPadding: EdgeInsets.all(10),
+        contentPadding: AllPadding(all: 10).getPadding(),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: AppColors.blackColor, width: 1),
+          borderRadius: BorderRadius.all(Radius.circular(8.r)),
+          borderSide: BorderSide(color: AppColors.blackColor, width: 1.w),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          borderSide: BorderSide(color: AppColors.blackColor, width: 1),
+          borderRadius: BorderRadius.all(Radius.circular(8.r)),
+          borderSide: BorderSide(color: AppColors.blackColor, width: 1.w),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
+          borderRadius: BorderRadius.all(Radius.circular(8.r)),
           borderSide: BorderSide(color: AppColors.blackColor, width: 1),
         ),
         label: Text(
           label,
-          style: CustomTextStyle.customUbuntu(
+          style: CustomTextStyle.customOpenSans(
             fontWeight: FontWeight.w400,
             fontSize: 14,
             color: AppColors.blackColor,
           ),
         ),
         hintText: hintText,
-        hintStyle: CustomTextStyle.customUbuntu(
+        hintStyle: CustomTextStyle.customOpenSans(
           fontWeight: FontWeight.w200,
-          fontSize: 12,
+          fontSize: 11,
           color: AppColors.blackColor,
         ),
       ),

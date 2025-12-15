@@ -1,6 +1,5 @@
 import 'package:get_storage/get_storage.dart';
 import 'package:inventory/module/category/model/category_model.dart';
-import 'package:inventory/module/category/view/animal_category.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 

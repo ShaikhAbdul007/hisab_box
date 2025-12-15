@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
-import 'package:inventory/common_widget/textfiled.dart';
 import '../../../common_widget/colors.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
@@ -31,10 +32,10 @@ class SellingConfirmationListText extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(10.r),
       ),
-      margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      margin: SymmetricPadding(horizontal: 15, vertical: 10).getPadding(),
+      padding: SymmetricPadding(horizontal: 10, vertical: 5).getPadding(),
       child: Column(
         children: [
           Row(
@@ -56,11 +57,11 @@ class SellingConfirmationListText extends StatelessWidget {
                 ],
               ),
               Container(
-                height: 40,
-                width: 100,
+                height: 40.h,
+                width: 100.w,
                 decoration: BoxDecoration(
                   color: AppColors.blackColor,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Center(child: sellingPrices),
               ),
@@ -75,7 +76,7 @@ class SellingConfirmationListText extends StatelessWidget {
                   InkWell(
                     onTap: minusOnTap,
                     child: CircleAvatar(
-                      radius: 18,
+                      radius: 18.r,
                       backgroundColor: AppColors.greyColor,
                       child: Text(
                         '-',
@@ -88,11 +89,11 @@ class SellingConfirmationListText extends StatelessWidget {
                   ),
                   setWidth(width: 5),
                   Container(
-                    height: 30,
-                    width: 50,
+                    height: 30.h,
+                    width: 50.w,
                     decoration: BoxDecoration(
                       color: AppColors.greyColorShade100,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Center(
                       child: Text(
@@ -109,7 +110,7 @@ class SellingConfirmationListText extends StatelessWidget {
                   InkWell(
                     onTap: plusOnTap,
                     child: CircleAvatar(
-                      radius: 18,
+                      radius: 18.r,
                       backgroundColor: AppColors.blackColor,
                       child: Text(
                         '+',
@@ -122,20 +123,23 @@ class SellingConfirmationListText extends StatelessWidget {
                   ),
                   setWidth(width: 5),
                   Container(
-                    height: 40,
-                    width: 80,
+                    height: 30.h,
+                    width: 50.w,
                     padding: EdgeInsets.zero,
                     decoration: BoxDecoration(
-                      color: AppColors.greyColorShade100,
-                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.greyColor,
+                        width: 0.5.w,
+                      ),
+                      borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: TextFormField(
                       keyboardType: TextInputType.number,
                       controller: dicountController,
                       onChanged: onDiscountChanged,
-                      cursorHeight: 15,
+                      cursorHeight: 14.sp,
                       cursorColor: AppColors.blackColor,
-                      style: CustomTextStyle.customUbuntu(
+                      style: CustomTextStyle.customOpenSans(
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -146,9 +150,22 @@ class SellingConfirmationListText extends StatelessWidget {
                         LengthLimitingTextInputFormatter(4),
                       ],
                       decoration: InputDecoration(
-                        contentPadding: EdgeInsets.only(left: 10, bottom: 15),
+                        contentPadding:
+                            OnlyPadding(left: 10, bottom: 15).getPadding(),
                         border: InputBorder.none,
-                        label: Text('Discount'),
+                        label: Text('%', style: CustomTextStyle.customPoppin()),
+                        // enabledBorder: OutlineInputBorder(
+                        //   borderSide: BorderSide(width: 0.5.w),
+                        //   borderRadius: BorderRadius.circular(8.r),
+                        // ),
+                        // errorBorder: OutlineInputBorder(
+                        //   borderSide: BorderSide(color: AppColors.greyColor),
+                        //   borderRadius: BorderRadius.circular(10.r),
+                        // ),
+                        // focusedBorder: OutlineInputBorder(
+                        //   borderSide: BorderSide(width: 0.5.w),
+                        //   borderRadius: BorderRadius.circular(8.r),
+                        // ),
                         labelStyle: CustomTextStyle.customMontserrat(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -161,8 +178,8 @@ class SellingConfirmationListText extends StatelessWidget {
               InkWell(
                 onTap: removeOnTap,
                 child: Container(
-                  height: 30,
-                  width: 100,
+                  height: 30.h,
+                  width: 100.w,
                   decoration: BoxDecoration(
                     color: AppColors.redColor,
                     borderRadius: BorderRadius.circular(10),
@@ -179,7 +196,6 @@ class SellingConfirmationListText extends StatelessWidget {
               ),
             ],
           ),
-          setHeight(height: 10),
         ],
       ),
     );

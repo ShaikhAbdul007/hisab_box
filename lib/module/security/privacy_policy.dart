@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 
 import '../../helper/app_message.dart';
 
@@ -11,7 +12,7 @@ class PrivacyPolicy extends StatelessWidget {
     return CommonAppbar(
       appBarLabel: 'Privacy Policy',
       body: ListView(
-        padding: EdgeInsets.all(16),
+        padding: AllPadding(all: 16).getPadding(),
         children: [
           Text(
             'Hisab Box (Billing & Inventory App)',

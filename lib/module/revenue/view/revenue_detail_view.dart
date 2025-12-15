@@ -14,7 +14,31 @@ class RevenueDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var data = Get.arguments;
+
     return CommonAppbar(
+      // persistentFooterButtons: [
+      //   RichText(
+      //     text: TextSpan(
+      //       text: 'Total',
+      //       style: CustomTextStyle.customUbuntu(fontWeight: FontWeight.w500),
+      //       children: [
+      //         TextSpan(
+      //           text: " : ",
+      //           style: CustomTextStyle.customMontserrat(
+      //             fontWeight: FontWeight.w600,
+      //           ),
+      //         ),
+      //         TextSpan(
+      //           text: data,
+      //           style: CustomTextStyle.customMontserrat(
+      //             fontWeight: FontWeight.w400,
+      //             fontSize: 18,
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   ),
+      // ],
       appBarLabel: 'Sell Details',
       firstActionChild: InkWell(
         onTap: () {

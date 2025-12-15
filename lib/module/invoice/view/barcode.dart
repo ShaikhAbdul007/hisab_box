@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:get/get.dart';
 import 'package:inventory/module/invoice/widget/invoice_printer.dart';
-import 'package:smart_printer_flutter/smart_printer_flutter.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
+import '../../../helper/helper.dart';
 import '../controller/bardcode_controller.dart';
 import '../widget/bluetooth_info_widget.dart';
-import '../widget/bluetooth_validate_widget.dart';
 
 class BarcodeView extends GetView<BardcodeController> {
   const BarcodeView({super.key});
@@ -25,64 +24,64 @@ class BarcodeView extends GetView<BardcodeController> {
             isLoading: controller.isPrintingLoading.value,
             label: "Print",
             onTap: () async {
-              bool checkBluetooth =
-                  await controller.checkBluetoothConnectivity();
-              if (checkBluetooth == true) {
-                // if (controller.receiptController.value != null) {
-                //   await printReceipt(
-                //     rController: controller.receiptController.value!,
-                //     paymentMethod: 'paymentMethod',
-                //   );
-                // }
+              // bool checkBluetooth =
+              //     await controller.checkBluetoothConnectivity();
+              // if (checkBluetooth == true) {
+              //   // if (controller.receiptController.value != null) {
+              //   //   await printReceipt(
+              //   //     rController: controller.receiptController.value!,
+              //   //     paymentMethod: 'paymentMethod',
+              //   //   );
+              //   // }
 
-                try {
-                  final plugin = SmartPrinterFlutter();
+              //   try {
+              //     final plugin = SmartPrinterFlutter();
 
-                  // STEP 1: Start Scan (VERY IMPORTANT – initializes printerManager)
-                  await plugin.startScan();
+              //     // STEP 1: Start Scan (VERY IMPORTANT – initializes printerManager)
+              //     await plugin.startScan();
 
-                  // Wait 1 second for scanner to initialize
-                  await Future.delayed(Duration(seconds: 1));
+              //     // Wait 1 second for scanner to initialize
+              //     await Future.delayed(Duration(seconds: 1));
 
-                  // OPTIONAL: Printer status check
-                  var status = await plugin.getPrinterStatus();
-                  print("Printer Status: $status");
+              //     // OPTIONAL: Printer status check
+              //     var status = await plugin.getPrinterStatus();
+              //    customMessageOrErrorPrint(  message: "Printer Status: $status");
 
-                  // OPTIONAL: Scanning check
-                  var scanning = await plugin.isScanning();
-                  print("Scanning: $scanning");
+              //     // OPTIONAL: Scanning check
+              //     var scanning = await plugin.isScanning();
+              //    customMessageOrErrorPrint(  message: "Scanning: $scanning");
 
-                  // STEP 2: Stop scanning BEFORE connecting
-                  await plugin.stopScan();
+              //     // STEP 2: Stop scanning BEFORE connecting
+              //     await plugin.stopScan();
 
-                  // STEP 5: CHECK CONNECTION
-                  bool ok = await plugin.isConnected;
-                  print("Connected: $ok");
+              //     // STEP 5: CHECK CONNECTION
+              //     bool ok = await plugin.isConnected;
+              //    customMessageOrErrorPrint(  message: "Connected: $ok");
 
-                  if (!ok) {
-                    print("Connection failed!");
-                    return;
-                  }
+              //     if (!ok) {
+              //      customMessageOrErrorPrint(  message: "Connection failed!");
+              //       return;
+              //     }
 
-                  // STEP 6: PRINT
-                  await controller.printBarcodeLabel(plugin: plugin, qty: 2);
-                } catch (e) {
-                  print("PRINT ERROR: $e");
-                }
+              //     // STEP 6: PRINT
+              //     await controller.printBarcodeLabel(plugin: plugin, qty: 2);
+              //   } catch (e) {
+              //    customMessageOrErrorPrint(  message: "PRINT ERROR: $e");
+              //   }
 
-                // 3) PRINT LABELS
+              //   // 3) PRINT LABELS
 
-                // 4) DISCONNECT
-                // await plugin.disconnect();
-              } else {
-                commonBottomSheet(
-                  label: 'Bluetooth Info',
-                  onPressed: () {
-                    Get.back();
-                  },
-                  child: BluetoothValidateWidget(),
-                );
-              }
+              //   // 4) DISCONNECT
+              //   // await plugin.disconnect();
+              // } else {
+              //   commonBottomSheet(
+              //     label: 'Bluetooth Info',
+              //     onPressed: () {
+              //       Get.back();
+              //     },
+              //     child: BluetoothValidateWidget(),
+              //   );
+              // }
             },
           ),
         ),
@@ -91,7 +90,7 @@ class BarcodeView extends GetView<BardcodeController> {
       body: BarcodePrinterView(
         data: controller.data,
         onInitialized: (p0) {
-          print("📏 PAPER SIZE: ${p0.paperSize}");
+          customMessageOrErrorPrint(message: "📏 PAPER SIZE: ${p0.paperSize}");
 
           controller.setReceiptController(p0);
         },

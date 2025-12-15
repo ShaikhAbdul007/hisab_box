@@ -7,6 +7,7 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/module/category/controller/category_controller.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_progressbar.dart';
@@ -127,7 +128,7 @@ class Category extends GetView<CategoryController> {
             CommonTextField(
               hintText: 'Category',
               label: 'Category',
-              contentPadding: EdgeInsets.symmetric(horizontal: 10),
+              contentPadding: SymmetricPadding(horizontal: 10).getPadding(),
               controller: controller.category,
               validator: (val) {
                 if (val!.isEmpty) {

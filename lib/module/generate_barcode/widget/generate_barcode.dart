@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/state_manager.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/keys/keys.dart';
-import 'package:inventory/product_details/widget/inventory_bottomsheep_component_text.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_calender.dart';
@@ -13,6 +15,7 @@ import '../../../common_widget/common_switch.dart';
 import '../../../common_widget/textfiled.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
+import '../../product_details/widget/inventory_bottomsheep_component_text.dart';
 import '../controller/generate_barcode_controller.dart';
 
 class GenerateBarcodeComponent extends StatelessWidget {
@@ -21,29 +24,82 @@ class GenerateBarcodeComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+    return CustomPadding(
+      paddingOption: SymmetricPadding(horizontal: 10.0),
       child: SingleChildScrollView(
         child: Form(
           key: inventoryScanKey,
           child: Column(
             spacing: 10,
             children: [
-              InventoryBottomsheetComponentText(
-                readOnly1: true,
-                controller1: controller.barcode,
-                controller2: controller.productName,
-                label1: 'Barcode',
-                hintText1: 'Enter barcode',
-                hintText2: 'Enter product name',
-                label2: 'Product Name',
-                validator2: (name) {
-                  if (name!.isEmpty) {
-                    return emptyProductName;
-                  } else {
-                    return null;
-                  }
-                },
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 50.r,
+                    backgroundColor: AppColors.whiteColor,
+                    child: Icon(CupertinoIcons.cube, size: 50.r),
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        CommonTextField(
+                          validator: (quantity) {
+                            if (quantity!.isEmpty) {
+                              return emptyBarcode;
+                            } else {
+                              return null;
+                            }
+                          },
+                          contentPadding:
+                              SymmetricPadding(
+                                vertical: 5,
+                                horizontal: 5,
+                              ).getPadding(),
+                          inputLength: 5,
+                          keyboardType: TextInputType.number,
+                          hintText: 'Enter Barcode',
+                          label: 'Enter Barcode',
+                          controller: controller.barcode,
+                        ),
+                        CustomPadding(
+                          paddingOption: OnlyPadding(right: 15.0, top: 5),
+                          child: InkWell(
+                            onTap: () {
+                              // controller.
+                            },
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                'Auto Generate Barcode',
+                                style: CustomTextStyle.customPoppin(
+                                  fontSize: 10,
+                                  color: AppColors.deepPurple,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        CommonTextField(
+                          validator: (quantity) {
+                            if (quantity!.isEmpty) {
+                              return emptyProductName;
+                            } else {
+                              return null;
+                            }
+                          },
+                          contentPadding:
+                              SymmetricPadding(
+                                vertical: 5,
+                                horizontal: 5,
+                              ).getPadding(),
+                          hintText: 'Enter product name',
+                          label: 'Product Name',
+                          controller: controller.productName,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               Row(
                 children: [
@@ -98,10 +154,11 @@ class GenerateBarcodeComponent extends StatelessWidget {
                           return null;
                         }
                       },
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
                       inputLength: 5,
                       keyboardType: TextInputType.number,
                       hintText: 'Enter stock',
@@ -116,7 +173,6 @@ class GenerateBarcodeComponent extends StatelessWidget {
                       hintText: 'Select isLoose',
                       notifyParent: (val) {
                         controller.isLoose = val;
-                        print(' controller.isLoose ${controller.isLoose}');
                       },
                     ),
                   ),
@@ -201,10 +257,11 @@ class GenerateBarcodeComponent extends StatelessWidget {
                           return null;
                         }
                       },
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
                       hintText: 'dd-MM-yyyy',
                       label: 'Purchase Date',
                       controller: controller.purchaseDate,
@@ -234,10 +291,11 @@ class GenerateBarcodeComponent extends StatelessWidget {
                           return null;
                         }
                       },
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 5,
-                        horizontal: 5,
-                      ),
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
 
                       hintText: 'dd-MM-yyyy',
                       label: 'Expire Date',
@@ -274,8 +332,8 @@ class GenerateBarcodeComponent extends StatelessWidget {
                         : Container(),
               ),
               Obx(
-                () => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                () => CustomPadding(
+                  paddingOption: SymmetricPadding(horizontal: 15.0),
                   child: CommonSwitch(
                     labelSize: 12,
                     label: "Flavor & Weight Required",

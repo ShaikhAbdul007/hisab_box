@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -48,7 +49,7 @@ class DeskTopScreen extends StatelessWidget {
             BottomBarItem(
               icon: Icon(
                 CupertinoIcons.house_alt,
-                size: 15,
+                size: 15.sp,
                 color: AppColors.greyColor,
               ),
               title: Text(
@@ -65,7 +66,7 @@ class DeskTopScreen extends StatelessWidget {
               selectedIcon: Icon(
                 CupertinoIcons.house_alt_fill,
                 color: AppColors.blackColor,
-                size: 20,
+                size: 20.sp,
               ),
             ),
             BottomBarItem(
@@ -83,7 +84,7 @@ class DeskTopScreen extends StatelessWidget {
               selectedIcon: Icon(
                 CupertinoIcons.gear_alt_fill,
                 color: AppColors.blackColor,
-                size: 20,
+                size: 20.sp,
               ),
             ),
           ],
@@ -123,85 +124,100 @@ class MobileScreen extends StatelessWidget {
       body: Obx(
         () => IndexedStack(
           index: controller.index.value,
-          children: [HomeView(), ReportView(), SettingView()],
+          children: [HomeView(), Text('Credits'), ReportView(), SettingView()],
         ),
       ),
-      bottomNavigationBar: Obx(
-        () => ClipRRect(
-          borderRadius: BorderRadius.circular(25),
-          child: StylishBottomBar(
-            borderRadius: BorderRadius.circular(25),
-            currentIndex: controller.index.value,
-            onTap: controller.setBottomIndex,
-            backgroundColor: AppColors.whiteColor,
-            elevation: 5,
-            items: [
-              BottomBarItem(
-                icon: Icon(
-                  CupertinoIcons.house_alt,
-                  size: 15,
-                  color: AppColors.greyColor,
-                ),
-                title: Text(
-                  'Home',
-                  style: CustomTextStyle.customPoppin(
-                    fontSize: controller.index.value == 0 ? 15 : 12,
-                    color:
-                        controller.index.value == 0
-                            ? AppColors.blackColor
-                            : AppColors.greyColor,
-                  ),
-                ),
-                unSelectedColor: AppColors.greyColor,
-                selectedIcon: Icon(
-                  CupertinoIcons.house_alt_fill,
-                  color: AppColors.blackColor,
-                  size: 20,
-                ),
-              ),
 
-              BottomBarItem(
-                icon: Icon(CupertinoIcons.chart_bar, size: 15),
-                title: Text(
-                  'Reports',
-                  style: CustomTextStyle.customPoppin(
-                    fontSize: controller.index.value == 1 ? 15 : 12,
-                    color:
-                        controller.index.value == 0
-                            ? AppColors.blackColor
-                            : AppColors.greyColor,
-                  ),
-                ),
-                selectedIcon: Icon(
-                  CupertinoIcons.chart_bar_fill,
-                  color: AppColors.blackColor,
-                  size: 20,
+      bottomNavigationBar: Obx(
+        () => StylishBottomBar(
+          borderRadius: BorderRadius.circular(8.r),
+          currentIndex: controller.index.value,
+          onTap: controller.setBottomIndex,
+          backgroundColor: AppColors.whiteColor,
+          elevation: 5,
+          items: [
+            BottomBarItem(
+              icon: Icon(
+                CupertinoIcons.house_alt,
+                size: 15.sp,
+                color: AppColors.greyColor,
+              ),
+              title: Text(
+                'Home',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: controller.index.value == 0 ? 15 : 12,
+                  color:
+                      controller.index.value == 0
+                          ? AppColors.blackColor
+                          : AppColors.greyColor,
                 ),
               ),
-              BottomBarItem(
-                icon: Icon(CupertinoIcons.gear_alt, size: 15),
-                title: Text(
-                  'Setting',
-                  style: CustomTextStyle.customPoppin(
-                    fontSize: controller.index.value == 1 ? 15 : 12,
-                    color:
-                        controller.index.value == 0
-                            ? AppColors.blackColor
-                            : AppColors.greyColor,
-                  ),
-                ),
-                selectedIcon: Icon(
-                  CupertinoIcons.gear_alt_fill,
-                  color: AppColors.blackColor,
-                  size: 20,
+              unSelectedColor: AppColors.greyColor,
+              selectedIcon: Icon(
+                CupertinoIcons.house_alt_fill,
+                color: AppColors.blackColor,
+                size: 20.sp,
+              ),
+            ),
+            BottomBarItem(
+              icon: Icon(CupertinoIcons.money_dollar_circle, size: 15.sp),
+              title: Text(
+                'Credits',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: controller.index.value == 1 ? 15 : 12,
+                  color:
+                      controller.index.value == 0
+                          ? AppColors.blackColor
+                          : AppColors.greyColor,
                 ),
               ),
-            ],
-            //hasNotch: true,
-            // notchStyle: NotchStyle.circle,
-            // fabLocation: StylishBarFabLocation.center,
-            option: AnimatedBarOptions(iconStyle: IconStyle.Default),
-          ),
+              selectedIcon: Icon(
+                CupertinoIcons.money_dollar_circle_fill,
+                color: AppColors.blackColor,
+                size: 20.sp,
+              ),
+            ),
+            BottomBarItem(
+              icon: Icon(CupertinoIcons.chart_bar, size: 15),
+              title: Text(
+                'Reports',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: controller.index.value == 1 ? 15 : 12,
+                  color:
+                      controller.index.value == 0
+                          ? AppColors.blackColor
+                          : AppColors.greyColor,
+                ),
+              ),
+              selectedIcon: Icon(
+                CupertinoIcons.chart_bar_fill,
+                color: AppColors.blackColor,
+                size: 20.sp,
+              ),
+            ),
+            BottomBarItem(
+              icon: Icon(CupertinoIcons.gear_alt, size: 15),
+              title: Text(
+                'Setting',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: controller.index.value == 1 ? 15 : 12,
+                  color:
+                      controller.index.value == 0
+                          ? AppColors.blackColor
+                          : AppColors.greyColor,
+                ),
+              ),
+              selectedIcon: Icon(
+                CupertinoIcons.gear_alt_fill,
+                color: AppColors.blackColor,
+                size: 20.sp,
+              ),
+            ),
+          ],
+          //hasNotch: true,
+          // notchStyle: NotchStyle.circle,
+          // fabLocation: StylishBarFabLocation.center,
+          option: AnimatedBarOptions(iconStyle: IconStyle.Default),
         ),
       ),
 

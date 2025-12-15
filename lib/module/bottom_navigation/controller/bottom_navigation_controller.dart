@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:get/get.dart';
-import 'package:inventory/helper/helper.dart';
 import 'package:inventory/routes/routes.dart';
 
 import '../../../routes/route_name.dart';
@@ -12,7 +10,7 @@ import '../../../routes/route_name.dart';
 class BottomNavigationController extends GetxController {
   RxInt index = 0.obs;
   StreamSubscription? subscription;
-  setBottomIndex(int value) {
+  void setBottomIndex(int value) {
     index.value = value;
   }
 

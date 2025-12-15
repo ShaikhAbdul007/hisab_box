@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:inventory/common_widget/size.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/module/home/model/grid_model.dart';
 import '../../../common_widget/colors.dart';
 import '../../../helper/textstyle.dart';
@@ -11,51 +12,32 @@ class HomeGridContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      margin: EdgeInsets.symmetric(horizontal: 3),
+      height: 50,
+      width: 200,
+      margin: OnlyPadding(right: 5, left: 5, bottom: 4).getPadding(),
+      padding: OnlyPadding(right: 10, left: 10, top: 5).getPadding(),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 2,
-            color: AppColors.greyColor,
-            // offset: Offset(1, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(10.r),
+        boxShadow: [BoxShadow(blurRadius: 2, color: AppColors.greyColor)],
       ),
-      child: Row(
+      child: Column(
+        spacing: 5.sp,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: ListView(
-              children: [
-                Text(
-                  customGridModel.label ?? '',
-                  style: CustomTextStyle.customNato(
-                    color: AppColors.blackColor,
-                    fontSize: 14,
-                  ),
-                ),
-                setHeight(height: 5),
-                Text(
-                  customGridModel.numbers.toString(),
-                  style: CustomTextStyle.customPoppin(
-                    color: AppColors.blackColor,
-                    fontSize: 18,
-                  ),
-                ),
-              ],
+          Text(
+            customGridModel.label ?? '',
+            style: CustomTextStyle.customMontserrat(
+              color: AppColors.blackColor,
+              fontSize: 14,
             ),
           ),
-          setWidth(width: 5),
-          Container(
-            height: 50,
-            width: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5),
-              color: Colors.black,
+          Text(
+            customGridModel.numbers.toString(),
+            style: CustomTextStyle.customPoppin(
+              color: AppColors.blackColor,
+              fontSize: 18,
             ),
-            child: Icon(customGridModel.icon, color: Colors.white, size: 20),
           ),
         ],
       ),

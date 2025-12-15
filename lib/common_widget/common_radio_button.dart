@@ -5,12 +5,14 @@ import 'colors.dart';
 class CommonRadioButton extends StatelessWidget {
   final String label;
   final int groupValue;
+  final int? radioValue;
   final void Function(int?)? onChanged;
   const CommonRadioButton({
     super.key,
     required this.label,
     required this.groupValue,
     this.onChanged,
+    this.radioValue,
   });
 
   @override
@@ -19,7 +21,7 @@ class CommonRadioButton extends StatelessWidget {
       activeColor: AppColors.blackColor,
       contentPadding: EdgeInsets.zero,
       title: Text(label, style: CustomTextStyle.customPoppin()),
-      value: int.parse(label),
+      value: radioValue ?? 0,
       groupValue: groupValue,
       onChanged: onChanged,
     );
