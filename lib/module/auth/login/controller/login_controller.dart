@@ -27,7 +27,6 @@ class LoginController extends GetxController with CacheManager {
         email: email.text,
         password: password.text,
       );
-
       saveUserLoggedIn(true);
       showMessage(message: loginSuccessFul);
       Future.delayed(Duration(seconds: 1), () {

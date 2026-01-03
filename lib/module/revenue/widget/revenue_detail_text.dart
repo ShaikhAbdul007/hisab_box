@@ -35,11 +35,19 @@ class RevenueDetailList extends StatelessWidget {
                 ),
                 setHeight(height: 2),
                 Text(
-                  revenueModel.flavours ?? '',
+                  revenueModel.barcode ?? '',
                   style: CustomTextStyle.customOpenSans(
                     color: AppColors.greyColor,
                   ),
                 ),
+                if (revenueModel.flavours?.isNotEmpty ?? false) ...{
+                  Text(
+                    revenueModel.flavours ?? '',
+                    style: CustomTextStyle.customOpenSans(
+                      color: AppColors.greyColor,
+                    ),
+                  ),
+                },
                 Row(
                   children: [
                     RichText(

@@ -168,6 +168,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
                   ),
                   Flexible(
                     child: CommonDropDown(
+                      isModelValueEnabled: false,
                       errorText: 'Please select',
                       listItems: [true, false],
                       hintText: 'Select isLoose',

@@ -89,8 +89,6 @@ class ReportController extends GetxController
         totalCard.value += (pay['card'] ?? 0).toDouble();
         totalCredit.value += (pay['credit'] ?? 0).toDouble();
         totalRoundOff.value += (pay['roundOffAmount'] ?? 0).toDouble();
-
-        //totalRevenue += (data['finalAmount'] ?? 0).toDouble();
       }
     } catch (e) {
       customMessageOrErrorPrint(message: "Payment Summary Error: $e");
@@ -489,13 +487,12 @@ class ReportController extends GetxController
 
   // ------------------ PRODUCT STOCK OUT ------------------
   List<String> productStockOutMapper(dynamic json) {
-    final item = SellItem.fromJson(json);
     return [
-      item.name ?? "",
-      item.category ?? "",
-      item.animalType ?? "",
-      item.weight ?? "",
-      (item.quantity ?? 0).toString(),
+      json['name'] ?? "",
+      json['category'] ?? "",
+      json['animalType'] ?? "",
+      json['weight'] ?? "",
+      json['quantity'] ?? 0,
       json["soldAt"] ?? "",
       json["time"] ?? "",
     ];
@@ -537,7 +534,6 @@ class ReportController extends GetxController
 
     return [
       i.name ?? "",
-
       i.category ?? "",
       i.animalType ?? "",
       i.weight ?? "",

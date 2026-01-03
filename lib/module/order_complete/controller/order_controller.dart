@@ -7,17 +7,29 @@ import 'package:inventory/module/order_complete/model/customer_details_model.dar
 import '../../sell/model/print_model.dart';
 
 class OrderController extends GetxController {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
   TextEditingController mobileNumber = TextEditingController();
   TextEditingController name = TextEditingController();
   TextEditingController address = TextEditingController();
+  TextEditingController description = TextEditingController();
   RxList<CustomerDetails> customerDetails = <CustomerDetails>[].obs;
   RxBool saveCustomerWithInvoiceLoading = false.obs;
+  RxBool homeButtonVisible = true.obs;
   var data = Get.arguments;
 
   @override
   void onInit() {
     loadAllCustomers();
+    if (data != null) {
+      setButtonValue();
+    }
     super.onInit();
+  }
+
+  void setButtonValue() {
+    if (data.payment.credit != 0.0) {
+      homeButtonVisible.value = false;
+    }
   }
 
   Future<List<CustomerDetails>> loadAllCustomers() async {
@@ -48,7 +60,6 @@ class OrderController extends GetxController {
   }) async {
     saveCustomerWithInvoiceLoading.value = true;
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
       final ref = FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -60,6 +71,7 @@ class OrderController extends GetxController {
           "name": name.text,
           "address": address.text,
           "mobile": mobileNumber.text,
+          'description': description.text,
           "updatedAt": DateTime.now().toIso8601String(),
           "invoices": FieldValue.arrayUnion([invoice.toJson()]),
         });
@@ -70,6 +82,7 @@ class OrderController extends GetxController {
           "name": name.text,
           "address": address.text,
           "mobile": mobileNumber.text,
+          'description': description.text,
           "createdAt": DateTime.now().toIso8601String(),
           "invoices": [invoice.toJson()],
         });
@@ -92,5 +105,6 @@ class OrderController extends GetxController {
     name.clear();
     address.clear();
     mobileNumber.clear();
+    description.clear();
   }
 }

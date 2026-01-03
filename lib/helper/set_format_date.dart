@@ -1,8 +1,8 @@
 import 'package:intl/intl.dart';
 
-String setFormateDate() {
+String setFormateDate([String dateFormat = 'dd-MM-yyyy']) {
   final now = DateTime.now();
-  final todayDate = DateFormat('dd-MM-yyyy').format(now);
+  final todayDate = DateFormat(dateFormat).format(now);
   return todayDate;
 }
 

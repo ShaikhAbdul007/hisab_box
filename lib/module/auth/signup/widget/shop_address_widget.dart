@@ -1,5 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_dropdown.dart';
 import '../../../../common_widget/size.dart';
 import '../../../../common_widget/textfiled.dart';
 import '../../../../helper/app_message.dart';
@@ -10,7 +16,9 @@ class ShopAddress extends StatelessWidget {
   final TextEditingController city;
   final TextEditingController state;
   final TextEditingController pincode;
-
+  final File profileImage;
+  final void Function()? onPressed;
+  final Function(dynamic) notifyParent;
   const ShopAddress({
     super.key,
     required this.shopName,
@@ -18,12 +26,49 @@ class ShopAddress extends StatelessWidget {
     required this.city,
     required this.state,
     required this.pincode,
+    required this.profileImage,
+    this.onPressed,
+    required this.notifyParent,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.black,
+              backgroundImage:
+                  profileImage.path.isNotEmpty ? FileImage(profileImage) : null,
+              child:
+                  profileImage.path.isEmpty
+                      ? Text(
+                        "H",
+                        style: TextStyle(fontSize: 40, color: Colors.white),
+                      )
+                      : null,
+            ),
+            Positioned(
+              top: 65.h,
+              left: 65.w,
+              child: Container(
+                height: 35,
+                width: 35,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  onPressed: onPressed,
+                  icon: Icon(Icons.edit, color: Colors.black),
+                ),
+              ),
+            ),
+          ],
+        ),
         CommonTextField(
           hintText: 'Shop Name',
           label: 'Shop Name',
@@ -80,9 +125,21 @@ class ShopAddress extends StatelessWidget {
           },
         ),
         setHeight(height: 10),
+        CommonDropDown(
+          isModelValueEnabled: false,
+          enabled: true,
+          dropDownBgColor: AppColors.greyColorShade100,
+          errorText: 'Select shop type',
+          listItems: ['Pet Shop'],
+          hintText: 'Shop type',
+          notifyParent: notifyParent,
+        ),
+        setHeight(height: 10),
         CommonTextField(
           hintText: 'Pincode',
           label: 'Pincode',
+          inputLength: 6,
+          keyboardType: TextInputType.number,
           controller: pincode,
           suffixIcon: Icon(Icons.password, size: 18),
           validator: (pincode) {

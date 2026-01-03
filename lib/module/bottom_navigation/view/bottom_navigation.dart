@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/credits_amount/view/credit_view.dart';
+import 'package:inventory/module/customer/view/customer_view.dart';
 import 'package:inventory/module/reports/view/report.dart';
 import 'package:inventory/module/setting/view/setting.dart';
 import 'package:inventory/responsive_layout/responsive_layout.dart';
@@ -49,13 +51,13 @@ class DeskTopScreen extends StatelessWidget {
             BottomBarItem(
               icon: Icon(
                 CupertinoIcons.house_alt,
-                size: 15.sp,
+                size: 13.sp,
                 color: AppColors.greyColor,
               ),
               title: Text(
                 'Home',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 0 ? 15 : 12,
+                  fontSize: controller.index.value == 0 ? 13 : 12,
                   color:
                       controller.index.value == 0
                           ? AppColors.blackColor
@@ -70,11 +72,11 @@ class DeskTopScreen extends StatelessWidget {
               ),
             ),
             BottomBarItem(
-              icon: Icon(CupertinoIcons.gear_alt, size: 15),
+              icon: Icon(CupertinoIcons.gear_alt, size: 13),
               title: Text(
                 'Setting',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 1 ? 15 : 12,
+                  fontSize: controller.index.value == 1 ? 13 : 12,
                   color:
                       controller.index.value == 0
                           ? AppColors.blackColor
@@ -124,7 +126,13 @@ class MobileScreen extends StatelessWidget {
       body: Obx(
         () => IndexedStack(
           index: controller.index.value,
-          children: [HomeView(), Text('Credits'), ReportView(), SettingView()],
+          children: [
+            HomeView(),
+            CreditView(),
+            ReportView(),
+            CustomerView(),
+            SettingView(),
+          ],
         ),
       ),
 
@@ -139,13 +147,13 @@ class MobileScreen extends StatelessWidget {
             BottomBarItem(
               icon: Icon(
                 CupertinoIcons.house_alt,
-                size: 15.sp,
+                size: 13.sp,
                 color: AppColors.greyColor,
               ),
               title: Text(
                 'Home',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 0 ? 15 : 12,
+                  fontSize: controller.index.value == 0 ? 13 : 12,
                   color:
                       controller.index.value == 0
                           ? AppColors.blackColor
@@ -160,13 +168,13 @@ class MobileScreen extends StatelessWidget {
               ),
             ),
             BottomBarItem(
-              icon: Icon(CupertinoIcons.money_dollar_circle, size: 15.sp),
+              icon: Icon(CupertinoIcons.money_dollar_circle, size: 13.sp),
               title: Text(
                 'Credits',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 1 ? 15 : 12,
+                  fontSize: controller.index.value == 1 ? 13 : 12,
                   color:
-                      controller.index.value == 0
+                      controller.index.value == 1
                           ? AppColors.blackColor
                           : AppColors.greyColor,
                 ),
@@ -178,13 +186,13 @@ class MobileScreen extends StatelessWidget {
               ),
             ),
             BottomBarItem(
-              icon: Icon(CupertinoIcons.chart_bar, size: 15),
+              icon: Icon(CupertinoIcons.chart_bar, size: 13),
               title: Text(
                 'Reports',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 1 ? 15 : 12,
+                  fontSize: controller.index.value == 2 ? 13 : 12,
                   color:
-                      controller.index.value == 0
+                      controller.index.value == 2
                           ? AppColors.blackColor
                           : AppColors.greyColor,
                 ),
@@ -196,13 +204,36 @@ class MobileScreen extends StatelessWidget {
               ),
             ),
             BottomBarItem(
-              icon: Icon(CupertinoIcons.gear_alt, size: 15),
+              icon: Icon(
+                CupertinoIcons.person,
+                size: 13.sp,
+                color: AppColors.greyColor,
+              ),
+              title: Text(
+                'Customers',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: controller.index.value == 3 ? 13 : 12,
+                  color:
+                      controller.index.value == 3
+                          ? AppColors.blackColor
+                          : AppColors.greyColor,
+                ),
+              ),
+              unSelectedColor: AppColors.greyColor,
+              selectedIcon: Icon(
+                CupertinoIcons.person_fill,
+                color: AppColors.blackColor,
+                size: 20.sp,
+              ),
+            ),
+            BottomBarItem(
+              icon: Icon(CupertinoIcons.gear_alt, size: 13),
               title: Text(
                 'Setting',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 1 ? 15 : 12,
+                  fontSize: controller.index.value == 4 ? 13 : 12,
                   color:
-                      controller.index.value == 0
+                      controller.index.value == 4
                           ? AppColors.blackColor
                           : AppColors.greyColor,
                 ),

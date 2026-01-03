@@ -7,6 +7,7 @@ class AppRouteName {
   static const String barcodePrintView = '/barcodePrintView';
   static const String setting = '/setting';
   static const String inventroyList = '/inventroyList';
+  static const String bankDetails = '/bankDetails';
   static const String reports = '/reports';
   static const String sell = '/sell';
   static const String login = '/login';
@@ -33,4 +34,5 @@ class AppRouteName {
   static const String revenueDetailView = '/revenueDetailView';
   static const String invoicePrintView = '/invoicePrintView';
   static const String shopDetailView = '/shopDetailView';
+  static const String nearExpireProduct = '/nearExpireProduct';
 }

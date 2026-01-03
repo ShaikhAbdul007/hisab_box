@@ -127,6 +127,19 @@ class OrderView extends GetView<OrderController> {
                               //   return null;
                               // },
                             ),
+                            setHeight(height: 20),
+                            CommonTextField(
+                              astraIsRequred: false,
+                              hintText: 'Description',
+                              label: 'Description',
+                              controller: controller.description,
+                              // validator: (add) {
+                              //   if (add?.isEmpty ?? false) {
+                              //     return 'Enter address';
+                              //   }
+                              //   return null;
+                              // },
+                            ),
                             setHeight(height: 30),
                             Obx(
                               () => CommonButton(
@@ -143,6 +156,8 @@ class OrderView extends GetView<OrderController> {
                                           invoice: controller.data,
                                         );
                                     if (res == true) {
+                                      controller.homeButtonVisible.value =
+                                          false;
                                       Get.back();
                                       showMessage(
                                         message: "Customer added with invoice",
@@ -189,31 +204,36 @@ class OrderView extends GetView<OrderController> {
                 ),
               ),
               setHeight(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  CommonButton(
-                    width: 150,
-                    label: 'Home',
-                    onTap: () {
-                      AppRoutes.navigateRoutes(
-                        routeName: AppRouteName.bottomNavigation,
-                      );
-                    },
-                  ),
-                  CommonButton(
-                    bgColor: AppColors.redColor,
-                    textColor: AppColors.whiteColor,
-                    width: 150,
-                    label: 'Print',
-                    onTap: () {
-                      AppRoutes.navigateRoutes(
-                        routeName: AppRouteName.invoicePrintView,
-                        data: controller.data,
-                      );
-                    },
-                  ),
-                ],
+              Obx(
+                () =>
+                    controller.homeButtonVisible.value
+                        ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            CommonButton(
+                              width: 150,
+                              label: 'Home',
+                              onTap: () {
+                                AppRoutes.navigateRoutes(
+                                  routeName: AppRouteName.bottomNavigation,
+                                );
+                              },
+                            ),
+                            CommonButton(
+                              bgColor: AppColors.redColor,
+                              textColor: AppColors.whiteColor,
+                              width: 150,
+                              label: 'Print',
+                              onTap: () {
+                                AppRoutes.navigateRoutes(
+                                  routeName: AppRouteName.invoicePrintView,
+                                  data: controller.data,
+                                );
+                              },
+                            ),
+                          ],
+                        )
+                        : Container(),
               ),
               setHeight(height: 30),
               RichText(

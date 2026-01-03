@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -22,16 +26,29 @@ class UserProfileController extends GetxController with CacheManager {
   TextEditingController pincodeController = TextEditingController();
   TextEditingController stateController = TextEditingController();
 
+  final ImagePicker picker = ImagePicker();
+
+  Rx<File?> profileImage = Rx<File?>(null);
+
   @override
   void onInit() {
     setUserDetails();
     super.onInit();
   }
 
+  Future<void> pickImage() async {
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      profileImage.value = File(image.path);
+    }
+  }
+
   Future<void> updateUserDetails() async {
     isLoading.value = true;
     final uid = _auth.currentUser!.uid;
     final String formatCreatedAt = setFormateDate();
+
     try {
       var updatedData = {
         "name": shopNameController.text,
@@ -43,11 +60,14 @@ class UserProfileController extends GetxController with CacheManager {
         'mobileNo': mobileController.text,
         'alternateMobileNo': alternativeMobileController.text,
         "createdAt": formatCreatedAt,
+        "profileImage":
+            profileImage.value != null ? profileImage.value!.path : '',
       };
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .update(updatedData);
+          .set(updatedData, SetOptions(merge: true));
+
       final newDoc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (newDoc.exists) {
@@ -76,6 +96,7 @@ class UserProfileController extends GetxController with CacheManager {
     addressController.text = user.address ?? '';
     cityController.text = user.city ?? '';
     emailController.text = user.email ?? '';
+    profileImage.value = File(user.image ?? '');
     Future.delayed(Duration(seconds: 2), () {
       isDataLoading.value = false;
     });

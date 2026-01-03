@@ -1,8 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
+import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
@@ -18,12 +21,14 @@ class UserProfileView extends GetView<UserProfileController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: 'User Profile',
-      firstActionChild: CommonButton(
-        width: 80,
-        label: 'Edit',
+      firstActionChild: InkWell(
         onTap: () {
           controller.readOnly.value = !controller.readOnly.value;
         },
+        child: Icon(
+          CupertinoIcons.square_pencil_fill,
+          color: AppColors.blackColor,
+        ),
       ),
       backgroundColor: AppColors.whiteColor,
       body: Obx(
@@ -37,40 +42,59 @@ class UserProfileView extends GetView<UserProfileController> {
                     child: ListView(
                       children: [
                         setHeight(height: 20),
-                        Stack(
-                          alignment: AlignmentGeometry.center,
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: AppColors.blackColor,
-                              radius: 75,
-                              child: Text(
-                                "H",
-                                style: CustomTextStyle.customRaleway(
-                                  fontSize: 40,
-                                  color: AppColors.whiteColor,
-                                ),
+                        Obx(
+                          () => Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 55,
+                                backgroundColor: Colors.black,
+                                backgroundImage:
+                                    controller.profileImage.value != null
+                                        ? FileImage(
+                                          scale: 2,
+                                          controller.profileImage.value!,
+                                        )
+                                        : null,
+                                child:
+                                    controller
+                                                .profileImage
+                                                .value
+                                                ?.path
+                                                .isEmpty ??
+                                            false
+                                        ? Text(
+                                          "H",
+                                          style: TextStyle(
+                                            fontSize: 40,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                        : null,
                               ),
-                            ),
-                            Positioned(
-                              top: 100,
-                              left: 240,
-                              child: Container(
-                                height: 40,
-                                width: 40,
-                                decoration: BoxDecoration(
-                                  color: AppColors.greyColorShade100,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: IconButton(
-                                  onPressed: () {},
-                                  icon: Icon(
-                                    Icons.edit,
-                                    color: AppColors.blackColor,
+                              controller.readOnly.value
+                                  ? Container()
+                                  : Positioned(
+                                    top: 75.h,
+                                    left: 200.w,
+                                    child: Container(
+                                      height: 35,
+                                      width: 35,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: IconButton(
+                                        onPressed: () => controller.pickImage(),
+                                        icon: Icon(
+                                          Icons.edit,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         setHeight(height: 30),
                         UserProfileWidget(
@@ -80,7 +104,7 @@ class UserProfileView extends GetView<UserProfileController> {
                           label2: 'Email',
                           label: 'Shop Name',
                         ),
-                        setHeight(height: 15),
+                        setHeight(height: 5),
                         UserProfileWidget(
                           readOnly: controller.readOnly.value,
                           controller2: controller.alternativeMobileController,
@@ -88,21 +112,21 @@ class UserProfileView extends GetView<UserProfileController> {
                           label2: 'Alternative No',
                           label: 'Mobile No',
                         ),
-                        setHeight(height: 15),
+                        setHeight(height: 5),
                         CommonTextField(
                           readOnly: controller.readOnly.value,
                           label: 'Address',
                           hintText: 'Address',
                           controller: controller.addressController,
                         ),
-                        setHeight(height: 15),
+                        setHeight(height: 5),
                         CommonTextField(
                           readOnly: controller.readOnly.value,
                           label: 'State',
                           hintText: 'State',
                           controller: controller.stateController,
                         ),
-                        setHeight(height: 15),
+                        setHeight(height: 5),
                         UserProfileWidget(
                           readOnly: controller.readOnly.value,
                           controller2: controller.pincodeController,
@@ -110,7 +134,7 @@ class UserProfileView extends GetView<UserProfileController> {
                           label2: 'Pincode',
                           label: 'City',
                         ),
-                        setHeight(height: 35),
+                        setHeight(height: 25),
                         CustomPadding(
                           paddingOption: SymmetricPadding(horizontal: 28.0),
                           child: Obx(

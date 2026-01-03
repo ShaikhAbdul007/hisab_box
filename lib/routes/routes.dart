@@ -1,7 +1,12 @@
 import 'package:get/get.dart';
+import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
+import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
+import 'package:inventory/module/credits_amount/binding/credit_binding.dart';
 import 'package:inventory/module/invoice/binding/invoice_binding.dart';
 import 'package:inventory/module/invoice/view/barcode.dart';
 import 'package:inventory/module/invoice/view/invoice.dart';
+import 'package:inventory/module/near_expire_product/binding/near_expire_product_binding.dart';
+import 'package:inventory/module/near_expire_product/view/near_expire_product_view.dart';
 import 'package:inventory/module/order_complete/binding/order_binding.dart';
 import 'package:inventory/module/order_complete/view/order_view.dart';
 import 'package:inventory/module/revenue/view/revenue_detail_view.dart';
@@ -21,6 +26,7 @@ import '../module/category/binding/animal_type_binding.dart';
 import '../module/category/binding/category_binding.dart';
 import '../module/category/view/animal_category.dart';
 import '../module/category/view/category.dart';
+import '../module/customer/binding/customer_binding.dart';
 import '../module/expense/binding/expense_binding.dart';
 import '../module/expense/view/expense.dart';
 import '../module/generate_barcode/view/generate_barcode.dart';
@@ -80,7 +86,13 @@ class AppRoutes {
       name: AppRouteName.bottomNavigation,
       page: () => BottomNavigation(),
       binding: BottomNavigationBinding(),
-      bindings: [HomeBinding(), SettingBinding(), ReportBinding()],
+      bindings: [
+        HomeBinding(),
+        SettingBinding(),
+        CreditBinding(),
+        CustomerBinding(),
+        ReportBinding(),
+      ],
     ),
     GetPage(name: AppRouteName.home, page: () => HomeView()),
     GetPage(
@@ -97,6 +109,11 @@ class AppRoutes {
       name: AppRouteName.inventroyList,
       page: () => InventroyList(),
       binding: InventorylistBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.bankDetails,
+      page: () => BankdetailsView(),
+      binding: BankdetailsBinding(),
     ),
     GetPage(
       name: AppRouteName.sellListAfterScan,
@@ -209,6 +226,11 @@ class AppRoutes {
       binding: OutOfStockBinding(),
     ),
     GetPage(
+      name: AppRouteName.nearExpireProduct,
+      page: () => NearExpireProductView(),
+      binding: NearExpireProductBinding(),
+    ),
+    GetPage(
       name: AppRouteName.generateBarcode,
       page: () => GenerateBarcode(),
       binding: GenerateBarcodeBinding(),
@@ -284,6 +306,12 @@ class AppRoutes {
         Get.toNamed(AppRouteName.animalCategory, arguments: data);
       case AppRouteName.looseSell:
         Get.toNamed(AppRouteName.looseSell, arguments: data);
+        break;
+      case AppRouteName.bankDetails:
+        Get.toNamed(AppRouteName.bankDetails, arguments: data);
+        break;
+      case AppRouteName.nearExpireProduct:
+        Get.toNamed(AppRouteName.nearExpireProduct, arguments: data);
         break;
       case AppRouteName.revenueView:
         Get.toNamed(AppRouteName.revenueView, arguments: data);

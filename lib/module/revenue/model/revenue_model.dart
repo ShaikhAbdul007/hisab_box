@@ -1,6 +1,6 @@
 class SellsModel {
   final String? billNo;
-  final bool? discount;
+  final bool? isDiscountGiven;
   final double? discountValue;
   final double? finalAmount;
   final int? itemsCount;
@@ -12,7 +12,7 @@ class SellsModel {
 
   SellsModel({
     this.billNo,
-    this.discount,
+    this.isDiscountGiven,
     this.discountValue,
     this.finalAmount,
     this.itemsCount,
@@ -26,7 +26,7 @@ class SellsModel {
   factory SellsModel.fromJson(Map<String, dynamic> json) {
     return SellsModel(
       billNo: json['billNo'],
-      discount: json['discount'],
+      isDiscountGiven: json['discount'],
       discountValue: (json['discountValue'] ?? 0).toDouble(),
       finalAmount: (json['finalAmount'] ?? 0).toDouble(),
       itemsCount: json['itemsCount'],
@@ -48,7 +48,7 @@ class SellsModel {
   Map<String, dynamic> toJson() {
     return {
       'billNo': billNo,
-      'discount': discount,
+      'discount': isDiscountGiven,
       'discountValue': discountValue,
       'finalAmount': finalAmount,
       'itemsCount': itemsCount,

@@ -36,7 +36,6 @@ class RevenueController extends GetxController {
       isRevenueListLoading.value = true;
       final uid = _auth.currentUser?.uid;
       if (uid == null) return [];
-
       final snapshot =
           await FirebaseFirestore.instance
               .collection('users')
@@ -44,18 +43,11 @@ class RevenueController extends GetxController {
               .collection('sales')
               .where('soldAt', isEqualTo: dayDate.value)
               .get();
-
-      isRevenueListLoading.value = false;
-
-      // 🔹 Convert all docs to BillModel
       final List<SellsModel> bills =
           snapshot.docs.map((doc) {
             final data = doc.data();
-
             return SellsModel.fromJson(data);
           }).toList();
-
-      // Debug logs
       customMessageOrErrorPrint(
         message: '✅ Total Bills Fetched: ${bills.length}',
       );
@@ -66,12 +58,12 @@ class RevenueController extends GetxController {
         );
       }
       customMessageOrErrorPrint(message: bills);
-
       return bills;
     } catch (e) {
-      isRevenueListLoading.value = false;
       showMessage(message: "❌ Error fetching revenue: ${e.toString()}");
       return [];
+    } finally {
+      isRevenueListLoading.value = false;
     }
   }
 }

@@ -68,6 +68,9 @@ dependencies:
   flutter_screenutil: ^5.9.3
   permission_handler: ^11.3.1
   device_info_plus: ^12.3.0
+  image_picker: ^1.2.1
+  firebase_messaging: ^16.1.0
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:

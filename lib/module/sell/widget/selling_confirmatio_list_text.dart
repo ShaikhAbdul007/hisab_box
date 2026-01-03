@@ -123,16 +123,16 @@ class SellingConfirmationListText extends StatelessWidget {
                   ),
                   setWidth(width: 5),
                   Container(
-                    height: 30.h,
+                    height: 40.h,
                     width: 50.w,
                     padding: EdgeInsets.zero,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.greyColor,
-                        width: 0.5.w,
-                      ),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
+                    // decoration: BoxDecoration(
+                    //   border: Border.all(
+                    //     color: AppColors.greyColor,
+                    //     width: 0.5.w,
+                    //   ),
+                    //   borderRadius: BorderRadius.circular(10.r),
+                    // ),
                     child: TextFormField(
                       keyboardType: TextInputType.number,
                       controller: dicountController,
@@ -154,18 +154,18 @@ class SellingConfirmationListText extends StatelessWidget {
                             OnlyPadding(left: 10, bottom: 15).getPadding(),
                         border: InputBorder.none,
                         label: Text('%', style: CustomTextStyle.customPoppin()),
-                        // enabledBorder: OutlineInputBorder(
-                        //   borderSide: BorderSide(width: 0.5.w),
-                        //   borderRadius: BorderRadius.circular(8.r),
-                        // ),
-                        // errorBorder: OutlineInputBorder(
-                        //   borderSide: BorderSide(color: AppColors.greyColor),
-                        //   borderRadius: BorderRadius.circular(10.r),
-                        // ),
-                        // focusedBorder: OutlineInputBorder(
-                        //   borderSide: BorderSide(width: 0.5.w),
-                        //   borderRadius: BorderRadius.circular(8.r),
-                        // ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(width: 0.5.w),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.greyColor),
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(width: 0.5.w),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
                         labelStyle: CustomTextStyle.customMontserrat(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,

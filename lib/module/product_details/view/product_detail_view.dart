@@ -9,6 +9,7 @@ import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_calender.dart';
+import '../../../common_widget/common_container.dart';
 import '../../../common_widget/common_dropdown.dart';
 import '../../../common_widget/common_padding.dart';
 import '../../../common_widget/common_progressbar.dart';
@@ -64,14 +65,16 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                 ),
               );
             },
-            child: Container(
+            child: CommonContainer(
               width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: AppColors.blackColor,
-                borderRadius: BorderRadius.circular(5),
+              height: 25,
+              color: AppColors.blackColor,
+              radius: 5,
+              child: Icon(
+                CupertinoIcons.barcode,
+                color: AppColors.whiteColor,
+                size: 22.sp,
               ),
-              child: Icon(CupertinoIcons.barcode, color: AppColors.whiteColor),
             ),
           ),
           setWidth(width: 10),
@@ -81,17 +84,9 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               controller.dropDownReadOnly.value =
                   !controller.dropDownReadOnly.value;
             },
-            child: Container(
-              width: 40,
-              height: 30,
-              decoration: BoxDecoration(
-                color: AppColors.blackColor,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Icon(
-                CupertinoIcons.square_pencil_fill,
-                color: AppColors.whiteColor,
-              ),
+            child: Icon(
+              CupertinoIcons.square_pencil_fill,
+              color: AppColors.blackColor,
             ),
           ),
         ],
@@ -117,7 +112,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                   children: [
                     Hero(
                       transitionOnUserGestures: true,
-                      tag: 'herotag_${controller.data.name ?? UniqueKey()}',
+                      tag: 'herotag_${UniqueKey()}',
                       child: Icon(CupertinoIcons.cube_box_fill, size: 70),
                     ),
                     setHeight(height: 8),
@@ -253,6 +248,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                           ),
                           Flexible(
                             child: CommonDropDown(
+                              isModelValueEnabled: false,
                               errorText: 'Please select',
                               enabled: controller.dropDownReadOnly.value,
                               selectedDropDownItem: controller.isLoose,

@@ -59,8 +59,46 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
+              height: 85,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SettingItem(
+                    label: 'Bank Details',
+                    subtitle: 'Manage your bank details',
+                    leading: SettingIconContainer(icon: Icons.account_balance),
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.bankDetails,
+                      );
+                    },
+                  ),
+                  // CommonDivider(indent: 20, endIndent: 20),
+                  // SettingItem(
+                  //   label:
+                  //       controller.shoptype.value == 'petShop'
+                  //           ? 'Animal Category'
+                  //           : 'Size Category',
+                  //   subtitle:
+                  //       controller.shoptype.value == 'petShop'
+                  //           ? 'Manage your animal categories'
+                  //           : 'Manage your size categories',
+                  //   leading: SettingIconContainer(
+                  //     icon: CupertinoIcons.circle_grid_3x3,
+                  //   ),
+                  //   onTap: () {
+                  //     AppRoutes.navigateRoutes(
+                  //       routeName: AppRouteName.animalCategory,
+                  //       data: controller.shoptype.value,
+                  //     );
+                  //   },
+                  // ),
+                ],
+              ),
+            ),
+            setHeight(height: 5),
+            CommonContainer(
               height: 170,
-
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

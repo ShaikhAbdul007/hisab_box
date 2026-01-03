@@ -41,9 +41,9 @@ class InventoryUserModel {
       city: json['city'] ?? '',
       state: json['state'] ?? '',
       pincode: json['pincode'] ?? '',
-      discountPerProduct: json['discountPerProduct'] ?? '',
+      discountPerProduct: json['discountPerProduct'] ?? false,
       shoptype: json['shoptype'] ?? '',
-      image: json['image'] ?? '',
+      image: json['profileImage'] ?? '',
     );
   }
 
@@ -60,7 +60,7 @@ class InventoryUserModel {
       "pincode": pincode,
       "shoptype": shoptype,
       "discountPerProduct": discountPerProduct,
-      "image": image,
+      "profileImage": image,
     };
   }
 }

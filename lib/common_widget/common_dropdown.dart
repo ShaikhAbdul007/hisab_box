@@ -12,6 +12,8 @@ class CommonDropDown extends StatelessWidget {
   final dynamic hintText;
   final String errorText;
   final bool enabled;
+  final bool isModelValueEnabled;
+  final Color? dropDownBgColor;
 
   final Function(dynamic value) notifyParent;
   const CommonDropDown({
@@ -21,7 +23,9 @@ class CommonDropDown extends StatelessWidget {
     required this.notifyParent,
     this.selectedDropDownItem,
     this.enabled = true,
+    this.isModelValueEnabled = true,
     required this.errorText,
+    this.dropDownBgColor,
   });
 
   @override
@@ -47,16 +51,20 @@ class CommonDropDown extends StatelessWidget {
         Container(
           margin: SymmetricPadding(horizontal: 10).getPadding(),
           decoration: BoxDecoration(
-            color: AppColors.greyColorShade100,
+            color: dropDownBgColor ?? AppColors.whiteColor,
             borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: AppColors.greyColor),
+            border: Border.all(color: AppColors.greyColor, width: 0.5.w),
           ),
           child: CustomDropdown.search(
             enabled: enabled,
             initialItem: selectedDropDownItem,
             decoration: CustomDropdownDecoration(
+              noResultFoundStyle: CustomTextStyle.customNato(fontSize: 11),
+              searchFieldDecoration: SearchFieldDecoration(
+                hintStyle: CustomTextStyle.customNato(fontSize: 11),
+              ),
               closedErrorBorder: Border.all(color: AppColors.transparent),
-              closedFillColor: AppColors.greyColorShade100,
+              closedFillColor: AppColors.transparent,
               errorStyle: CustomTextStyle.customNato(
                 fontSize: 10,
                 color: AppColors.redColor,
@@ -78,64 +86,28 @@ class CommonDropDown extends StatelessWidget {
               }
               return null;
             },
-
+            headerBuilder: (context, selectedItem, enabled) {
+              return isModelValueEnabled
+                  ? Text(
+                    selectedItem.name,
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  )
+                  : Text(
+                    selectedItem.toString(),
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+            },
             items: listItems,
             onChanged: (value) {
               notifyParent(value);
             },
           ),
-
-          //  DropdownButtonHideUnderline(
-          //   child: DropdownButtonFormField<dynamic>(
-          //     decoration: InputDecoration(
-          //       fillColor: Colors.grey.shade100,
-          //       iconColor: AppColors.blackColor,
-          //       filled: true,
-          //       enabledBorder: OutlineInputBorder(
-          //         borderRadius: BorderRadius.circular(10),
-          //         borderSide: BorderSide(color: Colors.transparent),
-          //       ),
-          //       contentPadding: EdgeInsets.only(left: 10, right: 5, top: 15),
-          //       border: OutlineInputBorder(
-          //         borderRadius: BorderRadius.circular(10),
-          //         borderSide: BorderSide(color: Colors.transparent),
-          //       ),
-          //       focusedBorder: OutlineInputBorder(
-          //         borderRadius: BorderRadius.circular(10),
-          //         borderSide: BorderSide(color: Colors.transparent),
-          //       ),
-          //     ),
-          //     validator:
-          //         ((value) => value == null ? "Please $hintText" : null),
-          //     isExpanded: true,
-          //     autovalidateMode: AutovalidateMode.onUserInteraction,
-          //     isDense: true,
-          //     value: selectedDropDownItem,
-          //     hint: Text(
-          //       hintText,
-          //       style: CustomTextStyle.customNato(
-          //         fontSize: 12,
-          //         color: AppColors.greyColor,
-          //       ),
-          //     ),
-          //     items:
-          //         listItems.map<DropdownMenuItem<dynamic>>((dynamic item) {
-          //           return DropdownMenuItem<dynamic>(
-          //             value: item.id,
-          //             child: Text(
-          //               "${item.name}",
-          //               style: CustomTextStyle.customNato(
-          //                 fontSize: 12,
-          //                 color: AppColors.greyColor,
-          //               ),
-          //             ),
-          //           );
-          //         }).toList(),
-          //     onChanged: (value) {
-          //       notifyParent(value);
-          //     },
-          //   ),
-          // ),
         ),
       ],
     );
@@ -162,7 +134,7 @@ class CustomDropDown extends StatelessWidget {
       margin: SymmetricPadding(horizontal: 10).getPadding(),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(width: 0.5, color: Colors.grey.shade100),
+        border: Border.all(width: 0.5.w, color: Colors.grey.shade100),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButtonFormField<dynamic>(

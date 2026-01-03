@@ -44,6 +44,7 @@ class CommonTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         CustomPadding(
           paddingOption: OnlyPadding(left: 8.0, bottom: 5),
@@ -108,21 +109,6 @@ class CommonTextField extends StatelessWidget {
                 fontSize: 11,
                 color: AppColors.greyColor,
               ),
-              // fillColor: AppColors.greyColorShade100,
-              // filled: true,
-
-              // errorBorder: OutlineInputBorder(
-              //   borderSide: BorderSide(color: AppColors.greyColor),
-              //   borderRadius: BorderRadius.circular(10.r),
-              // ),
-              // enabledBorder: OutlineInputBorder(
-              //   borderSide: BorderSide(color: AppColors.greyColor),
-              //   borderRadius: BorderRadius.circular(10.r),
-              // ),
-              // focusedBorder: OutlineInputBorder(
-              //   borderSide: BorderSide(color: AppColors.greyColor,),
-              //   borderRadius: BorderRadius.circular(10.r),
-              // ),
               errorStyle: CustomTextStyle.customNato(
                 fontSize: 10,
                 color: AppColors.redColor,

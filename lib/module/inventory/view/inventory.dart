@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
@@ -41,21 +42,19 @@ class InventoryView extends GetView<InventroyController> {
                 controller.flag == true
                     ? 'Scan product barcode to add the product.'
                     : 'Scan product barcode to sell the product.',
-                style: CustomTextStyle.customOpenSans(
-                  fontSize: 17,
+                style: CustomTextStyle.customRaleway(
+                  fontSize: 19,
                   color: AppColors.blackColor,
                   letterSpacing: 1,
                 ),
               ),
             ),
-            Container(
-              height: 300.h,
-              width: 400.w,
-              margin: OnlyPadding(top: 100, right: 20, left: 20).getPadding(),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.blackColor, width: 5.w),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
+            CommonContainer(
+              height: 400,
+              width: 500,
+              margin: OnlyPadding(top: 40, right: 0, left: 0).getPadding(),
+              border: Border.all(color: AppColors.blackColor, width: 2.w),
+              radius: 3,
               child: MobileScanner(
                 controller: controller.mobileScannerController,
                 onDetect: (barcodes) async {

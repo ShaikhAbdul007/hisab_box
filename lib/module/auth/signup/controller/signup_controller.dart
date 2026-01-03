@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/helper.dart';
@@ -22,9 +27,18 @@ class SignupController extends GetxController with CacheManager {
   TextEditingController state = TextEditingController();
   TextEditingController mobileNo = TextEditingController();
   TextEditingController alternateMobileNo = TextEditingController();
+  TextEditingController shopType = TextEditingController();
   RxBool signUpLoading = false.obs;
   RxBool obscureTextValue = true.obs;
   RxBool isShopDetailFilled = false.obs;
+
+  Rx<File?> profileImage = Rx<File?>(null);
+  final ImagePicker picker = ImagePicker();
+
+  Future pickImage() async {
+    final img = await picker.pickImage(source: ImageSource.gallery);
+    if (img != null) profileImage.value = File(img.path);
+  }
 
   void setobscureTextValue() {
     obscureTextValue.value = !obscureTextValue.value;
@@ -40,9 +54,7 @@ class SignupController extends GetxController with CacheManager {
             password: password.text,
           );
       String uid = userCredential.user!.uid;
-      final String formatCreatedAt = DateFormat(
-        'dd/MM/yyyy',
-      ).format(DateTime.now());
+      final String formatCreatedAt = setFormateDate();
 
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         "name": name.text,
@@ -53,9 +65,11 @@ class SignupController extends GetxController with CacheManager {
         'pincode': pincode.text,
         'state': state.text,
         'mobileNo': mobileNo.text,
-        'shoptype': 'petShop',
+        'shoptype': shopType.text,
         'alternateMobileNo': alternateMobileNo.text,
         "createdAt": formatCreatedAt,
+        "profileImage":
+            profileImage.value != null ? profileImage.value!.path : '',
       });
       final newDoc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();

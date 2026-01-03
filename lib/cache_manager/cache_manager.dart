@@ -1,4 +1,5 @@
 import 'package:get_storage/get_storage.dart';
+import 'package:inventory/module/bank_details/model/bank_model.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
@@ -18,6 +19,10 @@ mixin class CacheManager {
 
   void saveUserData(InventoryUserModel userModels) {
     box.write(Key.userModels.toString(), userModels.toJson());
+  }
+
+  void saveBankModelData(BankModel bankModel) {
+    box.write(Key.bankModels.toString(), bankModel.toJson());
   }
 
   void savePrinterAddress(String value) {
@@ -93,6 +98,14 @@ mixin class CacheManager {
     return InventoryUserModel();
   }
 
+  BankModel retrieveBankModelDetail() {
+    final bank = box.read(Key.bankModels.toString());
+    if (bank != null) {
+      return BankModel.formJson(bank);
+    }
+    return BankModel();
+  }
+
   Future<List<CategoryModel>> retrieveCategoryModel() async {
     final storedList = box.read(Key.categoryValue.toString());
     if (storedList != null && storedList is List) {
@@ -159,6 +172,7 @@ enum Key {
   printerAddress,
   billNo,
   userModels,
+  bankModels,
   product,
   cartProduct,
 }

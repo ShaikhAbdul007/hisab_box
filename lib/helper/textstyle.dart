@@ -26,7 +26,7 @@ class CustomTextStyle {
     double letterSpacing = 0,
     TextDecoration? decoration,
   }) {
-    return GoogleFonts.notoSansAnatolianHieroglyphs(
+    return GoogleFonts.arOneSans(
       color: color,
       fontWeight: fontWeight,
       fontSize: fontSize.sp,

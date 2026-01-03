@@ -14,6 +14,7 @@ import 'package:inventory/module/revenue/widget/revenue_list_text.dart';
 import 'package:inventory/responsive_layout/responsive_tempate.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
+import '../../../common_widget/common_container.dart';
 import '../../../common_widget/common_divider.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
@@ -286,6 +287,32 @@ class MobileScreen extends StatelessWidget {
     return CommonAppbar(
       appBarLabel: 'Home',
       isleadingButtonRequired: false,
+      firstActionChild: Row(
+        children: [
+          InkWell(
+            onTap: () {
+              AppRoutes.navigateRoutes(
+                routeName: AppRouteName.nearExpireProduct,
+              );
+            },
+            child: CommonContainer(
+              height: 30,
+              width: 30,
+              radius: 15,
+              color: AppColors.whiteColor,
+              child: Icon(Icons.history),
+            ),
+          ),
+          setWidth(width: 10),
+          CommonContainer(
+            height: 30,
+            width: 30,
+            radius: 15,
+            color: AppColors.whiteColor,
+            child: Icon(Icons.notifications_none_outlined),
+          ),
+        ],
+      ),
       body: Obx(
         () =>
             controller.isListLoading.value

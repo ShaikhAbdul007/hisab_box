@@ -90,6 +90,17 @@ class InventroyListText extends StatelessWidget {
                               ],
                             ),
                           ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            inventoryModel.location ?? '',
+                            style: CustomTextStyle.customOpenSans(
+                              color: AppColors.greyColor,
+                            ),
+                          ),
+                          setWidth(width: 10),
                           inventoryModel.isLoosed ?? false
                               ? Text(
                                 'Loosed : ${inventoryModel.isLoosed}',
@@ -98,7 +109,6 @@ class InventroyListText extends StatelessWidget {
                                 ),
                               )
                               : Container(),
-                          setHeight(height: 10),
                         ],
                       ),
                       Row(
@@ -128,7 +138,7 @@ class InventroyListText extends StatelessWidget {
                                   inventoryModel.quantity! < 10 ||
                               inventoryModel.quantity! == 0
                           ? Container(
-                            height: 25.h,
+                            height: 20.h,
                             width: 150.w,
                             padding:
                                 SymmetricPadding(horizontal: 5).getPadding(),
@@ -149,6 +159,7 @@ class InventroyListText extends StatelessWidget {
                                     getText(),
                                     style: CustomTextStyle.customOpenSans(
                                       color: AppColors.whiteColor,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ),

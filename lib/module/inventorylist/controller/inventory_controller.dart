@@ -1,8 +1,7 @@
 import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
@@ -12,9 +11,12 @@ import 'package:excel/excel.dart';
 import 'dart:typed_data';
 import '../../../helper/helper.dart';
 
-class InventoryListController extends GetxController with CacheManager {
+class InventoryListController extends GetxController
+    with GetSingleTickerProviderStateMixin, CacheManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   var productList = <ProductModel>[].obs;
+  var goDownProductList = <ProductModel>[].obs;
+  var shopProductList = <ProductModel>[].obs;
   RxBool isDataLoading = false.obs;
   RxBool isSaveLoading = false.obs;
   RxBool isInventoryScanSelected = false.obs;
@@ -30,12 +32,28 @@ class InventoryListController extends GetxController with CacheManager {
   TextEditingController purchasePrice = TextEditingController();
   TextEditingController searchController = TextEditingController();
   TextEditingController addSubtractQty = TextEditingController();
+  TabController? tabController;
 
   @override
   void onInit() {
     fetchAllProducts();
     isInventoryScanSelectedValue();
+    tabController = TabController(length: 2, vsync: this);
     super.onInit();
+  }
+
+  void setListAsPerType() {
+    shopProductList
+      ..clear()
+      ..addAll(
+        productList.where((p) => (p.location ?? '').toLowerCase() == 'shop'),
+      );
+
+    goDownProductList
+      ..clear()
+      ..addAll(
+        productList.where((p) => (p.location ?? '').toLowerCase() == 'godown'),
+      );
   }
 
   void clear() {
@@ -134,6 +152,7 @@ class InventoryListController extends GetxController with CacheManager {
     isDataLoading.value = true;
     if (cacheProductList.isNotEmpty) {
       productList.value = cacheProductList;
+      setListAsPerType();
     } else {
       final uid = _auth.currentUser?.uid;
       final productSnapshot =
@@ -148,6 +167,7 @@ class InventoryListController extends GetxController with CacheManager {
               .map((doc) => ProductModel.fromJson(doc.data()))
               .toList();
       saveProductList(productList);
+      setListAsPerType();
     }
     isDataLoading.value = false;
   }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_padding.dart';
@@ -20,6 +22,7 @@ class SignupView extends GetView<SignupController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.greyColorShade100,
       body: CustomPadding(
         paddingOption: SymmetricPadding(horizontal: 20, vertical: 40),
         child: Obx(
@@ -57,12 +60,21 @@ class SignupView extends GetView<SignupController> {
                 key: shopAddress,
                 child:
                     controller.isShopDetailFilled.value
-                        ? ShopAddress(
-                          shopName: controller.name,
-                          address: controller.address,
-                          city: controller.city,
-                          state: controller.state,
-                          pincode: controller.pincode,
+                        ? Obx(
+                          () => ShopAddress(
+                            notifyParent: (v) {
+                              controller.shopType.text = v;
+                            },
+                            profileImage:
+                                controller.profileImage.value ??
+                                File(controller.profileImage.value?.path ?? ''),
+                            onPressed: () => controller.pickImage(),
+                            shopName: controller.name,
+                            address: controller.address,
+                            city: controller.city,
+                            state: controller.state,
+                            pincode: controller.pincode,
+                          ),
                         )
                         : ShopDetails(
                           password: controller.password,
@@ -77,15 +89,30 @@ class SignupView extends GetView<SignupController> {
                         ),
               ),
               setHeight(height: 20),
-              CommonButton(
-                isLoading: controller.signUpLoading.value,
-                label:
-                    controller.isShopDetailFilled.value ? 'Save' : 'Continue',
-                onTap: () {
-                  if (shopAddress.currentState!.validate()) {
-                    controller.isShopDetailFilled.value = true;
-                  }
-                },
+              Obx(
+                () =>
+                    !controller.isShopDetailFilled.value
+                        ? CommonButton(
+                          isLoading: controller.signUpLoading.value,
+                          label:
+                              controller.isShopDetailFilled.value
+                                  ? 'Save'
+                                  : 'Continue',
+                          onTap: () async {
+                            if (shopAddress.currentState!.validate()) {
+                              controller.isShopDetailFilled.value = true;
+                            }
+                          },
+                        )
+                        : CommonButton(
+                          isLoading: controller.signUpLoading.value,
+                          label: 'Save',
+                          onTap: () async {
+                            if (shopAddress.currentState!.validate()) {
+                              await controller.signUpUser();
+                            }
+                          },
+                        ),
               ),
               setHeight(height: 5),
               InkWell(

@@ -72,7 +72,7 @@ void productNotWithScannedAvailableDialog(
             ),
           ],
         ),
-        setHeight(height: 10),
+        setHeight(height: 30),
         // CommonButton(
         //   bgColor: AppColors.buttonGreenColor,
         //   label: 'Manual Sell',
@@ -119,7 +119,7 @@ void productSavingDialog({
             ),
           ],
         ),
-        setHeight(height: 10),
+        setHeight(height: 30),
         // CommonButton(
         //   bgColor: AppColors.buttonGreenColor,
         //   label: 'Manual Sell',

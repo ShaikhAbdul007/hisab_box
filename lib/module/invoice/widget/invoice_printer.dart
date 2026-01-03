@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
+import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
@@ -26,12 +29,9 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
 
   @override
   Widget build(BuildContext context) {
-    final upiDetails = UPIDetails(
-      upiID: "UPI ID",
-      payeeName: "Payee Name",
-      amount: 1,
-    );
     var user = retrieveUserDetail();
+    var bankDetails = retrieveBankModelDetail();
+
     String userName =
         user.name?.isNotEmpty ?? false ? user.name!.substring(0, 1) : "HB";
     double total = 0;
@@ -62,7 +62,11 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                         : CircleAvatar(
                           radius: 50,
                           backgroundColor: AppColors.blackColor,
-                          child: Image.asset(user.image!, height: 80),
+                          backgroundImage:
+                              user.image == null || user.image!.isEmpty
+                                  ? null
+                                  : FileImage(File(user.image ?? '')),
+                          child: Text(''),
                         ),
                     setWidth(width: 15),
                     Column(
@@ -72,18 +76,28 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                         Text(
                           '${user.name}',
                           style: CustomTextStyle.customMontserrat(
-                            fontSize: 20,
+                            fontSize: 25,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         setHeight(height: 8),
-                        Text(
-                          '${user.mobileNo}/${user.alternateMobileNo}',
-                          style: CustomTextStyle.customMontserrat(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                        if (user.alternateMobileNo?.isNotEmpty ?? false) ...{
+                          Text(
+                            '${user.mobileNo}/${user.alternateMobileNo}',
+                            style: CustomTextStyle.customMontserrat(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+                        } else ...{
+                          Text(
+                            '${user.mobileNo}',
+                            style: CustomTextStyle.customMontserrat(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        },
                       ],
                     ),
                   ],
@@ -363,14 +377,37 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                   ],
                 ),
-                setHeight(height: 20),
-
-                UPIPaymentQRCode(
-                  upiDetails: upiDetails,
-                  size: 200,
-                  embeddedImagePath: 'assets/images/logo.png',
-                  embeddedImageSize: const Size(60, 60),
-                ),
+                setHeight(height: 30),
+                bankDetails.upiId == null &&
+                        paymentMethod.toLowerCase() != 'Cash'
+                    ? CustomPadding(
+                      paddingOption: SymmetricPadding(horizontal: 80),
+                      child: Column(
+                        children: [
+                          UPIPaymentQRCode(
+                            upiDetails: UPIDetails(
+                              upiID: bankDetails.upiId ?? '',
+                              payeeName: bankDetails.accountName ?? '',
+                              amount: total,
+                            ),
+                            size: 200,
+                            embeddedImageSize: const Size(60, 60),
+                            loader: CommonProgressbar(
+                              color: AppColors.blackColor,
+                            ),
+                          ),
+                          setHeight(height: 15),
+                          Text(
+                            '₹ $total /-',
+                            style: CustomTextStyle.customPoppin(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : Container(),
                 setHeight(height: 150),
               ],
             ),

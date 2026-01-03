@@ -20,6 +20,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
   RxList<DiscountModel> discountList = <DiscountModel>[].obs;
   RxList<DiscountModel> productDiscount = <DiscountModel>[].obs;
   TextEditingController quantity = TextEditingController();
+
   TextEditingController cashPaidController = TextEditingController(text: '0.0');
   TextEditingController upiPaidController = TextEditingController(text: '0.0');
   TextEditingController cardPaidController = TextEditingController(text: '0.0');
@@ -269,6 +270,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
       );
     } else {
       Get.back();
+      removeCartProductList();
       showMessage(message: somethingWentMessage);
     }
   }

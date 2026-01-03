@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/reports/widget/report_common_continer.dart';
@@ -51,7 +52,7 @@ class RevenueView extends GetView<RevenueController> {
                     ),
                   ),
         ),
-        Container(width: 200),
+        Container(width: 200.w),
       ],
       appBarLabel: 'Sell',
       firstActionChild: Obx(

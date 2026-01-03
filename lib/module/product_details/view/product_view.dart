@@ -126,6 +126,7 @@ class ProductView extends GetView<ProductController> {
                   ),
                   Flexible(
                     child: CommonDropDown(
+                      isModelValueEnabled: false,
                       errorText: 'Please select',
                       listItems: [true, false],
                       hintText: 'Select isLoose',
