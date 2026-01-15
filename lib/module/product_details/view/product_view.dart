@@ -25,9 +25,10 @@ class ProductView extends GetView<ProductController> {
     return CommonAppbar(
       isleadingButtonRequired: true,
       backgroundColor: AppColors.whiteColor,
-      appBarLabel: 'Add Product',
+      appBarLabel:
+          controller.loosedProduct.value ? 'Add Loose Product' : 'Add Product',
       body:
-          controller.data['flag'] == true
+          controller.loosedProduct.value
               ? looseProductWidget(controller.inventoryScanKey)
               : productWidget(context, controller.inventoryScanKey),
     );
@@ -172,16 +173,16 @@ class ProductView extends GetView<ProductController> {
               InventoryBottomsheetComponentText(
                 inputLength1: 2,
                 keyboardType1: TextInputType.number,
-                hintText2: 'Location',
-                label2: 'Location',
-                controller2: controller.location,
-                validator2: (location) {
-                  if (location!.isEmpty) {
-                    return emptyLocation;
-                  } else {
-                    return null;
-                  }
-                },
+                hintText2: 'Level',
+                label2: 'Level',
+                controller2: controller.level,
+                // validator2: (location) {
+                //   if (location!.isEmpty) {
+                //     return emptyLocation;
+                //   } else {
+                //     return null;
+                //   }
+                // },
                 hintText1: 'Enter discount',
                 label1: 'Discount (%)',
                 controller1: controller.discount,
@@ -192,6 +193,44 @@ class ProductView extends GetView<ProductController> {
                     return null;
                   }
                 },
+              ),
+              Row(
+                children: [
+                  Flexible(
+                    child: CommonTextField(
+                      // validator: (expire) {
+                      //   if (expire!.isEmpty) {
+                      //     return emptyExpire;
+                      //   } else {
+                      //     return null;
+                      //   }
+                      // },
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
+
+                      hintText: 'Rack',
+                      label: 'Rack',
+                      controller: controller.rack,
+                    ),
+                  ),
+                  Flexible(
+                    child: CommonDropDown(
+                      isModelValueEnabled: false,
+                      errorText: 'Select Location',
+                      listItems: ['Shop', 'Godown'],
+                      hintText: 'Location',
+                      notifyParent: (val) {
+                        controller.location.text = val;
+                        customMessageOrErrorPrint(
+                          message: ' controller.isLoose ${controller.isLoose}',
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
               Row(
                 children: [

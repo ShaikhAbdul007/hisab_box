@@ -21,6 +21,8 @@ class InventroyListText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int color = int.parse(inventoryModel.color ?? '0');
+    String rack = inventoryModel.rack ?? '';
+    String level = inventoryModel.level ?? '';
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -95,7 +97,13 @@ class InventroyListText extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            inventoryModel.location ?? '',
+                            level.isNotEmpty && rack.isNotEmpty
+                                ? '${inventoryModel.location}/$level/$rack'
+                                : level.isEmpty && rack.isNotEmpty
+                                ? '${inventoryModel.location}/$rack'
+                                : rack.isEmpty && level.isNotEmpty
+                                ? '${inventoryModel.location}/$level'
+                                : '${inventoryModel.location}',
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
@@ -186,22 +194,24 @@ class InventroyListText extends StatelessWidget {
                         fontSize: 18,
                       ),
                     ),
-                    RichText(
-                      text: TextSpan(
-                        text: inventoryModel.quantity.toString(),
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.blackColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: ' in stock',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
+                    FittedBox(
+                      child: RichText(
+                        text: TextSpan(
+                          text: inventoryModel.quantity.toString(),
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.blackColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
                           ),
-                        ],
+                          children: [
+                            TextSpan(
+                              text: ' in stock',
+                              style: CustomTextStyle.customOpenSans(
+                                color: AppColors.greyColor,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
