@@ -378,8 +378,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                   ],
                 ),
                 setHeight(height: 30),
-                bankDetails.upiId == null &&
-                        paymentMethod.toLowerCase() != 'Cash'
+                bankDetails.upiId != null &&
+                        paymentMethod.toLowerCase() != 'cash'
                     ? CustomPadding(
                       paddingOption: SymmetricPadding(horizontal: 80),
                       child: Column(
