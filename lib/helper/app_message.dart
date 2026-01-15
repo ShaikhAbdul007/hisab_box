@@ -43,7 +43,7 @@ const emptyPerpiece = "Please enter box per piece";
 const emptyProductCategory = "Please enter product category";
 const emptyAnimalCategory = "Please enter animal category";
 const emptyCategory = "Please enter category";
-const scannerDataSave = "Data save successful";
+const scannerDataSave = "Product added successfully";
 const emptyExpenseName = 'Enter the expense name';
 const emptyExpenseAmount = 'Enter the expense amount';
 const emptyDiscountPercentage = 'Enter the discount percentage';
@@ -68,3 +68,6 @@ const customerCareNumber = '9768858160';
 const customerCareEmail = 'info@softwaresnip.com';
 const sellingProduct = 'Selling Product';
 const addCustomer = 'Add Customer';
+const productNotFound = 'Add Customer';
+const productNotAllowedForLooseSelling =
+    'This product is not allowed for loose selling';
