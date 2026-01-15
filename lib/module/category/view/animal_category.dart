@@ -35,8 +35,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
           child: Icon(CupertinoIcons.add),
         ),
       ),
-      appBarLabel:
-          controller.data == 'petShop' ? 'Animal Category' : 'Size Category',
+      appBarLabel: 'Animal Category',
       body: Obx(
         () =>
             controller.isFetchAnimalCategory.value
