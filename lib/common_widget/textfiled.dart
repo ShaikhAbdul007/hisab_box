@@ -84,14 +84,15 @@ class CommonTextField extends StatelessWidget {
             controller: controller,
             autocorrect: true,
             cursorHeight: 14.sp,
-            cursorColor: AppColors.blackColor,
+
+            // cursorColor: AppColors.blackColor,
             style: CustomTextStyle.customOpenSans(
               fontSize: 12,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w400, // cursorHeight se match karao
             ),
             inputFormatters: [
               isEveryThingAllowed
-                  ? FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9s]'))
+                  ? FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s]'))
                   : FilteringTextInputFormatter.allow(
                     RegExp(r'[a-zA-Z0-9@./&\s]'),
                   ),
@@ -101,8 +102,13 @@ class CommonTextField extends StatelessWidget {
             decoration: InputDecoration(
               suffixIcon: suffixIcon,
               prefixIcon: prefixIcon,
+              suffixIconConstraints: BoxConstraints(
+                minHeight: 20,
+                minWidth: 20,
+              ),
               contentPadding:
-                  contentPadding ?? OnlyPadding(top: 10, left: 15).getPadding(),
+                  contentPadding ??
+                  SymmetricPadding(horizontal: 14, vertical: 12).getPadding(),
               border: InputBorder.none,
               hintText: hintText,
               hintStyle: CustomTextStyle.customNato(
@@ -120,3 +126,45 @@ class CommonTextField extends StatelessWidget {
     );
   }
 }
+
+
+// TextFormField(
+//   textCapitalization: TextCapitalization.words,
+//   onChanged: onChanged,
+//   readOnly: readOnly,
+//   obscureText: obscureText,
+//   obscuringCharacter: '*',
+//   autovalidateMode: AutovalidateMode.onUserInteraction,
+//   validator: validator,
+//   keyboardType: keyboardType,
+//   controller: controller,
+//   autocorrect: true,
+
+//   style: CustomTextStyle.customOpenSans(
+//     fontSize: 14,    // cursorHeight se match karao
+//   ),
+
+//   cursorHeight: 18,  // yeh font ke aas-paas rakho
+//   textAlignVertical: TextAlignVertical.center,
+//   isDense: true,
+
+//   inputFormatters: [
+  
+//   ],
+
+//   decoration: InputDecoration(
+//     suffixIcon: suffixIcon,
+//     prefixIcon: prefixIcon,
+
+//     // 👇 yeh most important hai
+//     contentPadding: EdgeInsets.symmetric(
+//       horizontal: 14,
+//       vertical: 12,
+//     ),
+
+  
+
+//     border: InputBorder.none,
+//     hintText: hintText,
+//   ),
+// );
