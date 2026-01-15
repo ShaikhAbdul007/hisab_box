@@ -32,7 +32,7 @@ class PartailPaymentWidget extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${controller.paymentMethodTotalAmount.value}',
+                  controller.paymentMethodTotalAmount.value.toStringAsFixed(2),
                   style: CustomTextStyle.customOpenSans(
                     fontSize: 18,
                     color: AppColors.blackColor,
