@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/set_format_date.dart';
 
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
@@ -34,7 +35,6 @@ class AnimalTypeController extends GetxController with CacheManager {
     if (uid == null) return;
 
     try {
-      final now = DateTime.now();
       final docRef =
           FirebaseFirestore.instance
               .collection('users')
@@ -43,10 +43,10 @@ class AnimalTypeController extends GetxController with CacheManager {
               .doc();
 
       final category = CategoryModel(
-        time: DateFormat('hh:mm a').format(now),
+        time: setFormateDate('hh:mm a'),
         id: docRef.id,
         name: categoryName,
-        createdAt: DateFormat('dd-MM-yyyy').format(now),
+        createdAt: setFormateDate(),
       );
 
       await docRef.set(category.toJson());

@@ -57,7 +57,7 @@ class LooseSell extends GetView<LooseController> {
           ),
         ),
       ),
-      appBarLabel: 'Loose Sell',
+      appBarLabel: 'Loose Inventory',
       body: Obx(
         () =>
             controller.isDataLoading.value
@@ -114,9 +114,23 @@ class LooseSell extends GetView<LooseController> {
                                                   .text,
                                             )
                                     ? LooseInventroyListText(
-                                      onTap: () {
-                                        controller.setQuantitydata(index);
-                                        updateDataDialog(index);
+                                      onTap: () async {
+                                        // controller.setQuantitydata(index);
+                                        // updateDataDialog(index);
+
+                                        var res =
+                                            await AppRoutes.futureNavigationToRoute(
+                                              routeName:
+                                                  AppRouteName
+                                                      .productDetailView,
+                                              data: {
+                                                'product': inventoryList,
+                                                'isProductLoosed': true,
+                                              },
+                                            );
+                                        if (res == true) {
+                                          controller.fetchLosseList();
+                                        }
                                       },
                                       isInventoryScanSelected: true,
                                       inventoryModel: inventoryList,

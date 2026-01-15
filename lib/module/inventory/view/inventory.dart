@@ -23,8 +23,8 @@ class InventoryView extends GetView<InventroyController> {
 
   @override
   Widget build(BuildContext context) {
-    bool isloosedInventory = false;
-    isloosedInventory =
+    // bool isloosedInventory = false;
+    bool isloosedInventory =
         controller.flag == false && controller.navigate == 'loose';
     return PopScope(
       canPop: false,
@@ -41,6 +41,8 @@ class InventoryView extends GetView<InventroyController> {
               child: Text(
                 controller.flag == true
                     ? 'Scan product barcode to add the product.'
+                    : isloosedInventory
+                    ? 'Scan product barcode to add the loose product.'
                     : 'Scan product barcode to sell the product.',
                 style: CustomTextStyle.customRaleway(
                   fontSize: 19,
@@ -68,23 +70,51 @@ class InventoryView extends GetView<InventroyController> {
                         isloosedInventory,
                       );
                     } else if (isloosedInventory) {
+                      await controller.stopCameraAfterDetect(barcodes);
                       String scannedValue = controller.barcodeValue.value;
                       bool isURL =
                           Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
-                      var res = await controller.existingProductInfo(
-                        controller.auth.currentUser!.uid,
-                        controller.barcodeValue.value,
-                      );
-                      if (res.$1 == true) {
+                      if (!isURL) {
+                        var res = await controller.existingProductInfo(
+                          controller.auth.currentUser!.uid,
+                          controller.barcodeValue.value,
+                          // controller.barcodeValue.value,
+                        );
+                        if (res.$1 == true) {
+                          controller.stopCameraAfterDetect(barcodes);
+                          var resss = await AppRoutes.futureNavigationToRoute(
+                            routeName: AppRouteName.productView,
+                            data: {
+                              'barcode': controller.barcodeValue.value,
+                              'flag': isloosedInventory,
+                              'productName': res.$2.name,
+                            },
+                          );
+
+                          if (resss == true) {
+                            controller.mobileScannerController.start();
+                          }
+                        } else {
+                          productNotAvailableDialog(
+                            label: 'Scanned product is not available in stock ',
+                            onTap: () {
+                              Get.back();
+                              controller.mobileScannerController.start();
+                            },
+                          );
+                        }
                       } else {
-                        var barcode = await controller
-                            .fetchLooseProductByBarcode(
-                              barcode: controller.barcodeValue.value,
-                            );
+                        productNotAvailableDialog(
+                          label:
+                              "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
+                          onTap: () {
+                            Get.back();
+                            controller.mobileScannerController.start();
+                          },
+                        );
                       }
                     } else {
                       await controller.stopCameraAfterDetect(barcodes);
-                      String scannedValue = controller.barcodeValue.value;
                       sellInventory(barcodes, inventoryScanKey);
                     }
                   }
@@ -114,14 +144,11 @@ class InventoryView extends GetView<InventroyController> {
       );
       if (existproduct.$1 == true) {
         controller.handleScan(
+          // availableQty: (existproduct.$2.quantity ?? 0).toDouble(),
           product: existproduct.$2,
           afterProductAdding: () {
             productSavingDialog(
               label: 'Scanning Done, product added',
-              // manualSellOnTap: () {
-              //   Get.back();
-              //   openManualySell(inventoryScanKey: inventoryScanKey);
-              // },
               scanAgainOnTap: () async {
                 Get.back();
                 controller.mobileScannerController.start();
@@ -138,7 +165,7 @@ class InventoryView extends GetView<InventroyController> {
             productNotWithScannedAvailableDialog(
               manualSellOnTap: () {
                 Get.back();
-                openManualySell(inventoryScanKey: inventoryScanKey);
+                //  openManualySell(inventoryScanKey: inventoryScanKey);
               },
               '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
               scanAgainOnTap: () {
@@ -231,84 +258,84 @@ class InventoryView extends GetView<InventroyController> {
       );
     }
   }
-
-  void openManualySell({required GlobalKey<FormState> inventoryScanKey}) {
-    openManuallySellBottomSheet(
-      onPressedOnTap: () {
-        // controller.clear();
-        controller.cameraStart();
-      },
-      formkeys: inventoryScanKey,
-      child: Obx(
-        () =>
-            controller.isfullLooseSellingListLoading.value
-                ? CommonProgressbar(color: AppColors.blackColor)
-                : controller.fullLooseSellingList.isEmpty
-                ? Column(
-                  children: [
-                    CommonNodatafound(message: 'No Loose Data Found', size: 15),
-                    setHeight(height: 30),
-                  ],
-                )
-                :
-                // ManuallyInventoryBottomsheetComponent(
-                //   controller: controller,
-                //   formkeys: inventoryScanKey,
-                //   addInventoryOnTap: () {
-                //     if (inventoryScanKey.currentState!.validate()) {
-                //       ProductModel selectedProduct = controller
-                //           .fullLooseSellingList
-                //           .firstWhere(
-                //             (p) => p.id == controller.selectedManuallySell,
-                //           );
-                //       unfocus();
-                //       if (selectedProduct.isLooseCategory == true) {
-                //         controller.handleLooseScan(product: selectedProduct);
-                //         controller.selectedManuallySell = null;
-                //         controller.looseQuantity.clear();
-                //         controller.isDoneButtonReq.value = true;
-                //       } else {
-                //         if (controller.looseOldQty >
-                //             int.parse(controller.looseQuantity.text)) {
-                //           controller.handleLooseScan(product: selectedProduct);
-                //           controller.selectedManuallySell = null;
-                //           controller.looseQuantity.clear();
-                //           controller.isDoneButtonReq.value = true;
-                //         } else {
-                //           showSnackBar(
-                //             error:
-                //                 "Product is out of stock\nYou cannot add more than available stock.",
-                //           );
-                //         }
-                //       }
-                //     }
-                //   },
-                //   listItems: controller.fullLooseSellingList,
-                //   notifyParent: (np) {
-                //     controller.selectedManuallySell = np;
-                //   },
-                //   manuallyInventoryOnTap: () async {
-                //     if (controller.scannedProductDetails.isNotEmpty) {
-                //       Get.back();
-                //       AppRoutes.navigateRoutes(
-                //         routeName: AppRouteName.sellListAfterScan,
-                //         data: {'productList': controller.scannedProductDetails},
-                //       );
-                //     } else {
-                //       showMessage(message: 'Please scan the product first');
-                //     }
-                //   },
-                // ),
-                SizedBox(),
-      ),
-    );
-  }
 }
 
 
 
 
 
+
+  // void openManualySell({required GlobalKey<FormState> inventoryScanKey}) {
+  //   openManuallySellBottomSheet(
+  //     onPressedOnTap: () {
+  //       // controller.clear();
+  //       controller.cameraStart();
+  //     },
+  //     formkeys: inventoryScanKey,
+  //     child: Obx(
+  //       () =>
+  //           controller.isfullLooseSellingListLoading.value
+  //               ? CommonProgressbar(color: AppColors.blackColor)
+  //               : controller.fullLooseSellingList.isEmpty
+  //               ? Column(
+  //                 children: [
+  //                   CommonNodatafound(message: 'No Loose Data Found', size: 15),
+  //                   setHeight(height: 30),
+  //                 ],
+  //               )
+  //               :
+  //               // ManuallyInventoryBottomsheetComponent(
+  //               //   controller: controller,
+  //               //   formkeys: inventoryScanKey,
+  //               //   addInventoryOnTap: () {
+  //               //     if (inventoryScanKey.currentState!.validate()) {
+  //               //       ProductModel selectedProduct = controller
+  //               //           .fullLooseSellingList
+  //               //           .firstWhere(
+  //               //             (p) => p.id == controller.selectedManuallySell,
+  //               //           );
+  //               //       unfocus();
+  //               //       if (selectedProduct.isLooseCategory == true) {
+  //               //         controller.handleLooseScan(product: selectedProduct);
+  //               //         controller.selectedManuallySell = null;
+  //               //         controller.looseQuantity.clear();
+  //               //         controller.isDoneButtonReq.value = true;
+  //               //       } else {
+  //               //         if (controller.looseOldQty >
+  //               //             int.parse(controller.looseQuantity.text)) {
+  //               //           controller.handleLooseScan(product: selectedProduct);
+  //               //           controller.selectedManuallySell = null;
+  //               //           controller.looseQuantity.clear();
+  //               //           controller.isDoneButtonReq.value = true;
+  //               //         } else {
+  //               //           showSnackBar(
+  //               //             error:
+  //               //                 "Product is out of stock\nYou cannot add more than available stock.",
+  //               //           );
+  //               //         }
+  //               //       }
+  //               //     }
+  //               //   },
+  //               //   listItems: controller.fullLooseSellingList,
+  //               //   notifyParent: (np) {
+  //               //     controller.selectedManuallySell = np;
+  //               //   },
+  //               //   manuallyInventoryOnTap: () async {
+  //               //     if (controller.scannedProductDetails.isNotEmpty) {
+  //               //       Get.back();
+  //               //       AppRoutes.navigateRoutes(
+  //               //         routeName: AppRouteName.sellListAfterScan,
+  //               //         data: {'productList': controller.scannedProductDetails},
+  //               //       );
+  //               //     } else {
+  //               //       showMessage(message: 'Please scan the product first');
+  //               //     }
+  //               //   },
+  //               // ),
+  //               SizedBox(),
+  //     ),
+  //   );
+  // }
 
 
 

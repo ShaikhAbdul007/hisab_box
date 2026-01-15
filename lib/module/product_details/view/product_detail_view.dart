@@ -445,7 +445,6 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                   if (controller.inventoryScanKey.currentState!
                                       .validate()) {
                                     unfocus();
-
                                     if (isProductLoosed) {
                                       print('form true${controller.isLoose}');
                                       controller.updateProductQuantity(

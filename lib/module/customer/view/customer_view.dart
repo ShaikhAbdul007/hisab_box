@@ -136,81 +136,86 @@ class CustomerView extends GetView<CustomerController> {
       appBarLabel: 'Customers',
       body: CustomPadding(
         paddingOption: SymmetricPadding(horizontal: 8.0),
-        child: Column(
-          children: [
-            setHeight(height: 10),
-            Expanded(
-              flex: 2,
-              child: CommonSearch(
-                icon: Obx(
-                  () => InkWell(
-                    onTap:
+        child: RefreshIndicator.adaptive(
+          onRefresh: () {
+            return controller.fetchAllCustomers();
+          },
+          child: Column(
+            children: [
+              setHeight(height: 10),
+              Expanded(
+                flex: 2,
+                child: CommonSearch(
+                  icon: Obx(
+                    () => InkWell(
+                      onTap:
+                          controller.searchText.value.isNotEmpty
+                              ? () {
+                                controller.clear();
+                                unfocus();
+                              }
+                              : null,
+                      child: Icon(
                         controller.searchText.value.isNotEmpty
-                            ? () {
-                              controller.clear();
-                              unfocus();
-                            }
-                            : null,
-                    child: Icon(
-                      controller.searchText.value.isNotEmpty
-                          ? CupertinoIcons.clear
-                          : CupertinoIcons.search,
+                            ? CupertinoIcons.clear
+                            : CupertinoIcons.search,
+                      ),
                     ),
                   ),
+                  label: 'Search',
+                  hintText: 'search customer',
+                  controller: controller.searchController,
+                  onChanged: (val) => controller.searchProduct(val),
                 ),
-                label: 'Search',
-                hintText: 'search customer',
-                controller: controller.searchController,
-                onChanged: (val) => controller.searchProduct(val),
               ),
-            ),
-            Expanded(
-              flex: 20,
-              child: Obx(
-                () =>
-                    controller.customDataLoading.value
-                        ? CommonProgressbar(color: AppColors.blackColor)
-                        : controller.customerDetailList.isEmpty
-                        ? CommonNodatafound(message: 'No customer found')
-                        : ListView.builder(
-                          itemCount: controller.customerDetailList.length,
-                          itemBuilder: (context, index) {
-                            var customerData =
-                                controller.customerDetailList[index];
-                            return Obx(
-                              () =>
-                                  customerData.name!.toLowerCase().contains(
-                                            controller.searchText.value,
-                                          ) ||
-                                          customerData.mobile!
-                                              .toLowerCase()
-                                              .contains(
-                                                controller.searchText.value,
-                                              )
-                                      ? ListTile(
-                                        title: Text(
-                                          customerData.name ?? '',
-                                          style:
-                                              CustomTextStyle.customMontserrat(),
-                                        ),
-                                        subtitle: Text(
-                                          customerData.address ?? '',
-                                          style:
-                                              CustomTextStyle.customMontserrat(),
-                                        ),
-                                        trailing: Text(
-                                          customerData.mobile ?? '',
-                                          style:
-                                              CustomTextStyle.customOpenSans(),
-                                        ),
-                                      )
-                                      : Container(),
-                            );
-                          },
-                        ),
+              Expanded(
+                flex: 20,
+                child: Obx(
+                  () =>
+                      controller.customDataLoading.value
+                          ? CommonProgressbar(color: AppColors.blackColor)
+                          : controller.customerDetailList.isEmpty
+                          ? CommonNodatafound(message: 'No customer found')
+                          : ListView.builder(
+                            itemCount: controller.customerDetailList.length,
+                            itemBuilder: (context, index) {
+                              var customerData =
+                                  controller.customerDetailList[index];
+                              return Obx(
+                                () =>
+                                    customerData.name!.toLowerCase().contains(
+                                              controller.searchText.value,
+                                            ) ||
+                                            customerData.mobile!
+                                                .toLowerCase()
+                                                .contains(
+                                                  controller.searchText.value,
+                                                )
+                                        ? ListTile(
+                                          title: Text(
+                                            customerData.name ?? '',
+                                            style:
+                                                CustomTextStyle.customMontserrat(),
+                                          ),
+                                          subtitle: Text(
+                                            customerData.address ?? '',
+                                            style:
+                                                CustomTextStyle.customMontserrat(),
+                                          ),
+                                          trailing: Text(
+                                            customerData.mobile ?? '',
+                                            style:
+                                                CustomTextStyle.customOpenSans(),
+                                          ),
+                                        )
+                                        : Container(),
+                              );
+                            },
+                          ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

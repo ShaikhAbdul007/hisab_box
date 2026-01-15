@@ -2,14 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/order_complete/controller/order_controller.dart';
 
-import '../../../helper/helper.dart';
 import '../../order_complete/model/customer_details_model.dart';
 
-class CustomerController extends GetxController {
-  final orderController = Get.put(OrderController());
-  final uid = FirebaseAuth.instance.currentUser?.uid;
+class CustomerController extends GetxController with CacheManager {
+  final _auth = FirebaseAuth.instance;
+  var orderController = Get.put(OrderController());
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
   RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
@@ -23,45 +23,46 @@ class CustomerController extends GetxController {
 
   void searchProduct(String value) {
     searchText.value = value;
-    searchController.text = searchText.value;
+    searchController.text = value;
   }
 
   void clear() {
     searchController.clear();
-
     searchText.value = '';
   }
 
   double calculateTotalCredit(CustomerDetails customer) {
-    if (customer.invoices == null || customer.invoices!.isEmpty) return 0;
-
-    double total = 0;
-
-    for (var invoice in customer.invoices!) {
-      total += (invoice.payment?.credit ?? 0).toDouble();
-    }
-
-    return total;
+    return customer.totalCredit;
   }
 
-  Future<List<CustomerDetails>> fetchAllCustomers() async {
+  Future<void> fetchAllCustomers() async {
+    customDataLoading.value = true;
+
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      customDataLoading.value = false;
+      return;
+    }
+
     try {
       final snapshot =
           await FirebaseFirestore.instance
               .collection('users')
               .doc(uid)
               .collection('customers')
-              .orderBy('createdAt', descending: true)
+              .orderBy('lastInvoiceAt', descending: true)
               .get();
 
-      customerDetailList.value =
+      final customers =
           snapshot.docs
               .map((doc) => CustomerDetails.fromJson(doc.data()))
               .toList();
-      return customerDetailList;
+
+      customerDetailList.value = customers;
     } catch (e) {
-      customMessageOrErrorPrint(message: "Fetch customers error: $e");
-      return customerDetailList.value = [];
+      print("Fetch customers error: $e");
+    } finally {
+      customDataLoading.value = false;
     }
   }
 }

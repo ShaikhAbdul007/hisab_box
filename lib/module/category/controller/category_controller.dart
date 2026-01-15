@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/set_format_date.dart';
 
 import '../../../helper/app_message.dart';
 import '../model/category_model.dart';
@@ -42,10 +43,10 @@ class CategoryController extends GetxController with CacheManager {
               .doc(); // 🔐 Auto ID
 
       final category = CategoryModel(
-        time: DateFormat('hh:mm a').format(now),
+        time: setFormateDate('hh:mm a'),
         id: docRef.id,
         name: categoryName,
-        createdAt: DateFormat('dd-MM-yyyy').format(now),
+        createdAt: setFormateDate(),
       );
 
       await docRef.set(category.toJson());

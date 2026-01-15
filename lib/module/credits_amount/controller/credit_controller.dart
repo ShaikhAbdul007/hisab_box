@@ -8,6 +8,7 @@ import '../../../helper/helper.dart';
 
 class CredtiController extends GetxController {
   final uid = FirebaseAuth.instance.currentUser?.uid;
+
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
   RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
@@ -21,7 +22,7 @@ class CredtiController extends GetxController {
 
   void searchProduct(String value) {
     searchText.value = value;
-    searchController.text = searchText.value;
+    searchController.text = value;
   }
 
   void clear() {
@@ -29,36 +30,33 @@ class CredtiController extends GetxController {
     searchText.value = '';
   }
 
+  /// ⚡ INSTANT – no invoice scan
   double calculateTotalCredit(CustomerDetails customer) {
-    if (customer.invoices == null || customer.invoices!.isEmpty) return 0;
-
-    double total = 0;
-
-    for (var invoice in customer.invoices!) {
-      total += (invoice.payment?.credit ?? 0).toDouble();
-    }
-
-    return total;
+    return customer.totalCredit; // 🔥 already pre-calculated in Firestore
   }
 
-  Future<List<CustomerDetails>> fetchAllCustomers() async {
+  Future<void> fetchAllCustomers() async {
     try {
+      customDataLoading.value = true;
+
       final snapshot =
           await FirebaseFirestore.instance
               .collection('users')
               .doc(uid)
               .collection('customers')
-              .orderBy('createdAt', descending: true)
+              .where('totalCredit', isGreaterThan: 0) // 🔥 only dues customers
+              .orderBy('totalCredit', descending: true)
               .get();
 
       customerDetailList.value =
           snapshot.docs
               .map((doc) => CustomerDetails.fromJson(doc.data()))
               .toList();
-      return customerDetailList;
     } catch (e) {
       customMessageOrErrorPrint(message: "Fetch customers error: $e");
-      return customerDetailList.value = [];
+      customerDetailList.clear();
+    } finally {
+      customDataLoading.value = false;
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -15,6 +16,7 @@ import '../../inventory/model/product_model.dart';
 
 class ProductController extends GetxController with CacheManager {
   final FirebaseAuth auth = FirebaseAuth.instance;
+  final box = GetStorage();
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   var productList = <ProductModel>[].obs;
@@ -31,6 +33,8 @@ class ProductController extends GetxController with CacheManager {
   TextEditingController location = TextEditingController();
   TextEditingController discount = TextEditingController(text: '0');
   TextEditingController purchasePrice = TextEditingController();
+  TextEditingController level = TextEditingController();
+  TextEditingController rack = TextEditingController();
   TextEditingController flavor = TextEditingController();
   TextEditingController weight = TextEditingController();
   TextEditingController quantity = TextEditingController();
@@ -42,16 +46,30 @@ class ProductController extends GetxController with CacheManager {
   RxBool isLooseProductSave = false.obs;
   RxBool isSaveLoading = false.obs;
   RxString barcodeValue = ''.obs;
+  RxBool loosedProduct = false.obs;
   RxString dayDate = ''.obs;
   bool isLoose = false;
   var data = Get.arguments;
   @override
   void onInit() async {
     dayDate.value = setFormateDate();
-    barcode.text = data['barcode'];
-    barcodeValue.value = barcode.text;
+    setLoosedProduct();
+    setBarcode();
     getCategoryData();
     super.onInit();
+  }
+
+  void setLoosedProduct() {
+    loosedProduct.value = data['flag'];
+    if (loosedProduct.value) {
+      loooseProductName.text = data['productName'];
+      print('your product name is ${data['productName']}');
+    }
+  }
+
+  void setBarcode() {
+    barcode.text = data['barcode'];
+    barcodeValue.value = barcode.text;
   }
 
   void calculatePurchasePrice() {
@@ -136,42 +154,36 @@ class ProductController extends GetxController with CacheManager {
       final uid = auth.currentUser?.uid;
       if (uid == null) return;
 
-      final now = DateTime.now();
-      final String formatDate = DateFormat('dd-MM-yyyy').format(now);
-      final String formaTime = DateFormat('hh:mm a').format(now);
+      final String formatDate = setFormateDate();
+
+      final String formaTime = setFormateDate('hh:mm a');
 
       final productRef = FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('products')
           .doc(barcode);
-      final aminalTypeData = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('animalCategories')
-          .doc(animalType.text);
-      final categoriesData = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('categories')
-          .doc(category.text);
-
-      final animalexistingDoc = await aminalTypeData.get();
-      final categories = await categoriesData.get();
-
+      final aminalTypeData =
+          animalTypeList.firstWhere((e) => e.id == animalType.text).name;
+      final categoriesData =
+          categoryList.firstWhere((e) => e.id == category.text).name;
       int quantityOnly = int.tryParse(quantity.text) ?? 0;
       int discounts = int.tryParse(discount.text) ?? 0;
+      double purchasePrices = double.tryParse(purchasePrice.text) ?? 0.0;
+      double sellingPrices = double.tryParse(sellingPrice.text) ?? 0.0;
       await productRef.set({
         'barcode': barcode,
         'name': productName.text,
-        'category': categories['name'],
-        'animalType': animalexistingDoc['name'],
-        'isLoose': isLoose,
+        'category': categoriesData,
+        'animalType': aminalTypeData,
+        'isLoose': loosedProduct.value,
         'quantity': quantityOnly,
-        'purchasePrice': double.tryParse(purchasePrice.text) ?? 0,
-        'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
+        'purchasePrice': purchasePrices,
+        'sellingPrice': sellingPrices,
         'flavours': flavor.text,
         'weight': weight.text,
+        'level': level.text,
+        'rack': rack.text,
         'createdDate': formatDate,
         'updatedDate': formatDate,
         'createdTime': formaTime,
@@ -182,8 +194,10 @@ class ProductController extends GetxController with CacheManager {
         'discount': discounts,
         'purchaseDate': purchaseDate.text,
         'exprieDate': exprieDate.text,
+        'isActive': true,
       });
       fetchAllProducts();
+
       showMessage(message: scannerDataSave);
       Future.delayed(Duration(milliseconds: 500), () {
         clear();
@@ -192,6 +206,7 @@ class ProductController extends GetxController with CacheManager {
     } on FirebaseAuthException catch (e) {
       showMessage(message: e.message ?? '');
     } catch (e) {
+      print('');
       showMessage(message: somethingWentMessage);
     } finally {
       isSaveLoading.value = false;
@@ -200,10 +215,13 @@ class ProductController extends GetxController with CacheManager {
 
   Future<void> saveNewLooseProduct({required String barcode}) async {
     isLooseProductSave.value = true;
+
+    final uid = auth.currentUser?.uid;
+    if (uid == null) return;
+
     final now = DateTime.now();
     final String formatDate = DateFormat('dd-MM-yyyy').format(now);
     final String formaTime = DateFormat('hh:mm a').format(now);
-    final uid = auth.currentUser?.uid;
 
     final productRef = FirebaseFirestore.instance
         .collection('users')
@@ -211,57 +229,88 @@ class ProductController extends GetxController with CacheManager {
         .collection('products')
         .doc(barcode);
 
-    final looseCollectionRef = FirebaseFirestore.instance
+    final looseRef = FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('looseProducts')
         .doc(barcode);
 
     try {
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final productSnap = await transaction.get(productRef);
-        if (!productSnap.exists) {
-          throw Exception("Product not found");
-        }
-        final data = productSnap.data()!;
-        final quantity = (data['quantity'] ?? 0) as int;
-        if (quantity <= 0) {
-          throw Exception("Insufficient stock");
-        }
-        transaction.update(productRef, {'quantity': quantity - 1});
-      });
-      final looseSnap = await looseCollectionRef.get();
-      final productData = await productRef.get();
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final productSnap = await tx.get(productRef);
 
-      if (looseSnap.exists) {
-        throw Exception("Product already exists in loose stock");
-      }
-      await looseCollectionRef.set({
-        'barcode': barcode,
-        'name': productData['name'],
-        'category': productData['category'],
-        'animalType': productData['animalType'],
-        'isLoose': productData['isLoose'],
-        'quantity': int.tryParse(looseQuantity.text) ?? 0,
-        'purchasePrice': productData['purchasePrice'],
-        'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
-        'flavours': productData['flavours'],
-        'weight': productData['weight'],
-        'createdDate': formatDate,
-        'updatedDate': formatDate,
-        'createdTime': formaTime,
-        'updatedTime': formaTime,
-        'color': productData['color'],
+        if (!productSnap.exists) {
+          throw productNotFound;
+        }
+
+        final data = productSnap.data()!;
+
+        // ❌ if not marked looseable → block
+        if (data['isLoose'] != true) {
+          throw productNotAllowedForLooseSelling;
+        }
+
+        final int mainStock = (data['quantity'] ?? 0).toInt();
+
+        if (mainStock <= 0) {
+          throw "No sealed pack left";
+        }
+
+        // 👇 1 packet → loose
+        tx.update(productRef, {
+          'quantity': mainStock - 1,
+          'updatedDate': formatDate,
+          'updatedTime': formaTime,
+        });
+
+        final looseQty = int.tryParse(looseQuantity.text) ?? 0;
+        if (looseQty <= 0) throw "Loose quantity invalid";
+
+        final looseSnap = await tx.get(looseRef);
+
+        if (looseSnap.exists) {
+          final oldQty = (looseSnap['quantity'] ?? 0).toInt();
+          tx.update(looseRef, {
+            'quantity': oldQty + looseQty,
+            'updatedDate': formatDate,
+            'updatedTime': formaTime,
+            'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
+          });
+        } else {
+          double sellingPrices = double.tryParse(sellingPrice.text) ?? 0.0;
+          tx.set(looseRef, {
+            'barcode': barcode,
+            'name': data['name'],
+            'category': data['category'],
+            'animalType': data['animalType'],
+            'isLoose': true,
+            'quantity': looseQty,
+            'purchasePrice': data['purchasePrice'],
+            'sellingPrice': sellingPrices,
+            'flavours': data['flavours'],
+            'weight': data['weight'],
+            'createdDate': formatDate,
+            'updatedDate': formatDate,
+            'createdTime': formaTime,
+            'updatedTime': formaTime,
+            'color': data['color'],
+            'level': data['level'],
+            'rack': data['rack'],
+            'isFlavorAndWeightNotRequired':
+                data['isFlavorAndWeightNotRequired'],
+            'location': data['location'],
+            'discount': data['discount'],
+            'purchaseDate': data['purchaseDate'],
+            'exprieDate': data['exprieDate'],
+          });
+        }
       });
+
       clear();
-      Get.back();
-      // mobileScannerController.start();
-      showMessage(message: 'Product added to loose stock');
-    } on FirebaseException catch (e) {
-      Get.back();
-      showMessage(message: e.message ?? "Firebase Error");
+
+      Get.back(result: true);
+      showMessage(message: "Loose stock created successfully");
     } catch (e) {
-      Get.back();
       showMessage(message: e.toString());
     } finally {
       isLooseProductSave.value = false;

@@ -11,6 +11,7 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import '../../../helper/app_message.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/expense/controller/expense_controller.dart';
@@ -134,9 +135,8 @@ class Expense extends GetView<ExpenseController> {
                   label: saveButton,
                   onTap: () async {
                     if (expenseKey.currentState!.validate()) {
-                      DateTime now = DateTime.now();
-                      String formattedTime = DateFormat('h:mm a').format(now);
-                      String formatDate = DateFormat('dd-MM-yyyy').format(now);
+                      String formattedTime = setFormateDate('h:mm a');
+                      String formatDate = setFormateDate();
                       double amount = double.parse(controller.amount.text);
                       var expense = ExpenseModel(
                         amount: amount,

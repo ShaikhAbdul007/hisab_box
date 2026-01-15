@@ -156,8 +156,7 @@ class OrderView extends GetView<OrderController> {
                                           invoice: controller.data,
                                         );
                                     if (res == true) {
-                                      controller.homeButtonVisible.value =
-                                          false;
+                                      controller.homeButtonVisible.value = true;
                                       Get.back();
                                       showMessage(
                                         message: "Customer added with invoice",

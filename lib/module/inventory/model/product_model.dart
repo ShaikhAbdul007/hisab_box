@@ -27,6 +27,7 @@ class ProductModel {
   String? purchaseDate;
   String? expireDate;
   String? location;
+  bool? isActive;
 
   ProductModel({
     this.barcode,
@@ -36,6 +37,7 @@ class ProductModel {
     this.billNo,
     this.paymentMethod,
     this.purchasePrice,
+    this.isActive,
     this.sellingPrice,
     this.createdDate,
     this.updatedDate,
@@ -63,6 +65,7 @@ class ProductModel {
     id = json['id'];
     barcode = json['barcode'];
     name = json['name'];
+    isActive = json['isActive'];
     category = json['category'];
     quantity = json['quantity'];
     purchasePrice = json['purchasePrice'];
@@ -102,6 +105,7 @@ class ProductModel {
     data['createdDate'] = createdDate;
     data['updatedDate'] = updatedDate;
     data['createdTime'] = createdTime;
+    data['isActive'] = isActive;
     data['updatedTime'] = updatedTime;
     data['weight'] = weight;
     data['flavours'] = flavor;

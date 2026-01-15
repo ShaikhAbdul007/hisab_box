@@ -145,7 +145,7 @@ class InventroyController extends GetxController with CacheManager {
     final existingDoc = await productRef.get();
     final product = ProductModel.fromJson(existingDoc.data() ?? {});
     if (existingDoc.exists) {
-      stockqty.value = product.quantity ?? 0;
+      stockqty.value = product.quantity?.toInt() ?? 0;
       existProductName.value = product.name ?? '';
       //loooseProductName.text = product.name ?? '';
       return (true, product);
@@ -289,7 +289,6 @@ class InventroyController extends GetxController with CacheManager {
             location: product.location,
             purchasePrice: product.purchasePrice,
           );
-
           cacheList.add(scanned);
           saveCartProductList(cacheList);
           afterProductAdding();
@@ -309,7 +308,7 @@ class InventroyController extends GetxController with CacheManager {
           scannedProductDetails[index].quantity =
               (scannedProductDetails[index].quantity ?? 0) + 1;
 
-          scannedQty.value = scannedProductDetails[index].quantity!;
+          scannedQty.value = scannedProductDetails[index].quantity!.toInt();
           saveCartProductList(scannedProductDetails);
           afterProductAdding();
         } else {

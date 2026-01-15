@@ -172,7 +172,10 @@ class InventroyList extends GetView<InventoryListController> {
                                                     routeName:
                                                         AppRouteName
                                                             .productDetailView,
-                                                    data: inventoryList,
+                                                    data: {
+                                                      'product': inventoryList,
+                                                      'isProductLoosed': false,
+                                                    },
                                                   );
                                               if (res == true) {
                                                 await controller
@@ -247,7 +250,11 @@ class InventroyList extends GetView<InventoryListController> {
                                                     routeName:
                                                         AppRouteName
                                                             .productDetailView,
-                                                    data: goDownInventoryList,
+                                                    data: {
+                                                      'product':
+                                                          goDownInventoryList,
+                                                      'isProductLoosed': false,
+                                                    },
                                                   );
                                               if (res == true) {
                                                 await controller

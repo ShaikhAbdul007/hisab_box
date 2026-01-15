@@ -540,7 +540,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
       sellList.add(
         SellItem(
           name: p.name,
-          quantity: p.quantity,
+          quantity: p.quantity?.toInt() ?? 0,
           originalPrice: p.sellingPrice,
           originalDiscount: p.discount,
           discount: discount,

@@ -4,6 +4,8 @@ import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 
+import '../module/loose_sell/model/loose_model.dart' show LooseInvetoryModel;
+
 mixin class CacheManager {
   final box = GetStorage();
 
@@ -46,6 +48,11 @@ mixin class CacheManager {
   void saveProductList(List<ProductModel> product) {
     final productList = product.map((e) => e.toJson()).toList();
     box.write(Key.product.toString(), productList);
+  }
+
+  void saveLoosedProductList(List<LooseInvetoryModel> loosedProduct) {
+    final loosedProductList = loosedProduct.map((e) => e.toJson()).toList();
+    box.write(Key.looseInvetoryKey.toString(), loosedProductList);
   }
 
   void saveCartProductList(List<ProductModel> product) {
@@ -130,6 +137,16 @@ mixin class CacheManager {
     return [];
   }
 
+  Future<List<LooseInvetoryModel>> retrieveLoosedProductList() async {
+    final loosedProductList = box.read(Key.looseInvetoryKey.toString());
+    if (loosedProductList != null && loosedProductList is List) {
+      return loosedProductList
+          .map((e) => LooseInvetoryModel.fromJson(e))
+          .toList();
+    }
+    return [];
+  }
+
   Future<List<ProductModel>> retrieveCartProductList() async {
     final productList = box.read(Key.cartProduct.toString());
     if (productList != null && productList is List) {
@@ -175,4 +192,5 @@ enum Key {
   bankModels,
   product,
   cartProduct,
+  looseInvetoryKey,
 }
