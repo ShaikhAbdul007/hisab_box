@@ -2,7 +2,7 @@ class ProductModel {
   String? barcode;
   String? name;
   String? category;
-  int? quantity;
+  num? quantity;
   double? purchasePrice;
   double? sellingPrice;
   String? createdDate;
@@ -13,6 +13,8 @@ class ProductModel {
   String? weight;
   String? flavor;
   String? animalType;
+  String? level;
+  String? rack;
   int? box;
   int? perpiece;
   bool? isLoosed;
@@ -44,6 +46,8 @@ class ProductModel {
     this.animalType,
     this.weight,
     this.flavor,
+    this.level,
+    this.rack,
     this.box,
     this.perpiece,
     this.isLoosed,
@@ -70,6 +74,8 @@ class ProductModel {
     color = json['color'];
     flavor = json['flavours'];
     weight = json['weight'];
+    level = json['level'];
+    rack = json['rack'];
     animalType = json['animalType'];
     box = json['box'];
     perpiece = json['perpiece'];
@@ -112,6 +118,8 @@ class ProductModel {
     data['exprieDate'] = expireDate;
     data['location'] = location;
     data['discount'] = discount;
+    data['level'] = level;
+    data['rack'] = rack;
     return data;
   }
 }
