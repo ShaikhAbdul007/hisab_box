@@ -116,14 +116,8 @@ class SettingView extends GetView<SettingController> {
                   ),
                   CommonDivider(indent: 20, endIndent: 20),
                   SettingItem(
-                    label:
-                        controller.shoptype.value == 'petShop'
-                            ? 'Animal Category'
-                            : 'Size Category',
-                    subtitle:
-                        controller.shoptype.value == 'petShop'
-                            ? 'Manage your animal categories'
-                            : 'Manage your size categories',
+                    label: 'Animal Category',
+                    subtitle: 'Manage your animal categories',
                     leading: SettingIconContainer(
                       icon: CupertinoIcons.circle_grid_3x3,
                     ),
