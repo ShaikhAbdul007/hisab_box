@@ -317,14 +317,14 @@ class MobileScreen extends StatelessWidget {
         () =>
             controller.isListLoading.value
                 ? CommonProgressbar(color: AppColors.blackColor, size: 50)
-                : RefreshIndicator.adaptive(
-                  color: AppColors.blackColor,
-                  onRefresh: () {
-                    return controller.getRevenveAndStock();
-                  },
-                  child: CustomPadding(
-                    paddingOption: SymmetricPadding(horizontal: 10.0),
-                    child: SingleChildScrollView(
+                : CustomPadding(
+                  paddingOption: SymmetricPadding(horizontal: 10.0),
+                  child: SingleChildScrollView(
+                    child: RefreshIndicator.adaptive(
+                      color: AppColors.blackColor,
+                      onRefresh: () {
+                        return controller.getRevenveAndStock();
+                      },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -346,10 +346,16 @@ class MobileScreen extends StatelessWidget {
                                   onTap: () async {
                                     if (controller.lis[index].routeName !=
                                         null) {
-                                      AppRoutes.futureNavigationToRoute(
-                                        routeName:
-                                            controller.lis[index].routeName!,
-                                      );
+                                      var ress =
+                                          await AppRoutes.futureNavigationToRoute(
+                                            routeName:
+                                                controller
+                                                    .lis[index]
+                                                    .routeName!,
+                                          );
+                                      if (ress == true) {
+                                        controller.getRevenveAndStock();
+                                      }
                                     }
                                   },
                                   child: HomeGridContainer(
