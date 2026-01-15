@@ -27,6 +27,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
 
   @override
   Widget build(BuildContext context) {
+    bool isProductLoosed = controller.data['isProductLoosed'];
     return CommonAppbar(
       isleadingButtonRequired: true,
       backgroundColor: AppColors.whiteColor,
@@ -91,7 +92,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
           ),
         ],
       ),
-      appBarLabel: 'Product Details',
+      appBarLabel: isProductLoosed ? 'Loose Product Detail' : 'Product Detail',
       body: Form(
         key: controller.inventoryScanKey,
         child: SingleChildScrollView(
@@ -444,9 +445,20 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                   if (controller.inventoryScanKey.currentState!
                                       .validate()) {
                                     unfocus();
-                                    controller.updateProductQuantity(
-                                      barcode: controller.barcode.text,
-                                    );
+
+                                    if (isProductLoosed) {
+                                      print('form true${controller.isLoose}');
+                                      controller.updateProductQuantity(
+                                        barcode: controller.barcode.text,
+                                        isLoosed: isProductLoosed,
+                                      );
+                                    } else {
+                                      print(controller.isLoose);
+                                      controller.updateProductQuantity(
+                                        barcode: controller.barcode.text,
+                                        isLoosed: isProductLoosed,
+                                      );
+                                    }
                                   }
                                 },
                               ),
