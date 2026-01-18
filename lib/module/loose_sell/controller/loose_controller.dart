@@ -127,38 +127,6 @@ class LooseController extends GetxController with CacheManager {
     }
   }
 
-  // Future<void> sellLooseItem() async {
-  //   isSaveLoading.value = true;
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-
-  //   try {
-  //     final now = DateTime.now();
-  //     final date = DateFormat('dd-MM-yyyy').format(now);
-  //     final time = DateFormat('hh:mm a').format(now);
-  //     int quantitys = int.parse(quantity.text);
-  //     int amot = int.parse(amount.text);
-  //     await FirebaseFirestore.instance
-  //         .collection('users')
-  //         .doc(uid)
-  //         .collection('looseSell')
-  //         .add({
-  //           'quantitys': quantitys,
-  //           'createdAt': date,
-  //           'time': time,
-  //           'amount': amot,
-  //         });
-  //     Get.back();
-  //     showMessage(message: 'Product sale successful');
-  //     clear();
-  //     fetchLooseCategory();
-  //   } on FirebaseException catch (e) {
-  //     showMessage(message: e.toString());
-  //   } finally {
-  //     isSaveLoading.value = false;
-  //   }
-  // }
-
   void clear() {
     quantity.clear();
     amount.clear();

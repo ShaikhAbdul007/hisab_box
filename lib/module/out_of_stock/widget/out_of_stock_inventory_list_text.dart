@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -326,34 +327,47 @@ class OutOfStockInventoryListText extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Column(
-              children: [
-                Text(
-                  '\u{20B9} ${inventoryModel.sellingPrice}',
-                  style: CustomTextStyle.customPoppin(
-                    color: AppColors.blackColor,
-                    fontSize: 18,
-                  ),
-                ),
-                RichText(
-                  text: TextSpan(
-                    text: inventoryModel.quantity.toString(),
-                    style: CustomTextStyle.customOpenSans(
+            child: CustomPadding(
+              paddingOption: OnlyPadding(right: 10),
+              child: Column(
+                children: [
+                  Text(
+                    '\u{20B9} ${inventoryModel.sellingPrice}',
+                    style: CustomTextStyle.customPoppin(
                       color: AppColors.blackColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 18,
                     ),
-                    children: [
-                      TextSpan(
-                        text: ' in stock',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-              ],
+                  RichText(
+                    text: TextSpan(
+                      text: inventoryModel.quantity.toString(),
+                      style: CustomTextStyle.customOpenSans(
+                        color: AppColors.blackColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: ' in stock',
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.greyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  setHeight(height: 10),
+                  inventoryModel.quantity != 0
+                      ? SizedBox.shrink()
+                      : CommonButton(
+                        bgColor: AppColors.redColor,
+                        height: 25,
+                        radius: 6,
+                        label: 'Delete',
+                        onTap: () {},
+                      ),
+                ],
+              ),
             ),
           ),
         ],
