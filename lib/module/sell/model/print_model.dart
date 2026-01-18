@@ -84,10 +84,15 @@ class SellItem {
   bool? isFlavorAndWeightNotRequired;
   String? exprieDate;
   String? location;
-
+  bool? isActive;
+  String? sellType;
+  String? rack;
+  String? level;
   SellItem({
     this.name,
     this.quantity,
+    this.isActive,
+    this.sellType,
     this.originalPrice,
     this.originalDiscount,
     this.discount,
@@ -108,10 +113,14 @@ class SellItem {
     this.isFlavorAndWeightNotRequired,
     this.exprieDate,
     this.location,
+    this.level,
+    this.rack,
   });
 
   SellItem.fromJson(Map<String, dynamic> json) {
     name = json['name'] ?? '';
+    level = json['level'] ?? '';
+    rack = json['rack'] ?? '';
     quantity = json['quantity'] ?? 0;
     originalPrice = json['originalPrice'] ?? 0.0;
     originalDiscount = json['originalDiscount'] ?? 0;
@@ -129,16 +138,22 @@ class SellItem {
     perpiece = json['perpiece'] ?? 0;
     isLoose = json['isLoose'] ?? false;
     paymentMethod = json['paymentMethod'] ?? '';
+    sellType = json['sellType'] ?? '';
+    isActive = json['isActive'] ?? false;
     isLooseCategory = json['isLooseCategory'] ?? false;
     isFlavorAndWeightNotRequired =
         json['isFlavorAndWeightNotRequired'] ?? false;
     exprieDate = json['exprieDate'] ?? '';
     location = json['location'] ?? '';
+    sellType = json['sellType'] ?? '';
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['name'] = name;
+    data['level'] = level;
+    data['sellType'] = sellType;
+    data['rack'] = rack;
     data['quantity'] = quantity;
     data['originalPrice'] = originalPrice;
     data['originalDiscount'] = originalDiscount;
@@ -146,6 +161,8 @@ class SellItem {
     data['finalPrice'] = finalPrice;
     data['category'] = category;
     data['barcode'] = barcode;
+    data['isActive'] = isActive;
+    data['sellType'] = sellType;
     data['id'] = id;
     data['purchasePrice'] = purchasePrice;
     data['weight'] = weight;

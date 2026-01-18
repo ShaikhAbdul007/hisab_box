@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
@@ -301,7 +302,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     Expanded(
                       flex: 3,
                       child: Text(
-                        "₹ $total",
+                        "₹ ${total.toStringAsFixed(2)}",
                         textAlign: TextAlign.right,
                         style: CustomTextStyle.customPoppin(
                           fontWeight: FontWeight.bold,
@@ -429,63 +430,88 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
   Widget build(BuildContext context) {
     var user = retrieveUserDetail();
     return Receipt(
-      defaultTextStyle: TextStyle(fontSize: 20),
+      defaultTextStyle: const TextStyle(
+        fontSize: 16, // Even larger default font for maximum visibility
+      ),
       builder: (context) {
         return SizedBox(
-          height: 140,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                data.name ?? "",
-                style: CustomTextStyle.customMontserrat(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
+          // 🔥 OPTIMIZED FOR 25mm x 50mm LABEL STICKER
+          height: 140, // Reduced height for 25mm label (was 155)
+          width: 189, // 50mm width in pixels (50mm ≈ 189px at 96dpi)
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: 6,
+              left: 6,
+              top: 10,
+              bottom: 10, // Vertical padding for perfect centering
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment:
+                  MainAxisAlignment.center, // 🔥 CENTER EVERYTHING
+              children: [
+                // 🔥 BARCODE - Centered and optimized for text space
+                BarcodeWidget(
+                  barcode: Barcode.code128(),
+                  data: data['product'].barcode,
+                  height: 55, // Smaller barcode for more text space
+                  width: 175, // Centered width
+                  drawText: false,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              setHeight(height: 3),
-              Text(
-                "Flr:${data.flavor}",
-                style: CustomTextStyle.customMontserrat(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
 
-              setHeight(height: 3),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Wt:${data.weight}",
-                    style: CustomTextStyle.customMontserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                const SizedBox(height: 2), // Minimal spacing
+                // 🔥 SHOP NAME - Large and bold for maximum visibility
+                Text(
+                  user.name ?? 'Hisab Box',
+                  style: CustomTextStyle.customMontserrat(
+                    fontSize: 22, // Even larger for maximum visibility
+                    fontWeight: FontWeight.w800, // Extra bold
                   ),
-                  setWidth(width: 10),
-                  Text(
-                    "MRP: ₹${data.sellingPrice}",
-                    style: CustomTextStyle.customMontserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 1), // Minimal spacing
+                // 🔥 PRODUCT NAME - Large and clear
+                Text(
+                  data['product'].name ?? '',
+                  style: CustomTextStyle.customMontserrat(
+                    fontSize: 18, // Larger for better visibility
+                    fontWeight: FontWeight.w700, // Bold
                   ),
-                ],
-              ),
-              setHeight(height: 3),
-              BarcodeWidget(
-                barcode: Barcode.ean13(),
-                data: data.barcode,
-                height: 60,
-                width: 300,
-                drawText: true,
-              ),
-            ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 1), // Minimal spacing
+                // 🔥 PRODUCT DETAILS - Clear and readable
+                Text(
+                  '${data['product'].flavor} | ${data['product'].weight} | ₹${data['product'].sellingPrice}',
+                  style: CustomTextStyle.customMontserrat(
+                    fontSize: 16, // Larger for better visibility
+                    fontWeight: FontWeight.w600, // Semi-bold
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+
+                // 🔥 BARCODE NUMBER - Clear and readable
+                // const SizedBox(height: 1),
+                // Text(
+                //   data['product'].barcode ?? '',
+                //   style: CustomTextStyle.customMontserrat(
+                //     fontSize: 16, // Larger for better visibility
+                //     fontWeight: FontWeight.w500, // Medium weight
+                //   ),
+                //   maxLines: 1,
+                //   overflow: TextOverflow.ellipsis,
+                //   textAlign: TextAlign.center,
+                // ),
+              ],
+            ),
           ),
         );
       },

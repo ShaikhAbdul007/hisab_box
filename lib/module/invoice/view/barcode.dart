@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:get/get.dart';
+import 'package:inventory/module/invoice/widget/bluetooth_validate_widget.dart';
 import 'package:inventory/module/invoice/widget/invoice_printer.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
@@ -15,83 +16,66 @@ class BarcodeView extends GetView<BardcodeController> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put<BardcodeController>(BardcodeController());
+
+    // Print single label
+
     return CommonAppbar(
       appBarLabel: 'Barcode',
       persistentFooterButtons: [
         Obx(
           () => CommonButton(
-            //   width: 180,
             isLoading: controller.isPrintingLoading.value,
-            label: "Print",
+            label: "Print Simple",
             onTap: () async {
-              // bool checkBluetooth =
-              //     await controller.checkBluetoothConnectivity();
-              // if (checkBluetooth == true) {
-              //   // if (controller.receiptController.value != null) {
-              //   //   await printReceipt(
-              //   //     rController: controller.receiptController.value!,
-              //   //     paymentMethod: 'paymentMethod',
-              //   //   );
-              //   // }
-
-              //   try {
-              //     final plugin = SmartPrinterFlutter();
-
-              //     // STEP 1: Start Scan (VERY IMPORTANT – initializes printerManager)
-              //     await plugin.startScan();
-
-              //     // Wait 1 second for scanner to initialize
-              //     await Future.delayed(Duration(seconds: 1));
-
-              //     // OPTIONAL: Printer status check
-              //     var status = await plugin.getPrinterStatus();
-              //    customMessageOrErrorPrint(  message: "Printer Status: $status");
-
-              //     // OPTIONAL: Scanning check
-              //     var scanning = await plugin.isScanning();
-              //    customMessageOrErrorPrint(  message: "Scanning: $scanning");
-
-              //     // STEP 2: Stop scanning BEFORE connecting
-              //     await plugin.stopScan();
-
-              //     // STEP 5: CHECK CONNECTION
-              //     bool ok = await plugin.isConnected;
-              //    customMessageOrErrorPrint(  message: "Connected: $ok");
-
-              //     if (!ok) {
-              //      customMessageOrErrorPrint(  message: "Connection failed!");
-              //       return;
-              //     }
-
-              //     // STEP 6: PRINT
-              //     await controller.printBarcodeLabel(plugin: plugin, qty: 2);
-              //   } catch (e) {
-              //    customMessageOrErrorPrint(  message: "PRINT ERROR: $e");
-              //   }
-
-              //   // 3) PRINT LABELS
-
-              //   // 4) DISCONNECT
-              //   // await plugin.disconnect();
-              // } else {
-              //   commonBottomSheet(
-              //     label: 'Bluetooth Info',
-              //     onPressed: () {
-              //       Get.back();
-              //     },
-              //     child: BluetoothValidateWidget(),
-              //   );
-              // }
+              bool checkBluetooth =
+                  await controller.checkBluetoothConnectivity();
+              if (checkBluetooth == true) {
+                // await controller.printSimpleLabel(qty: 3);
+                await controller.printWithBasicReset(
+                  qty: 2,
+                  //controller.data['product'].quantity ?? '',
+                );
+              } else {
+                commonBottomSheet(
+                  label: 'Bluetooth Info',
+                  onPressed: () {
+                    Get.back();
+                  },
+                  child: BluetoothValidateWidget(),
+                );
+              }
             },
           ),
         ),
-        setWidth(width: 80),
+        setWidth(width: 10),
+        // Obx(
+        //   () => CommonButton(
+        //     isLoading: controller.isPrintingLoading.value,
+        //     label: "Print Basic Reset",
+        //     onTap: () async {
+        //       bool checkBluetooth =
+        //           await controller.checkBluetoothConnectivity();
+        //       if (checkBluetooth == true) {
+        //         await controller.printWithBasicReset(qty: 3);
+        //       } else {
+        //         commonBottomSheet(
+        //           label: 'Bluetooth Info',
+        //           onPressed: () {
+        //             Get.back();
+        //           },
+        //           child: BluetoothValidateWidget(),
+        //         );
+        //       }
+        //     },
+        //   ),
+        // ),
+        setWidth(width: 30),
       ],
       body: BarcodePrinterView(
         data: controller.data,
         onInitialized: (p0) {
           customMessageOrErrorPrint(message: "📏 PAPER SIZE: ${p0.paperSize}");
-
           controller.setReceiptController(p0);
         },
       ),
@@ -109,6 +93,7 @@ class BarcodeView extends GetView<BardcodeController> {
       var res = await rController.print(address: device, delayTime: 0);
       if (res == true) {
         controller.isPrintingLoading.value = false;
+        Get.back();
         // AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
       }
     } else {

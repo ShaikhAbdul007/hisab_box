@@ -5,6 +5,7 @@ class AppRouteName {
   static const String inventoryViewFormSell = '/inventoryViewFormSell';
   static const String home = '/home';
   static const String barcodePrintView = '/barcodePrintView';
+  static const String reliableBarcodeView = '/reliableBarcodeView';
   static const String setting = '/setting';
   static const String inventroyList = '/inventroyList';
   static const String bankDetails = '/bankDetails';

@@ -65,11 +65,14 @@ dependencies:
   flutter_svg: ^2.2.3
   open_file: ^3.5.10
   flutter_screenutil: ^5.9.3
-  permission_handler: ^11.3.1
+  permission_handler: ^12.0.1
   device_info_plus: ^12.3.0
   image_picker: ^1.2.1
   firebase_messaging: ^16.1.0
   flutter_local_notifications: ^19.5.0
+  printing: ^5.11.0
+  barcode: ^2.2.4
+  esc_pos_utils_plus: ^2.0.3
 
 dev_dependencies:
   flutter_test:

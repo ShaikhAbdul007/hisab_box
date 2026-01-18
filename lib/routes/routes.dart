@@ -3,8 +3,10 @@ import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
 import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
 import 'package:inventory/module/credits_amount/binding/credit_binding.dart';
 import 'package:inventory/module/invoice/binding/invoice_binding.dart';
+import 'package:inventory/module/invoice/binding/reliable_barcode_binding.dart';
 import 'package:inventory/module/invoice/view/barcode.dart';
 import 'package:inventory/module/invoice/view/invoice.dart';
+import 'package:inventory/module/invoice/view/reliable_barcode_view.dart';
 import 'package:inventory/module/near_expire_product/binding/near_expire_product_binding.dart';
 import 'package:inventory/module/near_expire_product/view/near_expire_product_view.dart';
 import 'package:inventory/module/order_complete/binding/order_binding.dart';
@@ -171,6 +173,11 @@ class AppRoutes {
       binding: BarcodeBinding(),
     ),
     GetPage(
+      name: AppRouteName.reliableBarcodeView,
+      page: () => ReliableBarcodeView(),
+      binding: ReliableBarcodeBinding(),
+    ),
+    GetPage(
       name: AppRouteName.nointernateConnection,
       page: () => NointernateConnection(),
     ),
@@ -268,6 +275,9 @@ class AppRoutes {
         break;
       case AppRouteName.barcodePrintView:
         Get.toNamed(AppRouteName.barcodePrintView, arguments: data);
+        break;
+      case AppRouteName.reliableBarcodeView:
+        Get.toNamed(AppRouteName.reliableBarcodeView, arguments: data);
         break;
       case AppRouteName.splash:
         Get.toNamed(AppRouteName.splash, arguments: data);

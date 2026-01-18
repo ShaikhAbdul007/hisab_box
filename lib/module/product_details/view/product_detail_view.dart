@@ -44,12 +44,15 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    BarcodeWidget(
-                      barcode: Barcode.ean13(),
-                      data: controller.barcode.text,
-                      height: 50,
-                      width: 200,
-                      drawText: false,
+                    CustomPadding(
+                      paddingOption: OnlyPadding(top: 20),
+                      child: BarcodeWidget(
+                        barcode: Barcode.code128(),
+                        data: controller.barcode.text,
+                        height: 80,
+                        width: 200,
+                        drawText: true,
+                      ),
                     ),
                     setHeight(height: 20),
                     CommonButton(
@@ -61,7 +64,17 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                         );
                       },
                     ),
-                    setHeight(height: 100),
+                    setHeight(height: 12),
+                    CommonButton(
+                      label: '🔥 Reliable Barcode Printer',
+                      onTap: () {
+                        AppRoutes.navigateRoutes(
+                          routeName: AppRouteName.reliableBarcodeView,
+                          data: controller.data,
+                        );
+                      },
+                    ),
+                    setHeight(height: 80),
                   ],
                 ),
               );
@@ -329,21 +342,24 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                         Flexible(
                           child: CommonTextField(
                             readOnly: true,
-                            suffixIcon: InkWell(
-                              onTap: () async {
-                                var res = await customDatePicker(
-                                  lastDate: DateTime(2040),
-                                  context: context,
-                                  selectedDate: DateTime.now(),
-                                  controller: controller.dayDate,
-                                );
-                                if (res.isNotEmpty) {
-                                  controller.purchaseDate.text = res;
-                                }
-                              },
-                              child: Icon(
-                                CupertinoIcons.calendar_today,
-                                size: 20,
+                            suffixIcon: CustomPadding(
+                              paddingOption: OnlyPadding(right: 10),
+                              child: InkWell(
+                                onTap: () async {
+                                  var res = await customDatePicker(
+                                    lastDate: DateTime(2040),
+                                    context: context,
+                                    selectedDate: DateTime.now(),
+                                    controller: controller.dayDate,
+                                  );
+                                  if (res.isNotEmpty) {
+                                    controller.purchaseDate.text = res;
+                                  }
+                                },
+                                child: Icon(
+                                  CupertinoIcons.calendar_today,
+                                  size: 20,
+                                ),
                               ),
                             ),
                             validator: (purchase) {
@@ -366,21 +382,24 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                         Flexible(
                           child: CommonTextField(
                             readOnly: true,
-                            suffixIcon: InkWell(
-                              onTap: () async {
-                                var res = await customDatePicker(
-                                  context: context,
-                                  lastDate: DateTime(2040),
-                                  selectedDate: DateTime.now(),
-                                  controller: controller.dayDate,
-                                );
-                                if (res.isNotEmpty) {
-                                  controller.exprieDate.text = res;
-                                }
-                              },
-                              child: Icon(
-                                CupertinoIcons.calendar_today,
-                                size: 20,
+                            suffixIcon: CustomPadding(
+                              paddingOption: OnlyPadding(right: 10),
+                              child: InkWell(
+                                onTap: () async {
+                                  var res = await customDatePicker(
+                                    context: context,
+                                    lastDate: DateTime(2040),
+                                    selectedDate: DateTime.now(),
+                                    controller: controller.dayDate,
+                                  );
+                                  if (res.isNotEmpty) {
+                                    controller.exprieDate.text = res;
+                                  }
+                                },
+                                child: Icon(
+                                  CupertinoIcons.calendar_today,
+                                  size: 20,
+                                ),
                               ),
                             ),
                             validator: (expire) {
