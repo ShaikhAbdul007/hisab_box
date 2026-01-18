@@ -28,6 +28,7 @@ class ProductModel {
   String? expireDate;
   String? location;
   bool? isActive;
+  String? sellType;
 
   ProductModel({
     this.barcode,
@@ -59,12 +60,14 @@ class ProductModel {
     this.discount,
     this.expireDate,
     this.purchaseDate,
+    this.sellType,
   });
 
   ProductModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     barcode = json['barcode'];
     name = json['name'];
+    sellType = json['sellType'];
     isActive = json['isActive'];
     category = json['category'];
     quantity = json['quantity'];
@@ -98,6 +101,7 @@ class ProductModel {
     data['id'] = id;
     data['barcode'] = barcode;
     data['name'] = name;
+    data['sellType'] = sellType;
     data['category'] = category;
     data['quantity'] = quantity;
     data['purchasePrice'] = purchasePrice;

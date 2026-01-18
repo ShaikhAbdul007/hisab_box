@@ -15,6 +15,7 @@ class ShopDetails extends StatelessWidget {
   final TextEditingController email;
   final bool obscureText;
   final void Function()? onTap;
+
   const ShopDetails({
     super.key,
     required this.password,
@@ -26,98 +27,109 @@ class ShopDetails extends StatelessWidget {
     required this.onTap,
   });
 
+  Widget commonSuffixIcon({required Widget child}) {
+    return CustomPadding(paddingOption: OnlyPadding(right: 10), child: child);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        /// Email
         CommonTextField(
           hintText: 'Email',
           label: 'Email',
           controller: email,
-          suffixIcon: Icon(CupertinoIcons.mail, size: 18),
           marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
+          suffixIcon: commonSuffixIcon(
+            child: const Icon(CupertinoIcons.mail, size: 18),
+          ),
           validator: (emailValue) {
-            if (emailValue!.isEmpty) {
-              return emptyEmail;
-            }
-            if (!GetUtils.isEmail(emailValue)) {
-              return invalidEmail;
-            } else {
-              return null;
-            }
+            if (emailValue!.isEmpty) return emptyEmail;
+            if (!GetUtils.isEmail(emailValue)) return invalidEmail;
+            return null;
           },
         ),
+
         setHeight(height: 5),
+
+        /// Mobile No
         CommonTextField(
           hintText: 'Mobile No',
           label: 'Mobile No',
           controller: mobileNo,
           inputLength: 10,
-          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           keyboardType: TextInputType.number,
-          suffixIcon: Icon(CupertinoIcons.phone, size: 18),
-          validator: (mobileNo) {
-            if (mobileNo!.isEmpty) {
-              return emptyMobileNo;
-            } else if (mobileNo.length < 10) {
-              return shortPassword;
-            } else {
-              return null;
-            }
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
+          suffixIcon: commonSuffixIcon(
+            child: const Icon(CupertinoIcons.phone, size: 18),
+          ),
+          validator: (value) {
+            if (value!.isEmpty) return emptyMobileNo;
+            if (value.length < 10) return shortPassword;
+            return null;
           },
         ),
+
         setHeight(height: 5),
+
+        /// Alternate Mobile No
         CommonTextField(
-          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           hintText: 'Alternate No',
           label: 'Alternate No',
+          controller: alternateMobileNo,
           keyboardType: TextInputType.number,
           inputLength: 10,
-          controller: alternateMobileNo,
-          suffixIcon: Icon(CupertinoIcons.phone, size: 18),
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
+          suffixIcon: commonSuffixIcon(
+            child: const Icon(CupertinoIcons.phone, size: 18),
+          ),
         ),
+
         setHeight(height: 5),
+
+        /// Password
         CommonTextField(
-          obscureText: true,
           hintText: 'Password',
           label: 'Password',
           controller: password,
+          obscureText: true,
           marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
-          suffixIcon: Icon(CupertinoIcons.padlock, size: 18),
-          validator: (passwordValue) {
-            if (passwordValue!.isEmpty) {
-              return emptyPassword;
-            } else if (passwordValue.length < 6) {
-              return shortPassword;
-            } else {
-              return null;
-            }
+          suffixIcon: commonSuffixIcon(
+            child: const Icon(CupertinoIcons.padlock, size: 18),
+          ),
+          validator: (value) {
+            if (value!.isEmpty) return emptyPassword;
+            if (value.length < 6) return shortPassword;
+            return null;
           },
         ),
+
         setHeight(height: 5),
+
+        /// Confirm Password (toggle)
         CommonTextField(
-          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
-          obscureText: obscureText,
           hintText: 'Confirm Password',
           label: 'Confirm Password',
           controller: confirmpassword,
-          suffixIcon: InkWell(
-            onTap: onTap,
-            child: Icon(
-              obscureText ? CupertinoIcons.padlock : CupertinoIcons.lock_open,
-              size: 18,
+          obscureText: obscureText,
+          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
+          suffixIcon: commonSuffixIcon(
+            child: InkWell(
+              onTap: onTap,
+              child: Icon(
+                obscureText ? CupertinoIcons.padlock : CupertinoIcons.lock_open,
+                size: 18,
+              ),
             ),
           ),
-          validator: (passwordValue) {
-            if (passwordValue!.isEmpty) {
-              return emptyPassword;
-            } else if (passwordValue.length < 6) {
-              return shortPassword;
-            } else if (password.text != confirmpassword.text) {
+          validator: (value) {
+            if (value!.isEmpty) return emptyPassword;
+            if (value.length < 6) return shortPassword;
+            if (password.text != confirmpassword.text) {
               return passwordMismatch;
-            } else {
-              return null;
             }
+            return null;
           },
         ),
       ],

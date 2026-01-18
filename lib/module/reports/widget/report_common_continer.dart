@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 
@@ -22,8 +23,8 @@ class ReportCommonContiner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonContainer(
-      height: height,
-      width: width,
+      height: height.h,
+      width: width.w,
       color: AppColors.whiteColor,
       margin:
           margin ?? SymmetricPadding(horizontal: 2, vertical: 5).getPadding(),

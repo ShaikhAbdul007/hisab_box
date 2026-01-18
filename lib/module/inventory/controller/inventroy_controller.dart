@@ -43,20 +43,7 @@ class InventroyController extends GetxController with CacheManager {
     navigate = data['navigate'];
     mobileScannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
-      formats: [
-        // BarcodeFormat.code128,
-        // BarcodeFormat.code39,
-        // BarcodeFormat.code93,
-        // BarcodeFormat.codabar,
-        // BarcodeFormat.ean13,
-        // BarcodeFormat.ean8,
-        // BarcodeFormat.aztec,
-        // BarcodeFormat.dataMatrix,
-        // BarcodeFormat.itf,
-        // BarcodeFormat.upcE,
-        // BarcodeFormat.pdf417,
-        BarcodeFormat.all,
-      ],
+      formats: [BarcodeFormat.all],
     );
     player = AudioPlayer();
 
@@ -171,11 +158,11 @@ class InventroyController extends GetxController with CacheManager {
 
     if (doc.exists) {
       final product = ProductModel.fromJson(doc.data()!);
-      handleScan(
-        product: product,
-        afterProductAdding: afterProductAdding,
-        qtyIsNotEnough: qtyIsNotEnough,
-      );
+      // handleScan(
+      //   product: product,
+      //   afterProductAdding: afterProductAdding,
+      //   qtyIsNotEnough: qtyIsNotEnough,
+      // );
     } else {
       elseFun!();
     }
@@ -205,148 +192,122 @@ class InventroyController extends GetxController with CacheManager {
     }
   }
 
-  // void handleScan({
-  //   required ProductModel product,
-  //   required Function() afterProductAdding,
-  //   required Function() qtyIsNotEnough,
-  // }) {
-  //   if (product.barcode == null || product.barcode!.isEmpty) return;
-  //   final index = scannedProductDetails.indexWhere(
-  //     (p) => p.barcode == product.barcode,
-  //   );
-  //   if (index != -1) {
-  //     // Product already scanned → qty badhane ka logic
-  //     if (scannedProductDetails[index].quantity! < (product.quantity ?? 0)) {
-  //       scannedProductDetails[index].quantity =
-  //           (scannedProductDetails[index].quantity ?? 0) + 1;
-  //       scannedQty.value = scannedProductDetails[index].quantity!;
-  //       afterProductAdding();
-  //     } else {
-  //       // Database ki quantity se zyada scan nahi kar sakte
-  //       qtyIsNotEnough();
-  //     }
-  //   } else {
-  //     // naya product hai → list me add karo with qty = 1
-  //     if ((product.quantity ?? 0) > 0) {
-  //       ProductModel scanned = ProductModel(
-  //         barcode: product.barcode,
-  //         name: product.name,
-  //         sellingPrice: product.sellingPrice,
-  //         quantity: 1,
-  //       );
-  //       scannedProductDetails.add(scanned);
-  //       saveProductList(scannedProductDetails);
-  //       afterProductAdding();
-  //     } else {
-  //       // Agar database me stock hi khatam hai
-  //       qtyIsNotEnough();
-  //     }
-  //   }
-  // }
-
-  void handleScan({
-    required ProductModel product,
+  Future<void> handleScan({
+    required String barcode,
+    required String sellType, // packet | loose
     required Function() afterProductAdding,
     required Function() qtyIsNotEnough,
   }) async {
-    // 🔹 Retrieve cache list
-    var cacheList = await retrieveCartProductList();
+    final uid = auth.currentUser?.uid;
+    if (uid == null) return;
 
-    // 🔹 If cache has data, use cache logic
-    if (cacheList.isNotEmpty) {
-      final index = cacheList.indexWhere((p) => p.barcode == product.barcode);
+    final firestore = FirebaseFirestore.instance;
+    ProductModel? product;
 
-      if (index != -1) {
-        // Already in cache → increase qty
-        if (cacheList[index].quantity! < (product.quantity ?? 0)) {
-          cacheList[index].quantity = (cacheList[index].quantity ?? 0) + 1;
-          saveCartProductList(cacheList);
-          afterProductAdding();
-        } else {
-          qtyIsNotEnough();
-        }
+    // ===============================
+    // 1️⃣ FETCH PRODUCT
+    // ===============================
+    if (sellType.toLowerCase() == 'loose') {
+      final snap =
+          await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('looseProducts')
+              .doc(barcode)
+              .get();
+
+      if (!snap.exists) {
+        showMessage(
+          message: "❌ Loose product not available, please add loose stock",
+        );
+        return;
+      }
+      product = ProductModel.fromJson(snap.data()!);
+    } else {
+      final query =
+          await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('products')
+              .where('barcode', isEqualTo: barcode)
+              .limit(1)
+              .get();
+
+      if (query.docs.isEmpty) {
+        showMessage(message: "❌ Product not found");
+        return;
+      }
+      product = ProductModel.fromJson(query.docs.first.data());
+    }
+
+    // ===============================
+    // 2️⃣ STOCK CHECK
+    // ===============================
+    if ((product.quantity ?? 0) <= 0) {
+      qtyIsNotEnough();
+      return;
+    }
+
+    // ===============================
+    // 3️⃣ LOAD CART (ONLY ONE SOURCE)
+    // ===============================
+    final cartList = await retrieveCartProductList();
+
+    final index = cartList.indexWhere(
+      (p) => p.barcode == barcode && p.sellType == sellType,
+    );
+
+    if (index != -1) {
+      // qty++
+      if ((cartList[index].quantity ?? 0) < (product.quantity ?? 0)) {
+        cartList[index].quantity = (cartList[index].quantity ?? 0) + 1;
       } else {
-        if ((product.quantity ?? 0) > 0) {
-          ProductModel scanned = ProductModel(
-            barcode: product.barcode,
-            name: product.name,
-            sellingPrice: product.sellingPrice,
-            quantity: 1,
-            animalType: product.animalType,
-            billNo: product.billNo,
-            box: product.box,
-            category: product.category,
-            color: product.color,
-            createdDate: product.createdDate,
-            createdTime: product.createdTime,
-            discount: product.discount,
-            expireDate: product.expireDate,
-            flavor: product.flavor,
-            isFlavorAndWeightNotRequired: product.isFlavorAndWeightNotRequired,
-            id: product.id,
-            isLooseCategory: product.isLooseCategory,
-            isLoosed: product.isLoosed,
-            location: product.location,
-            purchasePrice: product.purchasePrice,
-          );
-          cacheList.add(scanned);
-          saveCartProductList(cacheList);
-          afterProductAdding();
-        } else {
-          qtyIsNotEnough();
-        }
+        qtyIsNotEnough();
+        return;
       }
     } else {
-      if (product.barcode == null || product.barcode!.isEmpty) return;
-
-      final index = scannedProductDetails.indexWhere(
-        (p) => p.barcode == product.barcode,
+      // add new item
+      cartList.add(
+        ProductModel(
+          barcode: product.barcode,
+          name: product.name,
+          sellingPrice: product.sellingPrice,
+          purchasePrice: product.purchasePrice,
+          quantity: 1,
+          sellType: sellType,
+          isActive: product.isActive,
+          isLoosed: product.isLoosed,
+          isLooseCategory: product.isLooseCategory,
+          category: product.category,
+          animalType: product.animalType,
+          weight: product.weight,
+          flavor: product.flavor,
+          color: product.color,
+          box: product.box,
+          location: product.location,
+          rack: product.rack,
+          level: product.level,
+          createdDate: product.createdDate,
+          createdTime: product.createdTime,
+          expireDate: product.expireDate,
+          discount: product.discount,
+          billNo: product.billNo,
+          id: product.id,
+          isFlavorAndWeightNotRequired: product.isFlavorAndWeightNotRequired,
+        ),
       );
-
-      if (index != -1) {
-        if (scannedProductDetails[index].quantity! < (product.quantity ?? 0)) {
-          scannedProductDetails[index].quantity =
-              (scannedProductDetails[index].quantity ?? 0) + 1;
-
-          scannedQty.value = scannedProductDetails[index].quantity!.toInt();
-          saveCartProductList(scannedProductDetails);
-          afterProductAdding();
-        } else {
-          qtyIsNotEnough();
-        }
-      } else {
-        if ((product.quantity ?? 0) > 0) {
-          ProductModel scanned = ProductModel(
-            barcode: product.barcode,
-            name: product.name,
-            sellingPrice: product.sellingPrice,
-            quantity: 1,
-            animalType: product.animalType,
-            billNo: product.billNo,
-            box: product.box,
-            category: product.category,
-            color: product.color,
-            createdDate: product.createdDate,
-            createdTime: product.createdTime,
-            discount: product.discount,
-            expireDate: product.expireDate,
-            flavor: product.flavor,
-            isFlavorAndWeightNotRequired: product.isFlavorAndWeightNotRequired,
-            id: product.id,
-            isLooseCategory: product.isLooseCategory,
-            isLoosed: product.isLoosed,
-            location: product.location,
-            purchasePrice: product.purchasePrice,
-          );
-
-          scannedProductDetails.add(scanned);
-          saveCartProductList(scannedProductDetails);
-          afterProductAdding();
-        } else {
-          qtyIsNotEnough();
-        }
-      }
     }
+
+    // ===============================
+    // 4️⃣ SAVE & SYNC UI
+    // ===============================
+    saveCartProductList(cartList);
+
+    scannedProductDetails
+      ..clear()
+      ..addAll(cartList);
+
+    afterProductAdding();
   }
 
   void handleLooseScan({required ProductModel product}) {

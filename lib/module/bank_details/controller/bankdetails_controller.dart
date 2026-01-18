@@ -71,7 +71,7 @@ class BankdetailsController extends GetxController with CacheManager {
   Future<void> saveBankDetails() async {
     bankDetailsUpi.value = true;
     String date = setFormateDate();
-    String time = setFormateDate('HH:mm');
+    String time = setFormateDate('hh:mm a');
     customMessageOrErrorPrint(message: "Fetch customers error: $date");
     customMessageOrErrorPrint(message: "Fetch customers error: $time");
 

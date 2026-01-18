@@ -294,7 +294,7 @@ class ReportOverViewContainer extends StatelessWidget {
     required this.label,
     required this.labelValue,
     this.height = 80,
-    this.width = 165,
+    this.width = 170,
   });
 
   @override

@@ -56,7 +56,11 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
         Flexible(
           flex: flex1,
           child: CommonTextField(
-            suffixIcon: suffixIcon1,
+            suffixIcon: CustomPadding(
+              paddingOption: OnlyPadding(right: 10),
+
+              child: suffixIcon1 ?? SizedBox.shrink(),
+            ),
             onChanged: onChanged1,
             readOnly: readOnly1,
             validator: validator1,
@@ -72,7 +76,10 @@ class InventoryBottomsheetComponentText extends StatelessWidget {
         Flexible(
           flex: flex2,
           child: CommonTextField(
-            suffixIcon: suffixIcon2,
+            suffixIcon: CustomPadding(
+              paddingOption: OnlyPadding(right: 10),
+              child: suffixIcon2 ?? SizedBox.shrink(),
+            ),
             onChanged: onChanged2,
             readOnly: readOnly2,
             validator: validator2,

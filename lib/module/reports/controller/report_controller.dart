@@ -52,7 +52,7 @@ class ReportController extends GetxController
   }
 
   void fetchData() async {
-    await fetchTodaySalesAndProfit();
+    // await fetchTodaySalesAndProfit();
     await fetchTopSellingProducts();
     await fetchTopSellingProductsChart();
     await fetchPaymentSummary();
@@ -103,8 +103,92 @@ class ReportController extends GetxController
     sellsList.value = await fetchRevenueList();
   }
 
+  // Future<void> fetchTodaySalesAndProfit() async {
+  //   String today = setFormateDate();
+
+  //   totalProfit.value = 0.0;
+  //   totalRevenue.value = 0.0;
+
+  //   if (uid == null) return;
+
+  //   try {
+  //     final snapshot =
+  //         await FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('sales')
+  //             .where('soldAt', isEqualTo: today)
+  //             .get();
+
+  //     if (snapshot.docs.isEmpty) return;
+
+  //     for (var doc in snapshot.docs) {
+  //       final data = doc.data();
+
+  //       // ---------- REVENUE -----------
+  //       double saleAmount = (data['finalAmount'] ?? 0).toDouble();
+  //       totalRevenue.value += saleAmount;
+
+  //       // ---------- PROFIT CALCULATION ----------
+  //       List items = data["items"] ?? [];
+
+  //       for (var item in items) {
+  //         double finalPrice =
+  //             (item["finalPrice"] ?? 0).toDouble(); // TOTAL SELLING
+  //         double costPP =
+  //             (item["purchasePrice"] ?? 0).toDouble(); // COST PER PIECE
+  //         int qty = (item["quantity"] ?? 1).toInt();
+
+  //         double totalCost = costPP * qty;
+  //         double profit = finalPrice - totalCost;
+
+  //         totalProfit.value += profit;
+  //       }
+  //     }
+  //   } catch (e) {
+  //     customMessageOrErrorPrint(message: "Error: $e");
+  //     totalProfit.value = 0.0;
+  //     totalRevenue.value = 0.0;
+  //   }
+  // }
+
+  double calculateItemProfit(Map<String, dynamic> item) {
+    final int qty = (item['quantity'] ?? 1).toInt();
+    final double purchasePrice = (item['purchasePrice'] ?? 0).toDouble();
+
+    // total selling (prefer finalPrice → originalPrice → sellingPrice)
+    final double totalSelling =
+        (item['finalPrice'] ??
+                item['originalPrice'] ??
+                item['sellingPrice'] ??
+                0)
+            .toDouble();
+
+    final String sellType = (item['sellType'] ?? 'packet').toString();
+
+    if (qty <= 0 || purchasePrice <= 0 || totalSelling <= 0) {
+      return 0;
+    }
+
+    // 🔥 PACKET (default & backward compatible)
+    if (sellType == 'packet') {
+      return totalSelling - (purchasePrice * qty);
+    }
+
+    // 🔥 LOOSE
+    final int totalPieces = (item['totalPieces'] ?? qty).toInt();
+    final int soldQty = (item['soldQty'] ?? qty).toInt();
+
+    if (totalPieces <= 0 || soldQty <= 0) return 0;
+
+    final double costPerPiece = purchasePrice / totalPieces;
+    final double sellingPerPiece = (item['sellingPrice'] ?? 0).toDouble();
+
+    return (sellingPerPiece - costPerPiece) * soldQty;
+  }
+
   Future<void> fetchTodaySalesAndProfit() async {
-    String today = setFormateDate();
+    final String today = setFormateDate();
 
     totalProfit.value = 0.0;
     totalRevenue.value = 0.0;
@@ -120,29 +204,19 @@ class ReportController extends GetxController
               .where('soldAt', isEqualTo: today)
               .get();
 
-      if (snapshot.docs.isEmpty) return;
-
-      for (var doc in snapshot.docs) {
+      for (final doc in snapshot.docs) {
         final data = doc.data();
 
-        // ---------- REVENUE -----------
-        double saleAmount = (data['finalAmount'] ?? 0).toDouble();
-        totalRevenue.value += saleAmount;
+        // ---------- REVENUE ----------
+        totalRevenue.value += (data['finalAmount'] ?? 0).toDouble();
 
-        // ---------- PROFIT CALCULATION ----------
-        List items = data["items"] ?? [];
+        // ---------- PROFIT ----------
+        final List items = data['items'] ?? [];
 
-        for (var item in items) {
-          double finalPrice =
-              (item["finalPrice"] ?? 0).toDouble(); // TOTAL SELLING
-          double costPP =
-              (item["purchasePrice"] ?? 0).toDouble(); // COST PER PIECE
-          int qty = (item["quantity"] ?? 1).toInt();
-
-          double totalCost = costPP * qty;
-          double profit = finalPrice - totalCost;
-
-          totalProfit.value += profit;
+        for (final raw in items) {
+          totalProfit.value += calculateItemProfit(
+            Map<String, dynamic>.from(raw),
+          );
         }
       }
     } catch (e) {

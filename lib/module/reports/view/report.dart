@@ -90,7 +90,7 @@ class ReportView extends GetView<ReportController> {
         paddingOption: SymmetricPadding(horizontal: 15.0),
         child: Column(
           children: [
-            ReportOptionContainerLabel(controller: controller),
+            //  ReportOptionContainerLabel(controller: controller),
             setHeight(height: 10),
             Container(
               height: 40.h,

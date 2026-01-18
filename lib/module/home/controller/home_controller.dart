@@ -26,7 +26,7 @@ class HomeController extends GetxController with CacheManager {
   List<Map<String, dynamic>> chartData = [];
   final scrollController = ScrollController();
   var sellsList = <SellsModel>[].obs;
-
+  FirebaseAuth get auth => _auth;
   @override
   void onInit() {
     getRevenveAndStock();

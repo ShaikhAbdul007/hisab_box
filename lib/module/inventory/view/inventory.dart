@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
@@ -142,52 +143,164 @@ class InventoryView extends GetView<InventroyController> {
         controller.auth.currentUser!.uid,
         controller.barcodeValue.value,
       );
+
       if (existproduct.$1 == true) {
-        controller.handleScan(
-          // availableQty: (existproduct.$2.quantity ?? 0).toDouble(),
-          product: existproduct.$2,
-          afterProductAdding: () {
-            productSavingDialog(
-              label: 'Scanning Done, product added',
-              scanAgainOnTap: () async {
-                Get.back();
-                controller.mobileScannerController.start();
-              },
-              scanccingDoneOnTap: () async {
-                Get.back();
-                AppRoutes.navigateRoutes(
-                  routeName: AppRouteName.sellListAfterScan,
-                );
-              },
-            );
-          },
-          qtyIsNotEnough: () {
-            productNotWithScannedAvailableDialog(
-              manualSellOnTap: () {
-                Get.back();
-                //  openManualySell(inventoryScanKey: inventoryScanKey);
-              },
-              '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
-              scanAgainOnTap: () {
-                Get.back();
-                controller.mobileScannerController.start();
-              },
-              scanningDoneOnTap2: () {
-                if (controller.scannedProductDetails.isNotEmpty) {
+        if (existproduct.$2.isLoosed == true) {
+          checkProductStatusDialog(
+            label: 'Is this product sell in Packet or Loose',
+            packetOnTap: () {
+              Get.back();
+              controller.handleScan(
+                barcode: controller.barcodeValue.value,
+                // availableQty: (existproduct.$2.quantity ?? 0).toDouble(),
+                sellType: 'Packet',
+                // product: existproduct.$2,
+                afterProductAdding: () {
+                  productSavingDialog(
+                    label: 'Scanning Done, product added',
+                    scanAgainOnTap: () async {
+                      Get.back();
+                      controller.mobileScannerController.start();
+                    },
+                    scanccingDoneOnTap: () async {
+                      Get.back();
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.sellListAfterScan,
+                      );
+                    },
+                  );
+                },
+                qtyIsNotEnough: () {
+                  productNotWithScannedAvailableDialog(
+                    manualSellOnTap: () {
+                      Get.back();
+                      //  openManualySell(inventoryScanKey: inventoryScanKey);
+                    },
+                    '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
+                    scanAgainOnTap: () {
+                      Get.back();
+                      controller.mobileScannerController.start();
+                    },
+                    scanningDoneOnTap2: () {
+                      if (controller.scannedProductDetails.isNotEmpty) {
+                        Get.back();
+                        AppRoutes.navigateRoutes(
+                          routeName: AppRouteName.sellListAfterScan,
+                          data: {
+                            'productList': controller.scannedProductDetails,
+                          },
+                        );
+                      } else {
+                        Get.back();
+                        controller.mobileScannerController.start();
+                        showMessage(message: 'Please scan the product first');
+                      }
+                    },
+                  );
+                },
+              );
+            },
+            looseDoneOnTap: () {
+              Get.back();
+              controller.handleScan(
+                barcode: controller.barcodeValue.value,
+                sellType: 'Loose',
+                //product: existproduct.$2,
+                afterProductAdding: () {
+                  productSavingDialog(
+                    label: 'Scanning Done, product added',
+                    scanAgainOnTap: () async {
+                      Get.back();
+                      controller.mobileScannerController.start();
+                    },
+                    scanccingDoneOnTap: () async {
+                      Get.back();
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.sellListAfterScan,
+                      );
+                    },
+                  );
+                },
+                qtyIsNotEnough: () {
+                  productNotWithScannedAvailableDialog(
+                    manualSellOnTap: () {
+                      Get.back();
+                      //  openManualySell(inventoryScanKey: inventoryScanKey);
+                    },
+                    '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
+                    scanAgainOnTap: () {
+                      Get.back();
+                      controller.mobileScannerController.start();
+                    },
+                    scanningDoneOnTap2: () {
+                      if (controller.scannedProductDetails.isNotEmpty) {
+                        Get.back();
+                        AppRoutes.navigateRoutes(
+                          routeName: AppRouteName.sellListAfterScan,
+                          data: {
+                            'productList': controller.scannedProductDetails,
+                          },
+                        );
+                      } else {
+                        Get.back();
+                        controller.mobileScannerController.start();
+                        showMessage(message: 'Please scan the product first');
+                      }
+                    },
+                  );
+                },
+              );
+            },
+          );
+        } else {
+          controller.handleScan(
+            barcode: controller.barcodeValue.value,
+            // availableQty: (existproduct.$2.quantity ?? 0).toDouble(),
+            sellType: 'Packet',
+            // product: existproduct.$2,
+            afterProductAdding: () {
+              productSavingDialog(
+                label: 'Scanning Done, product added',
+                scanAgainOnTap: () async {
+                  Get.back();
+                  controller.mobileScannerController.start();
+                },
+                scanccingDoneOnTap: () async {
                   Get.back();
                   AppRoutes.navigateRoutes(
                     routeName: AppRouteName.sellListAfterScan,
-                    data: {'productList': controller.scannedProductDetails},
                   );
-                } else {
+                },
+              );
+            },
+            qtyIsNotEnough: () {
+              productNotWithScannedAvailableDialog(
+                manualSellOnTap: () {
+                  Get.back();
+                  //  openManualySell(inventoryScanKey: inventoryScanKey);
+                },
+                '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
+                scanAgainOnTap: () {
                   Get.back();
                   controller.mobileScannerController.start();
-                  showMessage(message: 'Please scan the product first');
-                }
-              },
-            );
-          },
-        );
+                },
+                scanningDoneOnTap2: () {
+                  if (controller.scannedProductDetails.isNotEmpty) {
+                    Get.back();
+                    AppRoutes.navigateRoutes(
+                      routeName: AppRouteName.sellListAfterScan,
+                      data: {'productList': controller.scannedProductDetails},
+                    );
+                  } else {
+                    Get.back();
+                    controller.mobileScannerController.start();
+                    showMessage(message: 'Please scan the product first');
+                  }
+                },
+              );
+            },
+          );
+        }
       } else {
         productNotAvailableDialog(
           label: 'Scanned product is not available in stock ',

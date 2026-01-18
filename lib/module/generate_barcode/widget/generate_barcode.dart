@@ -237,19 +237,22 @@ class GenerateBarcodeComponent extends StatelessWidget {
                   Flexible(
                     child: CommonTextField(
                       readOnly: true,
-                      suffixIcon: InkWell(
-                        onTap: () async {
-                          var res = await customDatePicker(
-                            lastDate: DateTime(2040),
-                            context: context,
-                            selectedDate: DateTime.now(),
-                            controller: controller.dayDate,
-                          );
-                          if (res.isNotEmpty) {
-                            controller.purchaseDate.text = res;
-                          }
-                        },
-                        child: Icon(CupertinoIcons.calendar_today, size: 20),
+                      suffixIcon: CustomPadding(
+                        paddingOption: OnlyPadding(right: 10),
+                        child: InkWell(
+                          onTap: () async {
+                            var res = await customDatePicker(
+                              lastDate: DateTime(2040),
+                              context: context,
+                              selectedDate: DateTime.now(),
+                              controller: controller.dayDate,
+                            );
+                            if (res.isNotEmpty) {
+                              controller.purchaseDate.text = res;
+                            }
+                          },
+                          child: Icon(CupertinoIcons.calendar_today, size: 20),
+                        ),
                       ),
                       validator: (purchase) {
                         if (purchase!.isEmpty) {
@@ -271,19 +274,22 @@ class GenerateBarcodeComponent extends StatelessWidget {
                   Flexible(
                     child: CommonTextField(
                       readOnly: true,
-                      suffixIcon: InkWell(
-                        onTap: () async {
-                          var res = await customDatePicker(
-                            lastDate: DateTime(2040),
-                            context: context,
-                            selectedDate: DateTime.now(),
-                            controller: controller.dayDate,
-                          );
-                          if (res.isNotEmpty) {
-                            controller.exprieDate.text = res;
-                          }
-                        },
-                        child: Icon(CupertinoIcons.calendar_today, size: 20),
+                      suffixIcon: CustomPadding(
+                        paddingOption: OnlyPadding(right: 10),
+                        child: InkWell(
+                          onTap: () async {
+                            var res = await customDatePicker(
+                              lastDate: DateTime(2040),
+                              context: context,
+                              selectedDate: DateTime.now(),
+                              controller: controller.dayDate,
+                            );
+                            if (res.isNotEmpty) {
+                              controller.exprieDate.text = res;
+                            }
+                          },
+                          child: Icon(CupertinoIcons.calendar_today, size: 20),
+                        ),
                       ),
                       validator: (expire) {
                         if (expire!.isEmpty) {

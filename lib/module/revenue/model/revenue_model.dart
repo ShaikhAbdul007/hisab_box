@@ -84,6 +84,8 @@ class SellItem {
   bool? isFlavorAndWeightNotRequired;
   String? exprieDate;
   String? location;
+  bool? isActive;
+  String? sellType;
 
   SellItem({
     this.name,
@@ -103,6 +105,8 @@ class SellItem {
     this.box,
     this.perpiece,
     this.isLoose,
+    this.isActive,
+    this.sellType,
     this.paymentMethod,
     this.isLooseCategory,
     this.isFlavorAndWeightNotRequired,
@@ -120,6 +124,8 @@ class SellItem {
     category = json['category'] ?? '';
     barcode = json['barcode'] ?? '';
     id = json['id'] ?? '';
+    sellType = json['sellType'] ?? '';
+    isActive = json['isActive'] ?? false;
     purchasePrice = json['purchasePrice'] ?? 0.0;
     weight = json['weight'] ?? '';
     flavours = json['flavours'] ?? '';
@@ -153,6 +159,8 @@ class SellItem {
     data['animalType'] = animalType;
     data['color'] = color;
     data['box'] = box;
+    data['isActive'] = isActive;
+    data['sellType'] = sellType;
     data['perpiece'] = perpiece;
     data['isLoose'] = isLoose;
     data['paymentMethod'] = paymentMethod;

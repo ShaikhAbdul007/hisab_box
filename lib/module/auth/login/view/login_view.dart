@@ -62,7 +62,10 @@ class LoginView extends GetView<LoginController> {
                     hintText: 'Email',
                     label: 'Email',
                     controller: controller.email,
-                    suffixIcon: Icon(CupertinoIcons.mail, size: 18),
+                    suffixIcon: CustomPadding(
+                      paddingOption: OnlyPadding(right: 10),
+                      child: Icon(CupertinoIcons.mail, size: 18),
+                    ),
                     validator: (emailValue) {
                       if (emailValue!.isEmpty) {
                         return emptyEmail;
@@ -83,11 +86,14 @@ class LoginView extends GetView<LoginController> {
                       controller: controller.password,
                       suffixIcon: InkWell(
                         onTap: () => controller.setobscureTextValue(),
-                        child: Icon(
-                          controller.obscureTextValue.value
-                              ? CupertinoIcons.padlock
-                              : CupertinoIcons.lock_open,
-                          size: 18,
+                        child: CustomPadding(
+                          paddingOption: OnlyPadding(right: 10),
+                          child: Icon(
+                            controller.obscureTextValue.value
+                                ? CupertinoIcons.padlock
+                                : CupertinoIcons.lock_open,
+                            size: 18,
+                          ),
                         ),
                       ),
                       validator: (passwordValue) {

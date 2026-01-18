@@ -97,10 +97,7 @@ void productSavingDialog({
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Center(
-          child: Text('', style: CustomTextStyle.customRaleway(fontSize: 0)),
-        ),
-        setHeight(height: 10),
+        setHeight(height: 20),
         Text(label, style: CustomTextStyle.customRaleway(fontSize: 15)),
         setHeight(height: 10),
         Row(
@@ -119,13 +116,40 @@ void productSavingDialog({
             ),
           ],
         ),
-        setHeight(height: 30),
-        // CommonButton(
-        //   bgColor: AppColors.buttonGreenColor,
-        //   label: 'Manual Sell',
-        //   onTap: manualSellOnTap,
-        // ),
-        // setHeight(height: 10),
+        setHeight(height: 80),
+      ],
+    ),
+  );
+}
+
+void checkProductStatusDialog({
+  required String label,
+  required void Function() packetOnTap,
+  required void Function() looseDoneOnTap,
+}) {
+  commonBottomSheet(
+    label: 'Product Info',
+    isCancelButtonRequire: false,
+    onPressed: () {},
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        setHeight(height: 20),
+        Text(label, style: CustomTextStyle.customRaleway(fontSize: 15)),
+        setHeight(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            CommonButton(width: 120, label: 'Packet', onTap: packetOnTap),
+            CommonButton(
+              bgColor: AppColors.buttonRedColor,
+              width: 140,
+              label: 'Loose',
+              onTap: looseDoneOnTap,
+            ),
+          ],
+        ),
+        setHeight(height: 80),
       ],
     ),
   );

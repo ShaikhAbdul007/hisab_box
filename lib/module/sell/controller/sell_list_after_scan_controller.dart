@@ -200,59 +200,134 @@ class SellListAfterScanController extends GetxController with CacheManager {
     }
   }
 
-  void updateQuantity(bool isIncrement, int index) async {
-    int? pexistingQty;
-    int? existingLooseQty;
+  // void updateQuantity(bool isIncrement, int index) async {
+  //   int? pexistingQty;
+  //   int? existingLooseQty;
+  //   final uid = _auth.currentUser?.uid;
+  //   isStockOver.value = false;
+  //   final productRef = FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(uid)
+  //       .collection('products')
+  //       .doc(productList[index].barcode);
+  //   final looseProductRef = FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(uid)
+  //       .collection('looseProducts')
+  //       .doc(productList[index].barcode);
+  //   final existingDoc = await productRef.get();
+  //   final existingLooseDoc = await looseProductRef.get();
+  //   if (existingDoc.exists) {
+  //     pexistingQty = existingDoc['quantity'];
+  //   }
+  //   if (existingLooseDoc.exists) {
+  //     existingLooseQty = existingLooseDoc['quantity'];
+  //   }
+  //   var current = productList[index];
+  //   if (isIncrement) {
+  //     if (pexistingQty != null) {
+  //       if ((current.quantity ?? 0) < pexistingQty) {
+  //         current.quantity = (current.quantity ?? 0) + 1;
+  //       } else {
+  //         isStockOver.value = true;
+  //         showSnackBar(
+  //           error:
+  //               "Product is out of stock\nYou cannot add more than available stock.",
+  //         );
+  //       }
+  //     } else if (existingLooseQty != null) {
+  //       if ((current.quantity ?? 0) < existingLooseQty) {
+  //         current.quantity = (current.quantity ?? 0) + 1;
+  //       } else {
+  //         isStockOver.value = true;
+  //         showSnackBar(
+  //           error:
+  //               "Product is out of stock\nYou cannot add more than available stock.",
+  //         );
+  //       }
+  //     }
+  //   } else {
+  //     if ((current.quantity ?? 1) > 1) {
+  //       current.quantity = (current.quantity ?? 1) - 1;
+  //     }
+  //   }
+  //   productList[index] = current;
+  //   saveCartProductList(productList);
+  //   discountCalculateAsPerProduct(index);
+  //   calculateTotalWithDiscount();
+  // }
+
+  Future<void> updateQuantity(bool isIncrement, int index) async {
     final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+
     isStockOver.value = false;
-    final productRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('products')
-        .doc(productList[index].barcode);
-    final looseProductRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('looseProducts')
-        .doc(productList[index].barcode);
-    final existingDoc = await productRef.get();
-    final existingLooseDoc = await looseProductRef.get();
-    if (existingDoc.exists) {
-      pexistingQty = existingDoc['quantity'];
-    }
-    if (existingLooseDoc.exists) {
-      existingLooseQty = existingLooseDoc['quantity'];
-    }
     var current = productList[index];
+
+    int availableQty = 0;
+
+    // ===============================
+    // 1️⃣ FETCH STOCK BASED ON sellType
+    // ===============================
+    if (current.sellType?.toLowerCase() == 'loose') {
+      final looseRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('looseProducts')
+          .doc(current.barcode);
+
+      final snap = await looseRef.get();
+      if (!snap.exists) {
+        showSnackBar(error: "Loose product stock not found");
+        return;
+      }
+
+      availableQty = snap['quantity'] ?? 0;
+    } else {
+      final productRef =
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('products')
+              .where('barcode', isEqualTo: current.barcode)
+              .limit(1)
+              .get();
+
+      final query = await productRef;
+      if (query.docs.isEmpty) {
+        showSnackBar(error: "Product stock not found");
+        return;
+      }
+
+      availableQty = query.docs.first['quantity'] ?? 0;
+    }
+
+    // ===============================
+    // 2️⃣ UPDATE QTY
+    // ===============================
     if (isIncrement) {
-      if (pexistingQty != null) {
-        if ((current.quantity ?? 0) < pexistingQty) {
-          current.quantity = (current.quantity ?? 0) + 1;
-        } else {
-          isStockOver.value = true;
-          showSnackBar(
-            error:
-                "Product is out of stock\nYou cannot add more than available stock.",
-          );
-        }
-      } else if (existingLooseQty != null) {
-        if ((current.quantity ?? 0) < existingLooseQty) {
-          current.quantity = (current.quantity ?? 0) + 1;
-        } else {
-          isStockOver.value = true;
-          showSnackBar(
-            error:
-                "Product is out of stock\nYou cannot add more than available stock.",
-          );
-        }
+      if ((current.quantity ?? 0) < availableQty) {
+        current.quantity = (current.quantity ?? 0) + 1;
+      } else {
+        isStockOver.value = true;
+        showSnackBar(
+          error:
+              "Product is out of stock\nYou cannot add more than available stock.",
+        );
+        return;
       }
     } else {
       if ((current.quantity ?? 1) > 1) {
         current.quantity = (current.quantity ?? 1) - 1;
       }
     }
+
+    // ===============================
+    // 3️⃣ SAVE & RECALCULATE
+    // ===============================
     productList[index] = current;
     saveCartProductList(productList);
+
     discountCalculateAsPerProduct(index);
     calculateTotalWithDiscount();
   }
@@ -297,6 +372,58 @@ class SellListAfterScanController extends GetxController with CacheManager {
     }
   }
 
+  Future<Map<String, dynamic>> prepareStockUpdate({
+    required String uid,
+    required ProductModel product,
+  }) async {
+    final firestore = FirebaseFirestore.instance;
+
+    late DocumentReference ref;
+    late Map<String, dynamic> data;
+
+    // 🔥 LOOSE → looseProducts ONLY
+    if (product.sellType?.toLowerCase() == 'loose') {
+      ref = firestore
+          .collection('users')
+          .doc(uid)
+          .collection('looseProducts')
+          .doc(product.barcode);
+
+      final snap = await ref.get();
+      if (!snap.exists) {
+        throw Exception("Loose product not found: ${product.barcode}");
+      }
+
+      data = snap.data() as Map<String, dynamic>;
+    }
+    // 🔥 PACKET → products ONLY
+    else {
+      final query =
+          await firestore
+              .collection('users')
+              .doc(uid)
+              .collection('products')
+              .where('barcode', isEqualTo: product.barcode)
+              .limit(1)
+              .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception("Product not found: ${product.barcode}");
+      }
+
+      final snap = query.docs.first;
+      ref = snap.reference;
+      data = snap.data();
+    }
+    final currentQty = data['quantity'] ?? 0;
+    final sellQty = product.quantity ?? 1;
+    if (currentQty < sellQty) {
+      throw Exception("Not enough stock for ${data['name']}");
+    }
+
+    return {'ref': ref, 'newQty': currentQty - sellQty};
+  }
+
   Future<bool> confirmSale({
     required List<SellItem> sellItems,
     required RxBool isLoading,
@@ -305,146 +432,80 @@ class SellListAfterScanController extends GetxController with CacheManager {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
     try {
-      var now = DateTime.now();
-      String formatDate = DateFormat('dd-MM-yyyy').format(now);
-      String formatTime = DateFormat('hh:mm:ss a').format(now);
-      List<Map<String, dynamic>> productUpdates = [];
-      List<Map<String, dynamic>> items = []; // 👈 all items in one list
+      final now = DateTime.now();
+      final formatDate = DateFormat('dd-MM-yyyy').format(now);
+      final formatTime = DateFormat('hh:mm:ss a').format(now);
+
+      List<Map<String, dynamic>> stockUpdates = [];
       double totalAmount = 0;
       double finalAmount = 0;
-      // 🔹 STEP 1: Process each scanned product
-      for (var product in scannedProductDetails) {
-        if (product.barcode == null && product.id == null) continue;
-        DocumentReference? productRef;
-        Map<String, dynamic> productData = {};
-        // 🔹 Fetch product details & update logic
-        if (product.isLooseCategory == true || product.isLoosed == false) {
-          // Loose Category Product
-          productData = {
-            'name': product.name ?? "",
-            'category': product.category ?? "Loose Category",
-            'flavours': product.flavor ?? "",
-            'weight': product.weight ?? "0.0",
-            'box': product.box ?? "0.0",
-          };
-        }
-        //  else if (product.isLoosed == true ||
-        //     product.isLooseCategory == false) {
-        //   // Loose Product (from looseProducts)
-        //   productRef = FirebaseFirestore.instance
-        //       .collection('users')
-        //       .doc(uid)
-        //       .collection('looseProducts')
-        //       .doc(product.barcode);
-        //   final snapshot = await productRef.get();
-        //   if (!snapshot.exists) {
-        //     showMessage(message: "❌ Loose product not found: ${product.id}");
-        //     return false;
-        //   }
-        //   productData = snapshot.data() as Map<String, dynamic>;
-        //   int currentQty = productData['quantity'] ?? 0;
-        //   if (currentQty < (product.quantity ?? 1)) {
-        //     showMessage(
-        //       message: "❌ Not enough stock for ${productData['name']}",
-        //     );
-        //     return false;
-        //   }
-        //   // Add update for transaction
-        //   productUpdates.add({
-        //     "ref": productRef,
-        //     "newQty": currentQty - (product.quantity ?? 1),
-        //   });
-        // }
-        else {
-          // Normal Product (from products collection)
-          final querySnapshot =
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(uid)
-                  .collection('products')
-                  .where('barcode', isEqualTo: product.barcode)
-                  .limit(1)
-                  .get();
 
-          if (querySnapshot.docs.isEmpty) {
-            showMessage(message: "❌ Product not found: ${product.barcode}");
-            return false;
-          }
-
-          final snapshot = querySnapshot.docs.first;
-          productRef = snapshot.reference;
-          productData = snapshot.data();
-
-          int currentQty = productData['quantity'] ?? 0;
-          if (currentQty < (product.quantity ?? 1)) {
-            showMessage(
-              message: "❌ Not enough stock for ${productData['name']}",
-            );
-            return false;
-          }
-
-          productUpdates.add({
-            "ref": productRef,
-            "newQty": currentQty - (product.quantity ?? 1),
-          });
-        }
+      // ===============================
+      // 1️⃣ PREPARE STOCK UPDATES
+      // ===============================
+      for (final product in scannedProductDetails) {
+        final update = await prepareStockUpdate(uid: uid, product: product);
+        stockUpdates.add(update);
       }
 
-      // 🔹 Generate Bill Number
-      String newBillNo = await generateBillNo();
-
-      // 🔹 STEP 2: Update inventory in transaction
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        for (var update in productUpdates) {
-          transaction.update(update['ref'], {
-            'quantity': update['newQty'],
+      // ===============================
+      // 2️⃣ TRANSACTION (ATOMIC)
+      // ===============================
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        for (final u in stockUpdates) {
+          tx.update(u['ref'], {
+            'quantity': u['newQty'],
             'updatedDate': formatDate,
             'updatedTime': formatTime,
           });
         }
       });
+
+      // ===============================
+      // 3️⃣ CALCULATIONS
+      // ===============================
       for (var item in sellItems) {
         totalAmount += item.originalPrice ?? 0;
         finalAmount += item.finalPrice ?? 0;
       }
 
-      // 🔹 STEP 3: Save final sale document
-      final paymentData = buildPaymentMap(
-        totalAmount: totalAmount,
-        roundOffPaid: double.parse(roundOffPaidController.text),
-        cashPaid: double.parse(cashPaidController.text),
-        upiPaid: double.parse(upiPaidController.text),
-        cardPaid: double.parse(cardPaidController.text),
-        creditPaid: double.parse(creditPaidController.text),
+      final roundOff = double.tryParse(roundOffPaidController.text) ?? 0;
+      final finalPayable = double.parse(
+        (finalAmount - roundOff).toStringAsFixed(2),
       );
 
-      double roundOffAmount = double.tryParse(roundOffPaidController.text) ?? 0;
-      double finalPayableAmount = double.parse(
-        (finalAmount - roundOffAmount).toStringAsFixed(2),
+      final paymentData = buildPaymentMap(
+        totalAmount: totalAmount,
+        roundOffPaid: roundOff,
+        cashPaid: double.tryParse(cashPaidController.text) ?? 0,
+        upiPaid: double.tryParse(upiPaidController.text) ?? 0,
+        cardPaid: double.tryParse(cardPaidController.text) ?? 0,
+        creditPaid: double.tryParse(creditPaidController.text) ?? 0,
       );
+
+      final billNo = await generateBillNo();
+
       final saleData = {
-        'billNo': newBillNo,
+        'billNo': billNo,
         'soldAt': formatDate,
         'time': formatTime,
         'totalAmount': totalAmount,
-        'discount': isDiscountGiven.value,
-        'discountValue': discountValue.value,
-        'finalAmount': finalPayableAmount,
-        'itemsCount': items.length,
+        'finalAmount': finalPayable,
         'items': sellItems.map((e) => e.toJson()).toList(),
         'payment': paymentData,
       };
-      printInvoice.value = PrintInvoiceModel.fromJson(saleData);
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('sales')
           .add(saleData);
-      fetchAllProducts();
+      printInvoice.value = PrintInvoiceModel.fromJson(saleData);
       scannedProductDetails.clear();
+      fetchAllProducts();
       return true;
     } catch (e) {
-      showMessage(message: "❌ Error: ${e.toString()}");
+      showMessage(message: "❌ ${e.toString()}");
       return false;
     } finally {
       isLoading.value = false;
@@ -472,7 +533,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
 
       transaction.set(counterRef, {'lastBillNo': newBillNo});
 
-      return "HBX-$newBillNo";
+      return "HB-$newBillNo";
     });
   }
 
@@ -567,6 +628,161 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 }
 
+
+
+  // Future<bool> confirmSale({
+  //   required List<SellItem> sellItems,
+  //   required RxBool isLoading,
+  // }) async {
+  //   isLoading.value = true;
+  //   final uid = _auth.currentUser?.uid;
+  //   if (uid == null) return false;
+  //   try {
+  //     var now = DateTime.now();
+  //     String formatDate = DateFormat('dd-MM-yyyy').format(now);
+  //     String formatTime = DateFormat('hh:mm:ss a').format(now);
+  //     List<Map<String, dynamic>> productUpdates = [];
+  //     List<Map<String, dynamic>> items = []; // 👈 all items in one list
+  //     double totalAmount = 0;
+  //     double finalAmount = 0;
+  //     // 🔹 STEP 1: Process each scanned product
+  //     for (var product in scannedProductDetails) {
+  //       if (product.barcode == null && product.id == null) continue;
+  //       DocumentReference? productRef;
+  //       Map<String, dynamic> productData = {};
+  //       // 🔹 Fetch product details & update logic
+  //       if (product.isLooseCategory == true || product.isLoosed == false) {
+  //         // Loose Category Product
+  //         productData = {
+  //           'name': product.name ?? "",
+  //           'category': product.category ?? "Loose Category",
+  //           'flavours': product.flavor ?? "",
+  //           'weight': product.weight ?? "0.0",
+  //           'box': product.box ?? "0.0",
+  //         };
+  //       }
+  //        else if (product.isLoosed == true ||
+  //           product.isLooseCategory == false) {
+  //         // Loose Product (from looseProducts)
+  //         productRef = FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('looseProducts')
+  //             .doc(product.barcode);
+  //         final snapshot = await productRef.get();
+  //         if (!snapshot.exists) {
+  //           showMessage(message: "❌ Loose product not found: ${product.id}");
+  //           return false;
+  //         }
+  //         productData = snapshot.data() as Map<String, dynamic>;
+  //         int currentQty = productData['quantity'] ?? 0;
+  //         if (currentQty < (product.quantity ?? 1)) {
+  //           showMessage(
+  //             message: "❌ Not enough stock for ${productData['name']}",
+  //           );
+  //           return false;
+  //         }
+  //         // Add update for transaction
+  //         productUpdates.add({
+  //           "ref": productRef,
+  //           "newQty": currentQty - (product.quantity ?? 1),
+  //         });
+  //       }
+  //       else {
+  //         // Normal Product (from products collection)
+  //         final querySnapshot =
+  //             await FirebaseFirestore.instance
+  //                 .collection('users')
+  //                 .doc(uid)
+  //                 .collection('products')
+  //                 .where('barcode', isEqualTo: product.barcode)
+  //                 .limit(1)
+  //                 .get();
+
+  //         if (querySnapshot.docs.isEmpty) {
+  //           showMessage(message: "❌ Product not found: ${product.barcode}");
+  //           return false;
+  //         }
+
+  //         final snapshot = querySnapshot.docs.first;
+  //         productRef = snapshot.reference;
+  //         productData = snapshot.data();
+
+  //         int currentQty = productData['quantity'] ?? 0;
+  //         if (currentQty < (product.quantity ?? 1)) {
+  //           showMessage(
+  //             message: "❌ Not enough stock for ${productData['name']}",
+  //           );
+  //           return false;
+  //         }
+
+  //         productUpdates.add({
+  //           "ref": productRef,
+  //           "newQty": currentQty - (product.quantity ?? 1),
+  //         });
+  //       }
+  //     }
+
+  //     // 🔹 Generate Bill Number
+  //     String newBillNo = await generateBillNo();
+
+  //     // 🔹 STEP 2: Update inventory in transaction
+  //     await FirebaseFirestore.instance.runTransaction((transaction) async {
+  //       for (var update in productUpdates) {
+  //         transaction.update(update['ref'], {
+  //           'quantity': update['newQty'],
+  //           'updatedDate': formatDate,
+  //           'updatedTime': formatTime,
+  //         });
+  //       }
+  //     });
+  //     for (var item in sellItems) {
+  //       totalAmount += item.originalPrice ?? 0;
+  //       finalAmount += item.finalPrice ?? 0;
+  //     }
+
+  //     // 🔹 STEP 3: Save final sale document
+  //     final paymentData = buildPaymentMap(
+  //       totalAmount: totalAmount,
+  //       roundOffPaid: double.parse(roundOffPaidController.text),
+  //       cashPaid: double.parse(cashPaidController.text),
+  //       upiPaid: double.parse(upiPaidController.text),
+  //       cardPaid: double.parse(cardPaidController.text),
+  //       creditPaid: double.parse(creditPaidController.text),
+  //     );
+
+  //     double roundOffAmount = double.tryParse(roundOffPaidController.text) ?? 0;
+  //     double finalPayableAmount = double.parse(
+  //       (finalAmount - roundOffAmount).toStringAsFixed(2),
+  //     );
+  //     final saleData = {
+  //       'billNo': newBillNo,
+  //       'soldAt': formatDate,
+  //       'time': formatTime,
+  //       'totalAmount': totalAmount,
+  //       'discount': isDiscountGiven.value,
+  //       'discountValue': discountValue.value,
+  //       'finalAmount': finalPayableAmount,
+  //       'itemsCount': items.length,
+  //       'items': sellItems.map((e) => e.toJson()).toList(),
+  //       'payment': paymentData,
+  //     };
+  //     printInvoice.value = PrintInvoiceModel.fromJson(saleData);
+  //     await FirebaseFirestore.instance
+  //         .collection('users')
+  //         .doc(uid)
+  //         .collection('sales')
+  //         .add(saleData);
+  //     fetchAllProducts();
+  //     scannedProductDetails.clear();
+  //     return true;
+  //   } catch (e) {
+  //     showMessage(message: "❌ Error: ${e.toString()}");
+  //     return false;
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
 
 
 // Future<void> fetchLooseCategory() async {

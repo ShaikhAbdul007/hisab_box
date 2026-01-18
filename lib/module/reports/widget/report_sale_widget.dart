@@ -18,19 +18,21 @@ class ReportSaleWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              ReportOverViewContainer(
-                label: 'Total Revenue',
-                labelValue: controller.totalRevenue.value.toStringAsFixed(2),
-              ),
-              ReportOverViewContainer(
-                width: 170,
-                label: 'Total Profit',
-                labelValue: controller.totalProfit.value.toStringAsFixed(2),
-              ),
-            ],
+          ReportOverViewContainer(
+            width: 500,
+            label: 'Total Revenue',
+            labelValue: controller.totalRevenue.value.toStringAsFixed(2),
           ),
+          // Row(
+          //   children: [
+
+          //     ReportOverViewContainer(
+          //       width: 180,
+          //       label: 'Total Profit',
+          //       labelValue: controller.totalProfit.value.toStringAsFixed(2),
+          //     ),
+          //   ],
+          // ),
           ReportCommonContiner(
             height: 500,
             width: 500,

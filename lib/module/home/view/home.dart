@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,6 +8,7 @@ import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/home/controller/home_controller.dart';
 import 'package:inventory/module/home/widget/home_grid_container.dart';
 import 'package:inventory/module/home/widget/quick_action_component.dart';
@@ -309,7 +311,12 @@ class MobileScreen extends StatelessWidget {
             width: 30,
             radius: 15,
             color: AppColors.whiteColor,
-            child: Icon(Icons.notifications_none_outlined),
+            child: InkWell(
+              onTap: () {
+                // migrateProductsAddFields(uid: controller.auth.currentUser!.uid);
+              },
+              child: Icon(Icons.notifications_none_outlined),
+            ),
           ),
         ],
       ),
@@ -413,7 +420,7 @@ class MobileScreen extends StatelessWidget {
                           ),
                           controller.sellsList.isNotEmpty
                               ? ReportCommonContiner(
-                                height: 400,
+                                height: 450,
                                 width: 550,
                                 child: ListView.builder(
                                   itemCount: controller.sellsList.length,
@@ -437,5 +444,85 @@ class MobileScreen extends StatelessWidget {
                 ),
       ),
     );
+  }
+
+  Future<void> migrateProductsAddFields({required String uid}) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    final CollectionReference<Map<String, dynamic>> productsRef = firestore
+        .collection('users')
+        .doc(uid)
+        .collection('products');
+
+    try {
+      final QuerySnapshot<Map<String, dynamic>> snapshot =
+          await productsRef.get();
+
+      if (snapshot.docs.isEmpty) {
+        debugPrint("❌ No products found to migrate");
+        return;
+      }
+
+      const int batchLimit = 400; // Firestore hard limit = 500
+      final int totalDocs = snapshot.docs.length;
+      int migratedCount = 0;
+
+      debugPrint("🚀 Starting migration for $totalDocs products");
+
+      for (int i = 0; i < totalDocs; i += batchLimit) {
+        final WriteBatch batch = firestore.batch();
+        final docsChunk = snapshot.docs.skip(i).take(batchLimit);
+
+        int batchUpdates = 0;
+
+        for (final doc in docsChunk) {
+          final data = doc.data();
+          final Map<String, dynamic> updateData = {};
+
+          // Existing fields
+          if (!data.containsKey('isActive')) {
+            updateData['isActive'] = true;
+          }
+
+          if (!data.containsKey('sellType')) {
+            updateData['sellType'] = 'packet';
+          }
+
+          // 🔥 NEW FIELDS
+          if (!data.containsKey('location')) {
+            updateData['location'] = 'shop';
+          }
+
+          if (!data.containsKey('rack')) {
+            updateData['rack'] = '';
+          }
+
+          if (!data.containsKey('level')) {
+            updateData['level'] = '';
+          }
+
+          if (updateData.isNotEmpty) {
+            final date = setFormateDate();
+            final time = setFormateDate('hh:mm a');
+            updateData['updatedDate'] = date;
+            updateData['updatedTime'] = time;
+            batch.update(doc.reference, updateData);
+            batchUpdates++;
+            migratedCount++;
+          }
+        }
+
+        if (batchUpdates > 0) {
+          await batch.commit();
+          debugPrint("✅ Batch committed: $migratedCount / $totalDocs");
+        }
+      }
+
+      debugPrint("🎯 Migration completed. Total updated: $migratedCount");
+    } catch (e, stack) {
+      debugPrint("❌ Migration failed: $e");
+      debugPrint(stack.toString());
+      rethrow;
+    }
   }
 }

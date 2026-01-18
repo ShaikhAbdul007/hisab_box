@@ -23,7 +23,8 @@ class LooseInvetoryModel {
   int? discount;
   bool? isLoosed;
   bool? isFlavorAndWeightNotRequired;
-
+  bool? isActive;
+  String? sellType;
   LooseInvetoryModel({
     this.barcode,
     this.name,
@@ -43,7 +44,8 @@ class LooseInvetoryModel {
     this.flavor,
     this.box,
     this.isFlavorAndWeightNotRequired,
-
+    this.isActive,
+    this.sellType,
     this.perpiece,
     this.level,
     this.rack,
@@ -64,6 +66,8 @@ class LooseInvetoryModel {
     createdTime = json['createdTime'];
     updatedTime = json['updatedTime'];
     color = json['color'];
+    sellType = json['sellType'];
+    isActive = json['isActive'];
     flavor = json['flavours'];
     weight = json['weight'];
     isLoosed = json['isLoose'];
@@ -85,6 +89,8 @@ class LooseInvetoryModel {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['barcode'] = barcode;
     data['name'] = name;
+    data['sellType'] = sellType;
+    data['isActive'] = isActive;
     data['category'] = category;
     data['isFlavorAndWeightNotRequired'] = isFlavorAndWeightNotRequired;
     data['quantity'] = quantity;

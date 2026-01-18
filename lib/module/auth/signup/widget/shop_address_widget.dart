@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_dropdown.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import '../../../../common_widget/size.dart';
 import '../../../../common_widget/textfiled.dart';
 import '../../../../helper/app_message.dart';
@@ -19,6 +19,7 @@ class ShopAddress extends StatelessWidget {
   final File profileImage;
   final void Function()? onPressed;
   final Function(dynamic) notifyParent;
+
   const ShopAddress({
     super.key,
     required this.shopName,
@@ -30,6 +31,13 @@ class ShopAddress extends StatelessWidget {
     this.onPressed,
     required this.notifyParent,
   });
+
+  Widget commonSuffixIcon(IconData icon) {
+    return CustomPadding(
+      paddingOption: OnlyPadding(right: 10),
+      child: Icon(icon, size: 18),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +53,7 @@ class ShopAddress extends StatelessWidget {
                   profileImage.path.isNotEmpty ? FileImage(profileImage) : null,
               child:
                   profileImage.path.isEmpty
-                      ? Text(
+                      ? const Text(
                         "H",
                         style: TextStyle(fontSize: 40, color: Colors.white),
                       )
@@ -63,68 +71,70 @@ class ShopAddress extends StatelessWidget {
                 ),
                 child: IconButton(
                   onPressed: onPressed,
-                  icon: Icon(Icons.edit, color: Colors.black),
+                  icon: const Icon(Icons.edit, color: Colors.black),
                 ),
               ),
             ),
           ],
         ),
+
+        /// Shop Name
         CommonTextField(
           hintText: 'Shop Name',
           label: 'Shop Name',
           controller: shopName,
-          suffixIcon: Icon(CupertinoIcons.person, size: 18),
-          validator: (shopNameValue) {
-            if (shopNameValue!.isEmpty) {
-              return emptyShopName;
-            } else {
-              return null;
-            }
+          suffixIcon: commonSuffixIcon(CupertinoIcons.person),
+          validator: (value) {
+            if (value!.isEmpty) return emptyShopName;
+            return null;
           },
         ),
+
         setHeight(height: 10),
+
+        /// Address
         CommonTextField(
           hintText: 'Address',
           label: 'Address',
           controller: address,
-          suffixIcon: Icon(CupertinoIcons.location_solid, size: 18),
-          validator: (address) {
-            if (address!.isEmpty) {
-              return emptyAddress;
-            } else {
-              return null;
-            }
+          suffixIcon: commonSuffixIcon(CupertinoIcons.location_solid),
+          validator: (value) {
+            if (value!.isEmpty) return emptyAddress;
+            return null;
           },
         ),
+
         setHeight(height: 10),
+
+        /// City
         CommonTextField(
           hintText: 'City',
           label: 'City',
           controller: city,
-          suffixIcon: Icon(CupertinoIcons.building_2_fill, size: 18),
-          validator: (city) {
-            if (city!.isEmpty) {
-              return emptyCity;
-            } else {
-              return null;
-            }
+          suffixIcon: commonSuffixIcon(CupertinoIcons.building_2_fill),
+          validator: (value) {
+            if (value!.isEmpty) return emptyCity;
+            return null;
           },
         ),
+
         setHeight(height: 10),
+
+        /// State
         CommonTextField(
           hintText: 'State',
           label: 'State',
           controller: state,
-          suffixIcon: Icon(Icons.business_outlined, size: 18),
-          validator: (state) {
-            if (state!.isEmpty) {
-              return emptyState;
-            } else {
-              return null;
-            }
+          suffixIcon: commonSuffixIcon(Icons.business_outlined),
+          validator: (value) {
+            if (value!.isEmpty) return emptyState;
+            return null;
           },
         ),
+
         setHeight(height: 10),
+
+        /// Shop Type
         CommonDropDown(
           isModelValueEnabled: false,
           enabled: true,
@@ -134,20 +144,20 @@ class ShopAddress extends StatelessWidget {
           hintText: 'Shop type',
           notifyParent: notifyParent,
         ),
+
         setHeight(height: 10),
+
+        /// Pincode
         CommonTextField(
           hintText: 'Pincode',
           label: 'Pincode',
           inputLength: 6,
           keyboardType: TextInputType.number,
           controller: pincode,
-          suffixIcon: Icon(Icons.password, size: 18),
-          validator: (pincode) {
-            if (pincode!.isEmpty) {
-              return emptyPincode;
-            } else {
-              return null;
-            }
+          suffixIcon: commonSuffixIcon(Icons.password),
+          validator: (value) {
+            if (value!.isEmpty) return emptyPincode;
+            return null;
           },
         ),
       ],

@@ -195,6 +195,7 @@ class ProductController extends GetxController with CacheManager {
         'purchaseDate': purchaseDate.text,
         'exprieDate': exprieDate.text,
         'isActive': true,
+        'sellType': 'packet',
       });
       fetchAllProducts();
 
@@ -221,7 +222,16 @@ class ProductController extends GetxController with CacheManager {
 
     final now = DateTime.now();
     final String formatDate = DateFormat('dd-MM-yyyy').format(now);
-    final String formaTime = DateFormat('hh:mm a').format(now);
+    final String formatTime = DateFormat('hh:mm a').format(now);
+
+    final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
+    final double looseSellingPrice = double.tryParse(sellingPrice.text) ?? 0.0;
+
+    if (looseQty <= 0) {
+      showMessage(message: "❌ Invalid loose quantity");
+      isLooseProductSave.value = false;
+      return;
+    }
 
     final productRef = FirebaseFirestore.instance
         .collection('users')
@@ -237,81 +247,91 @@ class ProductController extends GetxController with CacheManager {
 
     try {
       await FirebaseFirestore.instance.runTransaction((tx) async {
+        /// ===============================
+        /// 1️⃣ READS FIRST (MANDATORY)
+        /// ===============================
         final productSnap = await tx.get(productRef);
+        final looseSnap = await tx.get(looseRef);
 
         if (!productSnap.exists) {
-          throw productNotFound;
+          throw Exception("Product not found");
         }
 
-        final data = productSnap.data()!;
+        final data = productSnap.data() as Map<String, dynamic>;
 
-        // ❌ if not marked looseable → block
-        if (data['isLoose'] != true) {
-          throw productNotAllowedForLooseSelling;
+        final bool allowLoose = data['isLoose'] == true;
+
+        if (!allowLoose) {
+          throw Exception("Product not allowed for loose selling");
         }
 
         final int mainStock = (data['quantity'] ?? 0).toInt();
-
         if (mainStock <= 0) {
-          throw "No sealed pack left";
+          throw Exception("No sealed pack left");
         }
 
-        // 👇 1 packet → loose
+        final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
+        if (looseQty <= 0) {
+          throw Exception("Invalid loose quantity");
+        }
+
+        /// ===============================
+        /// 2️⃣ WRITES AFTER ALL READS
+        /// ===============================
+
+        // 🔻 Deduct packet stock
         tx.update(productRef, {
           'quantity': mainStock - 1,
           'updatedDate': formatDate,
-          'updatedTime': formaTime,
+          'updatedTime': formatTime,
         });
 
-        final looseQty = int.tryParse(looseQuantity.text) ?? 0;
-        if (looseQty <= 0) throw "Loose quantity invalid";
-
-        final looseSnap = await tx.get(looseRef);
-
         if (looseSnap.exists) {
-          final oldQty = (looseSnap['quantity'] ?? 0).toInt();
+          final looseData = looseSnap.data() as Map<String, dynamic>;
+          final int oldQty = (looseData['quantity'] ?? 0).toInt();
           tx.update(looseRef, {
             'quantity': oldQty + looseQty,
+            'sellingPrice': looseSellingPrice,
             'updatedDate': formatDate,
-            'updatedTime': formaTime,
-            'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
+            'updatedTime': formatTime,
           });
         } else {
-          double sellingPrices = double.tryParse(sellingPrice.text) ?? 0.0;
           tx.set(looseRef, {
             'barcode': barcode,
             'name': data['name'],
             'category': data['category'],
             'animalType': data['animalType'],
-            'isLoose': true,
             'quantity': looseQty,
             'purchasePrice': data['purchasePrice'],
-            'sellingPrice': sellingPrices,
-            'flavours': data['flavours'],
+            'sellingPrice': looseSellingPrice,
             'weight': data['weight'],
-            'createdDate': formatDate,
-            'updatedDate': formatDate,
-            'createdTime': formaTime,
-            'updatedTime': formaTime,
             'color': data['color'],
             'level': data['level'],
             'rack': data['rack'],
-            'isFlavorAndWeightNotRequired':
-                data['isFlavorAndWeightNotRequired'],
             'location': data['location'],
             'discount': data['discount'],
-            'purchaseDate': data['purchaseDate'],
+            'isFlavorAndWeightNotRequired':
+                data['isFlavorAndWeightNotRequired'],
+            'createdDate': formatDate,
+            'createdTime': formatTime,
+            'updatedDate': formatDate,
+            'updatedTime': formatTime,
             'exprieDate': data['exprieDate'],
+            'purchaseDate': data['purchaseDate'],
+            'isActive': true,
+            'sellType': 'loose',
           });
         }
       });
-
       clear();
-
       Get.back(result: true);
-      showMessage(message: "Loose stock created successfully");
+      showMessage(message: "✅ Loose stock created successfully");
+    } on FirebaseException catch (e) {
+      print(e.toString());
+      showMessage(message: "❌ ${e.toString()}");
     } catch (e) {
-      showMessage(message: e.toString());
+      print(e.toString());
+      showMessage(message: "❌ ${e.toString()}");
     } finally {
       isLooseProductSave.value = false;
     }
