@@ -200,111 +200,34 @@ class SellListAfterScanController extends GetxController with CacheManager {
     }
   }
 
-  // void updateQuantity(bool isIncrement, int index) async {
-  //   int? pexistingQty;
-  //   int? existingLooseQty;
-  //   final uid = _auth.currentUser?.uid;
-  //   isStockOver.value = false;
-  //   final productRef = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('products')
-  //       .doc(productList[index].barcode);
-  //   final looseProductRef = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('looseProducts')
-  //       .doc(productList[index].barcode);
-  //   final existingDoc = await productRef.get();
-  //   final existingLooseDoc = await looseProductRef.get();
-  //   if (existingDoc.exists) {
-  //     pexistingQty = existingDoc['quantity'];
-  //   }
-  //   if (existingLooseDoc.exists) {
-  //     existingLooseQty = existingLooseDoc['quantity'];
-  //   }
-  //   var current = productList[index];
-  //   if (isIncrement) {
-  //     if (pexistingQty != null) {
-  //       if ((current.quantity ?? 0) < pexistingQty) {
-  //         current.quantity = (current.quantity ?? 0) + 1;
-  //       } else {
-  //         isStockOver.value = true;
-  //         showSnackBar(
-  //           error:
-  //               "Product is out of stock\nYou cannot add more than available stock.",
-  //         );
-  //       }
-  //     } else if (existingLooseQty != null) {
-  //       if ((current.quantity ?? 0) < existingLooseQty) {
-  //         current.quantity = (current.quantity ?? 0) + 1;
-  //       } else {
-  //         isStockOver.value = true;
-  //         showSnackBar(
-  //           error:
-  //               "Product is out of stock\nYou cannot add more than available stock.",
-  //         );
-  //       }
-  //     }
-  //   } else {
-  //     if ((current.quantity ?? 1) > 1) {
-  //       current.quantity = (current.quantity ?? 1) - 1;
-  //     }
-  //   }
-  //   productList[index] = current;
-  //   saveCartProductList(productList);
-  //   discountCalculateAsPerProduct(index);
-  //   calculateTotalWithDiscount();
-  // }
-
   Future<void> updateQuantity(bool isIncrement, int index) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
-
     isStockOver.value = false;
     var current = productList[index];
 
     int availableQty = 0;
 
-    // ===============================
-    // 1️⃣ FETCH STOCK BASED ON sellType
-    // ===============================
     if (current.sellType?.toLowerCase() == 'loose') {
-      final looseRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('looseProducts')
-          .doc(current.barcode);
-
-      final snap = await looseRef.get();
-      if (!snap.exists) {
-        showSnackBar(error: "Loose product stock not found");
+      final looseList = await retrieveLoosedProductList();
+      final loose = looseList.firstWhereOrNull(
+        (e) => e.barcode == current.barcode,
+      );
+      if (loose == null) {
+        showSnackBar(error: "Loose product not found");
         return;
       }
-
-      availableQty = snap['quantity'] ?? 0;
+      availableQty = loose.quantity ?? 0;
     } else {
-      final productRef =
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('products')
-              .where('barcode', isEqualTo: current.barcode)
-              .limit(1)
-              .get();
-
-      final query = await productRef;
-      if (query.docs.isEmpty) {
-        showSnackBar(error: "Product stock not found");
+      final products = await retrieveProductList();
+      final prod = products.firstWhereOrNull(
+        (e) => e.barcode == current.barcode,
+      );
+      if (prod == null) {
+        showSnackBar(error: "Product not found");
         return;
       }
-
-      availableQty = query.docs.first['quantity'] ?? 0;
+      availableQty = prod.quantity?.toInt() ?? 0;
     }
 
-    // ===============================
-    // 2️⃣ UPDATE QTY
-    // ===============================
     if (isIncrement) {
       if ((current.quantity ?? 0) < availableQty) {
         current.quantity = (current.quantity ?? 0) + 1;
@@ -322,12 +245,8 @@ class SellListAfterScanController extends GetxController with CacheManager {
       }
     }
 
-    // ===============================
-    // 3️⃣ SAVE & RECALCULATE
-    // ===============================
     productList[index] = current;
     saveCartProductList(productList);
-
     discountCalculateAsPerProduct(index);
     calculateTotalWithDiscount();
   }
@@ -351,70 +270,79 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 
   Future<void> fetchDiscounts() async {
+    final cached = getDiscountCache();
+    if (cached.isNotEmpty) {
+      discountList.value = cached;
+      return;
+    }
+
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('discounts')
-              .get();
-      discountList.value =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return DiscountModel.fromJson(data);
-          }).toList();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    }
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('discounts')
+            .get();
+
+    discountList.value =
+        snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return DiscountModel.fromJson(data);
+        }).toList();
+
+    saveDiscountCache(discountList);
   }
 
   Future<Map<String, dynamic>> prepareStockUpdate({
     required String uid,
     required ProductModel product,
   }) async {
-    final firestore = FirebaseFirestore.instance;
-
     late DocumentReference ref;
     late Map<String, dynamic> data;
 
-    // 🔥 LOOSE → looseProducts ONLY
+    // 🚀 CACHE-FIRST APPROACH (NO FIREBASE READS)
     if (product.sellType?.toLowerCase() == 'loose') {
-      ref = firestore
+      final looseProducts = await retrieveLoosedProductList();
+      final cached = looseProducts.firstWhereOrNull(
+        (p) => p.barcode == product.barcode,
+      );
+
+      if (cached == null) {
+        throw Exception("Loose product not found: ${product.barcode}");
+      }
+
+      ref = FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('looseProducts')
           .doc(product.barcode);
 
-      final snap = await ref.get();
-      if (!snap.exists) {
-        throw Exception("Loose product not found: ${product.barcode}");
-      }
+      data = {'quantity': cached.quantity ?? 0, 'name': cached.name ?? ''};
+    } else {
+      final products = await retrieveProductList();
+      final cached = products.firstWhereOrNull(
+        (p) => p.barcode == product.barcode,
+      );
 
-      data = snap.data() as Map<String, dynamic>;
-    }
-    // 🔥 PACKET → products ONLY
-    else {
-      final query =
-          await firestore
-              .collection('users')
-              .doc(uid)
-              .collection('products')
-              .where('barcode', isEqualTo: product.barcode)
-              .limit(1)
-              .get();
-
-      if (query.docs.isEmpty) {
+      if (cached == null) {
         throw Exception("Product not found: ${product.barcode}");
       }
 
-      final snap = query.docs.first;
-      ref = snap.reference;
-      data = snap.data();
+      ref = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('products')
+          .doc(product.barcode);
+
+      data = {
+        'quantity': cached.quantity?.toInt() ?? 0,
+        'name': cached.name ?? '',
+      };
     }
+
     final currentQty = data['quantity'] ?? 0;
     final sellQty = product.quantity ?? 1;
     if (currentQty < sellQty) {
@@ -431,6 +359,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     isLoading.value = true;
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
+
     try {
       final now = DateTime.now();
       final formatDate = DateFormat('dd-MM-yyyy').format(now);
@@ -441,7 +370,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
       double finalAmount = 0;
 
       // ===============================
-      // 1️⃣ PREPARE STOCK UPDATES
+      // 1️⃣ PREPARE STOCK UPDATES (CACHE-ONLY)
       // ===============================
       for (final product in scannedProductDetails) {
         final update = await prepareStockUpdate(uid: uid, product: product);
@@ -449,20 +378,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
       }
 
       // ===============================
-      // 2️⃣ TRANSACTION (ATOMIC)
-      // ===============================
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        for (final u in stockUpdates) {
-          tx.update(u['ref'], {
-            'quantity': u['newQty'],
-            'updatedDate': formatDate,
-            'updatedTime': formatTime,
-          });
-        }
-      });
-
-      // ===============================
-      // 3️⃣ CALCULATIONS
+      // 2️⃣ CALCULATIONS (BEFORE FIREBASE)
       // ===============================
       for (var item in sellItems) {
         totalAmount += item.originalPrice ?? 0;
@@ -483,26 +399,73 @@ class SellListAfterScanController extends GetxController with CacheManager {
         creditPaid: double.tryParse(creditPaidController.text) ?? 0,
       );
 
-      final billNo = await generateBillNo();
+      // ===============================
+      // 3️⃣ SINGLE MEGA TRANSACTION (ALL-IN-ONE)
+      // ===============================
+      final result = await FirebaseFirestore.instance.runTransaction((
+        tx,
+      ) async {
+        // 🔥 Generate Bill Number (inside transaction)
+        final counterRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('bill')
+            .doc('billNo');
 
-      final saleData = {
-        'billNo': billNo,
-        'soldAt': formatDate,
-        'time': formatTime,
-        'totalAmount': totalAmount,
-        'finalAmount': finalPayable,
-        'items': sellItems.map((e) => e.toJson()).toList(),
-        'payment': paymentData,
-      };
+        final counterSnap = await tx.get(counterRef);
+        int newBillNo = 1;
+        if (counterSnap.exists) {
+          newBillNo = (counterSnap.data()?['lastBillNo'] ?? 0) + 1;
+        }
+        tx.set(counterRef, {'lastBillNo': newBillNo});
+        final billNo = "HB-$newBillNo";
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('sales')
-          .add(saleData);
-      printInvoice.value = PrintInvoiceModel.fromJson(saleData);
+        // 🔥 Update All Stock (inside same transaction)
+        for (final u in stockUpdates) {
+          tx.update(u['ref'], {
+            'quantity': u['newQty'],
+            'updatedDate': formatDate,
+            'updatedTime': formatTime,
+          });
+        }
+
+        // 🔥 Create Sale Record (inside same transaction)
+        final saleRef =
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .collection('sales')
+                .doc();
+
+        final saleData = {
+          'billNo': billNo,
+          'soldAt': formatDate,
+          'time': formatTime,
+          'totalAmount': totalAmount,
+          'finalAmount': finalPayable,
+          'items': sellItems.map((e) => e.toJson()).toList(),
+          'payment': paymentData,
+        };
+
+        tx.set(saleRef, saleData);
+
+        return saleData;
+      });
+
+      // ===============================
+      // 4️⃣ POST-TRANSACTION CLEANUP
+      // ===============================
+      printInvoice.value = PrintInvoiceModel.fromJson(result);
       scannedProductDetails.clear();
-      fetchAllProducts();
+
+      // 🚀 CACHE UPDATES (NO FIREBASE CALLS)
+      clearTodayReportCache();
+      clearTodayRevenueCache();
+      updateDashboardRevenue(finalAmount);
+      removelooseInvetoryKeyModel();
+      removePoductModel();
+      clearCustomerListCache();
+
       return true;
     } catch (e) {
       showMessage(message: "❌ ${e.toString()}");
@@ -510,47 +473,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
     } finally {
       isLoading.value = false;
     }
-  }
-
-  Future<String> generateBillNo() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return "HBX0001";
-
-    final counterRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('bill')
-        .doc('billNo');
-
-    return FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snapshot = await transaction.get(counterRef);
-
-      int newBillNo = 1;
-
-      if (snapshot.exists) {
-        newBillNo = (snapshot.data()?['lastBillNo'] ?? 0) + 1;
-      }
-
-      transaction.set(counterRef, {'lastBillNo': newBillNo});
-
-      return "HB-$newBillNo";
-    });
-  }
-
-  Future<void> fetchAllProducts() async {
-    final uid = _auth.currentUser?.uid;
-    final productSnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('products')
-            .where('quantity')
-            .get();
-    var productLists =
-        productSnapshot.docs
-            .map((doc) => ProductModel.fromJson(doc.data()))
-            .toList();
-    saveProductList(productLists);
   }
 
   Map<String, dynamic> buildPaymentMap({
@@ -627,6 +549,182 @@ class SellListAfterScanController extends GetxController with CacheManager {
     return sellList;
   }
 }
+
+
+// void updateQuantity(bool isIncrement, int index) async {
+  //   int? pexistingQty;
+  //   int? existingLooseQty;
+  //   final uid = _auth.currentUser?.uid;
+  //   isStockOver.value = false;
+  //   final productRef = FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(uid)
+  //       .collection('products')
+  //       .doc(productList[index].barcode);
+  //   final looseProductRef = FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(uid)
+  //       .collection('looseProducts')
+  //       .doc(productList[index].barcode);
+  //   final existingDoc = await productRef.get();
+  //   final existingLooseDoc = await looseProductRef.get();
+  //   if (existingDoc.exists) {
+  //     pexistingQty = existingDoc['quantity'];
+  //   }
+  //   if (existingLooseDoc.exists) {
+  //     existingLooseQty = existingLooseDoc['quantity'];
+  //   }
+  //   var current = productList[index];
+  //   if (isIncrement) {
+  //     if (pexistingQty != null) {
+  //       if ((current.quantity ?? 0) < pexistingQty) {
+  //         current.quantity = (current.quantity ?? 0) + 1;
+  //       } else {
+  //         isStockOver.value = true;
+  //         showSnackBar(
+  //           error:
+  //               "Product is out of stock\nYou cannot add more than available stock.",
+  //         );
+  //       }
+  //     } else if (existingLooseQty != null) {
+  //       if ((current.quantity ?? 0) < existingLooseQty) {
+  //         current.quantity = (current.quantity ?? 0) + 1;
+  //       } else {
+  //         isStockOver.value = true;
+  //         showSnackBar(
+  //           error:
+  //               "Product is out of stock\nYou cannot add more than available stock.",
+  //         );
+  //       }
+  //     }
+  //   } else {
+  //     if ((current.quantity ?? 1) > 1) {
+  //       current.quantity = (current.quantity ?? 1) - 1;
+  //     }
+  //   }
+  //   productList[index] = current;
+  //   saveCartProductList(productList);
+  //   discountCalculateAsPerProduct(index);
+  //   calculateTotalWithDiscount();
+  // }
+
+  // Future<void> updateQuantity(bool isIncrement, int index) async {
+  //   final uid = _auth.currentUser?.uid;
+  //   if (uid == null) return;
+
+  //   isStockOver.value = false;
+  //   var current = productList[index];
+
+  //   int availableQty = 0;
+
+  //   // ===============================
+  //   // 1️⃣ FETCH STOCK BASED ON sellType
+  //   // ===============================
+  //   if (current.sellType?.toLowerCase() == 'loose') {
+  //     final looseRef = FirebaseFirestore.instance
+  //         .collection('users')
+  //         .doc(uid)
+  //         .collection('looseProducts')
+  //         .doc(current.barcode);
+
+  //     final snap = await looseRef.get();
+  //     if (!snap.exists) {
+  //       showSnackBar(error: "Loose product stock not found");
+  //       return;
+  //     }
+
+  //     availableQty = snap['quantity'] ?? 0;
+  //   } else {
+  //     final productRef =
+  //         FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('products')
+  //             .where('barcode', isEqualTo: current.barcode)
+  //             .limit(1)
+  //             .get();
+
+  //     final query = await productRef;
+  //     if (query.docs.isEmpty) {
+  //       showSnackBar(error: "Product stock not found");
+  //       return;
+  //     }
+
+  //     availableQty = query.docs.first['quantity'] ?? 0;
+  //   }
+
+  //   // ===============================
+  //   // 2️⃣ UPDATE QTY
+  //   // ===============================
+  //   if (isIncrement) {
+  //     if ((current.quantity ?? 0) < availableQty) {
+  //       current.quantity = (current.quantity ?? 0) + 1;
+  //     } else {
+  //       isStockOver.value = true;
+  //       showSnackBar(
+  //         error:
+  //             "Product is out of stock\nYou cannot add more than available stock.",
+  //       );
+  //       return;
+  //     }
+  //   } else {
+  //     if ((current.quantity ?? 1) > 1) {
+  //       current.quantity = (current.quantity ?? 1) - 1;
+  //     }
+  //   }
+
+  //   // ===============================
+  //   // 3️⃣ SAVE & RECALCULATE
+  //   // ===============================
+  //   productList[index] = current;
+  //   saveCartProductList(productList);
+
+  //   discountCalculateAsPerProduct(index);
+  //   calculateTotalWithDiscount();
+  // }
+
+  // 🚀 REMOVED - Bill generation now inside main transaction
+  // Future<String> generateBillNo() async {
+  //   final uid = _auth.currentUser?.uid;
+  //   if (uid == null) return "HBX0001";
+
+  //   final counterRef = FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(uid)
+  //       .collection('bill')
+  //       .doc('billNo');
+
+  //   return FirebaseFirestore.instance.runTransaction((transaction) async {
+  //     final snapshot = await transaction.get(counterRef);
+
+  //     int newBillNo = 1;
+
+  //     if (snapshot.exists) {
+  //       newBillNo = (snapshot.data()?['lastBillNo'] ?? 0) + 1;
+  //     }
+
+  //     transaction.set(counterRef, {'lastBillNo': newBillNo});
+
+  //     return "HB-$newBillNo";
+  //   });
+  // }
+
+  // 🚀 REMOVED - Products fetched from cache only
+  // Future<void> fetchAllProducts() async {
+  //   final uid = _auth.currentUser?.uid;
+  //   final productSnapshot =
+  //       await FirebaseFirestore.instance
+  //           .collection('users')
+  //           .doc(uid)
+  //           .collection('products')
+  //           .where('quantity')
+  //           .get();
+  //   var productLists =
+  //       productSnapshot.docs
+  //           .map((doc) => ProductModel.fromJson(doc.data()))
+  //           .toList();
+  //   saveProductList(productLists);
+  // }
 
 
 
@@ -961,5 +1059,28 @@ class SellListAfterScanController extends GetxController with CacheManager {
   //     return false;
   //   } finally {
   //     isSaleLoading.value = false;
+  //   }
+  // }
+
+
+  // Future<void> fetchDiscounts() async {
+  //   final uid = _auth.currentUser?.uid;
+  //   if (uid == null) return;
+
+  //   try {
+  //     final snapshot =
+  //         await FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('discounts')
+  //             .get();
+  //     discountList.value =
+  //         snapshot.docs.map((doc) {
+  //           final data = doc.data();
+  //           data['id'] = doc.id;
+  //           return DiscountModel.fromJson(data);
+  //         }).toList();
+  //   } on FirebaseAuthException catch (e) {
+  //     showMessage(message: e.toString());
   //   }
   // }

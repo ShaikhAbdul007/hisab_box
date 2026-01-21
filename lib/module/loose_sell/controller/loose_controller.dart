@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import '../../../helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
 import '../model/loose_model.dart';
@@ -62,8 +63,7 @@ class LooseController extends GetxController with CacheManager {
   }) async {
     isSaveLoading.value = true;
     try {
-      final now = DateTime.now();
-      final String formatDate = DateFormat('dd-MM-yyyy').format(now);
+      final String formatDate = setFormateDate();
       final uid = _auth.currentUser?.uid;
       if (uid == null) return;
       final productRef = FirebaseFirestore.instance
@@ -84,8 +84,9 @@ class LooseController extends GetxController with CacheManager {
             'quantity': add ? prevQty + newQty : prevQty - newQty,
             'updatedDate': formatDate,
             'sellingPrice': sellingprice,
-            'updatedTime': DateFormat('hh:mm a').format(now),
+            'updatedTime': setFormateDate('hh:mm a'),
           });
+          removelooseInvetoryKeyModel();
           Get.back();
           qtyClear();
           showMessage(message: '✅ Product quantity updated.');
@@ -101,8 +102,21 @@ class LooseController extends GetxController with CacheManager {
 
   Future<void> fetchLooseProduct() async {
     isDataLoading.value = true;
+
+    // 1️⃣ Cache-first
+    final cachedLooseProducts = await retrieveLoosedProductList();
+    if (cachedLooseProducts.isNotEmpty) {
+      productList.value = cachedLooseProducts;
+      isDataLoading.value = false;
+      return;
+    }
+
+    // 2️⃣ Firebase fallback
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) {
+      isDataLoading.value = false;
+      return;
+    }
 
     try {
       final snapshot =
@@ -118,9 +132,10 @@ class LooseController extends GetxController with CacheManager {
             data['id'] = doc.id;
             return LooseInvetoryModel.fromJson(data);
           }).toList();
-      isDataLoading.value = false;
-    } on FirebaseAuthException catch (e) {
-      isDataLoading.value = false;
+
+      // 🔥 cache save
+      saveLoosedProductList(productList);
+    } catch (e) {
       showMessage(message: e.toString());
     } finally {
       isDataLoading.value = false;

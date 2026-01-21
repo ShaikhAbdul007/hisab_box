@@ -1,7 +1,11 @@
 import 'package:get_storage/get_storage.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
 import 'package:inventory/module/category/model/category_model.dart';
+import 'package:inventory/module/discount/model/discount_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
+import 'package:inventory/module/order_complete/model/customer_details_model.dart';
+import 'package:inventory/module/revenue/model/revenue_model.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 
 import '../module/loose_sell/model/loose_model.dart' show LooseInvetoryModel;
@@ -160,6 +164,14 @@ mixin class CacheManager {
     box.remove(Key.cacheModel.toString());
   }
 
+  void removePoductModel() {
+    box.remove(Key.product.toString());
+  }
+
+  void removelooseInvetoryKeyModel() {
+    box.remove(Key.looseInvetoryKey.toString());
+  }
+
   void removeCartProductList() {
     box.remove(Key.cartProduct.toString());
   }
@@ -172,11 +184,146 @@ mixin class CacheManager {
     removeCacheModel();
     box.erase();
   }
+
+  // ================= CUSTOMER CACHE =================
+
+  void saveCustomerList(List<CustomerDetails> customers) {
+    final list = customers.map((e) => e.toJson()).toList();
+    box.write(Key.customerListKey.toString(), list);
+  }
+
+  Future<List<CustomerDetails>> retrieveCustomerList() async {
+    final stored = box.read(Key.customerListKey.toString());
+    if (stored != null && stored is List) {
+      return stored
+          .map((e) => CustomerDetails.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return [];
+  }
+
+  // ================= DASHBOARD CACHE =================
+
+  void saveDashboardCache({
+    required double totalRevenue,
+    required num stock,
+    required num looseStock,
+    required num outOfStock,
+    required num expense,
+    required List<Map<String, dynamic>> chartData,
+    required List<SellsModel> sellsList,
+  }) {
+    box.write(Key.dashboardCache.toString(), {
+      'totalRevenue': totalRevenue,
+      'stock': stock,
+      'looseStock': looseStock,
+      'outOfStock': outOfStock,
+      'expense': expense,
+      'chartData': chartData,
+      'sellsList': sellsList.map((e) => e.toJson()).toList(),
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Map<String, dynamic>? getDashboardCache() {
+    return box.read(Key.dashboardCache.toString());
+  }
+
+  bool hasDashboardCache() {
+    return box.hasData(Key.dashboardCache.toString());
+  }
+
+  void clearDashboardCache() {
+    box.remove(Key.dashboardCache.toString());
+  }
+
+  void clearCustomerListCache() {
+    box.remove(Key.customerListKey.toString());
+  }
+
+  // ================= DISCOUNT CACHE =================
+
+  void saveDiscountCache(List<DiscountModel> list) {
+    box.write(
+      Key.discountCache.toString(),
+      list.map((e) => e.toJson()).toList(),
+    );
+  }
+
+  List<DiscountModel> getDiscountCache() {
+    final data = box.read(Key.discountCache.toString());
+    if (data != null && data is List) {
+      return data.map((e) => DiscountModel.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  void updateDashboardRevenue(double billAmount) {
+    final data = box.read(Key.dashboardCache.toString());
+    if (data == null) return;
+
+    final currentRevenue = (data['totalRevenue'] ?? 0).toDouble();
+    data['totalRevenue'] = currentRevenue + billAmount;
+    data['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
+
+    box.write(Key.dashboardCache.toString(), data);
+  }
+
+  void saveTodayRevenueCache({
+    required String date,
+    required List<SellsModel> sells,
+  }) {
+    box.write(Key.todayRevenueCache.toString(), {
+      'date': date,
+      'sells': sells.map((e) => e.toJson()).toList(),
+    });
+  }
+
+  Map<String, dynamic>? getTodayRevenueCache() {
+    return box.read(Key.todayRevenueCache.toString());
+  }
+
+  void clearTodayRevenueCache() {
+    box.remove(Key.todayRevenueCache.toString());
+  }
+
+  void saveTodayReportCache(Map<String, dynamic> data) {
+    box.write(Key.todayReportCache.toString(), data);
+  }
+
+  Map<String, dynamic>? getTodayReportCache() {
+    return box.read(Key.todayReportCache.toString());
+  }
+
+  void clearTodayReportCache() {
+    box.remove(Key.todayReportCache.toString());
+  }
+
+  void saveTodaySellCache({
+    required String date,
+    required List<SaleModel> sells,
+  }) {
+    box.write(Key.todaySellCache.toString(), {
+      'date': date,
+      'sells': sells.map((e) => e.toJson()).toList(),
+    });
+  }
+
+  Map<String, dynamic>? getTodaySellCache() {
+    return box.read(Key.todaySellCache.toString());
+  }
+
+  void clearTodaySellCache() {
+    box.remove(Key.todaySellCache.toString());
+  }
 }
 
 enum Key {
   cacheModel,
+  todayReportCache,
+  todaySellCache,
   cacheEmployeeModel,
+  todayRevenueCache,
   categoryValue,
   userLoginIn,
   employeeIdKey,
@@ -193,4 +340,7 @@ enum Key {
   product,
   cartProduct,
   looseInvetoryKey,
+  dashboardCache,
+  discountCache,
+  customerListKey,
 }

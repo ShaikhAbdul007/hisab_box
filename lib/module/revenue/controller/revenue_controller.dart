@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import '../../../helper/helper.dart';
 import '../model/revenue_model.dart';
 
-class RevenueController extends GetxController {
+class RevenueController extends GetxController with CacheManager {
   final _auth = FirebaseAuth.instance;
   RxBool isRevenueListLoading = false.obs;
   var sellsList = <SellsModel>[].obs;
@@ -20,14 +21,33 @@ class RevenueController extends GetxController {
   }
 
   void setSellList() async {
-    sellsList.value = await fetchRevenueList();
+    final today = dayDate.value;
 
+    // 1️⃣ Cache check
+    final cache = getTodayRevenueCache();
+    if (cache != null && cache['date'] == today) {
+      sellsList.value =
+          (cache['sells'] as List).map((e) => SellsModel.fromJson(e)).toList();
+
+      _calculateTotal();
+      return;
+    }
+
+    // 2️⃣ Firebase fallback
+    final data = await fetchRevenueList();
+    sellsList.value = data;
+
+    // 3️⃣ Cache save
+    saveTodayRevenueCache(date: today, sells: data);
+
+    _calculateTotal();
+  }
+
+  void _calculateTotal() {
     double total = 0.0;
-
     for (var bill in sellsList) {
       total += (bill.finalAmount ?? 0).toDouble();
     }
-
     sellTotalAmount.value = total;
   }
 

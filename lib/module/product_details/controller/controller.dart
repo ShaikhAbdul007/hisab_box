@@ -198,7 +198,6 @@ class ProductController extends GetxController with CacheManager {
         'sellType': 'packet',
       });
       fetchAllProducts();
-
       showMessage(message: scannerDataSave);
       Future.delayed(Duration(milliseconds: 500), () {
         clear();
@@ -207,7 +206,6 @@ class ProductController extends GetxController with CacheManager {
     } on FirebaseAuthException catch (e) {
       showMessage(message: e.message ?? '');
     } catch (e) {
-      print('');
       showMessage(message: somethingWentMessage);
     } finally {
       isSaveLoading.value = false;
@@ -220,9 +218,8 @@ class ProductController extends GetxController with CacheManager {
     final uid = auth.currentUser?.uid;
     if (uid == null) return;
 
-    final now = DateTime.now();
-    final String formatDate = DateFormat('dd-MM-yyyy').format(now);
-    final String formatTime = DateFormat('hh:mm a').format(now);
+    final String formatDate = setFormateDate();
+    final String formatTime = setFormateDate('hh:mm a');
 
     final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
     final double looseSellingPrice = double.tryParse(sellingPrice.text) ?? 0.0;
@@ -345,6 +342,7 @@ class ProductController extends GetxController with CacheManager {
             .doc(uid)
             .collection('products')
             .where('quantity')
+            .where('isActive', isEqualTo: true)
             .get();
     productList.value =
         productSnapshot.docs

@@ -252,7 +252,7 @@ class ProductDetailsController extends GetxController with CacheManager {
             .collection('users')
             .doc(uid)
             .collection('products')
-            .where('quantity')
+            .where('isActive', isEqualTo: true)
             .get();
     productList.value =
         productSnapshot.docs

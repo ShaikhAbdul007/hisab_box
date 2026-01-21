@@ -49,4 +49,22 @@ class SaleModel {
       animalType: data['animalType'] ?? '',
     );
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'barcode': barcode,
+      'name': name,
+      'quantity': quantity,
+      'category': category,
+      'soldAt': soldAt,
+      'time': time,
+      'billNo': billNo,
+      'amount': amount,
+      'weight': weight,
+      'flavor': flavor,
+      'discountValue': discountPercentage,
+      'sellingPrice': sellingPrice,
+      'finalAmount': amountAfterDiscount,
+      'animalType': animalType,
+    };
+  }
 }

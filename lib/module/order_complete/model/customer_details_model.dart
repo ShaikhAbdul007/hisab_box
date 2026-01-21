@@ -32,4 +32,16 @@ class CustomerDetails {
       totalCredit: (json["totalCredit"] ?? 0).toDouble(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "address": address,
+      "createdAt": createdAt,
+      "mobile": mobile,
+      "name": name,
+      "totalPurchase": totalPurchase,
+      "totalPaid": totalPaid,
+      "totalCredit": totalCredit,
+    };
+  }
 }

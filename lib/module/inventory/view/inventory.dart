@@ -152,9 +152,7 @@ class InventoryView extends GetView<InventroyController> {
               Get.back();
               controller.handleScan(
                 barcode: controller.barcodeValue.value,
-                // availableQty: (existproduct.$2.quantity ?? 0).toDouble(),
                 sellType: 'Packet',
-                // product: existproduct.$2,
                 afterProductAdding: () {
                   productSavingDialog(
                     label: 'Scanning Done, product added',
@@ -174,9 +172,8 @@ class InventoryView extends GetView<InventroyController> {
                   productNotWithScannedAvailableDialog(
                     manualSellOnTap: () {
                       Get.back();
-                      //  openManualySell(inventoryScanKey: inventoryScanKey);
                     },
-                    '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
+                    '${controller.existProductName.value} product is out of stock right now.',
                     scanAgainOnTap: () {
                       Get.back();
                       controller.mobileScannerController.start();
@@ -227,7 +224,7 @@ class InventoryView extends GetView<InventroyController> {
                       Get.back();
                       //  openManualySell(inventoryScanKey: inventoryScanKey);
                     },
-                    '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
+                    '${controller.existProductName.value} product is out of stock right now.',
                     scanAgainOnTap: () {
                       Get.back();
                       controller.mobileScannerController.start();
@@ -255,9 +252,7 @@ class InventoryView extends GetView<InventroyController> {
         } else {
           controller.handleScan(
             barcode: controller.barcodeValue.value,
-            // availableQty: (existproduct.$2.quantity ?? 0).toDouble(),
             sellType: 'Packet',
-            // product: existproduct.$2,
             afterProductAdding: () {
               productSavingDialog(
                 label: 'Scanning Done, product added',
@@ -279,7 +274,7 @@ class InventoryView extends GetView<InventroyController> {
                   Get.back();
                   //  openManualySell(inventoryScanKey: inventoryScanKey);
                 },
-                '${controller.existProductName.value} product is out of stock right now. you already scanned ${controller.scannedQty.value} NO',
+                '${controller.existProductName.value} product is out of stock right now.',
                 scanAgainOnTap: () {
                   Get.back();
                   controller.mobileScannerController.start();
@@ -313,7 +308,7 @@ class InventoryView extends GetView<InventroyController> {
     } else {
       productNotAvailableDialog(
         label:
-            "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
+            "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the Barcode instead of the QR Code.",
         onTap: () {
           Get.back();
           controller.mobileScannerController.start();
@@ -363,7 +358,7 @@ class InventoryView extends GetView<InventroyController> {
     } else {
       productNotAvailableDialog(
         label:
-            "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the 📦 Barcode instead of the 🔲 QR Code.",
+            "Scanned code contains a link, not a valid product number.Please check and scan again\nIf two codes are available, kindly scan the Barcode instead of the QR Code.",
         onTap: () {
           Get.back();
           controller.mobileScannerController.start();

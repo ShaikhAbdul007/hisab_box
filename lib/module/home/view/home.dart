@@ -80,7 +80,7 @@ class TabletScreen extends StatelessWidget {
                                             controller.lis[index].routeName!,
                                       );
                                   if (res == true) {
-                                    controller.getRevenveAndStock();
+                                    controller.loadDashboard();
                                   }
                                 }
                               },
@@ -112,7 +112,7 @@ class TabletScreen extends StatelessWidget {
                                           routeName: AppRouteName.sell,
                                         );
                                     if (res == true) {
-                                      controller.getRevenveAndStock();
+                                      controller.loadDashboard();
                                     }
                                   },
                                   child: Text(
@@ -202,7 +202,7 @@ class DeskTopScreen extends StatelessWidget {
                                             controller.lis[index].routeName!,
                                       );
                                   if (res == true) {
-                                    controller.getRevenveAndStock();
+                                    controller.loadDashboard();
                                   }
                                 }
                               },
@@ -238,7 +238,7 @@ class DeskTopScreen extends StatelessWidget {
                                           routeName: AppRouteName.sell,
                                         );
                                     if (res == true) {
-                                      controller.getRevenveAndStock();
+                                      controller.loadDashboard();
                                     }
                                   },
                                   child: Text(
@@ -330,7 +330,8 @@ class MobileScreen extends StatelessWidget {
                     child: RefreshIndicator.adaptive(
                       color: AppColors.blackColor,
                       onRefresh: () {
-                        return controller.getRevenveAndStock();
+                        controller.clearDashboardCache();
+                        return controller.loadDashboard();
                       },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,7 +362,8 @@ class MobileScreen extends StatelessWidget {
                                                     .routeName!,
                                           );
                                       if (ress == true) {
-                                        controller.getRevenveAndStock();
+                                        controller.clearDashboardCache();
+                                        controller.loadDashboard();
                                       }
                                     }
                                   },
@@ -446,83 +448,83 @@ class MobileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> migrateProductsAddFields({required String uid}) async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  // Future<void> migrateProductsAddFields({required String uid}) async {
+  //   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-    final CollectionReference<Map<String, dynamic>> productsRef = firestore
-        .collection('users')
-        .doc(uid)
-        .collection('products');
+  //   final CollectionReference<Map<String, dynamic>> productsRef = firestore
+  //       .collection('users')
+  //       .doc(uid)
+  //       .collection('products');
 
-    try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot =
-          await productsRef.get();
+  //   try {
+  //     final QuerySnapshot<Map<String, dynamic>> snapshot =
+  //         await productsRef.get();
 
-      if (snapshot.docs.isEmpty) {
-        debugPrint("❌ No products found to migrate");
-        return;
-      }
+  //     if (snapshot.docs.isEmpty) {
+  //       debugPrint("❌ No products found to migrate");
+  //       return;
+  //     }
 
-      const int batchLimit = 400; // Firestore hard limit = 500
-      final int totalDocs = snapshot.docs.length;
-      int migratedCount = 0;
+  //     const int batchLimit = 400; // Firestore hard limit = 500
+  //     final int totalDocs = snapshot.docs.length;
+  //     int migratedCount = 0;
 
-      debugPrint("🚀 Starting migration for $totalDocs products");
+  //     debugPrint("🚀 Starting migration for $totalDocs products");
 
-      for (int i = 0; i < totalDocs; i += batchLimit) {
-        final WriteBatch batch = firestore.batch();
-        final docsChunk = snapshot.docs.skip(i).take(batchLimit);
+  //     for (int i = 0; i < totalDocs; i += batchLimit) {
+  //       final WriteBatch batch = firestore.batch();
+  //       final docsChunk = snapshot.docs.skip(i).take(batchLimit);
 
-        int batchUpdates = 0;
+  //       int batchUpdates = 0;
 
-        for (final doc in docsChunk) {
-          final data = doc.data();
-          final Map<String, dynamic> updateData = {};
+  //       for (final doc in docsChunk) {
+  //         final data = doc.data();
+  //         final Map<String, dynamic> updateData = {};
 
-          // Existing fields
-          if (!data.containsKey('isActive')) {
-            updateData['isActive'] = true;
-          }
+  //         // Existing fields
+  //         if (!data.containsKey('isActive')) {
+  //           updateData['isActive'] = true;
+  //         }
 
-          if (!data.containsKey('sellType')) {
-            updateData['sellType'] = 'packet';
-          }
+  //         if (!data.containsKey('sellType')) {
+  //           updateData['sellType'] = 'packet';
+  //         }
 
-          // 🔥 NEW FIELDS
-          if (!data.containsKey('location')) {
-            updateData['location'] = 'shop';
-          }
+  //         // 🔥 NEW FIELDS
+  //         if (!data.containsKey('location')) {
+  //           updateData['location'] = 'shop';
+  //         }
 
-          if (!data.containsKey('rack')) {
-            updateData['rack'] = '';
-          }
+  //         if (!data.containsKey('rack')) {
+  //           updateData['rack'] = '';
+  //         }
 
-          if (!data.containsKey('level')) {
-            updateData['level'] = '';
-          }
+  //         if (!data.containsKey('level')) {
+  //           updateData['level'] = '';
+  //         }
 
-          if (updateData.isNotEmpty) {
-            final date = setFormateDate();
-            final time = setFormateDate('hh:mm a');
-            updateData['updatedDate'] = date;
-            updateData['updatedTime'] = time;
-            batch.update(doc.reference, updateData);
-            batchUpdates++;
-            migratedCount++;
-          }
-        }
+  //         if (updateData.isNotEmpty) {
+  //           final date = setFormateDate();
+  //           final time = setFormateDate('hh:mm a');
+  //           updateData['updatedDate'] = date;
+  //           updateData['updatedTime'] = time;
+  //           batch.update(doc.reference, updateData);
+  //           batchUpdates++;
+  //           migratedCount++;
+  //         }
+  //       }
 
-        if (batchUpdates > 0) {
-          await batch.commit();
-          debugPrint("✅ Batch committed: $migratedCount / $totalDocs");
-        }
-      }
+  //       if (batchUpdates > 0) {
+  //         await batch.commit();
+  //         debugPrint("✅ Batch committed: $migratedCount / $totalDocs");
+  //       }
+  //     }
 
-      debugPrint("🎯 Migration completed. Total updated: $migratedCount");
-    } catch (e, stack) {
-      debugPrint("❌ Migration failed: $e");
-      debugPrint(stack.toString());
-      rethrow;
-    }
-  }
+  //     debugPrint("🎯 Migration completed. Total updated: $migratedCount");
+  //   } catch (e, stack) {
+  //     debugPrint("❌ Migration failed: $e");
+  //     debugPrint(stack.toString());
+  //     rethrow;
+  //   }
+  // }
 }

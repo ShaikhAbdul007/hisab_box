@@ -46,48 +46,7 @@ class InventroyController extends GetxController with CacheManager {
       formats: [BarcodeFormat.all],
     );
     player = AudioPlayer();
-
-    await fetchfullLooseSellingList();
     super.onInit();
-  }
-
-  Future<void> fetchfullLooseSellingList() async {
-    isfullLooseSellingListLoading.value = true;
-    var fetchLooseCategorys = await fetchLooseCategory();
-    var fetchLooseInventorys = await fetchLooseInventory();
-    fullLooseSellingList.addAll(fetchLooseCategorys);
-    fullLooseSellingList.addAll(fetchLooseInventorys);
-    isfullLooseSellingListLoading.value = false;
-    for (var lis in fullLooseSellingList) {
-      customMessageOrErrorPrint(message: 'fullLooseSellingList is ${lis.name}');
-      customMessageOrErrorPrint(
-        message: 'fullLooseSellingList is ${lis.sellingPrice}',
-      );
-    }
-  }
-
-  Future<List<ProductModel>> fetchLooseCategory() async {
-    final uid = auth.currentUser?.uid;
-
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('looseSellCategory')
-              .get();
-
-      looseCatogorieList.value =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return ProductModel.fromJson(data);
-          }).toList();
-      return looseCatogorieList;
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-      return [];
-    }
   }
 
   Future<List<ProductModel>> fetchLooseInventory() async {
@@ -99,6 +58,7 @@ class InventroyController extends GetxController with CacheManager {
               .collection('users')
               .doc(uid)
               .collection('looseProducts')
+              .where('isActive', isEqualTo: true)
               .get();
 
       looseInventoryLis.value =
@@ -138,34 +98,6 @@ class InventroyController extends GetxController with CacheManager {
       return (true, product);
     }
     return (false, product);
-  }
-
-  Future<void> fetchProductByBarcode({
-    required String barcode,
-    required Function()? elseFun,
-    required Function() qtyIsNotEnough,
-    required Function() afterProductAdding,
-  }) async {
-    isProductSaving.value = true;
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-    final productRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('products')
-        .doc(barcode);
-    final doc = await productRef.get();
-
-    if (doc.exists) {
-      final product = ProductModel.fromJson(doc.data()!);
-      // handleScan(
-      //   product: product,
-      //   afterProductAdding: afterProductAdding,
-      //   qtyIsNotEnough: qtyIsNotEnough,
-      // );
-    } else {
-      elseFun!();
-    }
   }
 
   Future<bool> fetchLooseProductByBarcode({required String barcode}) async {
@@ -230,6 +162,7 @@ class InventroyController extends GetxController with CacheManager {
               .doc(uid)
               .collection('products')
               .where('barcode', isEqualTo: barcode)
+              .where('isActive', isEqualTo: true)
               .limit(1)
               .get();
 
@@ -334,3 +267,72 @@ class InventroyController extends GetxController with CacheManager {
     mobileScannerController.stop();
   }
 }
+
+
+  // Future<void> fetchfullLooseSellingList() async {
+  //   isfullLooseSellingListLoading.value = true;
+  //   //var fetchLooseCategorys = await fetchLooseCategory();
+  //   // var fetchLooseInventorys = await fetchLooseInventory();
+  //   // fullLooseSellingList.addAll(fetchLooseCategorys);
+  //   //  fullLooseSellingList.addAll(fetchLooseInventorys);
+  //   isfullLooseSellingListLoading.value = false;
+  //   for (var lis in fullLooseSellingList) {
+  //     customMessageOrErrorPrint(message: 'fullLooseSellingList is ${lis.name}');
+  //     customMessageOrErrorPrint(
+  //       message: 'fullLooseSellingList is ${lis.sellingPrice}',
+  //     );
+  //   }
+  // }
+
+// Future<void> fetchProductByBarcode({
+  //   required String barcode,
+  //   required Function()? elseFun,
+  //   required Function() qtyIsNotEnough,
+  //   required Function() afterProductAdding,
+  // }) async {
+  //   isProductSaving.value = true;
+  //   final uid = auth.currentUser?.uid;
+  //   if (uid == null) return;
+  //   final productRef = FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(uid)
+  //       .collection('products')
+  //       .doc(barcode);
+  //   final doc = await productRef.get();
+
+  //   if (doc.exists) {
+  //     final product = ProductModel.fromJson(doc.data()!);
+  //     // handleScan(
+  //     //   product: product,
+  //     //   afterProductAdding: afterProductAdding,
+  //     //   qtyIsNotEnough: qtyIsNotEnough,
+  //     // );
+  //   } else {
+  //     elseFun!();
+  //   }
+  // }
+
+
+  // Future<List<ProductModel>> fetchLooseCategory() async {
+  //   final uid = auth.currentUser?.uid;
+
+  //   try {
+  //     final snapshot =
+  //         await FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('looseSellCategory')
+  //             .get();
+
+  //     looseCatogorieList.value =
+  //         snapshot.docs.map((doc) {
+  //           final data = doc.data();
+  //           data['id'] = doc.id;
+  //           return ProductModel.fromJson(data);
+  //         }).toList();
+  //     return looseCatogorieList;
+  //   } on FirebaseAuthException catch (e) {
+  //     showMessage(message: e.toString());
+  //     return [];
+  //   }
+  // }

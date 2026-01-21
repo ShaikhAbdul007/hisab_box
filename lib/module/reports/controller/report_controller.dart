@@ -52,11 +52,58 @@ class ReportController extends GetxController
   }
 
   void fetchData() async {
-    // await fetchTodaySalesAndProfit();
+    final today = setFormateDate();
+    final cache = getTodayReportCache();
+
+    if (cache != null && cache['date'] == today) {
+      // 🔥 LOAD FROM CACHE
+      totalRevenue.value = cache['totalRevenue'] ?? 0;
+      totalProfit.value = cache['totalProfit'] ?? 0;
+      totalCash.value = cache['totalCash'] ?? 0;
+      totalUpi.value = cache['totalUpi'] ?? 0;
+      totalCard.value = cache['totalCard'] ?? 0;
+      totalCredit.value = cache['totalCredit'] ?? 0;
+      totalRoundOff.value = cache['totalRoundOff'] ?? 0;
+      reportTopModel.value = List<ReportTopProductModel>.from(
+        (cache['topProducts'] ?? []).map(
+          (e) => ReportTopProductModel.fromJson(e),
+        ),
+      );
+      reportTopChart.value = List<ReportTopProductModel>.from(
+        (cache['topChart'] ?? []).map((e) => ReportTopProductModel.fromJson(e)),
+      );
+      // sellsList.value =
+      //     (cache['sells'] ?? []).map<SellsModel>(SellsModel.fromJson).toList();
+
+      sellsList.value =
+          (cache['sells'] ?? [])
+              .map<SellsModel>((e) => SellsModel.fromJson(e))
+              .toList();
+
+      return;
+    }
+
+    // 🔥 FIREBASE ONCE
+    await fetchTodaySalesAndProfit();
+    await fetchPaymentSummary();
     await fetchTopSellingProducts();
     await fetchTopSellingProductsChart();
-    await fetchPaymentSummary();
     await setSellList();
+
+    // 🔥 SAVE CACHE
+    saveTodayReportCache({
+      'date': today,
+      'totalRevenue': totalRevenue.value,
+      'totalProfit': totalProfit.value,
+      'totalCash': totalCash.value,
+      'totalUpi': totalUpi.value,
+      'totalCard': totalCard.value,
+      'totalCredit': totalCredit.value,
+      'totalRoundOff': totalRoundOff.value,
+      'topProducts': reportTopModel.map((e) => e.toJson()).toList(),
+      'topChart': reportTopChart.map((e) => e.toJson()).toList(),
+      'sells': sellsList.map((e) => e.toJson()).toList(),
+    });
   }
 
   Future<void> fetchPaymentSummary() async {
