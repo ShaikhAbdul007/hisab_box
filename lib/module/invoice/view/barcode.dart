@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:get/get.dart';
-import 'package:inventory/module/invoice/widget/bluetooth_validate_widget.dart';
 import 'package:inventory/module/invoice/widget/invoice_printer.dart';
+import 'package:inventory/helper/logger.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_button.dart';
@@ -28,49 +28,34 @@ class BarcodeView extends GetView<BardcodeController> {
             isLoading: controller.isPrintingLoading.value,
             label: "Print Simple",
             onTap: () async {
+              controller.isPrintingLoading.value = true;
+              AppLogger.info('Starting simple print operation', 'BarcodeView');
+              String bluetoothAddress =
+                  controller.retrievePrinterAddress() ?? '';
               bool checkBluetooth =
                   await controller.checkBluetoothConnectivity();
-              if (checkBluetooth == true) {
-                // await controller.printSimpleLabel(qty: 3);
-                await controller.printWithBasicReset(
-                  qty: 2,
-                  //controller.data['product'].quantity ?? '',
+
+              if (checkBluetooth == true && bluetoothAddress.isNotEmpty) {
+                await controller.printBarcodeLabelsFromSavedPrinter(
+                  barcode: controller.data['product'].barcode,
+                  quantity: controller.data['product'].quantity,
                 );
+
+                controller.isPrintingLoading.value = false;
               } else {
+                controller.isPrintingLoading.value = false;
                 commonBottomSheet(
                   label: 'Bluetooth Info',
                   onPressed: () {
                     Get.back();
                   },
-                  child: BluetoothValidateWidget(),
+                  child: BluetoothInfoWidget(),
                 );
               }
             },
           ),
         ),
         setWidth(width: 10),
-        // Obx(
-        //   () => CommonButton(
-        //     isLoading: controller.isPrintingLoading.value,
-        //     label: "Print Basic Reset",
-        //     onTap: () async {
-        //       bool checkBluetooth =
-        //           await controller.checkBluetoothConnectivity();
-        //       if (checkBluetooth == true) {
-        //         await controller.printWithBasicReset(qty: 3);
-        //       } else {
-        //         commonBottomSheet(
-        //           label: 'Bluetooth Info',
-        //           onPressed: () {
-        //             Get.back();
-        //           },
-        //           child: BluetoothValidateWidget(),
-        //         );
-        //       }
-        //     },
-        //   ),
-        // ),
-        setWidth(width: 30),
       ],
       body: BarcodePrinterView(
         data: controller.data,

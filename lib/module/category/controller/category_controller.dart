@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -34,7 +33,6 @@ class CategoryController extends GetxController with CacheManager {
     if (uid == null) return;
 
     try {
-      final now = DateTime.now();
       final docRef =
           FirebaseFirestore.instance
               .collection('users')

@@ -167,7 +167,7 @@ class InventroyController extends GetxController with CacheManager {
               .get();
 
       if (query.docs.isEmpty) {
-        showMessage(message: "❌ Product not found");
+        showMessage(message: "❌ Product not found in SHOP");
         return;
       }
       product = ProductModel.fromJson(query.docs.first.data());

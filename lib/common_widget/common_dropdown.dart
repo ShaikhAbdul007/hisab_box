@@ -161,7 +161,7 @@ class CustomDropDown extends StatelessWidget {
           isExpanded: true,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           isDense: true,
-          value: selectedDropDownItem,
+          initialValue: selectedDropDownItem,
           hint: Text(
             hintText,
             style: CustomTextStyle.customNato(

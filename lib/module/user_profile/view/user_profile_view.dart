@@ -5,13 +5,11 @@ import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
-import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/module/user_profile/controller/user_profile_controller.dart';
-import '../../../helper/textstyle.dart';
 import '../../../keys/keys.dart';
 
 class UserProfileView extends GetView<UserProfileController> {

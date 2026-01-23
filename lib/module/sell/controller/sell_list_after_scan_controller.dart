@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import '../../../routes/route_name.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
@@ -212,7 +213,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
         (e) => e.barcode == current.barcode,
       );
       if (loose == null) {
-        showSnackBar(error: "Loose product not found");
+        showSnackBar(error: "Loose product not found in SHOP");
         return;
       }
       availableQty = loose.quantity ?? 0;
@@ -311,7 +312,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
       );
 
       if (cached == null) {
-        throw Exception("Loose product not found: ${product.barcode}");
+        throw Exception("Loose product not found in SHOP: ${product.barcode}");
       }
 
       ref = FirebaseFirestore.instance
@@ -328,7 +329,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
       );
 
       if (cached == null) {
-        throw Exception("Product not found: ${product.barcode}");
+        throw Exception("Product not found in SHOP: ${product.barcode}");
       }
 
       ref = FirebaseFirestore.instance
@@ -361,9 +362,8 @@ class SellListAfterScanController extends GetxController with CacheManager {
     if (uid == null) return false;
 
     try {
-      final now = DateTime.now();
-      final formatDate = DateFormat('dd-MM-yyyy').format(now);
-      final formatTime = DateFormat('hh:mm:ss a').format(now);
+      final formatDate = setFormateDate();
+      final formatTime = setFormateDate('hh:mm:ss a');
 
       List<Map<String, dynamic>> stockUpdates = [];
       double totalAmount = 0;

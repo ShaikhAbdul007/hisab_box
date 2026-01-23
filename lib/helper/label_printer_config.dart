@@ -1,6 +1,7 @@
 /// 🔥 LABEL PRINTER CONFIGURATION
 /// Optimized settings for 25mm x 50mm label stickers
 /// Prevents blank space between labels
+library;
 
 class LabelPrinterConfig {
   // 🔥 LABEL DIMENSIONS (in pixels at 203 DPI)

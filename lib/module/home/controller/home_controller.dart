@@ -9,10 +9,8 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/revenue/model/revenue_model.dart';
-import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../routes/route_name.dart';
-import '../../sell/model/sell_model.dart';
 import '../model/grid_model.dart';
 
 // class HomeController extends GetxController with CacheManager {
@@ -424,10 +422,12 @@ class HomeController extends GetxController with CacheManager {
   // ================= FIREBASE (FALLBACK ONLY) =================
 
   Future<void> _loadFromFirebase() async {
-    await getTotalRevenue();
-    await getTotalStock();
-    await getOutOfStock();
-    await getTotalLooseStock();
+    await Future.wait([
+      getTotalRevenue(),
+      getTotalStock(),
+      getOutOfStock(),
+      getTotalLooseStock(),
+    ]);
     // await getTotalExpenses();
     sellsList.value = await fetchRevenueList();
     // await fetchPieChartData();

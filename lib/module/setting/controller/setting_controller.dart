@@ -37,7 +37,7 @@ class SettingController extends GetxController with CacheManager {
             await FirebaseFirestore.instance.collection('users').doc(uid).get();
         if (doc.exists) {
           var data = doc.data() as Map<String, dynamic>;
-          final userDatas = InventoryUserModel.fromJson(data);
+          final userDatas = UserModel.fromJson(data);
           storeName.value = userDatas.name ?? '';
           email.value = userDatas.email ?? '';
           shoptype.value = userDatas.shoptype ?? '';

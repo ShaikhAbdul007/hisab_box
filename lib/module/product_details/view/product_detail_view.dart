@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/helper/logger.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_button.dart';
@@ -65,16 +66,6 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                       },
                     ),
                     setHeight(height: 12),
-                    CommonButton(
-                      label: '🔥 Reliable Barcode Printer',
-                      onTap: () {
-                        AppRoutes.navigateRoutes(
-                          routeName: AppRouteName.reliableBarcodeView,
-                          data: controller.data,
-                        );
-                      },
-                    ),
-                    setHeight(height: 80),
                   ],
                 ),
               );
@@ -465,13 +456,19 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                       .validate()) {
                                     unfocus();
                                     if (isProductLoosed) {
-                                      print('form true${controller.isLoose}');
+                                      AppLogger.debug(
+                                        'Form validation passed, isLoose: ${controller.isLoose}',
+                                        'ProductDetailView',
+                                      );
                                       controller.updateProductQuantity(
                                         barcode: controller.barcode.text,
                                         isLoosed: isProductLoosed,
                                       );
                                     } else {
-                                      print(controller.isLoose);
+                                      AppLogger.debug(
+                                        'Form validation - isLoose: ${controller.isLoose}',
+                                        'ProductDetailView',
+                                      );
                                       controller.updateProductQuantity(
                                         barcode: controller.barcode.text,
                                         isLoosed: isProductLoosed,

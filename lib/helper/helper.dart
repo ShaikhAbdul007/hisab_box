@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/helper/logger.dart';
 
 import '../common_widget/colors.dart';
 
@@ -41,7 +42,5 @@ void unfocus() {
 }
 
 void customMessageOrErrorPrint({required dynamic message}) {
-  if (kDebugMode) {
-    print(message);
-  }
+  AppLogger.debug(message.toString());
 }

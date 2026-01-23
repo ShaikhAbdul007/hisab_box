@@ -2,21 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
-import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_container.dart';
-import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
-import 'package:inventory/common_widget/size.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../common_widget/colors.dart';
-import '../../../common_widget/common_progressbar.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/textstyle.dart';
 import '../../../keys/keys.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../controller/inventroy_controller.dart';
-import '../widget/inventory_bottom_sheets.dart';
 import '../widget/show_dialog_boxs.dart';
 
 class InventoryView extends GetView<InventroyController> {

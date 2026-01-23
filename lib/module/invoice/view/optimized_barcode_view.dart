@@ -7,7 +7,7 @@ import '../controller/bardcode_controller.dart';
 /// 🔥 OPTIMIZED BARCODE VIEW FOR 25mm x 50mm LABELS
 /// No blank space, perfect fit for label stickers
 class OptimizedBarcodeView extends StatelessWidget {
-  const OptimizedBarcodeView({Key? key}) : super(key: key);
+  const OptimizedBarcodeView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +62,7 @@ class OptimizedBarcodeView extends StatelessWidget {
                     scale: 2.0, // Scale up for preview
                     child: BarcodePrinterView(
                       data: controller.data,
-                      onInitialized: controller.setReceiptController,
+                      onInitialized: (v) {},
                     ),
                   ),
                 ),

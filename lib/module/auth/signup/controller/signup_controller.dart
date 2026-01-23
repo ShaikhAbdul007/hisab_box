@@ -2,11 +2,9 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/routes/routes.dart';
@@ -75,7 +73,7 @@ class SignupController extends GetxController with CacheManager {
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (newDoc.exists) {
         final data = newDoc.data() as Map<String, dynamic>;
-        final userDatas = InventoryUserModel.fromJson(data);
+        final userDatas = UserModel.fromJson(data);
         saveUserData(userDatas);
       }
       showMessage(message: singUpSuccessFul);

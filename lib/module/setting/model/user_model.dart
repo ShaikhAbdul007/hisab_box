@@ -1,4 +1,4 @@
-class InventoryUserModel {
+class UserModel {
   final String? id;
   final String? name;
   final String? email;
@@ -13,7 +13,7 @@ class InventoryUserModel {
   final String? shoptype;
   final String? image;
 
-  InventoryUserModel({
+  UserModel({
     this.id,
     this.name,
     this.email,
@@ -29,8 +29,8 @@ class InventoryUserModel {
     this.image,
   });
 
-  factory InventoryUserModel.fromJson(Map<String, dynamic> json, {String? id}) {
-    return InventoryUserModel(
+  factory UserModel.fromJson(Map<String, dynamic> json, {String? id}) {
+    return UserModel(
       id: id,
       name: json['name'] ?? '',
       email: json['email'] ?? '',

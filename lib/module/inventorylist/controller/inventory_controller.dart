@@ -1,15 +1,9 @@
-import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:excel/excel.dart';
-import 'dart:typed_data';
-import '../../../helper/helper.dart';
 
 class InventoryListController extends GetxController
     with GetSingleTickerProviderStateMixin, CacheManager {

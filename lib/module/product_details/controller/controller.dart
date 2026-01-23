@@ -4,10 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/helper/logger.dart';
 
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
@@ -16,7 +15,6 @@ import '../../inventory/model/product_model.dart';
 
 class ProductController extends GetxController with CacheManager {
   final FirebaseAuth auth = FirebaseAuth.instance;
-  final box = GetStorage();
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   var productList = <ProductModel>[].obs;
@@ -63,7 +61,10 @@ class ProductController extends GetxController with CacheManager {
     loosedProduct.value = data['flag'];
     if (loosedProduct.value) {
       loooseProductName.text = data['productName'];
-      print('your product name is ${data['productName']}');
+      AppLogger.debug(
+        'Product name set: ${data['productName']}',
+        'ProductController',
+      );
     }
   }
 
@@ -158,10 +159,17 @@ class ProductController extends GetxController with CacheManager {
 
       final String formaTime = setFormateDate('hh:mm a');
 
+      String? collectionName;
+      if (location.text.toLowerCase() == 'godown') {
+        collectionName = 'godownProducts';
+      } else {
+        collectionName = 'products'; // Default to shop
+      }
+
       final productRef = FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .collection('products')
+          .collection(collectionName)
           .doc(barcode);
       final aminalTypeData =
           animalTypeList.firstWhere((e) => e.id == animalType.text).name;
@@ -251,12 +259,20 @@ class ProductController extends GetxController with CacheManager {
         final looseSnap = await tx.get(looseRef);
 
         if (!productSnap.exists) {
-          throw Exception("Product not found");
+          throw Exception(
+            "Product not found Or Product not found in SHOP. Move to shop first!",
+          );
         }
 
         final data = productSnap.data() as Map<String, dynamic>;
 
         final bool allowLoose = data['isLoose'] == true;
+
+        final String productLocation =
+            data['location']?.toString().toLowerCase() ?? '';
+        if (productLocation != 'shop') {
+          throw Exception("Loose selling only allowed for SHOP products!");
+        }
 
         if (!allowLoose) {
           throw Exception("Product not allowed for loose selling");
@@ -264,7 +280,7 @@ class ProductController extends GetxController with CacheManager {
 
         final int mainStock = (data['quantity'] ?? 0).toInt();
         if (mainStock <= 0) {
-          throw Exception("No sealed pack left");
+          throw Exception("No sealed pack left SHOP");
         }
 
         final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
@@ -324,10 +340,14 @@ class ProductController extends GetxController with CacheManager {
       Get.back(result: true);
       showMessage(message: "✅ Loose stock created successfully");
     } on FirebaseException catch (e) {
-      print(e.toString());
+      AppLogger.error(
+        "Firebase error while creating loose stock",
+        e,
+        "ProductController",
+      );
       showMessage(message: "❌ ${e.toString()}");
     } catch (e) {
-      print(e.toString());
+      AppLogger.error("Error creating loose stock", e, "ProductController");
       showMessage(message: "❌ ${e.toString()}");
     } finally {
       isLooseProductSave.value = false;

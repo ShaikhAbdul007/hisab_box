@@ -84,11 +84,14 @@ class ReportController extends GetxController
     }
 
     // 🔥 FIREBASE ONCE
-    await fetchTodaySalesAndProfit();
-    await fetchPaymentSummary();
-    await fetchTopSellingProducts();
-    await fetchTopSellingProductsChart();
-    await setSellList();
+
+    await Future.wait([
+      fetchTodaySalesAndProfit(), // All run
+      fetchPaymentSummary(), // at the
+      fetchTopSellingProducts(), // same
+      fetchTopSellingProductsChart(), // time!
+      setSellList(),
+    ]);
 
     // 🔥 SAVE CACHE
     saveTodayReportCache({

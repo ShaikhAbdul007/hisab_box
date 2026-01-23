@@ -23,7 +23,7 @@ mixin class CacheManager {
     box.write(Key.billNo.toString(), billNo);
   }
 
-  void saveUserData(InventoryUserModel userModels) {
+  void saveUserData(UserModel userModels) {
     box.write(Key.userModels.toString(), userModels.toJson());
   }
 
@@ -101,12 +101,12 @@ mixin class CacheManager {
     return box.read(Key.inventoryScan.toString());
   }
 
-  InventoryUserModel retrieveUserDetail() {
+  UserModel retrieveUserDetail() {
     final user = box.read(Key.userModels.toString());
     if (user != null) {
-      return InventoryUserModel.fromJson(user);
+      return UserModel.fromJson(user);
     }
-    return InventoryUserModel();
+    return UserModel();
   }
 
   BankModel retrieveBankModelDetail() {

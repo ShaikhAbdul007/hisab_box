@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import '../../../helper/app_message.dart';
 
@@ -69,15 +70,15 @@ class LooseCategoryController extends GetxController {
         .doc(uid)
         .collection('looseSellCategory');
     try {
-      final now = DateTime.now();
-      final date = DateFormat('dd-MM-yyyy').format(now);
-      final time = DateFormat('hh:mm a').format(now);
+      final date = setFormateDate;
+      final time = setFormateDate('hh:mm a');
 
       String names = name.text;
       String weights = weight.text;
       double prices = double.parse(price.text);
-      String generatedBarcode =
-          "${names.replaceAll(" ", "")}-$weights-${now.millisecondsSinceEpoch}";
+      String generatedBarcode = '';
+
+      // "${names.replaceAll(" ", "")}-$weights-${now.millisecondsSinceEpoch}";
 
       await looseCollectionRef.add({
         'barcode': generatedBarcode,

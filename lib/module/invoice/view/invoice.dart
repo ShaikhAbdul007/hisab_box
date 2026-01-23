@@ -5,6 +5,7 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/module/invoice/controller/invoice_controller.dart';
+import 'package:inventory/helper/logger.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
 import '../../../routes/route_name.dart';
@@ -31,7 +32,7 @@ class InvoicePrint extends GetView<InvoiceController> {
                 isLoading: controller.isShareReceiptLoading.value,
                 label: "Share",
                 onTap: () async {
-                  var res = await controller.shareReceiptAsPDF();
+                  await controller.shareReceiptAsPDF();
                 },
               ),
             ),
