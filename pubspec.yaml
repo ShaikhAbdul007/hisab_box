@@ -65,13 +65,12 @@ dependencies:
   device_info_plus: ^12.3.0
   image_picker: ^1.2.1
   esc_pos_utils_plus: ^2.0.4
-  drift: ^2.17.0
+  supabase_flutter: ^2.12.0
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  drift_dev: ^2.17.0
-  build_runner: ^2.4.8
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
