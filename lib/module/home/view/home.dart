@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
@@ -10,6 +11,7 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/home/controller/home_controller.dart';
 import 'package:inventory/module/home/widget/home_grid_container.dart';
 import 'package:inventory/module/home/widget/quick_action_component.dart';
+import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/module/revenue/widget/revenue_list_text.dart';
 import 'package:inventory/responsive_layout/responsive_tempate.dart';
 import 'package:inventory/routes/routes.dart';
@@ -200,7 +202,8 @@ class DeskTopScreen extends StatelessWidget {
                                             controller.lis[index].routeName!,
                                       );
                                   if (res == true) {
-                                    controller.loadDashboard();
+                                    print('res is $res');
+                                    await controller.loadDashboard();
                                   }
                                 }
                               },
@@ -287,7 +290,7 @@ class MobileScreen extends StatelessWidget {
     return CommonAppbar(
       appBarLabel: 'Home',
       isleadingButtonRequired: false,
-      firstActionChild: Row(
+      secondActionChild: Row(
         children: [
           InkWell(
             onTap: () {
@@ -295,27 +298,48 @@ class MobileScreen extends StatelessWidget {
                 routeName: AppRouteName.nearExpireProduct,
               );
             },
-            child: CommonContainer(
-              height: 30,
-              width: 30,
-              radius: 15,
-              color: AppColors.whiteColor,
-              child: Icon(Icons.history),
-            ),
+            child: Icon(CupertinoIcons.time_solid),
           ),
-          setWidth(width: 10),
-          CommonContainer(
-            height: 30,
-            width: 30,
-            radius: 15,
-            color: AppColors.whiteColor,
-            child: InkWell(
-              onTap: () {
-                // migrateProductsAddFields(uid: controller.auth.currentUser!.uid);
-              },
-              child: Icon(Icons.notifications_none_outlined),
-            ),
-          ),
+          Obx(() {
+            final count = controller.pendingTransfers.length;
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(CupertinoIcons.bell_fill),
+                  onPressed: () {
+                    AppRoutes.navigateRoutes(
+                      routeName: AppRouteName.notificationView,
+                    );
+                  },
+                ),
+                if (count > 0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      padding: AllPadding(all: 4).getPadding(),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 18.w,
+                        minHeight: 18.h,
+                      ),
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
         ],
       ),
       body: Obx(
@@ -328,7 +352,6 @@ class MobileScreen extends StatelessWidget {
                     child: RefreshIndicator.adaptive(
                       color: AppColors.blackColor,
                       onRefresh: () {
-                        controller.clearDashboardCache();
                         return controller.loadDashboard();
                       },
                       child: Column(
@@ -360,7 +383,6 @@ class MobileScreen extends StatelessWidget {
                                                     .routeName!,
                                           );
                                       if (ress == true) {
-                                        controller.clearDashboardCache();
                                         controller.loadDashboard();
                                       }
                                     }
@@ -397,7 +419,7 @@ class MobileScreen extends StatelessWidget {
                               ),
                               QuickActionComponent(
                                 onTap: () async {
-                                  var res = AppRoutes.futureNavigationToRoute(
+                                  AppRoutes.futureNavigationToRoute(
                                     routeName: AppRouteName.inventoryView,
                                     data: {'flag': false},
                                   );

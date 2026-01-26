@@ -100,6 +100,11 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                             )
                                     ? OutOfStockInventoryListText(
                                       inventoryModel: inventoryList,
+                                      deleteOnTap: () {
+                                        controller.markProductInactive(
+                                          product: inventoryList,
+                                        );
+                                      },
                                     )
                                     : Container(),
                           );

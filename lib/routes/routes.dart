@@ -15,6 +15,8 @@ import 'package:inventory/module/security/privacy_policy.dart';
 import 'package:inventory/module/security/term_and_condition.dart';
 import 'package:inventory/module/product_details/binding/product_details_binding.dart';
 import 'package:inventory/module/product_details/view/product_detail_view.dart';
+import 'package:inventory/module/stock_transfer/binding/notification_binding.dart';
+import 'package:inventory/module/stock_transfer/view/notification_view.dart';
 import '../module/app_settings/binding/app_setting_binding.dart';
 import '../module/app_settings/view/app_setting_view.dart';
 import '../module/auth/login/binding/login_binding.dart';
@@ -165,6 +167,11 @@ class AppRoutes {
       name: AppRouteName.invoicePrintView,
       page: () => InvoicePrint(),
       binding: InvoiceBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.notificationView,
+      page: () => NotificationView(),
+      binding: NotificationBinding(),
     ),
     GetPage(
       name: AppRouteName.barcodePrintView,
@@ -351,6 +358,9 @@ class AppRoutes {
         break;
       case AppRouteName.orderView:
         Get.offAllNamed(AppRouteName.orderView, arguments: data);
+        break;
+      case AppRouteName.notificationView:
+        Get.toNamed(AppRouteName.notificationView, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

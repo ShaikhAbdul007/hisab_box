@@ -41,6 +41,7 @@ class UserProfileController extends GetxController with CacheManager {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       profileImage.value = File(image.path);
+      print(profileImage.value?.path);
     }
   }
 
@@ -115,9 +116,40 @@ class UserProfileController extends GetxController with CacheManager {
     cityController.text = user.city ?? '';
     emailController.text = user.email ?? '';
 
-    // 🔒 SAFE IMAGE LOAD
+    // 🔒 SAFE IMAGE LOAD - Handle cache directory access issues
     if (user.image != null && user.image!.isNotEmpty) {
-      profileImage.value = File(user.image!);
+      try {
+        final imageFile = File(user.image!);
+
+        // Debug: Print the path being accessed
+        print('🖼️ Trying to load image from: ${user.image}');
+
+        // Check if file exists and is readable
+        bool fileExists = await imageFile.exists();
+        print('📁 File exists: $fileExists');
+
+        if (fileExists) {
+          // Try to read file length to verify accessibility
+          try {
+            int fileLength = await imageFile.length();
+            print('📏 File size: $fileLength bytes');
+            profileImage.value = imageFile;
+          } catch (lengthError) {
+            print('❌ Cannot read file length: $lengthError');
+            profileImage.value = null;
+          }
+        } else {
+          print('❌ File does not exist at path: ${user.image}');
+          profileImage.value = null;
+          // Clear invalid image path from cache
+          _clearInvalidImageFromCache(user);
+        }
+      } catch (e) {
+        print('❌ Error accessing image file: $e');
+        profileImage.value = null;
+        // Clear invalid image path from cache on any error
+        _clearInvalidImageFromCache(user);
+      }
     } else {
       profileImage.value = null;
     }
@@ -125,5 +157,22 @@ class UserProfileController extends GetxController with CacheManager {
     Future.delayed(const Duration(milliseconds: 300), () {
       isDataLoading.value = false;
     });
+  }
+
+  // Helper method to clear invalid image from cache
+  void _clearInvalidImageFromCache(UserModel user) {
+    final updatedUser = UserModel(
+      name: user.name,
+      email: user.email,
+      address: user.address,
+      city: user.city,
+      pincode: user.pincode,
+      state: user.state,
+      mobileNo: user.mobileNo,
+      alternateMobileNo: user.alternateMobileNo,
+      image: '', // Clear invalid path
+    );
+    saveUserData(updatedUser);
+    print('🧹 Cleared invalid image path from cache');
   }
 }

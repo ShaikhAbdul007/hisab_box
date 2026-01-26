@@ -36,4 +36,5 @@ class AppRouteName {
   static const String invoicePrintView = '/invoicePrintView';
   static const String shopDetailView = '/shopDetailView';
   static const String nearExpireProduct = '/nearExpireProduct';
+  static const String notificationView = '/notificationView';
 }

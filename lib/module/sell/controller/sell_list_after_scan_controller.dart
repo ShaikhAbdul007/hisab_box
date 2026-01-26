@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -429,6 +428,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
           });
         }
 
+        //  getPrintReadyList();
         // 🔥 Create Sale Record (inside same transaction)
         final saleRef =
             FirebaseFirestore.instance
@@ -461,11 +461,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
       // 🚀 CACHE UPDATES (NO FIREBASE CALLS)
       clearTodayReportCache();
       clearTodayRevenueCache();
-      updateDashboardRevenue(finalAmount);
-      removelooseInvetoryKeyModel();
-      removePoductModel();
-      clearCustomerListCache();
-
       return true;
     } catch (e) {
       showMessage(message: "❌ ${e.toString()}");
@@ -550,6 +545,12 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 }
 
+
+
+ //updateDashboardRevenue(finalAmount);
+
+      // removelooseInvetoryKeyModel();
+      //removePoductModel();
 
 // void updateQuantity(bool isIncrement, int index) async {
   //   int? pexistingQty;

@@ -21,25 +21,33 @@ class ReportOverviewWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              ReportOverViewContainer(
-                label: 'Cash',
-                labelValue: controller.totalCash.value.toStringAsFixed(2),
+              Expanded(
+                child: ReportOverViewContainer(
+                  label: 'Cash',
+                  labelValue: controller.totalCash.value.toStringAsFixed(2),
+                ),
               ),
-              ReportOverViewContainer(
-                label: 'Upi',
-                labelValue: controller.totalUpi.value.toStringAsFixed(2),
+              Expanded(
+                child: ReportOverViewContainer(
+                  label: 'Upi',
+                  labelValue: controller.totalUpi.value.toStringAsFixed(2),
+                ),
               ),
             ],
           ),
           Row(
             children: [
-              ReportOverViewContainer(
-                label: 'Credit',
-                labelValue: controller.totalCredit.value.toStringAsFixed(2),
+              Expanded(
+                child: ReportOverViewContainer(
+                  label: 'Credit',
+                  labelValue: controller.totalCredit.value.toStringAsFixed(2),
+                ),
               ),
-              ReportOverViewContainer(
-                label: 'Card Machine',
-                labelValue: controller.totalCard.value.toStringAsFixed(2),
+              Expanded(
+                child: ReportOverViewContainer(
+                  label: 'Card Machine',
+                  labelValue: controller.totalCard.value.toStringAsFixed(2),
+                ),
               ),
             ],
           ),

@@ -23,66 +23,21 @@ import '../../../routes/routes.dart';
 import '../controller/product_details_controller.dart';
 import '../widget/inventory_bottomsheep_component_text.dart';
 
+enum MenuOption { barcode, moveToShop, editProductDetails }
+
 class ProductDetailView extends GetView<ProductDetailsController> {
   const ProductDetailView({super.key});
 
   @override
   Widget build(BuildContext context) {
     bool isProductLoosed = controller.data['isProductLoosed'];
+    bool godown = controller.data['product'].location == 'Godown';
     return CommonAppbar(
       isleadingButtonRequired: true,
       backgroundColor: AppColors.whiteColor,
       firstActionChild: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          InkWell(
-            onTap: () {
-              commonBottomSheet(
-                label: 'BarCode',
-                onPressed: () {
-                  Get.back();
-                },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomPadding(
-                      paddingOption: OnlyPadding(top: 20),
-                      child: BarcodeWidget(
-                        barcode: Barcode.code128(),
-                        data: controller.barcode.text,
-                        height: 80,
-                        width: 200,
-                        drawText: true,
-                      ),
-                    ),
-                    setHeight(height: 20),
-                    CommonButton(
-                      label: 'Generate Barcode',
-                      onTap: () {
-                        AppRoutes.navigateRoutes(
-                          routeName: AppRouteName.barcodePrintView,
-                          data: controller.data,
-                        );
-                      },
-                    ),
-                    setHeight(height: 12),
-                  ],
-                ),
-              );
-            },
-            child: CommonContainer(
-              width: 30,
-              height: 25,
-              color: AppColors.blackColor,
-              radius: 5,
-              child: Icon(
-                CupertinoIcons.barcode,
-                color: AppColors.whiteColor,
-                size: 22.sp,
-              ),
-            ),
-          ),
-          setWidth(width: 10),
           InkWell(
             onTap: () {
               controller.readOnly.value = !controller.readOnly.value;
@@ -93,6 +48,69 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               CupertinoIcons.square_pencil_fill,
               color: AppColors.blackColor,
             ),
+          ),
+          PopupMenuButton<MenuOption>(
+            enabled: true,
+            color: AppColors.whiteColor,
+            constraints: BoxConstraints(
+              maxHeight: 200.h,
+              maxWidth: 200.w,
+              minHeight: 40.h,
+              minWidth: 60.w,
+            ),
+            position: PopupMenuPosition.under,
+            borderRadius: BorderRadius.circular(200.r),
+            itemBuilder:
+                (BuildContext context) => <PopupMenuEntry<MenuOption>>[
+                  PopupMenuItem<MenuOption>(
+                    value: MenuOption.barcode,
+                    child: Row(
+                      // Example of using a custom child widget
+                      children: [
+                        Icon(
+                          CupertinoIcons.barcode,
+                          color: AppColors.blackColor,
+                        ),
+                        setWidth(width: 8),
+                        Text(
+                          'Generate Barcode',
+                          style: CustomTextStyle.customOpenSans(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  godown
+                      ? PopupMenuItem<MenuOption>(
+                        value: MenuOption.moveToShop,
+                        child: Row(
+                          children: [
+                            Icon(
+                              CupertinoIcons.arrow_right_arrow_left,
+                              size: 20.sp,
+                              color: AppColors.blackColor,
+                            ),
+                            setWidth(width: 8),
+                            Text(
+                              'Move to SHOP',
+                              style: CustomTextStyle.customOpenSans(),
+                            ),
+                          ],
+                        ),
+                      )
+                      : PopupMenuItem<MenuOption>(child: SizedBox.shrink()),
+                ],
+            // 2. onSelected: Handles the action when an item is selected
+            onSelected: (MenuOption result) {
+              if (result.name == 'barcode') {
+                showBarcode();
+              } else if (result.name == 'moveToShop') {
+                print(result.name);
+              } else {
+                print('result.name');
+              }
+            },
+            // Optional: You can customize the default icon (three vertical dots)
+            // icon: const Icon(Icons.more_horiz),
           ),
         ],
       ),
@@ -461,6 +479,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                         'ProductDetailView',
                                       );
                                       controller.updateProductQuantity(
+                                        locationType: controller.location.text,
                                         barcode: controller.barcode.text,
                                         isLoosed: isProductLoosed,
                                       );
@@ -470,6 +489,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                         'ProductDetailView',
                                       );
                                       controller.updateProductQuantity(
+                                        locationType: controller.location.text,
                                         barcode: controller.barcode.text,
                                         isLoosed: isProductLoosed,
                                       );
@@ -485,6 +505,41 @@ class ProductDetailView extends GetView<ProductDetailsController> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void showBarcode() {
+    commonBottomSheet(
+      label: 'BarCode',
+      onPressed: () {
+        Get.back();
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomPadding(
+            paddingOption: OnlyPadding(top: 20),
+            child: BarcodeWidget(
+              barcode: Barcode.code128(),
+              data: controller.barcode.text,
+              height: 80,
+              width: 200,
+              drawText: true,
+            ),
+          ),
+          setHeight(height: 20),
+          CommonButton(
+            label: 'Generate Barcode',
+            onTap: () {
+              AppRoutes.navigateRoutes(
+                routeName: AppRouteName.barcodePrintView,
+                data: controller.data,
+              );
+            },
+          ),
+          setHeight(height: 12),
+        ],
       ),
     );
   }

@@ -62,11 +62,12 @@ class CommonAppbar extends StatelessWidget {
               isleadingButtonRequired
                   ? IconButton(
                     onPressed: () async {
+                      customMessageOrErrorPrint(message: appBarLabel);
                       var cache = CacheManager();
-                      var cacheProductList =
-                          await cache.retrieveCartProductList();
-                      if (appBarLabel == sellingProduct &&
-                          cacheProductList.isNotEmpty) {
+                      // var cacheProductList =
+                      //     await cache.retrieveCartProductList();
+                      if (appBarLabel == sellingProduct) {
+                        customMessageOrErrorPrint(message: 'sellingProduct');
                         cache.removeCartProductList();
                       }
                       customMessageOrErrorPrint(message: 'back pressed');

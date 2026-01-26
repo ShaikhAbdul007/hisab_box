@@ -72,9 +72,6 @@ class ReportController extends GetxController
       reportTopChart.value = List<ReportTopProductModel>.from(
         (cache['topChart'] ?? []).map((e) => ReportTopProductModel.fromJson(e)),
       );
-      // sellsList.value =
-      //     (cache['sells'] ?? []).map<SellsModel>(SellsModel.fromJson).toList();
-
       sellsList.value =
           (cache['sells'] ?? [])
               .map<SellsModel>((e) => SellsModel.fromJson(e))
@@ -152,55 +149,6 @@ class ReportController extends GetxController
   Future<void> setSellList() async {
     sellsList.value = await fetchRevenueList();
   }
-
-  // Future<void> fetchTodaySalesAndProfit() async {
-  //   String today = setFormateDate();
-
-  //   totalProfit.value = 0.0;
-  //   totalRevenue.value = 0.0;
-
-  //   if (uid == null) return;
-
-  //   try {
-  //     final snapshot =
-  //         await FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('sales')
-  //             .where('soldAt', isEqualTo: today)
-  //             .get();
-
-  //     if (snapshot.docs.isEmpty) return;
-
-  //     for (var doc in snapshot.docs) {
-  //       final data = doc.data();
-
-  //       // ---------- REVENUE -----------
-  //       double saleAmount = (data['finalAmount'] ?? 0).toDouble();
-  //       totalRevenue.value += saleAmount;
-
-  //       // ---------- PROFIT CALCULATION ----------
-  //       List items = data["items"] ?? [];
-
-  //       for (var item in items) {
-  //         double finalPrice =
-  //             (item["finalPrice"] ?? 0).toDouble(); // TOTAL SELLING
-  //         double costPP =
-  //             (item["purchasePrice"] ?? 0).toDouble(); // COST PER PIECE
-  //         int qty = (item["quantity"] ?? 1).toInt();
-
-  //         double totalCost = costPP * qty;
-  //         double profit = finalPrice - totalCost;
-
-  //         totalProfit.value += profit;
-  //       }
-  //     }
-  //   } catch (e) {
-  //     customMessageOrErrorPrint(message: "Error: $e");
-  //     totalProfit.value = 0.0;
-  //     totalRevenue.value = 0.0;
-  //   }
-  // }
 
   double calculateItemProfit(Map<String, dynamic> item) {
     final int qty = (item['quantity'] ?? 1).toInt();
@@ -754,3 +702,54 @@ class ReportController extends GetxController
     );
   }
 }
+
+
+
+  // Future<void> fetchTodaySalesAndProfit() async {
+  //   String today = setFormateDate();
+
+  //   totalProfit.value = 0.0;
+  //   totalRevenue.value = 0.0;
+
+  //   if (uid == null) return;
+
+  //   try {
+  //     final snapshot =
+  //         await FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('sales')
+  //             .where('soldAt', isEqualTo: today)
+  //             .get();
+
+  //     if (snapshot.docs.isEmpty) return;
+
+  //     for (var doc in snapshot.docs) {
+  //       final data = doc.data();
+
+  //       // ---------- REVENUE -----------
+  //       double saleAmount = (data['finalAmount'] ?? 0).toDouble();
+  //       totalRevenue.value += saleAmount;
+
+  //       // ---------- PROFIT CALCULATION ----------
+  //       List items = data["items"] ?? [];
+
+  //       for (var item in items) {
+  //         double finalPrice =
+  //             (item["finalPrice"] ?? 0).toDouble(); // TOTAL SELLING
+  //         double costPP =
+  //             (item["purchasePrice"] ?? 0).toDouble(); // COST PER PIECE
+  //         int qty = (item["quantity"] ?? 1).toInt();
+
+  //         double totalCost = costPP * qty;
+  //         double profit = finalPrice - totalCost;
+
+  //         totalProfit.value += profit;
+  //       }
+  //     }
+  //   } catch (e) {
+  //     customMessageOrErrorPrint(message: "Error: $e");
+  //     totalProfit.value = 0.0;
+  //     totalRevenue.value = 0.0;
+  //   }
+  // }

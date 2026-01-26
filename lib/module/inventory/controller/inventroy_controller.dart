@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,6 +22,7 @@ class InventroyController extends GetxController with CacheManager {
   RxBool isCameraStop = false.obs;
   RxBool isProductSaving = false.obs;
   RxBool isScannedQtyOutOfStock = false.obs;
+  RxBool isExistingProductInfo = false.obs;
   RxBool isDoneButtonReq = false.obs;
   RxBool isfullLooseSellingListLoading = false.obs;
   late MobileScannerController mobileScannerController;
@@ -84,20 +86,25 @@ class InventroyController extends GetxController with CacheManager {
 
   Future<(bool existProductOrNot, ProductModel productModels)>
   existingProductInfo(String uid, String barcode) async {
-    final productRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('products')
-        .doc(barcode);
-    final existingDoc = await productRef.get();
-    final product = ProductModel.fromJson(existingDoc.data() ?? {});
-    if (existingDoc.exists) {
-      stockqty.value = product.quantity?.toInt() ?? 0;
-      existProductName.value = product.name ?? '';
-      //loooseProductName.text = product.name ?? '';
-      return (true, product);
+    isExistingProductInfo.value = true;
+    try {
+      final productRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('products')
+          .doc(barcode);
+      final existingDoc = await productRef.get();
+      final product = ProductModel.fromJson(existingDoc.data() ?? {});
+      if (existingDoc.exists && product.isActive == true) {
+        stockqty.value = product.quantity?.toInt() ?? 0;
+        existProductName.value = product.name ?? '';
+        //loooseProductName.text = product.name ?? '';
+        return (true, product);
+      }
+      return (false, product);
+    } finally {
+      isExistingProductInfo.value = false;
     }
-    return (false, product);
   }
 
   Future<bool> fetchLooseProductByBarcode({required String barcode}) async {
@@ -127,8 +134,8 @@ class InventroyController extends GetxController with CacheManager {
   Future<void> handleScan({
     required String barcode,
     required String sellType, // packet | loose
-    required Function() afterProductAdding,
-    required Function() qtyIsNotEnough,
+    required VoidCallback afterProductAdding,
+    required VoidCallback qtyIsNotEnough,
   }) async {
     final uid = auth.currentUser?.uid;
     if (uid == null) return;
@@ -191,13 +198,19 @@ class InventroyController extends GetxController with CacheManager {
     );
 
     if (index != -1) {
-      // qty++
-      if ((cartList[index].quantity ?? 0) < (product.quantity ?? 0)) {
-        cartList[index].quantity = (cartList[index].quantity ?? 0) + 1;
-      } else {
+      print('CART QTY: ${cartList[index].quantity}');
+      print('PRODUCT QTY: ${product.quantity}');
+
+      final cartQty = cartList[index].quantity ?? 0;
+      final maxQty = product.quantity ?? 0;
+
+      final canAddMore = cartQty < maxQty;
+
+      if (!canAddMore) {
         qtyIsNotEnough();
         return;
       }
+      cartList[index].quantity = cartQty + 1;
     } else {
       // add new item
       cartList.add(
@@ -243,23 +256,23 @@ class InventroyController extends GetxController with CacheManager {
     afterProductAdding();
   }
 
-  void handleLooseScan({required ProductModel product}) {
-    if (product.barcode == null || product.barcode!.isEmpty) {
-      return;
-    }
-    double sellingPrices = (product.sellingPrice ?? 0.0);
-    // int looseQuantitys = int.tryParse(looseQuantity.text) ?? 0;
-    int looseQuantitys = 0;
+  // void handleLooseScan({required ProductModel product}) {
+  //   if (product.barcode == null || product.barcode!.isEmpty) {
+  //     return;
+  //   }
+  //   double sellingPrices = (product.sellingPrice ?? 0.0);
+  //   // int looseQuantitys = int.tryParse(looseQuantity.text) ?? 0;
+  //   int looseQuantitys = 0;
 
-    ProductModel scanned = ProductModel(
-      barcode: product.barcode,
-      name: product.name,
-      sellingPrice: sellingPrices,
-      quantity: looseQuantitys,
-      isLoosed: product.isLoosed,
-    );
-    scannedProductDetails.add(scanned);
-  }
+  //   ProductModel scanned = ProductModel(
+  //     barcode: product.barcode,
+  //     name: product.name,
+  //     sellingPrice: sellingPrices,
+  //     quantity: looseQuantitys,
+  //     isLoosed: product.isLoosed,
+  //   );
+  //   scannedProductDetails.add(scanned);
+  // }
 
   Future<void> stopCameraAfterDetect(BarcodeCapture barcodes) async {
     barcodeValue.value = barcodes.barcodes.first.rawValue.toString();

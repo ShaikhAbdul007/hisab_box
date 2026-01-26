@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
+import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
@@ -35,6 +38,7 @@ class ProductDetailsController extends GetxController with CacheManager {
   TextEditingController exprieDate = TextEditingController();
   TextEditingController purchaseDate = TextEditingController();
   RxList<CategoryModel> categoryModel = <CategoryModel>[].obs;
+
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isLooseProductSave = false.obs;
   RxBool isSaveLoading = false.obs;
@@ -43,6 +47,8 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxString barcodeValue = ''.obs;
   RxString dayDate = ''.obs;
   bool isLoose = false;
+
+  RxBool isTransferLoading = false.obs;
   var data = Get.arguments;
 
   @override
@@ -51,6 +57,48 @@ class ProductDetailsController extends GetxController with CacheManager {
     setData();
     getCategoryData();
     super.onInit();
+  }
+
+  Future<void> requestStockTransfer({
+    required ProductModel product,
+    required int qty,
+  }) async {
+    final uid = auth.currentUser?.uid;
+    if (uid == null) return;
+
+    if (qty <= 0) {
+      showMessage(message: "Invalid quantity");
+      return;
+    }
+
+    isTransferLoading.value = true;
+
+    try {
+      final transferRef =
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('stockTransfers')
+              .doc(); // auto id
+
+      await transferRef.set({
+        'barcode': product.barcode,
+        'productName': product.name,
+        'requestedQty': qty,
+        'from': 'godown',
+        'to': 'shop',
+        'status': 'pending', // 🔥 important
+        'requestedAt': setFormateDate(),
+        'createdDate': setFormateDate(),
+        'createdTime': setFormateDate('hh:mm:ss a'),
+      });
+
+      showMessage(message: "📤 Stock transfer request sent to Shop");
+    } catch (e) {
+      showMessage(message: "❌ ${e.toString()}");
+    } finally {
+      isTransferLoading.value = false;
+    }
   }
 
   void getCategoryData() async {
@@ -80,6 +128,7 @@ class ProductDetailsController extends GetxController with CacheManager {
   void updateProductQuantity({
     required String barcode,
     required bool isLoosed,
+    required String locationType,
   }) async {
     isSaveLoading.value = true;
     try {
@@ -92,6 +141,9 @@ class ProductDetailsController extends GetxController with CacheManager {
       var animalCategoryItem = animalTypeList.firstWhereOrNull(
         (e) => e.id == animalType.text,
       );
+
+      bool isGodown = location.text.toLowerCase() == 'godown';
+      String collectionName = isGodown ? 'godownProducts' : 'products';
       var categoryName = categoryItem?.name ?? category.text;
       var animalCategoryName = animalCategoryItem?.name ?? animalType.text;
       customMessageOrErrorPrint(message: categoryName);
@@ -132,7 +184,7 @@ class ProductDetailsController extends GetxController with CacheManager {
         final productRef = FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
-            .collection('products')
+            .collection(collectionName)
             .doc(barcode);
         final existingDoc = await productRef.get();
         int discounts = int.tryParse(discount.text) ?? 0;

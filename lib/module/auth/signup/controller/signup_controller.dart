@@ -69,13 +69,22 @@ class SignupController extends GetxController with CacheManager {
         "profileImage":
             profileImage.value != null ? profileImage.value!.path : '',
       });
-      final newDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (newDoc.exists) {
-        final data = newDoc.data() as Map<String, dynamic>;
-        final userDatas = UserModel.fromJson(data);
-        saveUserData(userDatas);
-      }
+
+      saveUserData(
+        UserModel(
+          name: name.text,
+          email: email.text,
+          password: password.text,
+          address: address.text,
+          city: city.text,
+          pincode: pincode.text,
+          state: state.text,
+          mobileNo: mobileNo.text,
+          shoptype: shopType.text,
+          alternateMobileNo: alternateMobileNo.text,
+          image: profileImage.value != null ? profileImage.value!.path : '',
+        ),
+      );
       showMessage(message: singUpSuccessFul);
       signUpLoading.value = false;
       AppRoutes.navigateRoutes(routeName: AppRouteName.login);

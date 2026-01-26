@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/logger.dart';
+import 'package:inventory/module/loose_sell/model/loose_model.dart';
 
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
@@ -48,6 +49,7 @@ class ProductController extends GetxController with CacheManager {
   RxString dayDate = ''.obs;
   bool isLoose = false;
   var data = Get.arguments;
+
   @override
   void onInit() async {
     dayDate.value = setFormateDate();
@@ -156,11 +158,11 @@ class ProductController extends GetxController with CacheManager {
       if (uid == null) return;
 
       final String formatDate = setFormateDate();
-
       final String formaTime = setFormateDate('hh:mm a');
 
       String? collectionName;
-      if (location.text.toLowerCase() == 'godown') {
+      bool isGodown = location.text.toLowerCase() == 'godown';
+      if (isGodown) {
         collectionName = 'godownProducts';
       } else {
         collectionName = 'products'; // Default to shop
@@ -171,6 +173,7 @@ class ProductController extends GetxController with CacheManager {
           .doc(uid)
           .collection(collectionName)
           .doc(barcode);
+
       final aminalTypeData =
           animalTypeList.firstWhere((e) => e.id == animalType.text).name;
       final categoriesData =
@@ -179,6 +182,35 @@ class ProductController extends GetxController with CacheManager {
       int discounts = int.tryParse(discount.text) ?? 0;
       double purchasePrices = double.tryParse(purchasePrice.text) ?? 0.0;
       double sellingPrices = double.tryParse(sellingPrice.text) ?? 0.0;
+
+      // 🔥 CREATE NEW PRODUCT MODEL
+      final newProduct = ProductModel(
+        barcode: barcode,
+        name: productName.text,
+        category: categoriesData,
+        animalType: aminalTypeData,
+        isLoosed: loosedProduct.value,
+        quantity: quantityOnly,
+        purchasePrice: purchasePrices,
+        sellingPrice: sellingPrices,
+        flavor: flavor.text,
+        weight: weight.text,
+        level: level.text,
+        rack: rack.text,
+        createdDate: formatDate,
+        updatedDate: formatDate,
+        createdTime: formaTime,
+        updatedTime: formaTime,
+        color: getRandomHexColor(),
+        isFlavorAndWeightNotRequired: isFlavorAndWeightNotRequired.value,
+        location: location.text,
+        discount: discounts,
+        purchaseDate: purchaseDate.text,
+        expireDate: exprieDate.text,
+        isActive: true,
+        sellType: 'packet',
+      );
+
       await productRef.set({
         'barcode': barcode,
         'name': productName.text,
@@ -205,7 +237,22 @@ class ProductController extends GetxController with CacheManager {
         'isActive': true,
         'sellType': 'packet',
       });
-      fetchAllProducts();
+
+      // 🔥 PROPER CACHE UPDATE INSTEAD OF CLEAR
+      if (isGodown) {
+        // Update godown cache
+        final godownList = retrieveGodownProductList();
+        godownList.add(newProduct);
+        saveGodownProductList(godownList);
+      } else {
+        // Update shop cache
+        final shopList = await retrieveProductList();
+        shopList.add(newProduct);
+        saveProductList(shopList);
+      }
+
+      // 🔥 UPDATE DASHBOARD CACHE
+      //  recalculateInventoryDashboardOnly();
       showMessage(message: scannerDataSave);
       Future.delayed(Duration(milliseconds: 500), () {
         clear();
@@ -336,6 +383,59 @@ class ProductController extends GetxController with CacheManager {
           });
         }
       });
+
+      // 🔥 UPDATE CACHE AFTER TRANSACTION SUCCESS
+      // Update shop product cache (quantity decreased)
+      final shopList = await retrieveProductList();
+      final shopIndex = shopList.indexWhere((p) => p.barcode == barcode);
+      if (shopIndex != -1) {
+        shopList[shopIndex].quantity = (shopList[shopIndex].quantity ?? 0) - 1;
+        saveProductList(shopList);
+      }
+
+      // Update loose product cache
+      final looseList = await retrieveLoosedProductList();
+      final looseIndex = looseList.indexWhere((p) => p.barcode == barcode);
+      if (looseIndex != -1) {
+        // Update existing loose product
+        looseList[looseIndex].quantity =
+            (looseList[looseIndex].quantity ?? 0) + looseQty;
+        looseList[looseIndex].sellingPrice = looseSellingPrice;
+      } else {
+        // Add new loose product to cache
+        final productData = shopList.firstWhere((p) => p.barcode == barcode);
+        final newLooseProduct = LooseInvetoryModel(
+          barcode: barcode,
+          name: productData.name,
+          category: productData.category,
+          animalType: productData.animalType,
+          quantity: looseQty,
+          purchasePrice: productData.purchasePrice,
+          sellingPrice: looseSellingPrice,
+          weight: productData.weight,
+          color: productData.color,
+          level: productData.level,
+          rack: productData.rack,
+          location: productData.location,
+          discount: productData.discount,
+          isFlavorAndWeightNotRequired:
+              productData.isFlavorAndWeightNotRequired,
+          createdDate: formatDate,
+          createdTime: formatTime,
+          updatedDate: formatDate,
+          updatedTime: formatTime,
+          expireDate: productData.expireDate,
+          purchaseDate: productData.purchaseDate,
+          isActive: true,
+          sellType: 'loose',
+        );
+        looseList.add(newLooseProduct);
+      }
+      saveLoosedProductList(looseList);
+
+      // 🔥 UPDATE DASHBOARD CACHE
+      recalculateInventoryDashboardOnly();
+
       clear();
       Get.back(result: true);
       showMessage(message: "✅ Loose stock created successfully");

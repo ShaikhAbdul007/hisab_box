@@ -10,6 +10,7 @@ void commonBottomSheet({
   required String label,
   required void Function() onPressed,
   required Widget child,
+  double? size,
   bool isCancelButtonRequire = true,
 }) {
   Get.bottomSheet(
@@ -27,6 +28,7 @@ void commonBottomSheet({
                 CustomPadding(
                   paddingOption: OnlyPadding(left: 18),
                   child: CommonPopupAppbar(
+                    size: size ?? 15,
                     label: label,
                     onPressed: onPressed,
                     isCancelButtonRequire: isCancelButtonRequire,

@@ -34,7 +34,7 @@ class InventroyList extends GetView<InventoryListController> {
                       data: {'flag': true},
                     );
                     if (res == true) {
-                      await controller.fetchAllProducts();
+                      // await controller.fetchAllProducts();
                     }
                   },
                   child: CommonContainer(
@@ -116,162 +116,179 @@ class InventroyList extends GetView<InventoryListController> {
                       child: TabBarView(
                         controller: controller.tabController,
                         children: [
-                          ListView.builder(
-                            itemCount: controller.shopProductList.length,
-                            itemBuilder: (context, index) {
-                              var inventoryList =
-                                  controller.shopProductList[index];
-                              return Obx(
-                                () =>
-                                    inventoryList.name!.toLowerCase().contains(
-                                              controller.searchText.value,
-                                            ) ||
-                                            inventoryList.barcode!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                ) ||
-                                            inventoryList.weight!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                ) ||
-                                            inventoryList.category!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                ) ||
-                                            inventoryList.flavor!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                )
-                                        ? Hero(
-                                          tag:
-                                              'herotag_${inventoryList.name ?? UniqueKey()}',
-                                          child: InventroyListText(
-                                            onTap: () async {
-                                              customMessageOrErrorPrint(
-                                                message:
-                                                    "List id: ${inventoryList.id}",
-                                              );
-                                              var res =
-                                                  await AppRoutes.futureNavigationToRoute(
-                                                    routeName:
-                                                        AppRouteName
-                                                            .productDetailView,
-                                                    data: {
-                                                      'product': inventoryList,
-                                                      'isProductLoosed': false,
-                                                    },
+                          controller.shopProductList.isNotEmpty
+                              ? ListView.builder(
+                                itemCount: controller.shopProductList.length,
+                                itemBuilder: (context, index) {
+                                  var inventoryList =
+                                      controller.shopProductList[index];
+                                  return Obx(
+                                    () =>
+                                        inventoryList.name!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchText
+                                                          .value,
+                                                    ) ||
+                                                inventoryList.barcode!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    ) ||
+                                                inventoryList.weight!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    ) ||
+                                                inventoryList.category!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    ) ||
+                                                inventoryList.flavor!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    )
+                                            ? Hero(
+                                              tag:
+                                                  'herotag_${inventoryList.name ?? UniqueKey()}',
+                                              child: InventroyListText(
+                                                onTap: () async {
+                                                  customMessageOrErrorPrint(
+                                                    message:
+                                                        "List id: ${inventoryList.id}",
                                                   );
-                                              if (res == true) {
-                                                await controller
-                                                    .fetchAllProducts();
-                                              }
-                                            },
-                                            isInventoryScanSelected:
-                                                controller
-                                                    .isInventoryScanSelected
-                                                    .value,
-                                            inventoryModel: inventoryList,
-                                          ),
-                                        )
-                                        : Container(),
-                              );
-                            },
-                          ),
-                          ListView.builder(
-                            itemCount: controller.goDownProductList.length,
-                            itemBuilder: (context, index) {
-                              var goDownInventoryList =
-                                  controller.goDownProductList[index];
-                              return Obx(
-                                () =>
-                                    goDownInventoryList.name!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller.searchText.value,
-                                                ) ||
-                                            goDownInventoryList.barcode!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                ) ||
-                                            goDownInventoryList.weight!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                ) ||
-                                            goDownInventoryList.category!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                ) ||
-                                            goDownInventoryList.flavor!
-                                                .toLowerCase()
-                                                .contains(
-                                                  controller
-                                                      .searchController
-                                                      .value
-                                                      .text,
-                                                )
-                                        ? Hero(
-                                          tag: 'herotag_${UniqueKey()}',
-                                          child: InventroyListText(
-                                            onTap: () async {
-                                              customMessageOrErrorPrint(
-                                                message:
-                                                    "List id: ${goDownInventoryList.id}",
-                                              );
-                                              var res =
-                                                  await AppRoutes.futureNavigationToRoute(
-                                                    routeName:
-                                                        AppRouteName
-                                                            .productDetailView,
-                                                    data: {
-                                                      'product':
-                                                          goDownInventoryList,
-                                                      'isProductLoosed': false,
-                                                    },
+                                                  var res =
+                                                      await AppRoutes.futureNavigationToRoute(
+                                                        routeName:
+                                                            AppRouteName
+                                                                .productDetailView,
+                                                        data: {
+                                                          'product':
+                                                              inventoryList,
+                                                          'isProductLoosed':
+                                                              false,
+                                                        },
+                                                      );
+                                                  // if (res == true) {
+                                                  //   await controller
+                                                  //       .fetchAllProducts();
+                                                  // }
+                                                },
+                                                isInventoryScanSelected:
+                                                    controller
+                                                        .isInventoryScanSelected
+                                                        .value,
+                                                inventoryModel: inventoryList,
+                                              ),
+                                            )
+                                            : Container(),
+                                  );
+                                },
+                              )
+                              : CommonNodatafound(
+                                message: 'No product found in SHOP.',
+                              ),
+                          controller.goDownProductList.isEmpty
+                              ? CommonNodatafound(
+                                message: 'No product found in SHOP.',
+                              )
+                              : ListView.builder(
+                                itemCount: controller.goDownProductList.length,
+                                itemBuilder: (context, index) {
+                                  var goDownInventoryList =
+                                      controller.goDownProductList[index];
+                                  return Obx(
+                                    () =>
+                                        goDownInventoryList.name!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchText
+                                                          .value,
+                                                    ) ||
+                                                goDownInventoryList.barcode!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    ) ||
+                                                goDownInventoryList.weight!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    ) ||
+                                                goDownInventoryList.category!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    ) ||
+                                                goDownInventoryList.flavor!
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      controller
+                                                          .searchController
+                                                          .value
+                                                          .text,
+                                                    )
+                                            ? Hero(
+                                              tag: 'herotag_${UniqueKey()}',
+                                              child: InventroyListText(
+                                                onTap: () async {
+                                                  customMessageOrErrorPrint(
+                                                    message:
+                                                        "List id: ${goDownInventoryList.id}",
                                                   );
-                                              if (res == true) {
-                                                await controller
-                                                    .fetchAllProducts();
-                                              }
-                                            },
-                                            isInventoryScanSelected:
-                                                controller
-                                                    .isInventoryScanSelected
-                                                    .value,
-                                            inventoryModel: goDownInventoryList,
-                                          ),
-                                        )
-                                        : Container(),
-                              );
-                            },
-                          ),
+                                                  var res =
+                                                      await AppRoutes.futureNavigationToRoute(
+                                                        routeName:
+                                                            AppRouteName
+                                                                .productDetailView,
+                                                        data: {
+                                                          'product':
+                                                              goDownInventoryList,
+                                                          'isProductLoosed':
+                                                              false,
+                                                        },
+                                                      );
+                                                  if (res == true) {
+                                                    //
+                                                  }
+                                                },
+                                                isInventoryScanSelected:
+                                                    controller
+                                                        .isInventoryScanSelected
+                                                        .value,
+                                                inventoryModel:
+                                                    goDownInventoryList,
+                                              ),
+                                            )
+                                            : Container(),
+                                  );
+                                },
+                              ),
                         ],
                       ),
                     ),

@@ -82,8 +82,8 @@ class RevenueView extends GetView<RevenueController> {
         ),
       ),
       body: ReportCommonContiner(
-        height: MediaQuery.sizeOf(context).height,
-        width: MediaQuery.sizeOf(context).width,
+        height: double.infinity,
+        width: 500,
         child: Obx(
           () =>
               controller.isRevenueListLoading.value

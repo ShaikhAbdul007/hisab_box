@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
+import 'package:inventory/module/inventory/model/product_model.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
@@ -7,9 +8,10 @@ import '../../../helper/textstyle.dart';
 
 void exisitngProductDialog({
   required String message,
-  required void Function() onPressed,
+  required VoidCallback onPressed,
 }) {
   commonBottomSheet(
+    size: 18,
     label: 'Alert',
     onPressed: onPressed,
     child: Text(message, style: CustomTextStyle.customNato()),
@@ -18,9 +20,12 @@ void exisitngProductDialog({
 
 void productNotAvailableDialog({
   required String label,
-  required void Function() onTap,
+  required VoidCallback onTap,
+  required VoidCallback? scannedDoneOnTap,
+  required List<ProductModel> productModel,
 }) {
   commonBottomSheet(
+    size: 18,
     label: 'Error Info',
     onPressed: () {},
     isCancelButtonRequire: false,
@@ -33,6 +38,14 @@ void productNotAvailableDialog({
           Text(label, style: CustomTextStyle.customRaleway()),
           setHeight(height: 10),
           CommonButton(label: 'ok', onTap: onTap),
+          if (productModel.isNotEmpty) ...{
+            setHeight(height: 10),
+            CommonButton(
+              bgColor: AppColors.redColor,
+              label: 'Scanned Done',
+              onTap: scannedDoneOnTap ?? () {},
+            ),
+          },
           setHeight(height: 30),
         ],
       ),
@@ -124,8 +137,8 @@ void productSavingDialog({
 
 void checkProductStatusDialog({
   required String label,
-  required void Function() packetOnTap,
-  required void Function() looseDoneOnTap,
+  required VoidCallback packetOnTap,
+  required VoidCallback looseDoneOnTap,
 }) {
   commonBottomSheet(
     label: 'Product Info',

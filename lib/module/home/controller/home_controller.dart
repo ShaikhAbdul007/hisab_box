@@ -8,10 +8,522 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
+import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/module/revenue/model/revenue_model.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../routes/route_name.dart';
 import '../model/grid_model.dart';
+
+class HomeController extends GetxController with CacheManager {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // ================= DASHBOARD STATE =================
+
+  RxDouble totalBusRevenue = 0.0.obs;
+  RxNum stock = RxNum(0);
+  RxNum goDownStock = RxNum(0);
+  RxNum sellStock = RxNum(0);
+  RxNum totalExpense = RxNum(0);
+  RxNum looseStock = RxNum(0);
+  RxNum outOfStock = RxNum(0);
+
+  var productList = <ProductModel>[].obs;
+  var sellsList = <SellsModel>[].obs;
+  RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
+
+  List<Map<String, dynamic>> chartData = [];
+  List<CustomGridModel> lis = [];
+
+  RxBool isListLoading = false.obs;
+
+  // ================= STOCK TRANSFER =================
+
+  RxList<GoDownStockTransferToShopModel> pendingTransfers =
+      <GoDownStockTransferToShopModel>[].obs;
+
+  FirebaseAuth get auth => _auth;
+
+  // ================= INIT =================
+
+  @override
+  void onInit() {
+    loadDashboard();
+    super.onInit();
+  }
+
+  // ================= DASHBOARD MAIN =================
+
+  Future<void> loadDashboard() async {
+    isListLoading.value = true;
+
+    final cache = getDashboardCache();
+    if (cache != null && _isSameDay(cache['updatedAt'] ?? 0)) {
+      _loadFromCache();
+    } else {
+      await _loadFromFirebase();
+      _saveToCache();
+    }
+
+    await getDashBoardList();
+    isListLoading.value = false;
+  }
+
+  // ================= CACHE =================
+
+  void _loadFromCache() {
+    final data = getDashboardCache();
+    if (data == null) return;
+
+    totalBusRevenue.value = (data['totalRevenue'] ?? 0).toDouble();
+    stock.value = data['stock'] ?? 0;
+    looseStock.value = data['looseStock'] ?? 0;
+    outOfStock.value = data['outOfStock'] ?? 0;
+    totalExpense.value = data['expense'] ?? 0;
+
+    chartData = List<Map<String, dynamic>>.from(data['chartData'] ?? []);
+    sellsList.value =
+        (data['sellsList'] ?? [])
+            .map<SellsModel>((e) => SellsModel.fromJson(e))
+            .toList();
+  }
+
+  void _saveToCache() {
+    saveDashboardCache(
+      totalRevenue: totalBusRevenue.value,
+      stock: stock.value,
+      looseStock: looseStock.value,
+      outOfStock: outOfStock.value,
+      expense: totalExpense.value,
+      chartData: chartData,
+      sellsList: sellsList,
+    );
+  }
+
+  // ================= FIREBASE FALLBACK =================
+
+  Future<void> _loadFromFirebase() async {
+    await Future.wait([
+      getTotalRevenue(),
+      getTotalStock(),
+      getOutOfStock(),
+      getTotalLooseStock(),
+    ]);
+    sellsList.value = await fetchRevenueList();
+  }
+
+  // ================= DASHBOARD FUNCTIONS =================
+
+  Future<void> getTotalRevenue() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+
+    final todayDate = setFormateDate();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('sales')
+            .where('soldAt', isEqualTo: todayDate)
+            .get();
+
+    double total = 0;
+    for (var doc in snapshot.docs) {
+      total += (doc['finalAmount'] ?? doc['totalAmount'] ?? 0).toDouble();
+    }
+
+    totalBusRevenue.value = total;
+  }
+
+  Future<void> getTotalStock() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+
+    var shopProducts = await retrieveProductList();
+    var godownProducts = retrieveGodownProductList();
+
+    if (shopProducts.isEmpty) {
+      final snap =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('products')
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      shopProducts =
+          snap.docs.map((e) => ProductModel.fromJson(e.data())).toList();
+      saveProductList(shopProducts);
+    }
+
+    if (godownProducts.isEmpty) {
+      final snap =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('godownProducts')
+              .where('isActive', isEqualTo: true)
+              .get();
+
+      godownProducts =
+          snap.docs.map((e) => ProductModel.fromJson(e.data())).toList();
+      saveGodownProductList(godownProducts);
+    }
+
+    stock.value = shopProducts.length + godownProducts.length;
+  }
+
+  Future<void> getOutOfStock() async {
+    final products = await retrieveProductList();
+    outOfStock.value = products.where((e) => (e.quantity ?? 0) == 0).length;
+  }
+
+  Future<void> getTotalLooseStock() async {
+    final loose = await retrieveLoosedProductList();
+    if (loose.isNotEmpty) {
+      looseStock.value = loose.length;
+      return;
+    }
+
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return;
+
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('looseProducts')
+            .where('isActive', isEqualTo: true)
+            .get();
+
+    looseInventoryLis.value =
+        snapshot.docs.map((e) {
+          final data = e.data();
+          data['id'] = e.id;
+          return LooseInvetoryModel.fromJson(data);
+        }).toList();
+
+    saveLoosedProductList(looseInventoryLis);
+  }
+
+  Future<List<SellsModel>> fetchRevenueList() async {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return [];
+
+    final todayDate = setFormateDate();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('sales')
+            .where('soldAt', isEqualTo: todayDate)
+            .get();
+
+    return snapshot.docs.map((doc) => SellsModel.fromJson(doc.data())).toList();
+  }
+
+  Future<void> getDashBoardList() async {
+    lis = [
+      CustomGridModel(
+        routeName: AppRouteName.inventroyList,
+        label: 'Total Products',
+        icon: CupertinoIcons.cube_fill,
+        numbers: stock.value.toDouble(),
+      ),
+      CustomGridModel(
+        routeName: AppRouteName.outOfStock,
+        label: 'Out Of Stock',
+        icon: CupertinoIcons.cube_box,
+        numbers: outOfStock.value.toDouble(),
+      ),
+      CustomGridModel(
+        routeName: AppRouteName.revenueView,
+        label: 'Today Sales',
+        icon: Icons.paid,
+        numbers: totalBusRevenue.value,
+      ),
+      CustomGridModel(
+        routeName: AppRouteName.looseSell,
+        label: 'Loose Stock',
+        icon: CupertinoIcons.info,
+        numbers: looseStock.value.toDouble(),
+      ),
+    ];
+  }
+
+  bool _isSameDay(int millis) {
+    final last = DateTime.fromMillisecondsSinceEpoch(millis);
+    final now = DateTime.now();
+    return last.year == now.year &&
+        last.month == now.month &&
+        last.day == now.day;
+  }
+}
+
+
+
+
+
+  // ================= STOCK TRANSFER =================
+
+// class HomeController extends GetxController with CacheManager {
+//   final _auth = FirebaseAuth.instance;
+
+//   RxDouble totalBusRevenue = 0.0.obs;
+//   RxNum stock = RxNum(0);
+//   RxNum goDownStock = RxNum(0);
+//   RxNum sellStock = RxNum(0);
+//   RxNum totalExpense = RxNum(0);
+//   RxNum looseStock = RxNum(0);
+//   RxNum outOfStock = RxNum(0);
+//   var productList = <ProductModel>[].obs;
+//   List<CustomGridModel> lis = [];
+//   RxBool isListLoading = false.obs;
+//   List<Map<String, dynamic>> chartData = [];
+//   var sellsList = <SellsModel>[].obs;
+//   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
+//   RxList<GoDownStockTransferToShopModel> pendingTransfers =
+//       <GoDownStockTransferToShopModel>[].obs;
+//   FirebaseAuth get auth => _auth;
+//   RxBool isTransferLoading = false.obs;
+
+//   @override
+//   void onInit() {
+//     loadDashboard();
+//     super.onInit();
+//   }
+
+//   // ================= MAIN =================
+
+//   Future<void> loadDashboard() async {
+//     isListLoading.value = true;
+
+//     final cache = getDashboardCache();
+
+//     if (cache != null) {
+//       final updatedAt = cache['updatedAt'] ?? 0;
+
+//       if (_isSameDay(updatedAt)) {
+//         _loadFromCache();
+//       } else {
+//         await _loadFromFirebase();
+//         _saveToCache();
+//       }
+//     } else {
+//       await _loadFromFirebase();
+//       _saveToCache();
+//     }
+
+//     await getDashBoardList();
+//     isListLoading.value = false;
+//   }
+
+//   // ================= CACHE =================
+
+//   void _loadFromCache() {
+//     final data = getDashboardCache();
+//     if (data == null) return;
+
+//     totalBusRevenue.value = (data['totalRevenue'] ?? 0).toDouble();
+//     stock.value = data['stock'] ?? 0;
+//     looseStock.value = data['looseStock'] ?? 0;
+//     outOfStock.value = data['outOfStock'] ?? 0;
+//     totalExpense.value = data['expense'] ?? 0;
+//     chartData = List<Map<String, dynamic>>.from(data['chartData'] ?? []);
+//     sellsList.value =
+//         (data['sells'] ?? [])
+//             .map<SellsModel>((e) => SellsModel.fromJson(e))
+//             .toList();
+//   }
+
+//   void _saveToCache() {
+//     saveDashboardCache(
+//       totalRevenue: totalBusRevenue.value,
+//       stock: stock.value,
+//       looseStock: looseStock.value,
+//       outOfStock: outOfStock.value,
+//       expense: totalExpense.value,
+//       chartData: chartData,
+//       sellsList: sellsList,
+//     );
+//   }
+
+//   // ================= FIREBASE (FALLBACK ONLY) =================
+
+//   Future<void> _loadFromFirebase() async {
+//     await Future.wait([
+//       getTotalRevenue(),
+//       getTotalStock(),
+//       getOutOfStock(),
+//       getTotalLooseStock(),
+//     ]);
+//     // await getTotalExpenses();
+//     sellsList.value = await fetchRevenueList();
+//     // await fetchPieChartData();
+//   }
+
+//   // ================= EXISTING FUNCTIONS =================
+
+//   Future<void> getTotalRevenue() async {
+//     final uid = _auth.currentUser?.uid;
+//     if (uid == null) return;
+//     final todayDate = setFormateDate();
+//     final snapshot =
+//         await FirebaseFirestore.instance
+//             .collection('users')
+//             .doc(uid)
+//             .collection('sales')
+//             .where('soldAt', isEqualTo: todayDate)
+//             .get();
+
+//     double total = 0;
+//     for (var doc in snapshot.docs) {
+//       total += (doc['finalAmount'] ?? doc['totalAmount'] ?? 0).toDouble();
+//     }
+
+//     totalBusRevenue.value = total;
+//   }
+
+//   Future<void> getTotalStock() async {
+//     final uid = _auth.currentUser?.uid;
+//     if (uid == null) return;
+//     var shopProducts = await retrieveProductList();
+//     var godownProducts = retrieveGodownProductList();
+
+//     bool needShop = shopProducts.isEmpty;
+//     bool needGodown = godownProducts.isEmpty;
+
+//     // 2️⃣ Fetch ONLY missing data
+//     if (needShop) {
+//       final snap =
+//           await FirebaseFirestore.instance
+//               .collection('users')
+//               .doc(uid)
+//               .collection('products')
+//               .where('isActive', isEqualTo: true)
+//               .get();
+
+//       shopProducts =
+//           snap.docs.map((e) => ProductModel.fromJson(e.data())).toList();
+
+//       saveProductList(shopProducts);
+//     }
+
+//     if (needGodown) {
+//       final snap =
+//           await FirebaseFirestore.instance
+//               .collection('users')
+//               .doc(uid)
+//               .collection('godownProducts')
+//               .where('isActive', isEqualTo: true)
+//               .get();
+
+//       godownProducts =
+//           snap.docs.map((e) => ProductModel.fromJson(e.data())).toList();
+
+//       saveGodownProductList(godownProducts);
+//     }
+
+//     // 3️⃣ Final stock count (ALWAYS correct)
+//     stock.value = shopProducts.length + godownProducts.length;
+//   }
+
+//   Future<void> getOutOfStock() async {
+//     final products = await retrieveProductList();
+//     outOfStock.value = products.where((e) => (e.quantity ?? 0) == 0).length;
+//   }
+
+//   bool _isSameDay(int lastUpdatedMillis) {
+//     final last = DateTime.fromMillisecondsSinceEpoch(lastUpdatedMillis);
+//     final now = DateTime.now();
+
+//     return last.year == now.year &&
+//         last.month == now.month &&
+//         last.day == now.day;
+//   }
+
+//   Future<void> getTotalLooseStock() async {
+//     final uid = _auth.currentUser?.uid;
+//     final loose = await retrieveLoosedProductList();
+//     if (loose.isNotEmpty) {
+//       looseStock.value = loose.length;
+//       return;
+//     }
+
+//     if (uid == null) {
+//       return;
+//     }
+
+//     final snapshot =
+//         await FirebaseFirestore.instance
+//             .collection('users')
+//             .doc(uid)
+//             .collection('looseProducts')
+//             .where('isActive', isEqualTo: true)
+//             .get();
+
+//     looseInventoryLis.value =
+//         snapshot.docs.map((doc) {
+//           final data = doc.data();
+//           data['id'] = doc.id;
+//           //    looseOldQty = data['quantity'];
+
+//           return LooseInvetoryModel.fromJson(data);
+//         }).toList();
+//     saveLoosedProductList(looseInventoryLis);
+//   }
+
+//   //
+
+//   Future<List<SellsModel>> fetchRevenueList() async {
+//     final uid = _auth.currentUser?.uid;
+//     if (uid == null) return [];
+
+//     final todayDate = setFormateDate();
+
+//     final snapshot =
+//         await FirebaseFirestore.instance
+//             .collection('users')
+//             .doc(uid)
+//             .collection('sales')
+//             .where('soldAt', isEqualTo: todayDate)
+//             .get();
+
+//     return snapshot.docs.map((doc) => SellsModel.fromJson(doc.data())).toList();
+//   }
+
+//   Future<void> getDashBoardList() async {
+//     lis = [
+//       CustomGridModel(
+//         routeName: AppRouteName.inventroyList,
+//         label: 'Total Products',
+//         icon: CupertinoIcons.cube_fill,
+//         numbers: stock.value.toDouble(),
+//       ),
+//       CustomGridModel(
+//         routeName: AppRouteName.outOfStock,
+//         icon: CupertinoIcons.cube_box,
+//         label: 'Out Of Stock',
+//         numbers: outOfStock.value.toDouble(),
+//       ),
+//       CustomGridModel(
+//         routeName: AppRouteName.revenueView,
+//         label: 'Today Sales',
+//         icon: Icons.paid,
+//         numbers: totalBusRevenue.value,
+//       ),
+//       CustomGridModel(
+//         routeName: AppRouteName.looseSell,
+//         label: 'Loose Stock',
+//         icon: CupertinoIcons.info,
+//         numbers: looseStock.value.toDouble(),
+//       ),
+//     ];
+//   }
+// }
+
+
+
+
 
 // class HomeController extends GetxController with CacheManager {
 //   final _auth = FirebaseAuth.instance;
@@ -338,242 +850,6 @@ import '../model/grid_model.dart';
 //     ];
 //   }
 // }
-class HomeController extends GetxController with CacheManager {
-  final _auth = FirebaseAuth.instance;
-
-  RxDouble totalBusRevenue = 0.0.obs;
-  RxNum stock = RxNum(0);
-  RxNum sellStock = RxNum(0);
-  RxNum totalExpense = RxNum(0);
-  RxNum looseStock = RxNum(0);
-  RxNum outOfStock = RxNum(0);
-  var productList = <ProductModel>[].obs;
-  List<CustomGridModel> lis = [];
-  RxBool isListLoading = false.obs;
-  List<Map<String, dynamic>> chartData = [];
-  var sellsList = <SellsModel>[].obs;
-  RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
-  FirebaseAuth get auth => _auth;
-
-  @override
-  void onInit() {
-    loadDashboard();
-    super.onInit();
-  }
-
-  // ================= MAIN =================
-
-  Future<void> loadDashboard() async {
-    isListLoading.value = true;
-
-    final cache = getDashboardCache();
-
-    if (cache != null) {
-      final updatedAt = cache['updatedAt'] ?? 0;
-
-      if (_isSameDay(updatedAt)) {
-        _loadFromCache();
-      } else {
-        await _loadFromFirebase();
-        _saveToCache();
-      }
-    } else {
-      await _loadFromFirebase();
-      _saveToCache();
-    }
-
-    await getDashBoardList();
-    isListLoading.value = false;
-  }
-
-  // ================= CACHE =================
-
-  void _loadFromCache() {
-    final data = getDashboardCache();
-    if (data == null) return;
-
-    totalBusRevenue.value = (data['totalRevenue'] ?? 0).toDouble();
-    stock.value = data['stock'] ?? 0;
-    looseStock.value = data['looseStock'] ?? 0;
-    outOfStock.value = data['outOfStock'] ?? 0;
-    totalExpense.value = data['expense'] ?? 0;
-
-    chartData = List<Map<String, dynamic>>.from(data['chartData'] ?? []);
-
-    sellsList.value =
-        (data['sellsList'] as List?)
-            ?.map((e) => SellsModel.fromJson(e))
-            .toList() ??
-        [];
-  }
-
-  void _saveToCache() {
-    saveDashboardCache(
-      totalRevenue: totalBusRevenue.value,
-      stock: stock.value,
-      looseStock: looseStock.value,
-      outOfStock: outOfStock.value,
-      expense: totalExpense.value,
-      chartData: chartData,
-      sellsList: sellsList,
-    );
-  }
-
-  // ================= FIREBASE (FALLBACK ONLY) =================
-
-  Future<void> _loadFromFirebase() async {
-    await Future.wait([
-      getTotalRevenue(),
-      getTotalStock(),
-      getOutOfStock(),
-      getTotalLooseStock(),
-    ]);
-    // await getTotalExpenses();
-    sellsList.value = await fetchRevenueList();
-    // await fetchPieChartData();
-  }
-
-  // ================= EXISTING FUNCTIONS =================
-
-  Future<void> getTotalRevenue() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
-    final todayDate = setFormateDate();
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('sales')
-            .where('soldAt', isEqualTo: todayDate)
-            .get();
-
-    double total = 0;
-    for (var doc in snapshot.docs) {
-      total += (doc['finalAmount'] ?? doc['totalAmount'] ?? 0).toDouble();
-    }
-
-    totalBusRevenue.value = total;
-  }
-
-  Future<void> getTotalStock() async {
-    final products = await retrieveProductList();
-    if (products.isNotEmpty) {
-      stock.value = products.length;
-      return;
-    }
-
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) {
-      return;
-    }
-    final productSnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('products')
-            .where('isActive', isEqualTo: true)
-            .get();
-    productList.value =
-        productSnapshot.docs
-            .map((doc) => ProductModel.fromJson(doc.data()))
-            .toList();
-    stock.value = productList.length;
-    saveProductList(productList);
-  }
-
-  Future<void> getOutOfStock() async {
-    final products = await retrieveProductList();
-    outOfStock.value = products.where((e) => (e.quantity ?? 0) == 0).length;
-  }
-
-  bool _isSameDay(int lastUpdatedMillis) {
-    final last = DateTime.fromMillisecondsSinceEpoch(lastUpdatedMillis);
-    final now = DateTime.now();
-
-    return last.year == now.year &&
-        last.month == now.month &&
-        last.day == now.day;
-  }
-
-  Future<void> getTotalLooseStock() async {
-    final uid = _auth.currentUser?.uid;
-    final loose = await retrieveLoosedProductList();
-    if (loose.isNotEmpty) {
-      looseStock.value = loose.length;
-      return;
-    }
-
-    if (uid == null) {
-      return;
-    }
-
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('looseProducts')
-            .where('isActive', isEqualTo: true)
-            .get();
-
-    looseInventoryLis.value =
-        snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          //    looseOldQty = data['quantity'];
-
-          return LooseInvetoryModel.fromJson(data);
-        }).toList();
-    saveLoosedProductList(looseInventoryLis);
-  }
-
-  //
-
-  Future<List<SellsModel>> fetchRevenueList() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return [];
-
-    final todayDate = setFormateDate();
-
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('sales')
-            .where('soldAt', isEqualTo: todayDate)
-            .get();
-
-    return snapshot.docs.map((doc) => SellsModel.fromJson(doc.data())).toList();
-  }
-
-  Future<void> getDashBoardList() async {
-    lis = [
-      CustomGridModel(
-        routeName: AppRouteName.inventroyList,
-        label: 'Total Products',
-        icon: CupertinoIcons.cube_fill,
-        numbers: stock.value.toDouble(),
-      ),
-      CustomGridModel(
-        routeName: AppRouteName.outOfStock,
-        icon: CupertinoIcons.cube_box,
-        label: 'Out Of Stock',
-        numbers: outOfStock.value.toDouble(),
-      ),
-      CustomGridModel(
-        routeName: AppRouteName.revenueView,
-        label: 'Today Sales',
-        icon: Icons.paid,
-        numbers: totalBusRevenue.value,
-      ),
-      CustomGridModel(
-        routeName: AppRouteName.looseSell,
-        label: 'Loose Stock',
-        icon: CupertinoIcons.info,
-        numbers: looseStock.value.toDouble(),
-      ),
-    ];
-  }
-}
 
   // Future<void> fetchPieChartData() async {
   //   // final uid = _auth.currentUser?.uid;

@@ -47,33 +47,44 @@ class UserProfileView extends GetView<UserProfileController> {
                               CircleAvatar(
                                 radius: 55,
                                 backgroundColor: Colors.black,
-                                backgroundImage:
-                                    controller.profileImage.value != null
-                                        ? FileImage(
-                                          scale: 2,
-                                          controller.profileImage.value!,
-                                        )
-                                        : null,
                                 child:
-                                    controller
-                                                .profileImage
-                                                .value
-                                                ?.path
-                                                .isEmpty ??
-                                            false
-                                        ? Text(
-                                          "H",
+                                    controller.profileImage.value != null
+                                        ? ClipOval(
+                                          child: Image.file(
+                                            controller.profileImage.value!,
+                                            width: 110,
+                                            height: 110,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) {
+                                              print(
+                                                '🖼️ Image loading error: $error',
+                                              );
+                                              return Text(
+                                                "HB",
+                                                style: TextStyle(
+                                                  fontSize: 40,
+                                                  color: Colors.white,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        )
+                                        : Text(
+                                          "HB",
                                           style: TextStyle(
                                             fontSize: 40,
                                             color: Colors.white,
                                           ),
-                                        )
-                                        : null,
+                                        ),
                               ),
                               controller.readOnly.value
                                   ? Container()
                                   : Positioned(
-                                    top: 75.h,
+                                    top: 70.h,
                                     left: 200.w,
                                     child: Container(
                                       height: 35,

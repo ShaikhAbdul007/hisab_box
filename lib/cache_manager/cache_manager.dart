@@ -168,6 +168,10 @@ mixin class CacheManager {
     box.remove(Key.product.toString());
   }
 
+  void removeGodownProductList() {
+    box.remove(Key.godownProduct.toString());
+  }
+
   void removelooseInvetoryKeyModel() {
     box.remove(Key.looseInvetoryKey.toString());
   }
@@ -258,17 +262,6 @@ mixin class CacheManager {
     return [];
   }
 
-  void updateDashboardRevenue(double billAmount) {
-    final data = box.read(Key.dashboardCache.toString());
-    if (data == null) return;
-
-    final currentRevenue = (data['totalRevenue'] ?? 0).toDouble();
-    data['totalRevenue'] = currentRevenue + billAmount;
-    data['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
-
-    box.write(Key.dashboardCache.toString(), data);
-  }
-
   void saveTodayRevenueCache({
     required String date,
     required List<SellsModel> sells,
@@ -295,6 +288,26 @@ mixin class CacheManager {
     return box.read(Key.todayReportCache.toString());
   }
 
+  void recalculateInventoryDashboardOnly() async {
+    final products = await retrieveProductList();
+    final loose = await retrieveLoosedProductList();
+    final godownProducts = retrieveGodownProductList(); // 🔥 ADD GODOWN
+    final existing = getDashboardCache() ?? {};
+    // 🔥 TOTAL STOCK = SHOP + GODOWN
+    final totalStock = products.length + godownProducts.length;
+
+    box.write(Key.dashboardCache.toString(), {
+      ...existing, // 🔥 preserve sales & revenue
+      'stock': totalStock, // 🔥 Combined shop + godown
+      'shopStock': products.length, // 🔥 Separate shop count (optional)
+      'godownStock':
+          godownProducts.length, // 🔥 Separate godown count (optional)
+      'outOfStock': products.where((e) => (e.quantity ?? 0) == 0).length,
+      'looseStock': loose.length,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
   void clearTodayReportCache() {
     box.remove(Key.todayReportCache.toString());
   }
@@ -316,9 +329,25 @@ mixin class CacheManager {
   void clearTodaySellCache() {
     box.remove(Key.todaySellCache.toString());
   }
+
+  void saveGodownProductList(List<ProductModel> list) {
+    box.write(
+      Key.godownProduct.toString(),
+      list.map((e) => e.toJson()).toList(),
+    );
+  }
+
+  List<ProductModel> retrieveGodownProductList() {
+    final data = box.read(Key.godownProduct.toString());
+    if (data != null && data is List) {
+      return data.map((e) => ProductModel.fromJson(e)).toList();
+    }
+    return [];
+  }
 }
 
 enum Key {
+  godownProduct,
   cacheModel,
   todayReportCache,
   todaySellCache,
@@ -343,4 +372,5 @@ enum Key {
   dashboardCache,
   discountCache,
   customerListKey,
+  tranferRequestKey,
 }

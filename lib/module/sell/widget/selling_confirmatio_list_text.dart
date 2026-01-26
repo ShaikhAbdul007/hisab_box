@@ -29,6 +29,9 @@ class SellingConfirmationListText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isloosed = inventoryModel.isLoosed ?? false;
+    bool sellType = inventoryModel.sellType == 'Loose';
+    print('inventoryModel.sellType is ${inventoryModel.sellType}');
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
@@ -45,7 +48,7 @@ class SellingConfirmationListText extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    inventoryModel.name ?? '',
+                    getStringLengthText(inventoryModel.name ?? ''),
                     style: CustomTextStyle.customPoppin(),
                   ),
                   Text(
@@ -126,13 +129,7 @@ class SellingConfirmationListText extends StatelessWidget {
                     height: 40.h,
                     width: 50.w,
                     padding: EdgeInsets.zero,
-                    // decoration: BoxDecoration(
-                    //   border: Border.all(
-                    //     color: AppColors.greyColor,
-                    //     width: 0.5.w,
-                    //   ),
-                    //   borderRadius: BorderRadius.circular(10.r),
-                    // ),
+
                     child: TextFormField(
                       keyboardType: TextInputType.number,
                       controller: dicountController,
@@ -170,6 +167,24 @@ class SellingConfirmationListText extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
+                      ),
+                    ),
+                  ),
+                  setWidth(width: 5),
+                  Container(
+                    height: 25.h,
+                    width: 28.w,
+                    padding: OnlyPadding(top: 4.0, left: 2).getPadding(),
+                    decoration: BoxDecoration(
+                      color: AppColors.blackColor,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      sellType ? 'PC' : 'PKT',
+                      style: CustomTextStyle.customRaleway(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.whiteColor,
                       ),
                     ),
                   ),
