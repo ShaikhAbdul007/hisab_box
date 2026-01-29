@@ -15,13 +15,12 @@ class ProductModel {
   String? animalType;
   String? level;
   String? rack;
-  int? box;
-  int? perpiece;
+
   bool? isLoosed;
   String? id;
   String? paymentMethod;
   int? billNo;
-  bool? isLooseCategory;
+
   bool? isFlavorAndWeightNotRequired;
   int? discount;
   String? purchaseDate;
@@ -45,14 +44,12 @@ class ProductModel {
     this.createdTime,
     this.updatedTime,
     this.color,
-    this.isLooseCategory,
     this.animalType,
     this.weight,
     this.flavor,
     this.level,
     this.rack,
-    this.box,
-    this.perpiece,
+
     this.isLoosed,
     this.id,
     this.isFlavorAndWeightNotRequired,
@@ -63,71 +60,78 @@ class ProductModel {
     this.sellType,
   });
 
+  // 🔥 SUPABASE ROW → MODEL
   ProductModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     barcode = json['barcode'];
     name = json['name'];
-    sellType = json['sellType'];
-    isActive = json['isActive'];
     category = json['category'];
+    sellType = json['sell_type'];
+    location = json['location'];
     quantity = json['quantity'];
-    purchasePrice = json['purchasePrice'];
-    sellingPrice = json['sellingPrice'];
-    createdDate = json['createdDate'];
-    updatedDate = json['updatedDate'];
-    createdTime = json['createdTime'];
-    updatedTime = json['updatedTime'];
-    color = json['color'];
-    flavor = json['flavours'];
+    isActive = json['is_active'];
+
+    purchasePrice = (json['purchase_price'] as num?)?.toDouble();
+    sellingPrice = (json['selling_price'] as num?)?.toDouble();
+
+    flavor = json['flavour'];
     weight = json['weight'];
+    color = json['color'];
+    animalType = json['animal_type'];
+
+    isLoosed = json['is_loose'];
+
+    isFlavorAndWeightNotRequired = json['is_flavor_and_weight_not_required'];
+
+    billNo = json['bill_no'];
+    paymentMethod = json['payment_method'];
+    discount = json['discount'];
+
     level = json['level'];
     rack = json['rack'];
-    animalType = json['animalType'];
-    box = json['box'];
-    perpiece = json['perpiece'];
-    isLoosed = json['isLoose'];
-    billNo = json['billNo'];
-    paymentMethod = json['paymentMethod'];
-    isLooseCategory = json['isLooseCategory'];
-    isFlavorAndWeightNotRequired = json['isFlavorAndWeightNotRequired'];
-    purchaseDate = json['purchaseDate'];
-    expireDate = json['exprieDate'];
-    location = json['location'];
-    discount = json['discount'];
+
+    purchaseDate = json['purchase_date'];
+    expireDate = json['expire_date'];
+
+    createdDate = json['created_date'];
+    updatedDate = json['updated_date'];
+    createdTime = json['created_time'];
+    updatedTime = json['updated_time'];
   }
 
+  // 🔥 MODEL → SUPABASE INSERT / UPDATE
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+
     data['id'] = id;
     data['barcode'] = barcode;
     data['name'] = name;
-    data['sellType'] = sellType;
     data['category'] = category;
-    data['quantity'] = quantity;
-    data['purchasePrice'] = purchasePrice;
-    data['sellingPrice'] = sellingPrice;
-    data['createdDate'] = createdDate;
-    data['updatedDate'] = updatedDate;
-    data['createdTime'] = createdTime;
-    data['isActive'] = isActive;
-    data['updatedTime'] = updatedTime;
-    data['weight'] = weight;
-    data['flavours'] = flavor;
-    data['animalType'] = animalType;
-    data['color'] = color;
-    data['box'] = box;
-    data['perpiece'] = perpiece;
-    data['isLoose'] = isLoosed;
-    data['billNo'] = billNo;
-    data['paymentMethod'] = paymentMethod;
-    data['isLooseCategory'] = isLooseCategory;
-    data['isFlavorAndWeightNotRequired'] = isFlavorAndWeightNotRequired;
-    data['purchaseDate'] = purchaseDate;
-    data['exprieDate'] = expireDate;
+    data['sell_type'] = sellType;
     data['location'] = location;
+    data['quantity'] = quantity;
+    data['is_active'] = isActive;
+
+    data['purchase_price'] = purchasePrice;
+    data['selling_price'] = sellingPrice;
+
+    data['flavour'] = flavor;
+    data['weight'] = weight;
+    data['color'] = color;
+    data['animal_type'] = animalType;
+
+    data['is_loose'] = isLoosed;
+    data['is_flavor_and_weight_not_required'] = isFlavorAndWeightNotRequired;
+
+    data['bill_no'] = billNo;
+    data['payment_method'] = paymentMethod;
     data['discount'] = discount;
+
     data['level'] = level;
     data['rack'] = rack;
+
+    data['purchase_date'] = purchaseDate;
+    data['expire_date'] = expireDate;
     return data;
   }
 }

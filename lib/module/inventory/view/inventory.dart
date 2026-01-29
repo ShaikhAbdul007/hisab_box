@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -116,7 +115,7 @@ class InventoryView extends GetView<InventroyController> {
     }
 
     final (bool exists, ProductModel? product) = await controller
-        .existingProductInfo(controller.auth.currentUser!.uid, scannedValue);
+        .existingProductInfo(scannedValue);
 
     if (!exists || product == null) {
       _showProductNotFoundDialog();
@@ -157,10 +156,7 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
-    final (bool exists, _) = await controller.existingProductInfo(
-      controller.auth.currentUser!.uid,
-      scannedValue,
-    );
+    final (bool exists, _) = await controller.existingProductInfo(scannedValue);
 
     if (exists) {
       exisitngProductDialog(
@@ -198,7 +194,7 @@ class InventoryView extends GetView<InventroyController> {
     }
 
     final (bool exists, ProductModel? product) = await controller
-        .existingProductInfo(controller.auth.currentUser!.uid, scannedValue);
+        .existingProductInfo(scannedValue);
 
     if (!exists || product == null) {
       _showProductNotFoundDialog();

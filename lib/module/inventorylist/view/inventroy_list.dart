@@ -14,7 +14,7 @@ import '../../../common_widget/search.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
-import '../controller/inventory_controller.dart';
+import '../controller/inventory_list_controller.dart';
 import '../widget/inventory_list_text.dart';
 
 class InventroyList extends GetView<InventoryListController> {
