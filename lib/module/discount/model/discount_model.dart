@@ -19,7 +19,7 @@ class DiscountModel {
     return DiscountModel(
       id: json['id'] ?? '',
       label: json['label'] ?? "",
-      createdAt: json['createdAt'] ?? "",
+      createdAt: json['created_at'] ?? "",
       time: json['time'] ?? "",
     );
   }

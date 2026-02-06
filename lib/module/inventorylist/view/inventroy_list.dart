@@ -172,22 +172,16 @@ class InventroyList extends GetView<InventoryListController> {
                                                     message:
                                                         "List id: ${inventoryList.id}",
                                                   );
-                                                  var res =
-                                                      await AppRoutes.futureNavigationToRoute(
-                                                        routeName:
-                                                            AppRouteName
-                                                                .productDetailView,
-                                                        data: {
-                                                          'product':
-                                                              inventoryList,
-                                                          'isProductLoosed':
-                                                              false,
-                                                        },
-                                                      );
-                                                  // if (res == true) {
-                                                  //   await controller
-                                                  //       .fetchAllProducts();
-                                                  // }
+
+                                                  await AppRoutes.futureNavigationToRoute(
+                                                    routeName:
+                                                        AppRouteName
+                                                            .productDetailView,
+                                                    data: {
+                                                      'product': inventoryList,
+                                                      'isProductLoosed': false,
+                                                    },
+                                                  );
                                                 },
                                                 isInventoryScanSelected:
                                                     controller
@@ -205,7 +199,7 @@ class InventroyList extends GetView<InventoryListController> {
                               ),
                           controller.goDownProductList.isEmpty
                               ? CommonNodatafound(
-                                message: 'No product found in SHOP.',
+                                message: 'No product found in GODOWN.',
                               )
                               : ListView.builder(
                                 itemCount: controller.goDownProductList.length,

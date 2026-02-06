@@ -220,6 +220,7 @@ class SettingView extends GetView<SettingController> {
 
   void logoutDialog() {
     Get.defaultDialog(
+      backgroundColor: AppColors.greyColorShade100,
       title: '',
       titleStyle: CustomTextStyle.customNato(fontSize: 0),
       titlePadding: EdgeInsets.zero,
@@ -242,17 +243,28 @@ class SettingView extends GetView<SettingController> {
               ],
             ),
           ),
-          CommonDivider(indent: 20, endIndent: 20),
+          setHeight(height: 5),
+          CommonDivider(indent: 10, endIndent: 10),
+          setHeight(height: 5),
           Text(
-            'Are you sure you want to log out ?',
-            style: CustomTextStyle.customPoppin(fontSize: 17),
+            'Are you sure you want to log out?',
+            style: CustomTextStyle.customPoppin(),
           ),
           setHeight(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
+              CommonButton(
+                width: 120,
+                isLoading: controller.isUserlogout.value,
+                label: "No",
+                onTap: () {
+                  Get.back();
+                },
+              ),
               Obx(
                 () => CommonButton(
+                  bgColor: AppColors.buttonRedColor,
                   width: 120,
                   isLoading: controller.isUserlogout.value,
                   label: "Yes",
@@ -260,15 +272,6 @@ class SettingView extends GetView<SettingController> {
                     await controller.userlogout();
                   },
                 ),
-              ),
-              CommonButton(
-                isbgReq: false,
-                width: 120,
-                isLoading: controller.isUserlogout.value,
-                label: "No",
-                onTap: () {
-                  Get.back();
-                },
               ),
             ],
           ),

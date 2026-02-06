@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 
@@ -20,7 +21,6 @@ class LooseInventroyListText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int color = int.parse(inventoryModel.color ?? '0');
     String rack = inventoryModel.rack ?? '';
     String level = inventoryModel.level ?? '';
     return Material(
@@ -109,9 +109,9 @@ class LooseInventroyListText extends StatelessWidget {
                             ),
                           ),
                           setWidth(width: 10),
-                          inventoryModel.isLoosed ?? false
+                          inventoryModel.isLooseCategory ?? false
                               ? Text(
-                                'Loosed : ${inventoryModel.isLoosed}',
+                                'Loosed : ${inventoryModel.isLooseCategory}',
                                 style: CustomTextStyle.customOpenSans(
                                   color: AppColors.redColor,
                                 ),
@@ -122,7 +122,7 @@ class LooseInventroyListText extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            inventoryModel.purchaseDate ?? '',
+                            formatDate(inventoryModel.purchaseDate ?? ''),
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
@@ -134,7 +134,7 @@ class LooseInventroyListText extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            inventoryModel.expireDate ?? '',
+                            formatDate(inventoryModel.expireDate ?? ''),
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.redColor,
                             ),

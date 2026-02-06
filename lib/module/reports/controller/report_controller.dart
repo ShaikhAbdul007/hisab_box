@@ -2,14 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/device_info.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:excel/excel.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/reports/model/report_top_product_model.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../helper/helper.dart';
@@ -18,7 +17,7 @@ import '../model/product_report_model.dart';
 
 class ReportController extends GetxController
     with GetSingleTickerProviderStateMixin, DeviceInfoo, CacheManager {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
+  final userId = SupabaseConfig.auth.currentUser?.id;
   var selectedTab = 0.obs;
   RxDouble totalRevenue = 0.0.obs;
   RxDouble totalProfit = 0.0.obs;
@@ -52,90 +51,71 @@ class ReportController extends GetxController
   }
 
   void fetchData() async {
-    final today = setFormateDate();
-    final cache = getTodayReportCache();
-
-    if (cache != null && cache['date'] == today) {
-      // 🔥 LOAD FROM CACHE
-      totalRevenue.value = cache['totalRevenue'] ?? 0;
-      totalProfit.value = cache['totalProfit'] ?? 0;
-      totalCash.value = cache['totalCash'] ?? 0;
-      totalUpi.value = cache['totalUpi'] ?? 0;
-      totalCard.value = cache['totalCard'] ?? 0;
-      totalCredit.value = cache['totalCredit'] ?? 0;
-      totalRoundOff.value = cache['totalRoundOff'] ?? 0;
-      reportTopModel.value = List<ReportTopProductModel>.from(
-        (cache['topProducts'] ?? []).map(
-          (e) => ReportTopProductModel.fromJson(e),
-        ),
-      );
-      reportTopChart.value = List<ReportTopProductModel>.from(
-        (cache['topChart'] ?? []).map((e) => ReportTopProductModel.fromJson(e)),
-      );
-      sellsList.value =
-          (cache['sells'] ?? [])
-              .map<SellsModel>((e) => SellsModel.fromJson(e))
-              .toList();
-
-      return;
-    }
-
-    // 🔥 FIREBASE ONCE
-
+    // Direct Supabase se load karo, cache nahi
     await Future.wait([
-      fetchTodaySalesAndProfit(), // All run
-      fetchPaymentSummary(), // at the
-      fetchTopSellingProducts(), // same
-      fetchTopSellingProductsChart(), // time!
+      fetchTodaySalesAndProfit(),
+      fetchPaymentSummary(),
+      fetchTopSellingProducts(),
+      fetchTopSellingProductsChart(),
       setSellList(),
     ]);
-
-    // 🔥 SAVE CACHE
-    saveTodayReportCache({
-      'date': today,
-      'totalRevenue': totalRevenue.value,
-      'totalProfit': totalProfit.value,
-      'totalCash': totalCash.value,
-      'totalUpi': totalUpi.value,
-      'totalCard': totalCard.value,
-      'totalCredit': totalCredit.value,
-      'totalRoundOff': totalRoundOff.value,
-      'topProducts': reportTopModel.map((e) => e.toJson()).toList(),
-      'topChart': reportTopChart.map((e) => e.toJson()).toList(),
-      'sells': sellsList.map((e) => e.toJson()).toList(),
-    });
   }
 
   Future<void> fetchPaymentSummary() async {
-    if (uid == null) {
+    if (userId == null) {
       totalCash.value = 0.0;
       totalUpi.value = 0.0;
       totalCard.value = 0.0;
       totalCredit.value = 0.0;
       totalRoundOff.value = 0.0;
+      return;
     }
 
     String today = setFormateDate();
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('sales')
-              .where('soldAt', isEqualTo: today)
-              .get();
+      final response = await SupabaseConfig.from('sales')
+          .select('''
+            id,
+            sale_payments (
+              amount,
+              payment_mode
+            )
+          ''')
+          .eq('user_id', userId!)
+          .gte('created_at', '${today}T00:00:00.000Z')
+          .lt('created_at', '${today}T23:59:59.999Z');
 
-      for (var doc in snapshot.docs) {
-        var data = doc.data();
+      totalCash.value = 0.0;
+      totalUpi.value = 0.0;
+      totalCard.value = 0.0;
+      totalCredit.value = 0.0;
+      totalRoundOff.value = 0.0;
 
-        var pay = data['payment'] ?? {};
+      for (var sale in response) {
+        final payments = sale['sale_payments'] as List?;
+        if (payments != null) {
+          for (var payment in payments) {
+            final mode =
+                payment['payment_mode']?.toString().toLowerCase() ?? '';
+            final amount = (payment['amount'] ?? 0).toDouble();
 
-        totalCash.value += (pay['cash'] ?? 0).toDouble();
-        totalUpi.value += (pay['upi'] ?? 0).toDouble();
-        totalCard.value += (pay['card'] ?? 0).toDouble();
-        totalCredit.value += (pay['credit'] ?? 0).toDouble();
-        totalRoundOff.value += (pay['roundOffAmount'] ?? 0).toDouble();
+            switch (mode) {
+              case 'cash':
+                totalCash.value += amount;
+                break;
+              case 'upi':
+                totalUpi.value += amount;
+                break;
+              case 'card':
+                totalCard.value += amount;
+                break;
+              case 'credit':
+                totalCredit.value += amount;
+                break;
+            }
+          }
+        }
       }
     } catch (e) {
       customMessageOrErrorPrint(message: "Payment Summary Error: $e");
@@ -191,42 +171,73 @@ class ReportController extends GetxController
     totalProfit.value = 0.0;
     totalRevenue.value = 0.0;
 
-    if (uid == null) return;
+    if (userId == null) return;
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('sales')
-              .where('soldAt', isEqualTo: today)
-              .get();
+      // Step 1: Get sales data without product join
+      final response = await SupabaseConfig.from('sales')
+          .select('''
+            id,
+            total_amount,
+            sale_items (
+              qty,
+              final_price,
+              original_price,
+              product_id
+            )
+          ''')
+          .eq('user_id', userId!)
+          .gte('created_at', '${today}T00:00:00.000Z')
+          .lt('created_at', '${today}T23:59:59.999Z');
 
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-
+      for (final sale in response) {
         // ---------- REVENUE ----------
-        totalRevenue.value += (data['finalAmount'] ?? 0).toDouble();
+        totalRevenue.value += (sale['total_amount'] ?? 0).toDouble();
 
         // ---------- PROFIT ----------
-        final List items = data['items'] ?? [];
+        final List items = sale['sale_items'] ?? [];
 
-        for (final raw in items) {
-          totalProfit.value += calculateItemProfit(
-            Map<String, dynamic>.from(raw),
-          );
+        for (final item in items) {
+          final int qty = (item['qty'] ?? 1).toInt();
+          final double finalPrice = (item['final_price'] ?? 0).toDouble();
+          final String? productId = item['product_id'];
+
+          if (productId != null && qty > 0 && finalPrice > 0) {
+            // Step 2: Get purchase price from stock_batches separately
+            try {
+              final batchResponse =
+                  await SupabaseConfig.from('stock_batches')
+                      .select('purchase_price')
+                      .eq('product_id', productId)
+                      .eq('user_id', userId!)
+                      .limit(1)
+                      .maybeSingle();
+
+              final double purchasePrice =
+                  (batchResponse?['purchase_price'] ?? 0).toDouble();
+
+              if (purchasePrice > 0) {
+                totalProfit.value += finalPrice - (purchasePrice * qty);
+              }
+            } catch (e) {
+              // Skip this item if batch data not found
+              continue;
+            }
+          }
         }
       }
     } catch (e) {
-      customMessageOrErrorPrint(message: "Error: $e");
+      customMessageOrErrorPrint(message: "Sales & Profit Error: $e");
       totalProfit.value = 0.0;
       totalRevenue.value = 0.0;
     }
   }
 
   Future<void> fetchTopSellingProductsChart() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) reportTopChart.value = [];
+    if (userId == null) {
+      reportTopChart.value = [];
+      return;
+    }
 
     String today = setFormateDate();
 
@@ -234,25 +245,56 @@ class ReportController extends GetxController
     Map<String, double> revenueMap = {};
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('sales')
-              .where('soldAt', isEqualTo: today)
-              .get();
+      // Step 1: Get sale items without product join
+      final response = await SupabaseConfig.from('sales')
+          .select('''
+            id,
+            sale_items (
+              qty,
+              final_price,
+              product_id
+            )
+          ''')
+          .eq('user_id', userId!)
+          .gte('created_at', '${today}T00:00:00.000Z')
+          .lt('created_at', '${today}T23:59:59.999Z');
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        List items = data["items"] ?? [];
+      // Step 2: Get product names separately
+      Set<String> productIds = {};
+      for (var sale in response) {
+        final List items = sale["sale_items"] ?? [];
+        for (var item in items) {
+          final productId = item['product_id'];
+          if (productId != null) {
+            productIds.add(productId);
+          }
+        }
+      }
+
+      // Step 3: Get product names in batch
+      Map<String, String> productNames = {};
+      if (productIds.isNotEmpty) {
+        final productResponse = await SupabaseConfig.from(
+          'products',
+        ).select('id, name').inFilter('id', productIds.toList());
+
+        for (var product in productResponse) {
+          productNames[product['id']] = product['name'] ?? 'Unknown';
+        }
+      }
+
+      // Step 4: Process the data
+      for (var sale in response) {
+        final List items = sale["sale_items"] ?? [];
 
         for (var item in items) {
-          String name = item["name"] ?? "Unknown";
-          int qty = (item["quantity"] ?? 1).toInt();
-          double price = (item["finalPrice"] ?? 0).toDouble();
+          final productId = item['product_id'];
+          String name = productNames[productId] ?? "Unknown";
+          int qty = (item["qty"] ?? 1).toInt();
+          double price = (item["final_price"] ?? 0).toDouble();
 
           qtyMap[name] = (qtyMap[name] ?? 0) + qty;
-          revenueMap[name] = (revenueMap[name] ?? 0) + (price * qty);
+          revenueMap[name] = (revenueMap[name] ?? 0) + price;
         }
       }
 
@@ -268,7 +310,7 @@ class ReportController extends GetxController
       result.sort((a, b) => b.totalQty!.compareTo(a.totalQty.toString()));
       reportTopChart.value = result;
     } catch (e) {
-      customMessageOrErrorPrint(message: "Error: $e");
+      customMessageOrErrorPrint(message: "Top Chart Error: $e");
       reportTopChart.value = [];
     }
   }
@@ -276,17 +318,35 @@ class ReportController extends GetxController
   Future<List<SellsModel>> fetchRevenueList() async {
     try {
       final today = setFormateDate();
-      if (uid == null) return [];
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('sales')
-              .where('soldAt', isEqualTo: today)
-              .get();
+      if (userId == null) return [];
+
+      final response = await SupabaseConfig.from('sales')
+          .select('''
+            id,
+            total_amount,
+            created_at,
+            customer_id,
+            customers (name, mobile_number),
+            sale_items (
+              qty,
+              final_price,
+              original_price,
+              discount_amount,
+              product_id
+            ),
+            sale_payments (
+              amount,
+              payment_mode,
+              reference_no
+            )
+          ''')
+          .eq('user_id', userId!)
+          .gte('created_at', '${today}T00:00:00.000Z')
+          .lt('created_at', '${today}T23:59:59.999Z')
+          .order('created_at', ascending: false);
+
       final List<SellsModel> bills =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
+          response.map((data) {
             return SellsModel.fromJson(data);
           }).toList();
 
@@ -308,7 +368,7 @@ class ReportController extends GetxController
   }
 
   Future<void> fetchTopSellingProducts() async {
-    if (uid == null) {
+    if (userId == null) {
       reportTopModel.value = [];
       return;
     }
@@ -319,21 +379,53 @@ class ReportController extends GetxController
     Map<String, double> revenueMap = {};
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('sales')
-              .where('soldAt', isEqualTo: today)
-              .get();
+      // Step 1: Get sale items without product join
+      final response = await SupabaseConfig.from('sales')
+          .select('''
+            id,
+            sale_items (
+              qty,
+              final_price,
+              product_id
+            )
+          ''')
+          .eq('user_id', userId!)
+          .gte('created_at', '${today}T00:00:00.000Z')
+          .lt('created_at', '${today}T23:59:59.999Z');
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        List items = data["items"] ?? [];
+      // Step 2: Get product names separately
+      Set<String> productIds = {};
+      for (var sale in response) {
+        final List items = sale["sale_items"] ?? [];
         for (var item in items) {
-          String name = item["name"] ?? "Unknown";
-          int qty = (item["quantity"] ?? 1).toInt();
-          double finalPrice = (item["finalPrice"] ?? 0).toDouble();
+          final productId = item['product_id'];
+          if (productId != null) {
+            productIds.add(productId);
+          }
+        }
+      }
+
+      // Step 3: Get product names in batch
+      Map<String, String> productNames = {};
+      if (productIds.isNotEmpty) {
+        final productResponse = await SupabaseConfig.from(
+          'products',
+        ).select('id, name').inFilter('id', productIds.toList());
+
+        for (var product in productResponse) {
+          productNames[product['id']] = product['name'] ?? 'Unknown';
+        }
+      }
+
+      // Step 4: Process the data
+      for (var sale in response) {
+        final List items = sale["sale_items"] ?? [];
+        for (var item in items) {
+          final productId = item['product_id'];
+          String name = productNames[productId] ?? "Unknown";
+          int qty = (item["qty"] ?? 1).toInt();
+          double finalPrice = (item["final_price"] ?? 0).toDouble();
+
           qtyMap[name] = (qtyMap[name] ?? 0) + qty;
           revenueMap[name] = (revenueMap[name] ?? 0) + finalPrice;
         }
@@ -354,6 +446,7 @@ class ReportController extends GetxController
 
       reportTopModel.value = result;
     } catch (e) {
+      customMessageOrErrorPrint(message: "Top Products Error: $e");
       reportTopModel.value = [];
     }
   }
@@ -456,35 +549,96 @@ class ReportController extends GetxController
     required String label,
     required String reportType,
   }) async {
-    dynamic data;
+    if (userId == null) return [];
+
     (String, String) todaydate = getDateRange(
       label: label,
       customEndDate: '',
       customStartDate: '',
     );
-    String collectionName = getCollectionAsPerReportType(reportType);
-    if (reportType == 'Product Stock In') {
-      data =
-          data =
-              await FirebaseFirestore.instance
-                  .collection("users")
-                  .doc(uid)
-                  .collection(collectionName)
-                  .where("createdDate", isGreaterThanOrEqualTo: todaydate.$1)
-                  .where("createdDate", isLessThanOrEqualTo: todaydate.$2)
-                  .get();
-    } else {
-      data =
-          await FirebaseFirestore.instance
-              .collection("users")
-              .doc(uid)
-              .collection(collectionName)
-              .where("soldAt", isGreaterThanOrEqualTo: todaydate.$1)
-              .where("soldAt", isLessThanOrEqualTo: todaydate.$2)
-              .get();
-    }
 
-    return data.docs.map((e) => e.data()).toList();
+    try {
+      if (reportType == 'Product Stock In') {
+        // Product stock in from stock_batches table
+        final response = await SupabaseConfig.from('stock_batches')
+            .select('''
+              id,
+              quantity,
+              purchase_date,
+              created_at,
+              products (
+                name,
+                categories:category (name),
+                animals:animal_type (name),
+                weight
+              )
+            ''')
+            .eq('user_id', userId!)
+            .gte('purchase_date', _convertDateFormat(todaydate.$1))
+            .lte('purchase_date', _convertDateFormat(todaydate.$2));
+
+        return response
+            .map(
+              (e) => {
+                'name': e['products']?['name'] ?? '',
+                'category': e['products']?['categories']?['name'] ?? '',
+                'animalType': e['products']?['animals']?['name'] ?? '',
+                'weight': e['products']?['weight'] ?? '',
+                'quantity': e['quantity'] ?? 0,
+                'createdDate': e['purchase_date'] ?? '',
+                'createdTime': e['created_at'] ?? '',
+              },
+            )
+            .toList();
+      } else {
+        // Sales related reports
+        final response = await SupabaseConfig.from('sales')
+            .select('''
+              id,
+              total_amount,
+              created_at,
+              customers (name),
+              sale_items (
+                qty,
+                final_price,
+                original_price,
+                discount_amount,
+                product_id
+              ),
+              sale_payments (
+                amount,
+                payment_mode,
+                reference_no
+              )
+            ''')
+            .eq('user_id', userId!)
+            .gte(
+              'created_at',
+              '${_convertDateFormat(todaydate.$1)}T00:00:00.000Z',
+            )
+            .lte(
+              'created_at',
+              '${_convertDateFormat(todaydate.$2)}T23:59:59.999Z',
+            );
+
+        return response;
+      }
+    } catch (e) {
+      customMessageOrErrorPrint(message: "Product Report Error: $e");
+      return [];
+    }
+  }
+
+  String _convertDateFormat(String ddMMyyyy) {
+    try {
+      final parts = ddMMyyyy.split('-');
+      if (parts.length == 3) {
+        return '${parts[2]}-${parts[1]}-${parts[0]}'; // yyyy-MM-dd
+      }
+    } catch (e) {
+      customMessageOrErrorPrint(message: "Date conversion error: $e");
+    }
+    return ddMMyyyy;
   }
 
   String getCollectionAsPerReportType(String reportType) {
@@ -702,54 +856,3 @@ class ReportController extends GetxController
     );
   }
 }
-
-
-
-  // Future<void> fetchTodaySalesAndProfit() async {
-  //   String today = setFormateDate();
-
-  //   totalProfit.value = 0.0;
-  //   totalRevenue.value = 0.0;
-
-  //   if (uid == null) return;
-
-  //   try {
-  //     final snapshot =
-  //         await FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('sales')
-  //             .where('soldAt', isEqualTo: today)
-  //             .get();
-
-  //     if (snapshot.docs.isEmpty) return;
-
-  //     for (var doc in snapshot.docs) {
-  //       final data = doc.data();
-
-  //       // ---------- REVENUE -----------
-  //       double saleAmount = (data['finalAmount'] ?? 0).toDouble();
-  //       totalRevenue.value += saleAmount;
-
-  //       // ---------- PROFIT CALCULATION ----------
-  //       List items = data["items"] ?? [];
-
-  //       for (var item in items) {
-  //         double finalPrice =
-  //             (item["finalPrice"] ?? 0).toDouble(); // TOTAL SELLING
-  //         double costPP =
-  //             (item["purchasePrice"] ?? 0).toDouble(); // COST PER PIECE
-  //         int qty = (item["quantity"] ?? 1).toInt();
-
-  //         double totalCost = costPP * qty;
-  //         double profit = finalPrice - totalCost;
-
-  //         totalProfit.value += profit;
-  //       }
-  //     }
-  //   } catch (e) {
-  //     customMessageOrErrorPrint(message: "Error: $e");
-  //     totalProfit.value = 0.0;
-  //     totalRevenue.value = 0.0;
-  //   }
-  // }

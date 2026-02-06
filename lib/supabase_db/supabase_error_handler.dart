@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseErrorHandler {
@@ -32,6 +33,7 @@ class SupabaseErrorHandler {
     if (message.contains('User already registered')) {
       return 'Account already exists with this email';
     }
+    AppLogger.info(message);
 
     return message; // fallback (safe)
   }

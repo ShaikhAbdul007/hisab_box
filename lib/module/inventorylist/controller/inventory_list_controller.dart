@@ -1,16 +1,15 @@
 import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
-import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 
 class InventoryListController extends GetxController
     with GetSingleTickerProviderStateMixin, CacheManager {
+  final userId = SupabaseConfig.auth.currentUser?.id;
+
   var productList = <ProductModel>[].obs;
   var goDownProductList = <ProductModel>[].obs;
   var shopProductList = <ProductModel>[].obs;
@@ -49,108 +48,153 @@ class InventoryListController extends GetxController
     super.onReady();
   }
 
-  // ================================
-  // 🔥 SHOP PRODUCTS (SUPABASE)
-  // ================================
-  void listenShopProducts() async {
+  // 🔥 SHOP PRODUCTS
+  // 🔥 SHOP PRODUCTS (Explicit Relationship Version)
+  Future<void> listenShopProducts() async {
     final userId = SupabaseConfig.auth.currentUser?.id;
     if (userId == null) return;
 
     isDataLoading.value = true;
-
-    final response = await SupabaseConfig.from('product_stock')
-        .select('''
-          quantity,
-          location,
-          is_active,
-          stock_type,
-          selling_price,
-          products (
-            id,
-            name,
-            category,
-            animal_type,
-            is_loose_category,
-            is_flavor_and_weight_not_required
+    try {
+      // 💡 Humne yahan 'products!product_stock_product_id_fkey' specify kar diya hai
+      final response = await SupabaseConfig.from('product_stock')
+          .select('''
+        quantity, location, selling_price, discount, stock_type, is_active,
+        products!product_stock_product_id_fkey (
+          id, name, flavour, weight, rack, level,
+          is_loose_category, is_flavor_and_weight_not_required,
+          categories(name),
+          animal_categories(name),
+          stock_batches (
+            purchase_date,
+            expiry_date,
+            purchase_price
           )
-        ''')
-        .eq('user_id', userId)
-        .eq('location', 'shop')
-        .eq('is_active', true);
+        )
+      ''')
+          .eq('user_id', userId)
+          .eq('location', 'shop')
+          .eq('is_active', true);
 
-    final shopList =
-        (response as List).map((e) {
-          final product = Map<String, dynamic>.from(e['products']);
+      final List dataList = response as List;
+      final shopList =
+          dataList.map((e) {
+            // Yahan bhi dhyan rakha hai ki product key wahi ho jo join mein di hai
+            final productMap = Map<String, dynamic>.from(e['products']);
 
-          product['quantity'] = e['quantity'];
-          product['location'] = e['location'];
-          product['is_active'] = e['is_active'];
-          product['selling_price'] = e['selling_price'];
+            productMap['category'] = productMap['categories']?['name'];
+            productMap['animal_type'] =
+                productMap['animal_categories']?['name'];
 
-          // packet / loose mapping
-          product['is_loose'] = e['stock_type'] == 'loose';
+            productMap['quantity'] = e['quantity'];
+            productMap['selling_price'] = e['selling_price'];
+            productMap['location'] = e['location'];
+            productMap['discount'] = e['discount'];
+            productMap['is_active'] = e['is_active'];
+            productMap['is_loose'] = e['stock_type'] == 'loose';
 
-          return ProductModel.fromJson(product);
-        }).toList();
+            final batches = productMap['stock_batches'] as List?;
+            if (batches != null && batches.isNotEmpty) {
+              productMap['purchase_date'] = batches[0]['purchase_date'];
+              productMap['expiry_date'] = batches[0]['expiry_date'];
+              productMap['purchasePrice'] = batches[0]['purchase_price'];
+            }
 
-    saveProductList(shopList);
-    shopProductList.value = shopList;
+            return ProductModel.fromJson(productMap);
+          }).toList();
 
-    updateMainProductList();
-    recalculateInventoryDashboardOnly();
+      shopProductList.value = shopList;
+      updateMainProductList();
+      recalculateInventoryDashboardOnly();
+    } catch (e) {
+      print("Shop Fetch Error: $e");
+    } finally {
+      isDataLoading.value = false;
+    }
   }
 
-  // ================================
-  // 🔥 GODOWN PRODUCTS (SUPABASE)
-  // ================================
+  // 🔥 GODOWN PRODUCTS
   void listenGodownProducts() async {
-    final userId = SupabaseConfig.auth.currentUser?.id;
+    final userId = SupabaseConfig.auth.currentUser?.id; // Extra safety check
     if (userId == null) return;
 
-    final response = await SupabaseConfig.from('product_stock')
-        .select('''
-          quantity,
-          location,
-          is_active,
-          stock_type,
-          selling_price,
-          products (
-            id,
-            name,
-            category,
-            animal_type,
-            is_loose_category,
-            is_flavor_and_weight_not_required
+    try {
+      // 💡 1. Explicit Join: products!product_stock_product_id_fkey use kiya hai
+      // 💡 2. stock_batches ko products ke andar move kiya hai
+      final response = await SupabaseConfig.from('product_stock')
+          .select('''
+        quantity, 
+        location, 
+        selling_price, 
+        discount, 
+        stock_type, 
+        is_active,
+        products!product_stock_product_id_fkey (
+          id, 
+          name, 
+          flavour, 
+          weight, 
+          rack, 
+          level,
+          is_loose_category, 
+          is_flavor_and_weight_not_required,
+          categories(name),
+          animal_categories(name),
+          stock_batches (
+            purchase_date,
+            expiry_date,
+            purchase_price
           )
-        ''')
-        .eq('user_id', userId)
-        .eq('location', 'godown')
-        .eq('is_active', true);
+        )
+      ''')
+          .eq('user_id', userId)
+          .eq('location', 'godown')
+          .eq('is_active', true);
 
-    final godownList =
-        (response as List).map((e) {
-          final product = Map<String, dynamic>.from(e['products']);
+      final List dataList = response as List;
 
-          product['quantity'] = e['quantity'];
-          product['location'] = e['location'];
-          product['is_active'] = e['is_active'];
-          product['selling_price'] = e['selling_price'];
+      // Agar list khali hai toh debugger mein check karne ke liye:
+      if (dataList.isEmpty) {
+        print("Godown is empty in DB for user: $userId");
+      }
 
-          product['is_loose'] = e['stock_type'] == 'loose';
+      final godownList =
+          dataList.map((e) {
+            // Products data path check
+            final productMap = Map<String, dynamic>.from(e['products']);
 
-          return ProductModel.fromJson(product);
-        }).toList();
+            productMap['category'] = productMap['categories']?['name'];
+            productMap['animal_type'] =
+                productMap['animal_categories']?['name'];
 
-    saveGodownProductList(godownList);
-    goDownProductList.value = godownList;
+            productMap['quantity'] = e['quantity'];
+            productMap['selling_price'] = e['selling_price'];
+            productMap['location'] = e['location'];
+            productMap['discount'] = e['discount'];
+            productMap['is_active'] = e['is_active'];
+            productMap['is_loose'] = e['stock_type'] == 'loose';
 
-    updateMainProductList();
-    recalculateInventoryDashboardOnly();
+            // ✅ Correct Path: stock_batches ab products ke andar hai
+            final batches = productMap['stock_batches'] as List?;
+            if (batches != null && batches.isNotEmpty) {
+              productMap['purchase_date'] = batches[0]['purchase_date'];
+              productMap['expiry_date'] = batches[0]['expiry_date'];
+              productMap['purchasePrice'] = batches[0]['purchase_price'];
+            }
+
+            return ProductModel.fromJson(productMap);
+          }).toList();
+
+      goDownProductList.value = godownList;
+      updateMainProductList();
+      recalculateInventoryDashboardOnly();
+    } catch (e) {
+      print("Godown Fetch Error: $e");
+      // Delivery check: Error dikhana zaroori hai
+      showMessage(message: "Godown Error: $e");
+    }
   }
 
-  // ================================
-  // 🔥 MERGE SHOP + GODOWN
-  // ================================
   void updateMainProductList() {
     productList.value = [...shopProductList, ...goDownProductList];
     isDataLoading.value = false;
@@ -177,348 +221,7 @@ class InventoryListController extends GetxController
 
   @override
   void onClose() {
+    tabController?.dispose();
     super.onClose();
   }
 }
-
-
-// class InventoryListController extends GetxController
-//     with GetSingleTickerProviderStateMixin, CacheManager {
-//   // 🔥 FIREBASE REMOVED
-//   // final FirebaseAuth _auth = FirebaseAuth.instance;
-
-//   var productList = <ProductModel>[].obs;
-//   var goDownProductList = <ProductModel>[].obs;
-//   var shopProductList = <ProductModel>[].obs;
-
-//   RxBool isDataLoading = false.obs;
-//   RxBool isSaveLoading = false.obs;
-//   RxBool isInventoryScanSelected = false.obs;
-//   RxBool isSea = false.obs;
-//   RxBool isLoose = false.obs;
-//   RxBool isFlavorAndWeightNotRequired = false.obs;
-
-//   RxString searchText = ''.obs;
-
-//   TextEditingController updateQuantity = TextEditingController();
-//   TextEditingController name = TextEditingController();
-//   TextEditingController sellingPrice = TextEditingController();
-//   TextEditingController flavor = TextEditingController();
-//   TextEditingController weight = TextEditingController();
-//   TextEditingController purchasePrice = TextEditingController();
-//   TextEditingController searchController = TextEditingController();
-//   TextEditingController addSubtractQty = TextEditingController();
-
-//   TabController? tabController;
-
-//   // 🔥 FIREBASE STREAMS REMOVED (names kept, unused)
-
-//   @override
-//   void onInit() {
-//     isInventoryScanSelectedValue();
-//     tabController = TabController(length: 2, vsync: this);
-//     super.onInit();
-//   }
-
-//   @override
-//   void onReady() {
-//     // 🔥 MANUAL FETCH (instead of realtime listeners)
-//     listenShopProducts();
-//     listenGodownProducts();
-//     super.onReady();
-//   }
-
-//   // ================================
-//   // 🔥 SHOP PRODUCTS (SUPABASE)
-//   // ================================
-//   void listenShopProducts() async {
-//     final userId = SupabaseConfig.auth.currentUser?.id;
-//     if (userId == null) return;
-
-//     isDataLoading.value = true;
-
-//     final response = await SupabaseConfig.from('products')
-//         .select()
-//         .eq('user_id', userId)
-//         .eq('location', 'shop')
-//         .eq('is_active', true);
-
-//     final shopList =
-//         (response as List).map((e) => ProductModel.fromJson(e)).toList();
-
-//     // 🔥 Cache shop products
-//     saveProductList(shopList);
-
-//     // 🔥 Update shop list
-//     shopProductList.value = shopList;
-
-//     // 🔥 Merge lists
-//     updateMainProductList();
-
-//     // 🔥 Dashboard recalculation
-//     recalculateInventoryDashboardOnly();
-//   }
-
-//   // ================================
-//   // 🔥 GODOWN PRODUCTS (SUPABASE)
-//   // ================================
-//   void listenGodownProducts() async {
-//     final userId = SupabaseConfig.auth.currentUser?.id;
-//     if (userId == null) return;
-
-//     final response = await SupabaseConfig.from('products')
-//         .select()
-//         .eq('user_id', userId)
-//         .eq('location', 'godown')
-//         .eq('is_active', true);
-
-//     final godownList =
-//         (response as List).map((e) => ProductModel.fromJson(e)).toList();
-
-//     // 🔥 Cache godown products
-//     saveGodownProductList(godownList);
-
-//     // 🔥 Update godown list
-//     goDownProductList.value = godownList;
-
-//     // 🔥 Merge lists
-//     updateMainProductList();
-
-//     // 🔥 Dashboard recalculation
-//     recalculateInventoryDashboardOnly();
-//   }
-
-//   // ================================
-//   // 🔥 MERGE SHOP + GODOWN
-//   // ================================
-//   void updateMainProductList() {
-//     productList.value = [...shopProductList, ...goDownProductList];
-//     isDataLoading.value = false;
-//   }
-
-//   void clear() {
-//     searchController.clear();
-//     searchText.value = '';
-//   }
-
-//   void controllerClear() {
-//     addSubtractQty.clear();
-//   }
-
-//   void isInventoryScanSelectedValue() async {
-//     bool isInventoryScanSelecteds = await retrieveInventoryScan();
-//     isInventoryScanSelected.value = isInventoryScanSelecteds;
-//   }
-
-//   void searchProduct(String value) {
-//     searchText.value = value;
-//     searchController.text = searchText.value;
-//   }
-
-//   @override
-//   void onClose() {
-//     // 🔥 Streams already null, but cleanup kept
-
-//     super.onClose();
-//   }
-// }
-
-
-
-// class InventoryListController extends GetxController
-//     with GetSingleTickerProviderStateMixin, cache.CacheManager {
-//   final FirebaseAuth _auth = FirebaseAuth.instance;
-//   var productList = <ProductModel>[].obs;
-//   var goDownProductList = <ProductModel>[].obs;
-//   var shopProductList = <ProductModel>[].obs;
-//   RxBool isDataLoading = false.obs;
-//   RxBool isSaveLoading = false.obs;
-//   RxBool isInventoryScanSelected = false.obs;
-//   RxBool isSea = false.obs;
-//   RxBool isLoose = false.obs;
-//   RxBool isFlavorAndWeightNotRequired = false.obs;
-//   RxString searchText = ''.obs;
-//   TextEditingController updateQuantity = TextEditingController();
-//   TextEditingController name = TextEditingController();
-//   TextEditingController sellingPrice = TextEditingController();
-//   TextEditingController flavor = TextEditingController();
-//   TextEditingController weight = TextEditingController();
-//   TextEditingController purchasePrice = TextEditingController();
-//   TextEditingController searchController = TextEditingController();
-//   TextEditingController addSubtractQty = TextEditingController();
-//   TabController? tabController;
-//   StreamSubscription<QuerySnapshot>? productSub;
-//   StreamSubscription<QuerySnapshot>? godownSub; // 🔥 NEW LISTENER
-//   StreamSubscription<QuerySnapshot>? looseSub; // 🔥 LOOSE PRODUCTS LISTENER
-
-//   @override
-//   void onInit() {
-//     isInventoryScanSelectedValue();
-//     tabController = TabController(length: 2, vsync: this);
-//     super.onInit();
-//   }
-
-//   @override
-//   void onReady() {
-//     listenShopProducts(); // 🔥 REALTIME SHOP
-//     listenGodownProducts(); // 🔥 REALTIME GODOWN
-//     // listenLooseProducts(); // 🔥 REALTIME LOOSE
-//     super.onReady();
-//   }
-
-//   void listenShopProducts() {
-//     final uid = _auth.currentUser?.uid;
-//     if (uid == null) return;
-
-//     isDataLoading.value = true;
-
-//     productSub = FirebaseFirestore.instance
-//         .collection('users')
-//         .doc(uid)
-//         .collection('products') // SHOP
-//         .where('isActive', isEqualTo: true)
-//         .snapshots()
-//         .listen((snapshot) {
-//           final shopList =
-//               snapshot.docs
-//                   .map((e) => ProductModel.fromJson(e.data()))
-//                   .toList();
-
-//           // 🔥 Cache shop products
-//           saveProductList(shopList);
-
-//           // 🔥 Update shop list
-//           shopProductList.value = shopList;
-
-//           // 🔥 Merge and update main list
-//           updateMainProductList();
-
-//           // 🔥 UPDATE DASHBOARD CACHE
-//           recalculateInventoryDashboardOnly();
-//         });
-//   }
-
-//   void listenGodownProducts() {
-//     final uid = _auth.currentUser?.uid;
-//     if (uid == null) return;
-
-//     godownSub = FirebaseFirestore.instance
-//         .collection('users')
-//         .doc(uid)
-//         .collection('godownProducts') // GODOWN
-//         .where('isActive', isEqualTo: true)
-//         .snapshots()
-//         .listen((snapshot) {
-//           final godownList =
-//               snapshot.docs
-//                   .map((e) => ProductModel.fromJson(e.data()))
-//                   .toList();
-
-//           // 🔥 Cache godown products
-//           saveGodownProductList(godownList);
-
-//           // 🔥 Update godown list
-//           goDownProductList.value = godownList;
-
-//           // 🔥 Merge and update main list
-//           updateMainProductList();
-
-//           // 🔥 UPDATE DASHBOARD CACHE
-//           recalculateInventoryDashboardOnly();
-//         });
-//   }
-
-//   void updateMainProductList() {
-//     // 🔥 Merge shop + godown lists
-//     productList.value = [...shopProductList, ...goDownProductList];
-//     isDataLoading.value = false;
-//   }
-
-//   void clear() {
-//     searchController.clear();
-//     searchText.value = '';
-//   }
-
-//   void controllerClear() {
-//     addSubtractQty.clear();
-//   }
-
-//   void isInventoryScanSelectedValue() async {
-//     bool isInventoryScanSelecteds = await retrieveInventoryScan();
-//     isInventoryScanSelected.value = isInventoryScanSelecteds;
-//   }
-
-//   void searchProduct(String value) {
-//     searchText.value = value;
-//     searchController.text = searchText.value;
-//   }
-
-//   @override
-//   void onClose() {
-//     productSub?.cancel();
-//     godownSub?.cancel(); // 🔥 CANCEL GODOWN LISTENER
-//     looseSub?.cancel(); // 🔥 CANCEL LOOSE LISTENER
-//     super.onClose();
-//   }
-// }
-
-//  void setListAsPerType() {
-//     // 🔥 NO NEED TO FILTER - ALREADY SEPARATED
-//     // shopProductList and goDownProductList are already updated by listeners
-//   }
-
-
-// void listenLooseProducts() {
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-
-  //   looseSub = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('looseProducts') // LOOSE
-  //       .where('isActive', isEqualTo: true)
-  //       .snapshots()
-  //       .listen((snapshot) async {
-  //         final looseList =
-  //             snapshot.docs
-  //                 .map((e) => ProductModel.fromJson(e.data()))
-  //                 .toList();
-
-  //         // 🔥 Cache loose products (convert to LooseInvetoryModel)
-  //         final looseModels =
-  //             looseList
-  //                 .map(
-  //                   (p) => LooseInvetoryModel(
-  //                     barcode: p.barcode,
-  //                     name: p.name,
-  //                     category: p.category,
-  //                     animalType: p.animalType,
-  //                     quantity: p.quantity?.toInt(),
-  //                     purchasePrice: p.purchasePrice,
-  //                     sellingPrice: p.sellingPrice,
-  //                     weight: p.weight,
-  //                     color: p.color,
-  //                     level: p.level,
-  //                     rack: p.rack,
-  //                     location: p.location,
-  //                     discount: p.discount,
-  //                     isFlavorAndWeightNotRequired:
-  //                         p.isFlavorAndWeightNotRequired,
-  //                     createdDate: p.createdDate,
-  //                     createdTime: p.createdTime,
-  //                     updatedDate: p.updatedDate,
-  //                     updatedTime: p.updatedTime,
-  //                     expireDate: p.expireDate,
-  //                     purchaseDate: p.purchaseDate,
-  //                     isActive: p.isActive,
-  //                     sellType: p.sellType,
-  //                   ),
-  //                 )
-  //                 .toList();
-
-  //         saveLoosedProductList(looseModels);
-
-  //         // 🔥 UPDATE DASHBOARD CACHE
-  //         recalculateInventoryDashboardOnly();
-  //       });
-  // }

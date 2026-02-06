@@ -1,21 +1,16 @@
 import 'dart:math';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
-import 'package:inventory/helper/logger.dart';
-import 'package:inventory/module/loose_sell/model/loose_model.dart';
-
-import '../../../helper/app_message.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../helper/helper.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 
 class ProductController extends GetxController with CacheManager {
-  final FirebaseAuth auth = FirebaseAuth.instance;
+  final uid = SupabaseConfig.auth.currentUser?.id;
+  // 🔥 Supabase Config use kar rahe hain
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   var productList = <ProductModel>[].obs;
@@ -23,6 +18,7 @@ class ProductController extends GetxController with CacheManager {
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
   RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
+
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
   TextEditingController looseSellingPrice = TextEditingController();
@@ -41,6 +37,7 @@ class ProductController extends GetxController with CacheManager {
   TextEditingController purchaseDate = TextEditingController();
   TextEditingController exprieDate = TextEditingController();
   TextEditingController loooseProductName = TextEditingController();
+
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isLooseProductSave = false.obs;
   RxBool isSaveLoading = false.obs;
@@ -63,10 +60,6 @@ class ProductController extends GetxController with CacheManager {
     loosedProduct.value = data['flag'];
     if (loosedProduct.value) {
       loooseProductName.text = data['productName'];
-      AppLogger.debug(
-        'Product name set: ${data['productName']}',
-        'ProductController',
-      );
     }
   }
 
@@ -88,57 +81,48 @@ class ProductController extends GetxController with CacheManager {
     await fetchAnimalCategories();
   }
 
+  // ================================
+  // 🔥 FETCH CATEGORIES (SUPABASE)
+  // ================================
   Future<void> fetchCategories() async {
     var categorList = await retrieveCategoryModel();
     if (categorList.isNotEmpty) {
       categoryList.value = categorList;
     } else {
-      final uid = auth.currentUser?.uid;
       if (uid == null) return;
 
       try {
-        final snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .collection('categories')
-                .get();
+        final response = await SupabaseConfig.from(
+          'categories',
+        ).select().eq('user_id', uid ?? '');
 
         categoryList.value =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return CategoryModel.fromJson(data);
-            }).toList();
+            (response as List).map((e) => CategoryModel.fromJson(e)).toList();
         saveCategoryModel(categoryList);
-      } on FirebaseAuthException catch (e) {
+      } catch (e) {
         showMessage(message: e.toString());
       }
     }
   }
 
+  // ================================
+  // 🔥 FETCH ANIMAL CATEGORIES (SUPABASE)
+  // ================================
   Future<void> fetchAnimalCategories() async {
     var animalCategorList = await retrieveAnimalCategoryModel();
     if (animalCategorList.isNotEmpty) {
       animalTypeList.value = animalCategorList;
     } else {
-      final uid = auth.currentUser?.uid;
       if (uid == null) return;
       try {
-        final snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .collection('animalCategories')
-                .get();
+        final response = await SupabaseConfig.from(
+          'animal_categories',
+        ).select().eq('user_id', uid ?? '');
+
         animalTypeList.value =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return CategoryModel.fromJson(data);
-            }).toList();
+            (response as List).map((e) => CategoryModel.fromJson(e)).toList();
         saveAnimalCategoryModel(animalTypeList);
-      } on FirebaseAuthException catch (e) {
+      } catch (e) {
         showMessage(message: e.toString());
       }
     }
@@ -150,324 +134,222 @@ class ProductController extends GetxController with CacheManager {
     return '0xff${color.toRadixString(16).padLeft(6, '0')}';
   }
 
+  // ================================
+  // 🔥 SAVE NEW PRODUCT (MULTI-TABLE INSERT)
+  // ================================
   Future<void> saveNewProduct({required String barcode}) async {
     isSaveLoading.value = true;
-
     try {
-      final uid = auth.currentUser?.uid;
+      final uid = SupabaseConfig.auth.currentUser?.id;
       if (uid == null) return;
 
-      final String formatDate = setFormateDate();
-      final String formaTime = setFormateDate('hh:mm a');
+      // 1️⃣ Check Barcode for Multiple Barcodes Support [cite: 2026-01-31]
+      final existingBarcode =
+          await SupabaseConfig.from(
+            'product_barcodes',
+          ).select('product_id').eq('barcode', barcode).maybeSingle();
 
-      String? collectionName;
-      bool isGodown = location.text.toLowerCase() == 'godown';
-      if (isGodown) {
-        collectionName = 'godownProducts';
+      String productId;
+
+      if (existingBarcode != null) {
+        productId = existingBarcode['product_id'];
       } else {
-        collectionName = 'products'; // Default to shop
+        // 🆕 PRODUCTS Table Insert
+        final productResponse =
+            await SupabaseConfig.from('products')
+                .insert({
+                  'user_id': uid,
+                  'name': productName.text,
+                  'category': category.text,
+                  'animal_type': animalType.text,
+                  'flavour': flavor.text,
+                  'level': level.text,
+                  'rack': rack.text,
+                  'weight': weight.text,
+                  'is_loose_category': isLoose,
+                  'is_flavor_and_weight_not_required':
+                      isFlavorAndWeightNotRequired.value,
+                })
+                .select()
+                .single();
+
+        productId = productResponse['id'];
+
+        // BARCODE Insert
+        await SupabaseConfig.from(
+          'product_barcodes',
+        ).insert({'product_id': productId, 'barcode': barcode});
       }
 
-      final productRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection(collectionName)
-          .doc(barcode);
-
-      final aminalTypeData =
-          animalTypeList.firstWhere((e) => e.id == animalType.text).name;
-      final categoriesData =
-          categoryList.firstWhere((e) => e.id == category.text).name;
-      int quantityOnly = int.tryParse(quantity.text) ?? 0;
-      int discounts = int.tryParse(discount.text) ?? 0;
-      double purchasePrices = double.tryParse(purchasePrice.text) ?? 0.0;
-      double sellingPrices = double.tryParse(sellingPrice.text) ?? 0.0;
-
-      // 🔥 CREATE NEW PRODUCT MODEL
-      final newProduct = ProductModel(
-        barcode: barcode,
-        name: productName.text,
-        category: categoriesData,
-        animalType: aminalTypeData,
-        isLoosed: loosedProduct.value,
-        quantity: quantityOnly,
-        purchasePrice: purchasePrices,
-        sellingPrice: sellingPrices,
-        flavor: flavor.text,
-        weight: weight.text,
-        level: level.text,
-        rack: rack.text,
-        createdDate: formatDate,
-        updatedDate: formatDate,
-        createdTime: formaTime,
-        updatedTime: formaTime,
-        color: getRandomHexColor(),
-        isFlavorAndWeightNotRequired: isFlavorAndWeightNotRequired.value,
-        location: location.text,
-        discount: discounts,
-        purchaseDate: purchaseDate.text,
-        expireDate: exprieDate.text,
-        isActive: true,
-        sellType: 'packet',
-      );
-
-      await productRef.set({
-        'barcode': barcode,
-        'name': productName.text,
-        'category': categoriesData,
-        'animalType': aminalTypeData,
-        'isLoose': loosedProduct.value,
-        'quantity': quantityOnly,
-        'purchasePrice': purchasePrices,
-        'sellingPrice': sellingPrices,
-        'flavours': flavor.text,
-        'weight': weight.text,
+      final String targetLoc =
+          location.text.toLowerCase() == 'godown' ? 'godown' : 'shop';
+      final int qty = int.tryParse(quantity.text) ?? 0;
+      final double sPrice = double.tryParse(sellingPrice.text) ?? 0.0;
+      final double pPrice = double.tryParse(purchasePrice.text) ?? 0.0;
+      final double discAmt = double.tryParse(discount.text) ?? 0.0;
+      final String stockType = 'packet';
+      // 2️⃣ STOCK_BATCHES Insert (Date type columns)
+      await SupabaseConfig.from('stock_batches').insert({
+        'user_id': uid,
+        'product_id': productId,
+        'location': targetLoc,
+        'stock_type': stockType,
+        'purchase_price': pPrice,
+        'purchase_date': formatDateForDB(purchaseDate.text),
+        'expiry_date': formatDateForDB(exprieDate.text),
+        'quantity': qty,
         'level': level.text,
         'rack': rack.text,
-        'createdDate': formatDate,
-        'updatedDate': formatDate,
-        'createdTime': formaTime,
-        'updatedTime': formaTime,
-        'color': getRandomHexColor(),
-        'isFlavorAndWeightNotRequired': isFlavorAndWeightNotRequired.value,
-        'location': location.text,
-        'discount': discounts,
-        'purchaseDate': purchaseDate.text,
-        'exprieDate': exprieDate.text,
-        'isActive': true,
-        'sellType': 'packet',
       });
 
-      // 🔥 PROPER CACHE UPDATE INSTEAD OF CLEAR
-      if (isGodown) {
-        // Update godown cache
-        final godownList = retrieveGodownProductList();
-        godownList.add(newProduct);
-        saveGodownProductList(godownList);
-      } else {
-        // Update shop cache
-        final shopList = await retrieveProductList();
-        shopList.add(newProduct);
-        saveProductList(shopList);
-      }
-
-      // 🔥 UPDATE DASHBOARD CACHE
-      //  recalculateInventoryDashboardOnly();
-      showMessage(message: scannerDataSave);
-      Future.delayed(Duration(milliseconds: 500), () {
-        clear();
+      // 3️⃣ STOCK_MOVEMENTS Insert (Using 'form_location' as per your schema)
+      await SupabaseConfig.from('stock_movements').insert({
+        'product_id': productId,
+        'user_id': uid,
+        'form_location': targetLoc,
+        'to_location': targetLoc,
+        'stock_type': stockType,
+        'movement_type': 'add',
+        'quantity': qty,
+        'price': sPrice,
+        'discount_percent': discAmt,
+        'final_price': sPrice - discAmt,
+        'reason': 'Initial Stock Entry',
       });
+
+      // 4️⃣ PRODUCT_STOCK Insert (Insert only as per your rule)
+      await SupabaseConfig.from('product_stock').insert({
+        'product_id': productId,
+        'user_id': uid,
+        'location': targetLoc,
+        'stock_type': stockType,
+        'quantity': qty,
+        'selling_price': sPrice,
+        'discount': discAmt.toString(), // Schema says 'text' for discount
+        'is_active': true,
+      });
+
+      showMessage(message: "✅ Product and Stock added successfully!");
+      clear();
       Get.back(result: true);
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.message ?? '');
     } catch (e) {
-      showMessage(message: somethingWentMessage);
+      print("Insert Error: $e");
+      showMessage(message: "❌ Error: $e");
     } finally {
       isSaveLoading.value = false;
     }
   }
 
+  // ==========================================
+  // 🔥 SAVE NEW LOOSE PRODUCT (STOCK CONVERSION)
+  // ==========================================
   Future<void> saveNewLooseProduct({required String barcode}) async {
     isLooseProductSave.value = true;
 
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
-    final String formatDate = setFormateDate();
-    final String formatTime = setFormateDate('hh:mm a');
-
-    final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
-    final double looseSellingPrice = double.tryParse(sellingPrice.text) ?? 0.0;
-
-    if (looseQty <= 0) {
-      showMessage(message: "❌ Invalid loose quantity");
+    final uid = SupabaseConfig.auth.currentUser?.id;
+    if (uid == null) {
       isLooseProductSave.value = false;
       return;
     }
 
-    final productRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('products')
-        .doc(barcode);
-
-    final looseRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('looseProducts')
-        .doc(barcode);
-
     try {
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        /// ===============================
-        /// 1️⃣ READS FIRST (MANDATORY)
-        /// ===============================
-        final productSnap = await tx.get(productRef);
-        final looseSnap = await tx.get(looseRef);
+      // 1️⃣ Barcode scan karke Product aur Shop Stock nikaalo
+      final response =
+          await SupabaseConfig.from('product_barcodes')
+              .select('''
+          product_id,
+          products!inner (
+            name,
+            is_loose_category, 
+            product_stock!product_stock_product_id_fkey!inner (
+              id,
+              quantity,
+              location,
+              stock_type
+            )
+          )
+        ''')
+              .eq('barcode', barcode)
+              .maybeSingle();
 
-        if (!productSnap.exists) {
-          throw Exception(
-            "Product not found Or Product not found in SHOP. Move to shop first!",
-          );
-        }
+      if (response == null) {
+        showMessage(message: "❌ Product shop mein nahi mila!");
+        return;
+      }
 
-        final data = productSnap.data() as Map<String, dynamic>;
+      final String pId = response['product_id'];
+      final productData = response['products'];
+      final List stockList = productData['product_stock'] ?? [];
 
-        final bool allowLoose = data['isLoose'] == true;
+      // Specifically 'shop' aur 'packet' dhoondo
+      final packetEntry = stockList.firstWhere(
+        (s) => s['location'] == 'shop' && s['stock_type'] == 'packet',
+        orElse: () => null,
+      );
 
-        final String productLocation =
-            data['location']?.toString().toLowerCase() ?? '';
-        if (productLocation != 'shop') {
-          throw Exception("Loose selling only allowed for SHOP products!");
-        }
+      // --- VALIDATIONS ---
+      if (packetEntry == null || (packetEntry['quantity'] ?? 0) <= 0) {
+        showMessage(message: "❌ Shop mein packet stock khatam hai!");
+        return;
+      }
 
-        if (!allowLoose) {
-          throw Exception("Product not allowed for loose selling");
-        }
+      // [cite: 2026-01-31] Check if loose is allowed
+      if (productData['is_loose_category'] != true) {
+        showMessage(message: "❌ Ye product loose bechna mana hai!");
+        return;
+      }
 
-        final int mainStock = (data['quantity'] ?? 0).toInt();
-        if (mainStock <= 0) {
-          throw Exception("No sealed pack left SHOP");
-        }
+      // 2️⃣ EXECUTION (No Upsert, Only Insert in Loose Table)
 
-        final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
-        if (looseQty <= 0) {
-          throw Exception("Invalid loose quantity");
-        }
+      // A. Purane Packet Table se -1 Quantity update karo
+      await SupabaseConfig.from('product_stock')
+          .update({'quantity': (packetEntry['quantity'] ?? 0) - 1})
+          .eq('id', packetEntry['id']);
 
-        /// ===============================
-        /// 2️⃣ WRITES AFTER ALL READS
-        /// ===============================
-
-        // 🔻 Deduct packet stock
-        tx.update(productRef, {
-          'quantity': mainStock - 1,
-          'updatedDate': formatDate,
-          'updatedTime': formatTime,
-        });
-
-        if (looseSnap.exists) {
-          final looseData = looseSnap.data() as Map<String, dynamic>;
-          final int oldQty = (looseData['quantity'] ?? 0).toInt();
-          tx.update(looseRef, {
-            'quantity': oldQty + looseQty,
-            'sellingPrice': looseSellingPrice,
-            'updatedDate': formatDate,
-            'updatedTime': formatTime,
-          });
-        } else {
-          tx.set(looseRef, {
-            'barcode': barcode,
-            'name': data['name'],
-            'category': data['category'],
-            'animalType': data['animalType'],
-            'quantity': looseQty,
-            'purchasePrice': data['purchasePrice'],
-            'sellingPrice': looseSellingPrice,
-            'weight': data['weight'],
-            'color': data['color'],
-            'level': data['level'],
-            'rack': data['rack'],
-            'location': data['location'],
-            'discount': data['discount'],
-            'isFlavorAndWeightNotRequired':
-                data['isFlavorAndWeightNotRequired'],
-            'createdDate': formatDate,
-            'createdTime': formatTime,
-            'updatedDate': formatDate,
-            'updatedTime': formatTime,
-            'exprieDate': data['exprieDate'],
-            'purchaseDate': data['purchaseDate'],
-            'isActive': true,
-            'sellType': 'loose',
-          });
-        }
+      // B. Naya Record Loose Table mein INSERT karo (No Update/Upsert here)
+      // Har baar naya packet khulne par naya row banega
+      await SupabaseConfig.from('loose_stocks').insert({
+        'product_id': pId,
+        'user_id': uid,
+        'quantity': int.tryParse(looseQuantity.text) ?? 0,
+        'selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
+        // 'location' is table mein shop hi hogi by default
       });
 
-      // 🔥 UPDATE CACHE AFTER TRANSACTION SUCCESS
-      // Update shop product cache (quantity decreased)
-      final shopList = await retrieveProductList();
-      final shopIndex = shopList.indexWhere((p) => p.barcode == barcode);
-      if (shopIndex != -1) {
-        shopList[shopIndex].quantity = (shopList[shopIndex].quantity ?? 0) - 1;
-        saveProductList(shopList);
-      }
+      // C. History log maintain karo
+      await SupabaseConfig.from('stock_movements').insert({
+        'product_id': pId,
+        'user_id': uid,
+        'form_location': 'shop',
+        'stock_type': 'packet',
+        'movement_type': 'packet_to_loose',
+        'quantity': -1,
+        'reason': '1 Packet split into ${quantity.text} pieces',
+      });
 
-      // Update loose product cache
-      final looseList = await retrieveLoosedProductList();
-      final looseIndex = looseList.indexWhere((p) => p.barcode == barcode);
-      if (looseIndex != -1) {
-        // Update existing loose product
-        looseList[looseIndex].quantity =
-            (looseList[looseIndex].quantity ?? 0) + looseQty;
-        looseList[looseIndex].sellingPrice = looseSellingPrice;
-      } else {
-        // Add new loose product to cache
-        final productData = shopList.firstWhere((p) => p.barcode == barcode);
-        final newLooseProduct = LooseInvetoryModel(
-          barcode: barcode,
-          name: productData.name,
-          category: productData.category,
-          animalType: productData.animalType,
-          quantity: looseQty,
-          purchasePrice: productData.purchasePrice,
-          sellingPrice: looseSellingPrice,
-          weight: productData.weight,
-          color: productData.color,
-          level: productData.level,
-          rack: productData.rack,
-          location: productData.location,
-          discount: productData.discount,
-          isFlavorAndWeightNotRequired:
-              productData.isFlavorAndWeightNotRequired,
-          createdDate: formatDate,
-          createdTime: formatTime,
-          updatedDate: formatDate,
-          updatedTime: formatTime,
-          expireDate: productData.expireDate,
-          purchaseDate: productData.purchaseDate,
-          isActive: true,
-          sellType: 'loose',
-        );
-        looseList.add(newLooseProduct);
-      }
-      saveLoosedProductList(looseList);
-
-      // 🔥 UPDATE DASHBOARD CACHE
-      recalculateInventoryDashboardOnly();
+      showMessage(message: "✅ Naya Loose Stock Add ho gaya!");
 
       clear();
+
       Get.back(result: true);
-      showMessage(message: "✅ Loose stock created successfully");
-    } on FirebaseException catch (e) {
-      AppLogger.error(
-        "Firebase error while creating loose stock",
-        e,
-        "ProductController",
-      );
-      showMessage(message: "❌ ${e.toString()}");
     } catch (e) {
-      AppLogger.error("Error creating loose stock", e, "ProductController");
-      showMessage(message: "❌ ${e.toString()}");
+      print("Error: $e");
+      showMessage(message: "❌ Kuch gadat hua, retry kar!");
     } finally {
       isLooseProductSave.value = false;
     }
   }
 
   Future<void> fetchAllProducts() async {
-    final uid = auth.currentUser?.uid;
-    final productSnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('products')
-            .where('quantity')
-            .where('isActive', isEqualTo: true)
-            .get();
+    if (uid == null) return;
+
+    final response = await SupabaseConfig.from('products')
+        .select('*, product_stock!inner(*)')
+        .eq('user_id', uid ?? '')
+        .eq('product_stock.is_active', true);
+
     productList.value =
-        productSnapshot.docs
-            .map((doc) => ProductModel.fromJson(doc.data()))
-            .toList();
+        (response as List).map((e) => ProductModel.fromJson(e)).toList();
     saveProductList(productList);
   }
 

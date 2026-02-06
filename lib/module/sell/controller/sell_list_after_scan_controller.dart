@@ -1,11 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../routes/route_name.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
@@ -15,7 +14,7 @@ import '../../../helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
 
 class SellListAfterScanController extends GetxController with CacheManager {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final userId = SupabaseConfig.auth.currentUser?.id;
   List<ProductModel> scannedProductDetails = [];
   RxList<DiscountModel> discountList = <DiscountModel>[].obs;
   RxList<DiscountModel> productDiscount = <DiscountModel>[].obs;
@@ -270,86 +269,82 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 
   Future<void> fetchDiscounts() async {
-    final cached = getDiscountCache();
-    if (cached.isNotEmpty) {
-      discountList.value = cached;
-      return;
+    if (userId == null) return;
+
+    try {
+      final response = await SupabaseConfig.from(
+        'discounts',
+      ).select('*').eq('user_id', userId!);
+
+      discountList.value =
+          response.map((data) => DiscountModel.fromJson(data)).toList();
+    } catch (e) {
+      customMessageOrErrorPrint(message: "Discount Error: $e");
     }
-
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
-
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('discounts')
-            .get();
-
-    discountList.value =
-        snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return DiscountModel.fromJson(data);
-        }).toList();
-
-    saveDiscountCache(discountList);
   }
 
   Future<Map<String, dynamic>> prepareStockUpdate({
-    required String uid,
+    required String userId,
     required ProductModel product,
   }) async {
-    late DocumentReference ref;
-    late Map<String, dynamic> data;
+    try {
+      if (product.sellType?.toLowerCase() == 'loose') {
+        // Loose stock update
+        final response =
+            await SupabaseConfig.from('loose_stocks')
+                .select('id, quantity')
+                .eq('user_id', userId)
+                .eq('product_id', product.id ?? product.barcode ?? '')
+                .maybeSingle();
 
-    // 🚀 CACHE-FIRST APPROACH (NO FIREBASE READS)
-    if (product.sellType?.toLowerCase() == 'loose') {
-      final looseProducts = await retrieveLoosedProductList();
-      final cached = looseProducts.firstWhereOrNull(
-        (p) => p.barcode == product.barcode,
-      );
+        if (response == null) {
+          throw Exception("Loose product not found: ${product.barcode}");
+        }
 
-      if (cached == null) {
-        throw Exception("Loose product not found in SHOP: ${product.barcode}");
+        final currentQty = response['quantity'] ?? 0;
+        final sellQty = product.quantity ?? 1;
+
+        if (currentQty < sellQty) {
+          throw Exception("Not enough loose stock for ${product.name}");
+        }
+
+        return {
+          'table': 'loose_stocks',
+          'id': response['id'],
+          'newQty': currentQty - sellQty,
+          'productId': product.id ?? product.barcode ?? '',
+        };
+      } else {
+        // Regular product stock update
+        final response =
+            await SupabaseConfig.from('product_stock')
+                .select('id, quantity')
+                .eq('user_id', userId)
+                .eq('product_id', product.id ?? product.barcode ?? '')
+                .maybeSingle();
+
+        if (response == null) {
+          throw Exception("Product not found: ${product.barcode}");
+        }
+
+        final currentQty = response['quantity'] ?? 0;
+        final sellQty = product.quantity ?? 1;
+
+        if (currentQty < sellQty) {
+          throw Exception("Not enough stock for ${product.name}");
+        }
+
+        return {
+          'table': 'product_stock',
+          'id': response['id'],
+          'newQty': currentQty - sellQty,
+          'productId': product.id ?? product.barcode ?? '',
+        };
       }
-
-      ref = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('looseProducts')
-          .doc(product.barcode);
-
-      data = {'quantity': cached.quantity ?? 0, 'name': cached.name ?? ''};
-    } else {
-      final products = await retrieveProductList();
-      final cached = products.firstWhereOrNull(
-        (p) => p.barcode == product.barcode,
-      );
-
-      if (cached == null) {
-        throw Exception("Product not found in SHOP: ${product.barcode}");
-      }
-
-      ref = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('products')
-          .doc(product.barcode);
-
-      data = {
-        'quantity': cached.quantity?.toInt() ?? 0,
-        'name': cached.name ?? '',
-      };
+    } catch (e) {
+      print(e.toString());
+      throw Exception("Stock check failed: $e");
     }
-
-    final currentQty = data['quantity'] ?? 0;
-    final sellQty = product.quantity ?? 1;
-    if (currentQty < sellQty) {
-      throw Exception("Not enough stock for ${data['name']}");
-    }
-
-    return {'ref': ref, 'newQty': currentQty - sellQty};
   }
 
   Future<bool> confirmSale({
@@ -357,8 +352,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     required RxBool isLoading,
   }) async {
     isLoading.value = true;
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return false;
+    if (userId == null) return false;
 
     try {
       final formatDate = setFormateDate();
@@ -369,15 +363,18 @@ class SellListAfterScanController extends GetxController with CacheManager {
       double finalAmount = 0;
 
       // ===============================
-      // 1️⃣ PREPARE STOCK UPDATES (CACHE-ONLY)
+      // 1️⃣ PREPARE STOCK UPDATES
       // ===============================
       for (final product in scannedProductDetails) {
-        final update = await prepareStockUpdate(uid: uid, product: product);
+        final update = await prepareStockUpdate(
+          userId: userId!,
+          product: product,
+        );
         stockUpdates.add(update);
       }
 
       // ===============================
-      // 2️⃣ CALCULATIONS (BEFORE FIREBASE)
+      // 2️⃣ CALCULATIONS
       // ===============================
       for (var item in sellItems) {
         totalAmount += item.originalPrice ?? 0;
@@ -399,70 +396,118 @@ class SellListAfterScanController extends GetxController with CacheManager {
       );
 
       // ===============================
-      // 3️⃣ SINGLE MEGA TRANSACTION (ALL-IN-ONE)
+      // 3️⃣ CREATE SALE RECORD
       // ===============================
-      final result = await FirebaseFirestore.instance.runTransaction((
-        tx,
-      ) async {
-        // 🔥 Generate Bill Number (inside transaction)
-        final counterRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('bill')
-            .doc('billNo');
+      final saleResponse =
+          await SupabaseConfig.from('sales')
+              .insert({
+                'user_id': userId,
+                'total_amount': finalPayable,
+                'created_at': DateTime.now().toIso8601String(),
+              })
+              .select('id')
+              .single();
 
-        final counterSnap = await tx.get(counterRef);
-        int newBillNo = 1;
-        if (counterSnap.exists) {
-          newBillNo = (counterSnap.data()?['lastBillNo'] ?? 0) + 1;
-        }
-        tx.set(counterRef, {'lastBillNo': newBillNo});
-        final billNo = "HB-$newBillNo";
-
-        // 🔥 Update All Stock (inside same transaction)
-        for (final u in stockUpdates) {
-          tx.update(u['ref'], {
-            'quantity': u['newQty'],
-            'updatedDate': formatDate,
-            'updatedTime': formatTime,
-          });
-        }
-
-        //  getPrintReadyList();
-        // 🔥 Create Sale Record (inside same transaction)
-        final saleRef =
-            FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .collection('sales')
-                .doc();
-
-        final saleData = {
-          'billNo': billNo,
-          'soldAt': formatDate,
-          'time': formatTime,
-          'totalAmount': totalAmount,
-          'finalAmount': finalPayable,
-          'items': sellItems.map((e) => e.toJson()).toList(),
-          'payment': paymentData,
-        };
-
-        tx.set(saleRef, saleData);
-
-        return saleData;
-      });
+      final saleId = saleResponse['id'];
 
       // ===============================
-      // 4️⃣ POST-TRANSACTION CLEANUP
+      // 4️⃣ CREATE SALE ITEMS
       // ===============================
-      printInvoice.value = PrintInvoiceModel.fromJson(result);
+      final saleItemsData =
+          sellItems
+              .map(
+                (item) => {
+                  'sale_id': saleId,
+                  'product_id': item.id,
+                  'user_id': userId,
+                  'qty': item.quantity,
+                  'original_price': item.originalPrice,
+                  'discount_amount':
+                      (item.originalPrice ?? 0) - (item.finalPrice ?? 0),
+                  'final_price': item.finalPrice,
+                  'location': item.location ?? 'shop',
+                  'stock_type': item.isLoose == true ? 'loose' : 'packet',
+                  'applied_discount_percent': item.discount ?? 0,
+                  'default_discount_percent': item.originalDiscount ?? 0,
+                },
+              )
+              .toList();
+
+      await SupabaseConfig.from('sale_items').insert(saleItemsData);
+
+      // ===============================
+      // 5️⃣ CREATE PAYMENT RECORDS
+      // ===============================
+      List<Map<String, dynamic>> paymentRecords = [];
+
+      if ((double.tryParse(cashPaidController.text) ?? 0) > 0) {
+        paymentRecords.add({
+          'sale_id': saleId,
+          'amount': double.tryParse(cashPaidController.text) ?? 0,
+          'payment_mode': 'cash',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      }
+
+      if ((double.tryParse(upiPaidController.text) ?? 0) > 0) {
+        paymentRecords.add({
+          'sale_id': saleId,
+          'amount': double.tryParse(upiPaidController.text) ?? 0,
+          'payment_mode': 'upi',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      }
+
+      if ((double.tryParse(cardPaidController.text) ?? 0) > 0) {
+        paymentRecords.add({
+          'sale_id': saleId,
+          'amount': double.tryParse(cardPaidController.text) ?? 0,
+          'payment_mode': 'card',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      }
+
+      if ((double.tryParse(creditPaidController.text) ?? 0) > 0) {
+        paymentRecords.add({
+          'sale_id': saleId,
+          'amount': double.tryParse(creditPaidController.text) ?? 0,
+          'payment_mode': 'credit',
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      }
+
+      if (paymentRecords.isNotEmpty) {
+        await SupabaseConfig.from('sale_payments').insert(paymentRecords);
+      }
+
+      // ===============================
+      // 6️⃣ UPDATE STOCK
+      // ===============================
+      for (final update in stockUpdates) {
+        await SupabaseConfig.from(
+          update['table'],
+        ).update({'quantity': update['newQty']}).eq('id', update['id']);
+      }
+
+      // ===============================
+      // 7️⃣ PREPARE PRINT DATA
+      // ===============================
+      final saleData = {
+        'billNo': 'HB-$saleId',
+        'soldAt': formatDate,
+        'time': formatTime,
+        'totalAmount': totalAmount,
+        'finalAmount': finalPayable,
+        'items': sellItems.map((e) => e.toJson()).toList(),
+        'payment': paymentData,
+      };
+
+      printInvoice.value = PrintInvoiceModel.fromJson(saleData);
       scannedProductDetails.clear();
 
-      // 🚀 CACHE UPDATES (NO FIREBASE CALLS)
-      clearTodayReportCache();
-      clearTodayRevenueCache();
       return true;
     } catch (e) {
+      print(e.toString());
       showMessage(message: "❌ ${e.toString()}");
       return false;
     } finally {

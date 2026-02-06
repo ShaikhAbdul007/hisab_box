@@ -1,9 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
 import '../model/loose_model.dart';
@@ -25,11 +23,13 @@ class LooseController extends GetxController with CacheManager {
   RxList<LooseCategoryModel> looseCategoryModelList =
       <LooseCategoryModel>[].obs;
   RxString searchText = ''.obs;
-  final _auth = FirebaseAuth.instance;
+
+  final userId = SupabaseConfig.auth.currentUser?.id;
 
   @override
   void onInit() {
     fetchLosseList();
+    isInventoryScanSelectedValue();
     super.onInit();
   }
 
@@ -56,86 +56,93 @@ class LooseController extends GetxController with CacheManager {
     updateQuantity.text = productList[index].quantity.toString();
   }
 
+  // 🔥 UPDATE QUANTITY (SUPABASE)
   void updateProductQuantity({
     required String barcode,
     required bool add,
   }) async {
+    if (userId == null) return;
     isSaveLoading.value = true;
     try {
-      final String formatDate = setFormateDate();
-      final uid = _auth.currentUser?.uid;
-      if (uid == null) return;
-      final productRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('looseProducts')
-          .doc(barcode);
-      final existingDoc = await productRef.get();
+      // Current stock fetch
+      final response =
+          await SupabaseConfig.from('product_stock')
+              .select('quantity')
+              .eq('product_id', barcode)
+              .eq('user_id', userId!)
+              .maybeSingle();
 
-      if (existingDoc.exists) {
-        final prevQty = existingDoc['quantity'] ?? 0;
-        final newQty = int.tryParse(addSubtractQty.text) ?? 0;
-        final sellingprice = int.tryParse(sellingPrice.text) ?? 0;
-        if (prevQty == newQty) {
-          Get.back();
-        } else {
-          await productRef.update({
-            'quantity': add ? prevQty + newQty : prevQty - newQty,
-            'updatedDate': formatDate,
-            'sellingPrice': sellingprice,
-            'updatedTime': setFormateDate('hh:mm a'),
-          });
-          removelooseInvetoryKeyModel();
-          Get.back();
-          qtyClear();
-          showMessage(message: '✅ Product quantity updated.');
-          await fetchLooseProduct();
-        }
+      if (response != null) {
+        final num prevQty = response['quantity'] ?? 0;
+        final num newQtyInput = num.tryParse(addSubtractQty.text) ?? 0;
+        final double sPrice = double.tryParse(sellingPrice.text) ?? 0.0;
+        final num finalQty =
+            add ? prevQty + newQtyInput : prevQty - newQtyInput;
+
+        await SupabaseConfig.from('product_stock')
+            .update({'quantity': finalQty, 'selling_price': sPrice})
+            .eq('product_id', barcode)
+            .eq('user_id', userId!);
+
+        removelooseInvetoryKeyModel();
+        Get.back();
+        qtyClear();
+        showMessage(message: '✅ Quantity updated.');
+        await fetchLooseProduct();
       }
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+    } catch (e) {
+      print("Update Error: $e");
     } finally {
       isSaveLoading.value = false;
     }
   }
 
+  // 🔥 FETCH LOOSE PRODUCTS (EXPLICIT JOIN)
   Future<void> fetchLooseProduct() async {
+    if (userId == null) return;
     isDataLoading.value = true;
 
-    // 1️⃣ Cache-first
-    final cachedLooseProducts = await retrieveLoosedProductList();
-    if (cachedLooseProducts.isNotEmpty) {
-      productList.value = cachedLooseProducts;
-      isDataLoading.value = false;
-      return;
-    }
-
-    // 2️⃣ Firebase fallback
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) {
-      isDataLoading.value = false;
-      return;
-    }
-
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('looseProducts')
-              .get();
+      final response = await SupabaseConfig.from('loose_stocks')
+          .select('''
+        id,
+        quantity,
+        selling_price,
+        product_id,
+        user_id,
+        products!inner (
+          id, 
+          name, 
+          flavour, 
+          weight,
+          rack,
+          level,
+          is_loose_category,
+          categories:category (name), 
+          animals:animal_type (name),
+          product_stock!product_stock_product_id_fkey (
+            location,
+            stock_type,
+            is_active
+          ),
+          stock_batches (
+            purchase_date,
+            expiry_date,
+            purchase_price,
+            location,
+            stock_type
+          )
+        )
+      ''')
+          .eq('user_id', userId!)
+          .order('created_at', ascending: false);
 
+      final List data = response as List;
       productList.value =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return LooseInvetoryModel.fromJson(data);
-          }).toList();
-
-      // 🔥 cache save
+          data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
       saveLoosedProductList(productList);
     } catch (e) {
-      showMessage(message: e.toString());
+      print("Final Logic Error: $e");
     } finally {
       isDataLoading.value = false;
     }

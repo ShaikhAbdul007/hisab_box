@@ -101,13 +101,12 @@ class SignupController extends GetxController with CacheManager {
           image: profileImage.value?.path ?? '',
         ),
       );
-
       showMessage(message: singUpSuccessFul);
       AppRoutes.navigateRoutes(routeName: AppRouteName.login);
-    } catch (e) {
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
-    } finally {
       signUpLoading.value = false;
+    } catch (e) {
+      signUpLoading.value = false;
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     }
   }
 }

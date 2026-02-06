@@ -12,6 +12,7 @@ class UserModel {
   final bool? discountPerProduct;
   final String? shoptype;
   final String? image;
+  final bool? isSaved;
 
   UserModel({
     this.id,
@@ -27,6 +28,7 @@ class UserModel {
     this.shoptype,
     this.discountPerProduct,
     this.image,
+    this.isSaved,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json, {String? id}) {
@@ -35,15 +37,16 @@ class UserModel {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       password: json['password'] ?? '',
-      mobileNo: json['mobileNo'] ?? '',
-      alternateMobileNo: json['alternateMobileNo'] ?? '',
+      mobileNo: json['mobile_no'] ?? '',
+      alternateMobileNo: json['alternate_mobile_no'] ?? '',
       address: json['address'] ?? '',
       city: json['city'] ?? '',
       state: json['state'] ?? '',
       pincode: json['pincode'] ?? '',
       discountPerProduct: json['discountPerProduct'] ?? false,
-      shoptype: json['shoptype'] ?? '',
-      image: json['profileImage'] ?? '',
+      shoptype: json['shop_type'] ?? '',
+      image: json['profile_image'] ?? '',
+      isSaved: json['isSaved'] ?? false,
     );
   }
 
@@ -61,6 +64,7 @@ class UserModel {
       "shoptype": shoptype,
       "discountPerProduct": discountPerProduct,
       "profileImage": image,
+      "isSaved": isSaved,
     };
   }
 }

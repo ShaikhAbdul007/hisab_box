@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import '../../inventory/model/product_model.dart';
 
@@ -122,7 +123,7 @@ class InventroyListText extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            inventoryModel.purchaseDate ?? '',
+                            formatDate(inventoryModel.purchaseDate ?? ''),
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
@@ -134,7 +135,7 @@ class InventroyListText extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            inventoryModel.expireDate ?? '',
+                            formatDate(inventoryModel.expireDate ?? ''),
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.redColor,
                             ),

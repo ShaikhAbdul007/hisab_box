@@ -11,12 +11,12 @@ class CategoryModel {
       id: json['id'] ?? '',
       time: json['time'] ?? '',
       name: json['name'] ?? '',
-      createdAt: json['createdAt'] ?? '',
+      createdAt: json['created_at'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'time': time, 'createdAt': createdAt};
+    return {'id': id, 'name': name, 'time': time, 'created_at': createdAt};
   }
 
   @override

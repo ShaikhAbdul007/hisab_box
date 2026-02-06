@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
@@ -8,6 +9,7 @@ import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/category/controller/animaltype_controller.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_progressbar.dart';
@@ -24,9 +26,9 @@ class AnimalCategory extends GetView<AnimalTypeController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       firstActionChild: CommonContainer(
-        height: 40,
-        width: 50,
-        radius: 10,
+        height: 30,
+        width: 40,
+        radius: 5,
         color: AppColors.whiteColor,
         child: InkWell(
           onTap: () {
@@ -47,46 +49,60 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                       itemCount: controller.animalTypeList.length,
                       itemBuilder: (context, index) {
                         var list = controller.animalTypeList[index];
-                        return ListTile(
-                          title: Text(
-                            list.name ?? '',
-                            style: CustomTextStyle.customNato(
-                              fontSize: 18,
-                              color: AppColors.blackColor,
+                        return CustomPadding(
+                          paddingOption: SymmetricPadding(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadiusGeometry.circular(15.r),
                             ),
-                          ),
-                          subtitle: Row(
-                            children: [
-                              Text(
-                                list.createdAt ?? '',
-                                style: CustomTextStyle.customNato(),
-                              ),
-                              setWidth(width: 25),
-                              Text(
-                                list.time ?? '',
-                                style: CustomTextStyle.customNato(),
-                              ),
-                            ],
-                          ),
-                          trailing: Obx(
-                            () => InkWell(
-                              onTap:
-                                  controller.isDeleteAnimalCategory.value
-                                      ? null
-                                      : () async {
-                                        await controller.deleteAnimalCategory(
-                                          list.id ?? '',
-                                        );
-                                      },
-                              child: CommonContainer(
-                                height: 40,
-                                width: 50,
-                                radius: 5,
+                            tileColor: AppColors.whiteLigthColor,
+                            title: Text(
+                              list.name ?? '',
+                              style: CustomTextStyle.customNato(
+                                fontSize: 18,
                                 color: AppColors.blackColor,
-                                child: Icon(
-                                  CupertinoIcons.delete,
-                                  size: 18,
-                                  color: AppColors.whiteColor,
+                              ),
+                            ),
+                            subtitle: Row(
+                              children: [
+                                Text(
+                                  formatDateTime(list.createdAt ?? ''),
+                                  style: CustomTextStyle.customNato(),
+                                ),
+                                setWidth(width: 25),
+                                Text(
+                                  formatDateTime(
+                                    list.createdAt ?? '',
+                                    showDate: false,
+                                    showTime: true,
+                                  ),
+                                  style: CustomTextStyle.customNato(),
+                                ),
+                              ],
+                            ),
+                            trailing: Obx(
+                              () => InkWell(
+                                onTap:
+                                    controller.isDeleteAnimalCategory.value
+                                        ? null
+                                        : () async {
+                                          await controller.deleteAnimalCategory(
+                                            list.id ?? '',
+                                          );
+                                        },
+                                child: CommonContainer(
+                                  height: 30,
+                                  width: 35,
+                                  radius: 5,
+                                  color: AppColors.buttonRedColor,
+                                  child: Icon(
+                                    CupertinoIcons.delete,
+                                    size: 18,
+                                    color: AppColors.whiteColor,
+                                  ),
                                 ),
                               ),
                             ),
@@ -145,7 +161,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                 label: saveButton,
                 onTap: () async {
                   if (keys.currentState!.validate()) {
-                    await controller.addCategory(
+                    await controller.addAnimalCategory(
                       controller.animalCategory.text,
                     );
                   }

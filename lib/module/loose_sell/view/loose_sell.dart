@@ -23,19 +23,6 @@ class LooseSell extends GetView<LooseController> {
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
-      // firstActionChild: AddExpensesButton(
-      //   onTap: () {
-      //     Get.bottomSheet(
-      //       backgroundColor: AppColors.whiteColor,
-      //       enableDrag: false,
-      //       isDismissible: false,
-      //       LooseSellBottomsheetComponent(
-      //         controller: controller,
-      //         formkeys: inventoryScanKey,
-      //       ),
-      //     );
-      //   },
-      // ),
       secondActionChild: InkWell(
         onTap: () async {
           var res = await AppRoutes.futureNavigationToRoute(
@@ -100,24 +87,22 @@ class LooseSell extends GetView<LooseController> {
                         itemCount: controller.productList.length,
                         itemBuilder: (context, index) {
                           var inventoryList = controller.productList[index];
+                          String name = inventoryList.name?.toLowerCase() ?? '';
+                          String barcode =
+                              inventoryList.barcode?.toLowerCase() ?? '';
                           return Obx(
                             () =>
-                                inventoryList.name!.toLowerCase().contains(
+                                name.toLowerCase().contains(
                                           controller.searchText.value,
                                         ) ||
-                                        inventoryList.barcode!
-                                            .toLowerCase()
-                                            .contains(
-                                              controller
-                                                  .searchController
-                                                  .value
-                                                  .text,
-                                            )
+                                        barcode.toLowerCase().contains(
+                                          controller
+                                              .searchController
+                                              .value
+                                              .text,
+                                        )
                                     ? LooseInventroyListText(
                                       onTap: () async {
-                                        // controller.setQuantitydata(index);
-                                        // updateDataDialog(index);
-
                                         var res =
                                             await AppRoutes.futureNavigationToRoute(
                                               routeName:

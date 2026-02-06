@@ -15,8 +15,10 @@ class ProductModel {
   String? animalType;
   String? level;
   String? rack;
+  String? box; // For loose category products
 
   bool? isLoosed;
+  bool? isLooseCategory; // For loose category products
   String? id;
   String? paymentMethod;
   int? billNo;
@@ -28,6 +30,12 @@ class ProductModel {
   String? location;
   bool? isActive;
   String? sellType;
+  String? stockType; // packet/loose
+
+  // Additional fields for database compatibility
+  String? categoryId; // For foreign key reference
+  String? animalTypeId; // For foreign key reference
+  String? userId; // For multi-tenant support
 
   ProductModel({
     this.barcode,
@@ -49,8 +57,9 @@ class ProductModel {
     this.flavor,
     this.level,
     this.rack,
-
+    this.box,
     this.isLoosed,
+    this.isLooseCategory,
     this.id,
     this.isFlavorAndWeightNotRequired,
     this.location,
@@ -58,80 +67,116 @@ class ProductModel {
     this.expireDate,
     this.purchaseDate,
     this.sellType,
+    this.stockType,
+    this.categoryId,
+    this.animalTypeId,
+    this.userId,
   });
 
-  // 🔥 SUPABASE ROW → MODEL
   ProductModel.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    barcode = json['barcode'];
-    name = json['name'];
-    category = json['category'];
-    sellType = json['sell_type'];
-    location = json['location'];
-    quantity = json['quantity'];
-    isActive = json['is_active'];
+    id = json['id']?.toString();
+    barcode = json['barcode']?.toString();
+    name = json['name']?.toString();
+    sellType = json['sell_type']?.toString();
+    location = json['location']?.toString();
+    stockType = json['stock_type']?.toString();
+    userId = json['user_id']?.toString();
+    box = json['box']?.toString();
+
+    // Category handling - both name and ID
+    if (json['category'] is String) {
+      category = json['category'];
+    } else if (json['categories'] != null) {
+      category = json['categories']['name'];
+      categoryId = json['categories']['id']?.toString();
+    }
+    categoryId = categoryId ?? json['category_id']?.toString();
+
+    // Animal type handling - both name and ID
+    if (json['animal_type'] is String) {
+      animalType = json['animal_type'];
+    } else if (json['animals'] != null) {
+      animalType = json['animals']['name'];
+      animalTypeId = json['animals']['id']?.toString();
+    }
+    animalTypeId = animalTypeId ?? json['animal_type_id']?.toString();
+
+    // Safe numeric parsing
+    quantity =
+        json['quantity'] is num
+            ? json['quantity']
+            : num.tryParse(json['quantity']?.toString() ?? '0') ?? 0;
+
+    isActive = json['is_active'] ?? true;
+    isLooseCategory = json['is_loose_category'] ?? false;
 
     purchasePrice = (json['purchase_price'] as num?)?.toDouble();
     sellingPrice = (json['selling_price'] as num?)?.toDouble();
 
-    flavor = json['flavour'];
-    weight = json['weight'];
-    color = json['color'];
-    animalType = json['animal_type'];
+    // Mapping DB 'flavour' to Model 'flavor'
+    flavor = json['flavour']?.toString();
+    weight = json['weight']?.toString();
+    color = json['color']?.toString();
 
-    isLoosed = json['is_loose'];
+    // Mapping DB 'stock_type == loose' to isLoosed
+    isLoosed = json['is_loose'] ?? (json['stock_type'] == 'loose');
 
-    isFlavorAndWeightNotRequired = json['is_flavor_and_weight_not_required'];
+    isFlavorAndWeightNotRequired =
+        json['is_flavor_and_weight_not_required'] ?? false;
 
-    billNo = json['bill_no'];
-    paymentMethod = json['payment_method'];
-    discount = json['discount'];
+    billNo =
+        json['bill_no'] is int
+            ? json['bill_no']
+            : int.tryParse(json['bill_no']?.toString() ?? '');
 
-    level = json['level'];
-    rack = json['rack'];
+    paymentMethod = json['payment_method']?.toString();
 
-    purchaseDate = json['purchase_date'];
-    expireDate = json['expire_date'];
+    // Fixed discount parsing
+    discount =
+        json['discount'] is int
+            ? json['discount']
+            : int.tryParse(json['discount']?.toString() ?? '0') ?? 0;
 
-    createdDate = json['created_date'];
-    updatedDate = json['updated_date'];
-    createdTime = json['created_time'];
-    updatedTime = json['updated_time'];
+    level = json['level']?.toString();
+    rack = json['rack']?.toString();
+
+    purchaseDate = json['purchase_date']?.toString();
+    expireDate = json['expiry_date']?.toString();
+
+    createdDate =
+        json['created_date']?.toString() ?? json['created_at']?.toString();
+    updatedDate =
+        json['updated_date']?.toString() ?? json['updated_at']?.toString();
+    createdTime = json['created_time']?.toString();
+    updatedTime = json['updated_time']?.toString();
   }
 
-  // 🔥 MODEL → SUPABASE INSERT / UPDATE
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-
-    data['id'] = id;
-    data['barcode'] = barcode;
-    data['name'] = name;
-    data['category'] = category;
-    data['sell_type'] = sellType;
-    data['location'] = location;
-    data['quantity'] = quantity;
-    data['is_active'] = isActive;
-
-    data['purchase_price'] = purchasePrice;
-    data['selling_price'] = sellingPrice;
-
-    data['flavour'] = flavor;
-    data['weight'] = weight;
-    data['color'] = color;
-    data['animal_type'] = animalType;
-
-    data['is_loose'] = isLoosed;
-    data['is_flavor_and_weight_not_required'] = isFlavorAndWeightNotRequired;
-
-    data['bill_no'] = billNo;
-    data['payment_method'] = paymentMethod;
-    data['discount'] = discount;
-
-    data['level'] = level;
-    data['rack'] = rack;
-
-    data['purchase_date'] = purchaseDate;
-    data['expire_date'] = expireDate;
-    return data;
+    return {
+      'id': id,
+      'name': name,
+      'category': categoryId ?? category,
+      'animal_type': animalTypeId ?? animalType,
+      'flavour': flavor,
+      'weight': weight,
+      'color': color,
+      'rack': rack,
+      'level': level,
+      'box': box,
+      'is_active': isActive,
+      'is_loose_category': isLooseCategory,
+      'is_flavor_and_weight_not_required': isFlavorAndWeightNotRequired,
+      'user_id': userId,
+      'stock_type': stockType,
+      'sell_type': sellType,
+      'location': location,
+      // Stock fields
+      'quantity': quantity,
+      'selling_price': sellingPrice,
+      'purchase_price': purchasePrice,
+      'discount': discount?.toString(),
+      'purchase_date': purchaseDate,
+      'expiry_date': expireDate,
+    };
   }
 }

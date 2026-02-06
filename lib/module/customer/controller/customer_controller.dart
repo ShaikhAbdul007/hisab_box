@@ -6,11 +6,15 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/order_complete/controller/order_controller.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../order_complete/model/customer_details_model.dart';
 
 class CustomerController extends GetxController with CacheManager {
-  final _auth = FirebaseAuth.instance;
+  final _auth =
+      FirebaseAuth
+          .instance; // Agar auth bhi migrate ho gaya hai toh yahan userId logic badal sakte hain
   var orderController = Get.put(OrderController());
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
@@ -41,13 +45,14 @@ class CustomerController extends GetxController with CacheManager {
   Future<void> fetchAllCustomers() async {
     customDataLoading.value = true;
 
-    // 🔥 1️⃣ LOAD FROM CACHE FIRST
+    // 🔥 1️⃣ LOAD FROM CACHE FIRST (No change here)
     final cacheCustomers = await retrieveCustomerList();
     if (cacheCustomers.isNotEmpty) {
       customerDetailList.value = cacheCustomers;
     }
 
-    // 🔥 2️⃣ FETCH FROM FIREBASE (SYNC)
+    // 🔥 2️⃣ FETCH FROM SUPABASE (SYNC)
+    // Note: Assuming you have a way to get the current user's ID
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
       customDataLoading.value = false;
@@ -55,22 +60,27 @@ class CustomerController extends GetxController with CacheManager {
     }
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('customers')
-              .get();
+      // Firebase collection ki jagah Supabase table use kar rahe hain
+      final List<dynamic> response = await SupabaseConfig.from('customers')
+          .select()
+          .eq('user_id', uid)
+          .order(
+            'name',
+            ascending: true,
+          ); // Customers ko alphabetic order mein mangwa rahe hain
 
       final customers =
-          snapshot.docs
-              .map((doc) => CustomerDetails.fromJson(doc.data()))
-              .toList();
+          response.map((data) => CustomerDetails.fromJson(data)).toList();
 
       // 🔥 UPDATE UI + CACHE
       customerDetailList.value = customers;
       saveCustomerList(customers);
+
+      print(
+        "✅ Successfully fetched ${customers.length} customers from Supabase",
+      );
     } catch (e) {
+      // Variable names kept exactly same as requested
       AppLogger.error("Fetch customers error", e, "CustomerController");
       showMessage(message: e.toString());
     } finally {

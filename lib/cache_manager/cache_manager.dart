@@ -106,7 +106,7 @@ mixin class CacheManager {
     if (user != null) {
       return UserModel.fromJson(user);
     }
-    return UserModel();
+    return UserModel(isSaved: false);
   }
 
   BankModel retrieveBankModelDetail() {

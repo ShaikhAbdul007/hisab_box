@@ -1,19 +1,19 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
-import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 
 class ProductDetailsController extends GetxController with CacheManager {
-  final FirebaseAuth auth = FirebaseAuth.instance;
+  // Supabase Config use kar rahe hain
+  final userId = SupabaseConfig.auth.currentUser?.id;
+
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
@@ -21,6 +21,8 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxList<ProductModel> productList = <ProductModel>[].obs;
   RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
+
+  // Controllers (Wahi rakhe hain jo tune diye)
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
   TextEditingController looseSellingPrice = TextEditingController();
@@ -59,38 +61,30 @@ class ProductDetailsController extends GetxController with CacheManager {
     super.onInit();
   }
 
+  // ==========================================
+  // 🔥 STOCK TRANSFER (SUPABASE INSERT)
+  // ==========================================
   Future<void> requestStockTransfer({
     required ProductModel product,
     required int qty,
   }) async {
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
+    if (userId == null) return;
     if (qty <= 0) {
       showMessage(message: "Invalid quantity");
       return;
     }
 
     isTransferLoading.value = true;
-
     try {
-      final transferRef =
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('stockTransfers')
-              .doc(); // auto id
-
-      await transferRef.set({
-        'barcode': product.barcode,
-        'productName': product.name,
-        'requestedQty': qty,
-        'from': 'godown',
-        'to': 'shop',
-        'status': 'pending', // 🔥 important
-        'requestedAt': setFormateDate(),
-        'createdDate': setFormateDate(),
-        'createdTime': setFormateDate('hh:mm:ss a'),
+      await SupabaseConfig.from('stock_movements').insert({
+        'product_id': product.id,
+        'user_id': userId,
+        'quantity': qty,
+        'form_location': 'godown',
+        'to_location': 'shop',
+        'movement_type': 'transfer',
+        'status': 'pending',
+        'created_at': DateTime.now().toIso8601String(),
       });
 
       showMessage(message: "📤 Stock transfer request sent to Shop");
@@ -106,164 +100,215 @@ class ProductDetailsController extends GetxController with CacheManager {
     await fetchAnimalCategories();
   }
 
-  void setData() {
-    category.text = data['product'].category ?? '';
-    animalType.text = data['product'].animalType ?? '';
-    isFlavorAndWeightNotRequired.value =
-        data['product'].isFlavorAndWeightNotRequired ?? false;
-    productName.text = data['product'].name ?? '';
-    barcode.text = data['product'].barcode ?? '';
-    quantity.text = data['product'].quantity.toString();
-    sellingPrice.text = data['product'].sellingPrice.toString();
-    purchasePrice.text = data['product'].purchasePrice.toString();
-    flavor.text = data['product'].flavor ?? '';
-    weight.text = data['product'].weight.toString();
-    isLoose = data['product'].isLoosed ?? false;
-    location.text = data['product'].location ?? '';
-    discount.text = data['product'].discount.toString();
-    purchaseDate.text = data['product'].purchaseDate ?? '';
-    exprieDate.text = data['product'].expireDate ?? '';
+  CategoryModel? getSelectedCategory({
+    required String categorysId, // Isme ab ID ya Name aa sakta hai
+    String categoryType = '',
+  }) {
+    try {
+      if (categoryType == 'animal') {
+        // Animal types list mein se dhoondo
+        return animalTypeList.firstWhere(
+          (e) => e.name == categorysId || e.id == categorysId,
+          orElse: () => CategoryModel(),
+        );
+      } else {
+        // Main categories list mein se dhoondo
+        return categoryList.firstWhere(
+          (e) => e.name == categorysId || e.id == categorysId,
+          orElse: () => CategoryModel(),
+        );
+      }
+    } catch (e) {
+      // Error finding category: $e
+      return null;
+    }
   }
 
+  void setData() {
+    // Handle both ProductModel and LooseInventoryModel
+    var productData = data['product'];
+
+    if (productData is ProductModel) {
+      // ProductModel case
+      ProductModel p = productData;
+      category.text = p.category ?? '';
+      animalType.text = p.animalType ?? '';
+      isFlavorAndWeightNotRequired.value =
+          p.isFlavorAndWeightNotRequired ?? false;
+      productName.text = p.name ?? '';
+      barcode.text = p.barcode ?? '';
+      quantity.text = p.quantity.toString();
+      sellingPrice.text = p.sellingPrice.toString();
+      purchasePrice.text = p.purchasePrice.toString();
+      flavor.text = p.flavor ?? '';
+      weight.text = p.weight.toString();
+      isLoose = p.isLoosed ?? false;
+      location.text = p.location ?? '';
+      discount.text = p.discount.toString();
+      purchaseDate.text = p.purchaseDate ?? '';
+      exprieDate.text = p.expireDate ?? '';
+    } else if (productData is LooseInvetoryModel) {
+      // LooseInventoryModel case
+      LooseInvetoryModel l = productData;
+      category.text = l.category ?? '';
+      animalType.text = l.animalType ?? '';
+      isFlavorAndWeightNotRequired.value =
+          l.isFlavorAndWeightNotRequired ?? false;
+      productName.text = l.name ?? '';
+      barcode.text = l.barcode ?? '';
+      quantity.text = l.quantity.toString();
+      sellingPrice.text = l.sellingPrice.toString();
+      purchasePrice.text = l.purchasePrice.toString();
+      flavor.text = l.flavor ?? '';
+      weight.text = l.weight ?? '';
+      isLoose = true; // Always true for loose products
+      location.text = l.location ?? '';
+      discount.text = l.discount.toString();
+      purchaseDate.text = l.purchaseDate ?? '';
+      exprieDate.text = l.expireDate ?? '';
+    } else {
+      // Fallback for dynamic/Map case
+      Map<String, dynamic> p = productData as Map<String, dynamic>;
+      category.text = p['category']?.toString() ?? '';
+      animalType.text = p['animalType']?.toString() ?? '';
+      isFlavorAndWeightNotRequired.value =
+          p['isFlavorAndWeightNotRequired'] ?? false;
+      productName.text = p['name']?.toString() ?? '';
+      barcode.text = p['barcode']?.toString() ?? '';
+      quantity.text = p['quantity']?.toString() ?? '0';
+      sellingPrice.text = p['sellingPrice']?.toString() ?? '0';
+      purchasePrice.text = p['purchasePrice']?.toString() ?? '0';
+      flavor.text = p['flavor']?.toString() ?? '';
+      weight.text = p['weight']?.toString() ?? '';
+      isLoose = p['isLoosed'] ?? p['isLooseCategory'] ?? false;
+      location.text = p['location']?.toString() ?? '';
+      discount.text = p['discount']?.toString() ?? '0';
+      purchaseDate.text = p['purchaseDate']?.toString() ?? '';
+      exprieDate.text = p['expireDate']?.toString() ?? '';
+    }
+  }
+
+  // ==========================================
+  // 🔥 UPDATE PRODUCT (RELATIONAL UPDATE)
+  // ==========================================
   void updateProductQuantity({
     required String barcode,
     required bool isLoosed,
     required String locationType,
   }) async {
+    if (userId == null) return;
     isSaveLoading.value = true;
+
     try {
-      final String formatDate = setFormateDate();
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
+      // 1. Get IDs for Category and Animal Type from the observable lists
       var categoryItem = categoryList.firstWhereOrNull(
-        (e) => e.id == category.text,
+        (e) => e.name == category.text,
       );
-      var animalCategoryItem = animalTypeList.firstWhereOrNull(
-        (e) => e.id == animalType.text,
+      var animalItem = animalTypeList.firstWhereOrNull(
+        (e) => e.name == animalType.text,
       );
 
-      bool isGodown = location.text.toLowerCase() == 'godown';
-      String collectionName = isGodown ? 'godownProducts' : 'products';
-      var categoryName = categoryItem?.name ?? category.text;
-      var animalCategoryName = animalCategoryItem?.name ?? animalType.text;
-      customMessageOrErrorPrint(message: categoryName);
-      customMessageOrErrorPrint(message: animalCategoryName);
-      if (isLoosed) {
-        final looseProductRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('looseProducts')
-            .doc(barcode);
-        final looseProductExistingDoc = await looseProductRef.get();
+      String? catId = categoryItem?.id;
+      String? aniId = animalItem?.id;
 
-        int discounts = int.tryParse(discount.text) ?? 0;
-        if (looseProductExistingDoc.exists) {
-          await looseProductRef.update({
-            'quantity': int.parse(quantity.text),
-            'purchasePrice': double.tryParse(purchasePrice.text) ?? 0.0,
-            'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
-            'name': productName.text,
-            'flavours': flavor.text,
-            'isLoose': isLoose,
-            'isFlavorAndWeightNotRequired': isFlavorAndWeightNotRequired.value,
-            'location': location.text,
-            'discount': discounts,
-            'weight': weight.text,
-            'category': categoryName,
-            'animalType': animalCategoryName,
-            'purchaseDate': purchaseDate.text,
-            'exprieDate': exprieDate.text,
-            'updatedDate': formatDate,
-            'updatedTime': setFormateDate('hh:mm a'),
-          });
-          await fetchLooseProduct();
-          Get.back(result: true);
-          showMessage(message: '✅ Loosed Product Info updated.');
-        }
+      // 2. Get product ID from different sources
+      String? pid;
+      var productData = data['product'];
+
+      if (productData is ProductModel) {
+        pid = productData.id;
+      } else if (productData is LooseInvetoryModel) {
+        pid = productData.productId; // LooseInventoryModel uses productId
       } else {
-        final productRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection(collectionName)
-            .doc(barcode);
-        final existingDoc = await productRef.get();
-        int discounts = int.tryParse(discount.text) ?? 0;
-        if (existingDoc.exists) {
-          await productRef.update({
-            'quantity': int.parse(quantity.text),
-            'purchasePrice': double.tryParse(purchasePrice.text) ?? 0.0,
-            'sellingPrice': double.tryParse(sellingPrice.text) ?? 0.0,
-            'name': productName.text,
-            'flavours': flavor.text,
-            'isLoose': isLoose,
-            'isFlavorAndWeightNotRequired': isFlavorAndWeightNotRequired.value,
-            'location': location.text,
-            'discount': discounts,
-            'weight': weight.text,
-            'category': categoryName,
-            'animalType': animalCategoryName,
-            'purchaseDate': purchaseDate.text,
-            'exprieDate': exprieDate.text,
-            'updatedDate': formatDate,
-            'updatedTime': setFormateDate('hh:mm a'),
-          });
-          await fetchAllProducts();
-          Get.back(result: true);
-          showMessage(message: '✅ Product Info updated.');
-        }
+        pid =
+            productData['id']?.toString() ??
+            productData['productId']?.toString();
       }
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+
+      if (pid == null) {
+        showMessage(message: "❌ Product ID not found");
+        return;
+      }
+
+      // 3. Update Main Products Table (Name, Category, etc.)
+      await SupabaseConfig.from('products')
+          .update({
+            'name': productName.text,
+            'category': catId,
+            'animal_type': aniId,
+            'flavour': flavor.text,
+            'weight': weight.text,
+            'is_flavor_and_weight_not_required':
+                isFlavorAndWeightNotRequired.value,
+            'is_loose_category': isLoosed,
+          })
+          .eq('id', pid);
+
+      // 4. Update appropriate stock table based on product type
+      if (isLoosed) {
+        // Update loose_stocks table
+        await SupabaseConfig.from('loose_stocks')
+            .update({
+              'quantity': int.tryParse(quantity.text) ?? 0,
+              'selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
+            })
+            .eq('product_id', pid)
+            .eq('user_id', userId!);
+      } else {
+        // Update product_stock table
+        await SupabaseConfig.from('product_stock')
+            .update({
+              'quantity': num.tryParse(quantity.text) ?? 0,
+              'selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
+              'location': location.text.toLowerCase(),
+              'stock_type': 'packet',
+            })
+            .eq('product_id', pid)
+            .eq('user_id', userId!)
+            .eq('location', location.text.toLowerCase());
+      }
+
+      // 5. Update stock_batches if needed (for purchase/expiry dates)
+      if (purchaseDate.text.isNotEmpty || exprieDate.text.isNotEmpty) {
+        await SupabaseConfig.from('stock_batches')
+            .update({
+              'purchase_price': double.tryParse(purchasePrice.text) ?? 0.0,
+              'purchase_date':
+                  purchaseDate.text.isNotEmpty ? purchaseDate.text : null,
+              'expiry_date':
+                  exprieDate.text.isNotEmpty ? exprieDate.text : null,
+            })
+            .eq('product_id', pid)
+            .eq('user_id', userId!);
+      }
+
+      Get.back(result: true);
+      showMessage(message: '✅ Product Info updated.');
+    } catch (e) {
+      showMessage(message: "❌ Error: $e");
     } finally {
       isSaveLoading.value = false;
     }
   }
 
-  CategoryModel? getSelectedCategory({
-    required String categorysId,
-    String categoryType = '',
-  }) {
-    final name = categorysId;
-    try {
-      if (categoryType == 'animal') {
-        return animalTypeList.firstWhere((e) {
-          return e.name == name;
-        });
-      } else {
-        return categoryList.firstWhere((e) {
-          return e.name == name;
-        });
-      }
-    } catch (_) {
-      return null;
-    }
-  }
-
+  // ==========================================
+  // 🔥 FETCH DATA (SUPABASE)
+  // ==========================================
   Future<void> fetchCategories() async {
     var categorList = await retrieveCategoryModel();
     if (categorList.isNotEmpty) {
       categoryList.value = categorList;
     } else {
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
-
+      if (userId == null) return;
       try {
-        final snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .collection('categories')
-                .get();
-
+        final List response = await SupabaseConfig.from(
+          'categories',
+        ).select().eq('user_id', userId!);
         categoryList.value =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return CategoryModel.fromJson(data);
-            }).toList();
+            response.map((e) => CategoryModel.fromJson(e)).toList();
         saveCategoryModel(categoryList);
-      } on FirebaseAuthException catch (e) {
-        showMessage(message: e.toString());
+      } catch (e) {
+        // Error loading categories
       }
     }
   }
@@ -273,63 +318,17 @@ class ProductDetailsController extends GetxController with CacheManager {
     if (animalCategorList.isNotEmpty) {
       animalTypeList.value = animalCategorList;
     } else {
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
+      if (userId == null) return;
       try {
-        final snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .collection('animalCategories')
-                .get();
+        final List response = await SupabaseConfig.from(
+          'animal_categories',
+        ).select().eq('user_id', userId!);
         animalTypeList.value =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return CategoryModel.fromJson(data);
-            }).toList();
+            response.map((e) => CategoryModel.fromJson(e)).toList();
         saveAnimalCategoryModel(animalTypeList);
-      } on FirebaseAuthException catch (e) {
-        showMessage(message: e.toString());
+      } catch (e) {
+        // Error loading animal categories
       }
     }
-  }
-
-  Future<void> fetchAllProducts() async {
-    final uid = auth.currentUser?.uid;
-    final productSnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('products')
-            .where('isActive', isEqualTo: true)
-            .get();
-    productList.value =
-        productSnapshot.docs
-            .map((doc) => ProductModel.fromJson(doc.data()))
-            .toList();
-    saveProductList(productList);
-  }
-
-  Future<void> fetchLooseProduct() async {
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
-    try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('looseProducts')
-              .get();
-
-      snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return LooseInvetoryModel.fromJson(data);
-      }).toList();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    } finally {}
   }
 }
