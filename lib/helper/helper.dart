@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/helper/logger.dart';
@@ -12,19 +13,21 @@ void showMessage({
   bool isActionRequired = false,
   void Function()? onPressed,
 }) {
-  ScaffoldMessenger.of(Get.context!).showSnackBar(
-    SnackBar(
-      duration: Duration(seconds: isActionRequired ? seconds : seconds),
-      action:
-          isActionRequired
-              ? SnackBarAction(label: 'View', onPressed: onPressed!)
-              : null,
-      content: Text(
-        message,
-        style: CustomTextStyle.customRaleway(color: AppColors.whiteColor),
+  SchedulerBinding.instance.addPostFrameCallback((_) {
+    ScaffoldMessenger.of(Get.context!).showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: isActionRequired ? seconds : seconds),
+        action:
+            isActionRequired
+                ? SnackBarAction(label: 'View', onPressed: onPressed!)
+                : null,
+        content: Text(
+          message,
+          style: CustomTextStyle.customRaleway(color: AppColors.whiteColor),
+        ),
       ),
-    ),
-  );
+    );
+  });
 }
 
 void showSnackBar({required String error}) {

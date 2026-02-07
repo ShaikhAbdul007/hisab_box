@@ -105,44 +105,61 @@ class LooseController extends GetxController with CacheManager {
     try {
       final response = await SupabaseConfig.from('loose_stocks')
           .select('''
-        id,
-        quantity,
-        selling_price,
-        product_id,
-        user_id,
-        products!inner (
-          id, 
-          name, 
-          flavour, 
-          weight,
-          rack,
-          level,
-          is_loose_category,
-          categories:category (name), 
-          animals:animal_type (name),
-          product_stock!product_stock_product_id_fkey (
-            location,
-            stock_type,
-            is_active
-          ),
-          stock_batches (
-            purchase_date,
-            expiry_date,
-            purchase_price,
-            location,
-            stock_type
+          id,
+          quantity,
+          selling_price,
+          product_id,
+          user_id,
+          created_at,
+          updated_at,
+          products!fk_loose_stocks_products (
+            id, 
+            name, 
+            flavour, 
+            weight,
+            rack,
+            level,
+            is_loose_category,
+            is_flavor_and_weight_not_required,
+            categories:category (id, name), 
+            animals:animal_type (id, name),
+            product_stock!fk_product_stock_products (
+              location,
+              stock_type,
+              is_active
+            ),
+            product_barcodes!fk_product_barcodes_products (
+              barcode
+            ),
+            stock_batches (
+              purchase_date,
+              expiry_date,
+              purchase_price,
+              location,
+              stock_type
+            )
           )
-        )
-      ''')
+        ''')
           .eq('user_id', userId!)
           .order('created_at', ascending: false);
 
+      if (response == null) {
+        productList.clear();
+        return;
+      }
+
       final List data = response as List;
+
+      // DEBUG: Console mein check karo ki kya batches ke andar data aa raha hai?
+      if (data.isNotEmpty && data[0]['products'] != null) {
+        print("📅 Batch Data Check: ${data[0]['products']['stock_batches']}");
+      }
+
       productList.value =
           data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
       saveLoosedProductList(productList);
     } catch (e) {
-      print("Final Logic Error: $e");
+      print("🚨 Date Fetch Error: $e");
     } finally {
       isDataLoading.value = false;
     }

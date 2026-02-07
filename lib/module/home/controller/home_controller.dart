@@ -182,32 +182,102 @@ class HomeController extends GetxController with CacheManager {
         DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
 
     try {
+      // Query ekdum saaf kar di hai, koi extra comment ya symbol nahi hai
       final response = await SupabaseConfig.from('sales')
           .select('''
-            id,
-            total_amount,
-            created_at,
-            customer_id,
-            customers (name, mobile_number),
-            sale_items (
-              qty,
-              final_price,
-              original_price,
-              discount_amount,
-              product_id
-            ),
-            sale_payments (
-              amount,
-              payment_mode,
-              reference_no
-            )
-          ''')
+          id,
+          bill_no,
+          total_amount,
+          created_at,
+          customer_id,
+          customers (name, mobile_number),
+          sale_items (
+            qty,
+            final_price,
+            original_price,
+            discount_amount,
+            product_id,
+            applied_discount_percent,
+            stock_type,
+            location,
+            products ( name )
+          ),
+          sale_payments (
+            amount,
+            payment_mode,
+            reference_no
+          )
+        ''')
           .eq('user_id', userId!)
           .gte('created_at', startOfToday)
           .lte('created_at', endOfToday)
           .order('created_at', ascending: false);
 
-      return (response as List).map((doc) => SellsModel.fromJson(doc)).toList();
+      final List<dynamic> data = response as List;
+
+      return data.map((sale) {
+        final List<dynamic> dbItems = sale['sale_items'] ?? [];
+        final List<dynamic> dbPayments = sale['sale_payments'] ?? [];
+
+        // Mapping logic (Variable names wahi hain jo aapne mange the)
+        List<SellItem> mappedItems =
+            dbItems.map((item) {
+              return SellItem(
+                name: item['products']?['name'] ?? 'Unknown',
+                quantity: item['qty'] ?? 0,
+                originalPrice: (item['original_price'] ?? 0).toDouble(),
+                finalPrice: (item['final_price'] ?? 0).toDouble(),
+                discount: item['applied_discount_percent'] ?? 0,
+                barcode: '',
+                id: item['product_id'],
+                location: item['location'] ?? 'shop',
+                sellType: item['stock_type'] ?? 'packet',
+              );
+            }).toList();
+
+        double cash = 0, upi = 0, card = 0, credit = 0;
+        for (var p in dbPayments) {
+          String mode = p['payment_mode']?.toString().toLowerCase() ?? '';
+          double amt = (p['amount'] ?? 0).toDouble();
+          if (mode == 'cash') {
+            cash += amt;
+          } else if (mode == 'upi') {
+            upi += amt;
+          } else if (mode == 'card') {
+            card += amt;
+          } else if (mode == 'credit') {
+            credit += amt;
+          }
+        }
+
+        PaymentModel paymentObj = PaymentModel(
+          cash: cash,
+          upi: upi,
+          card: card,
+          credit: credit,
+          totalAmount: (sale['total_amount'] ?? 0).toDouble(),
+          isRoundOff: false,
+          roundOffAmount: 0.0,
+          type:
+              dbPayments.isNotEmpty ? dbPayments.first['payment_mode'] : 'Cash',
+        );
+
+        return SellsModel(
+          billNo: sale['bill_no']?.toString() ?? sale['id'].toString(),
+          finalAmount: (sale['total_amount'] ?? 0).toDouble(),
+          totalAmount: (sale['total_amount'] ?? 0).toDouble(),
+          itemsCount: mappedItems.fold(
+            0,
+            (sum, item) => (sum ?? 0) + (item.quantity ?? 0),
+          ),
+          soldAt: sale['created_at'].toString().split('T')[0],
+          time: sale['created_at'].toString().split('T')[1].split('.')[0],
+          items: mappedItems,
+          payment: paymentObj,
+          isDiscountGiven: false,
+          discountValue: 0.0,
+        );
+      }).toList();
     } catch (e) {
       print("🚨 Revenue List Error: $e");
       return [];

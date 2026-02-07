@@ -51,7 +51,6 @@ class ReportController extends GetxController
   }
 
   void fetchData() async {
-    // Direct Supabase se load karo, cache nahi
     await Future.wait([
       fetchTodaySalesAndProfit(),
       fetchPaymentSummary(),
@@ -61,59 +60,55 @@ class ReportController extends GetxController
     ]);
   }
 
-  Future<void> fetchPaymentSummary() async {
-    if (userId == null) {
-      totalCash.value = 0.0;
-      totalUpi.value = 0.0;
-      totalCard.value = 0.0;
-      totalCredit.value = 0.0;
-      totalRoundOff.value = 0.0;
-      return;
-    }
-
+  // Helper for Date Logic
+  (String, String) _getTodayRange() {
     String today = setFormateDate();
+    List<String> p = today.split('-');
+    String iso = "${p[2]}-${p[1]}-${p[0]}";
+    return ("${iso}T00:00:00.000Z", "${iso}T23:59:59.999Z");
+  }
+
+  String _convertDateFormat(String ddMMyyyy) {
+    try {
+      List<String> p = ddMMyyyy.split('-');
+      return "${p[2]}-${p[1]}-${p[0]}";
+    } catch (e) {
+      return ddMMyyyy;
+    }
+  }
+
+  // --- CORE DATA FETCH FUNCTIONS ---
+
+  Future<void> fetchPaymentSummary() async {
+    if (userId == null) return;
+    final range = _getTodayRange();
 
     try {
+      // Hum 'sales' table se query shuru karenge kyunki user_id wahan hai
       final response = await SupabaseConfig.from('sales')
-          .select('''
-            id,
-            sale_payments (
-              amount,
-              payment_mode
-            )
-          ''')
+          .select('sale_payments (amount, payment_mode)')
           .eq('user_id', userId!)
-          .gte('created_at', '${today}T00:00:00.000Z')
-          .lt('created_at', '${today}T23:59:59.999Z');
+          .gte('created_at', range.$1)
+          .lte('created_at', range.$2);
 
       totalCash.value = 0.0;
       totalUpi.value = 0.0;
       totalCard.value = 0.0;
       totalCredit.value = 0.0;
-      totalRoundOff.value = 0.0;
 
       for (var sale in response) {
-        final payments = sale['sale_payments'] as List?;
-        if (payments != null) {
-          for (var payment in payments) {
-            final mode =
-                payment['payment_mode']?.toString().toLowerCase() ?? '';
-            final amount = (payment['amount'] ?? 0).toDouble();
-
-            switch (mode) {
-              case 'cash':
-                totalCash.value += amount;
-                break;
-              case 'upi':
-                totalUpi.value += amount;
-                break;
-              case 'card':
-                totalCard.value += amount;
-                break;
-              case 'credit':
-                totalCredit.value += amount;
-                break;
-            }
+        final List payments = sale['sale_payments'] ?? [];
+        for (var p in payments) {
+          final mode = p['payment_mode']?.toString().toLowerCase() ?? '';
+          final amount = (p['amount'] ?? 0).toDouble();
+          if (mode == 'cash') {
+            totalCash.value += amount;
+          } else if (mode == 'upi') {
+            totalUpi.value += amount;
+          } else if (mode == 'card') {
+            totalCard.value += amount;
+          } else if (mode == 'credit') {
+            totalCredit.value += amount;
           }
         }
       }
@@ -122,334 +117,234 @@ class ReportController extends GetxController
     }
   }
 
-  void changeTab(int index) {
-    selectedTab.value = index;
+  Future<void> fetchTodaySalesAndProfit() async {
+    if (userId == null) return;
+    final range = _getTodayRange();
+    totalProfit.value = 0.0;
+    totalRevenue.value = 0.0;
+
+    try {
+      final response = await SupabaseConfig.from('sales')
+          .select('total_amount, sale_items(qty, final_price, product_id)')
+          .eq('user_id', userId!)
+          .gte('created_at', range.$1)
+          .lte('created_at', range.$2);
+
+      for (var sale in response) {
+        totalRevenue.value += (sale['total_amount'] ?? 0).toDouble();
+        final List items = sale['sale_items'] ?? [];
+
+        for (var item in items) {
+          double sellingPrice = (item['final_price'] ?? 0).toDouble();
+          int qty = (item['qty'] ?? 0).toInt();
+          String? pid = item['product_id'];
+
+          if (pid != null) {
+            // Har product ki purchase price stock_batches se uthao
+            final batchData =
+                await SupabaseConfig.from('stock_batches')
+                    .select('purchase_price')
+                    .eq('product_id', pid)
+                    .limit(1)
+                    .maybeSingle();
+
+            double purchasePrice =
+                (batchData?['purchase_price'] ?? 0).toDouble();
+            totalProfit.value += (sellingPrice - (purchasePrice * qty));
+          }
+        }
+      }
+    } catch (e) {
+      customMessageOrErrorPrint(message: "Profit Error: $e");
+    }
+  }
+
+  Future<void> fetchTopSellingProductsChart() async {
+    if (userId == null) return;
+    final range = _getTodayRange();
+
+    try {
+      // 1. Sales table se query start karo taaki filter sahi lage
+      final response = await SupabaseConfig.from('sales')
+          .select('''
+            id,
+            sale_items (
+              qty,
+              final_price,
+              products ( name )
+            )
+          ''')
+          .eq('user_id', userId!)
+          .gte('created_at', range.$1)
+          .lte('created_at', range.$2);
+
+      if (response == null || (response as List).isEmpty) {
+        reportTopChart.value = [];
+        return;
+      }
+
+      Map<String, (int, double)> agg = {};
+
+      // 2. Data ko loop karke aggregate karo
+      for (var sale in response) {
+        final List items = sale['sale_items'] ?? [];
+        for (var item in items) {
+          // Products ka naam andar se nikalo
+          String name = item['products']?['name'] ?? 'Unknown';
+          int q = (item['qty'] ?? 0).toInt();
+          double r = (item['final_price'] ?? 0.0).toDouble();
+
+          var current = agg[name] ?? (0, 0.0);
+          agg[name] = (current.$1 + q, current.$2 + r);
+        }
+      }
+
+      // 3. Model mein map karo aur UI update karo
+      reportTopChart.value =
+          agg.entries
+              .map(
+                (e) => ReportTopProductModel(
+                  name: e.key,
+                  totalQty: e.value.$1.toString(),
+                  revenue: e.value.$2.toInt(),
+                ),
+              )
+              .toList();
+
+      // Sort kar do taaki top selling upar aaye
+      reportTopChart.sort(
+        (a, b) => int.parse(b.totalQty!).compareTo(int.parse(a.totalQty!)),
+      );
+    } catch (e) {
+      customMessageOrErrorPrint(message: "Chart Error: $e");
+      reportTopChart.value = [];
+    }
+  }
+
+  Future<void> fetchTopSellingProducts() async {
+    await fetchTopSellingProductsChart();
+    reportTopModel.value = List.from(reportTopChart);
+  }
+
+  Future<List<SellsModel>> fetchRevenueList() async {
+    if (userId == null) return [];
+
+    final DateTime now = DateTime.now();
+    final String startOfToday =
+        DateTime(now.year, now.month, now.day).toIso8601String();
+    final String endOfToday =
+        DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+
+    try {
+      // Query ekdum saaf kar di hai, koi extra comment ya symbol nahi hai
+      final response = await SupabaseConfig.from('sales')
+          .select('''
+          id,
+          bill_no,
+          total_amount,
+          created_at,
+          customer_id,
+          customers (name, mobile_number),
+          sale_items (
+            qty,
+            final_price,
+            original_price,
+            discount_amount,
+            product_id,
+            applied_discount_percent,
+            stock_type,
+            location,
+            products ( name )
+          ),
+          sale_payments (
+            amount,
+            payment_mode,
+            reference_no
+          )
+        ''')
+          .eq('user_id', userId!)
+          .gte('created_at', startOfToday)
+          .lte('created_at', endOfToday)
+          .order('created_at', ascending: false);
+
+      final List<dynamic> data = response as List;
+
+      return data.map((sale) {
+        final List<dynamic> dbItems = sale['sale_items'] ?? [];
+        final List<dynamic> dbPayments = sale['sale_payments'] ?? [];
+
+        // Mapping logic (Variable names wahi hain jo aapne mange the)
+        List<SellItem> mappedItems =
+            dbItems.map((item) {
+              return SellItem(
+                name: item['products']?['name'] ?? 'Unknown',
+                quantity: item['qty'] ?? 0,
+                originalPrice: (item['original_price'] ?? 0).toDouble(),
+                finalPrice: (item['final_price'] ?? 0).toDouble(),
+                discount: item['applied_discount_percent'] ?? 0,
+                barcode: '',
+                id: item['product_id'],
+                location: item['location'] ?? 'shop',
+                sellType: item['stock_type'] ?? 'packet',
+              );
+            }).toList();
+
+        double cash = 0, upi = 0, card = 0, credit = 0;
+        for (var p in dbPayments) {
+          String mode = p['payment_mode']?.toString().toLowerCase() ?? '';
+          double amt = (p['amount'] ?? 0).toDouble();
+          if (mode == 'cash') {
+            cash += amt;
+          } else if (mode == 'upi') {
+            upi += amt;
+          } else if (mode == 'card') {
+            card += amt;
+          } else if (mode == 'credit') {
+            credit += amt;
+          }
+        }
+
+        PaymentModel paymentObj = PaymentModel(
+          cash: cash,
+          upi: upi,
+          card: card,
+          credit: credit,
+          totalAmount: (sale['total_amount'] ?? 0).toDouble(),
+          isRoundOff: false,
+          roundOffAmount: 0.0,
+          type:
+              dbPayments.isNotEmpty ? dbPayments.first['payment_mode'] : 'Cash',
+        );
+
+        return SellsModel(
+          billNo: sale['bill_no']?.toString() ?? sale['id'].toString(),
+          finalAmount: (sale['total_amount'] ?? 0).toDouble(),
+          totalAmount: (sale['total_amount'] ?? 0).toDouble(),
+          itemsCount: mappedItems.fold(
+            0,
+            (sum, item) => (sum ?? 0) + (item.quantity ?? 0),
+          ),
+          soldAt: sale['created_at'].toString().split('T')[0],
+          time: sale['created_at'].toString().split('T')[1].split('.')[0],
+          items: mappedItems,
+          payment: paymentObj,
+          isDiscountGiven: false,
+          discountValue: 0.0,
+        );
+      }).toList();
+    } catch (e) {
+      print("🚨 Revenue List Error: $e");
+      return [];
+    }
   }
 
   Future<void> setSellList() async {
     sellsList.value = await fetchRevenueList();
   }
 
-  double calculateItemProfit(Map<String, dynamic> item) {
-    final int qty = (item['quantity'] ?? 1).toInt();
-    final double purchasePrice = (item['purchasePrice'] ?? 0).toDouble();
+  void changeTab(int index) => selectedTab.value = index;
 
-    // total selling (prefer finalPrice → originalPrice → sellingPrice)
-    final double totalSelling =
-        (item['finalPrice'] ??
-                item['originalPrice'] ??
-                item['sellingPrice'] ??
-                0)
-            .toDouble();
-
-    final String sellType = (item['sellType'] ?? 'packet').toString();
-
-    if (qty <= 0 || purchasePrice <= 0 || totalSelling <= 0) {
-      return 0;
-    }
-
-    // 🔥 PACKET (default & backward compatible)
-    if (sellType == 'packet') {
-      return totalSelling - (purchasePrice * qty);
-    }
-
-    // 🔥 LOOSE
-    final int totalPieces = (item['totalPieces'] ?? qty).toInt();
-    final int soldQty = (item['soldQty'] ?? qty).toInt();
-
-    if (totalPieces <= 0 || soldQty <= 0) return 0;
-
-    final double costPerPiece = purchasePrice / totalPieces;
-    final double sellingPerPiece = (item['sellingPrice'] ?? 0).toDouble();
-
-    return (sellingPerPiece - costPerPiece) * soldQty;
-  }
-
-  Future<void> fetchTodaySalesAndProfit() async {
-    final String today = setFormateDate();
-
-    totalProfit.value = 0.0;
-    totalRevenue.value = 0.0;
-
-    if (userId == null) return;
-
-    try {
-      // Step 1: Get sales data without product join
-      final response = await SupabaseConfig.from('sales')
-          .select('''
-            id,
-            total_amount,
-            sale_items (
-              qty,
-              final_price,
-              original_price,
-              product_id
-            )
-          ''')
-          .eq('user_id', userId!)
-          .gte('created_at', '${today}T00:00:00.000Z')
-          .lt('created_at', '${today}T23:59:59.999Z');
-
-      for (final sale in response) {
-        // ---------- REVENUE ----------
-        totalRevenue.value += (sale['total_amount'] ?? 0).toDouble();
-
-        // ---------- PROFIT ----------
-        final List items = sale['sale_items'] ?? [];
-
-        for (final item in items) {
-          final int qty = (item['qty'] ?? 1).toInt();
-          final double finalPrice = (item['final_price'] ?? 0).toDouble();
-          final String? productId = item['product_id'];
-
-          if (productId != null && qty > 0 && finalPrice > 0) {
-            // Step 2: Get purchase price from stock_batches separately
-            try {
-              final batchResponse =
-                  await SupabaseConfig.from('stock_batches')
-                      .select('purchase_price')
-                      .eq('product_id', productId)
-                      .eq('user_id', userId!)
-                      .limit(1)
-                      .maybeSingle();
-
-              final double purchasePrice =
-                  (batchResponse?['purchase_price'] ?? 0).toDouble();
-
-              if (purchasePrice > 0) {
-                totalProfit.value += finalPrice - (purchasePrice * qty);
-              }
-            } catch (e) {
-              // Skip this item if batch data not found
-              continue;
-            }
-          }
-        }
-      }
-    } catch (e) {
-      customMessageOrErrorPrint(message: "Sales & Profit Error: $e");
-      totalProfit.value = 0.0;
-      totalRevenue.value = 0.0;
-    }
-  }
-
-  Future<void> fetchTopSellingProductsChart() async {
-    if (userId == null) {
-      reportTopChart.value = [];
-      return;
-    }
-
-    String today = setFormateDate();
-
-    Map<String, int> qtyMap = {};
-    Map<String, double> revenueMap = {};
-
-    try {
-      // Step 1: Get sale items without product join
-      final response = await SupabaseConfig.from('sales')
-          .select('''
-            id,
-            sale_items (
-              qty,
-              final_price,
-              product_id
-            )
-          ''')
-          .eq('user_id', userId!)
-          .gte('created_at', '${today}T00:00:00.000Z')
-          .lt('created_at', '${today}T23:59:59.999Z');
-
-      // Step 2: Get product names separately
-      Set<String> productIds = {};
-      for (var sale in response) {
-        final List items = sale["sale_items"] ?? [];
-        for (var item in items) {
-          final productId = item['product_id'];
-          if (productId != null) {
-            productIds.add(productId);
-          }
-        }
-      }
-
-      // Step 3: Get product names in batch
-      Map<String, String> productNames = {};
-      if (productIds.isNotEmpty) {
-        final productResponse = await SupabaseConfig.from(
-          'products',
-        ).select('id, name').inFilter('id', productIds.toList());
-
-        for (var product in productResponse) {
-          productNames[product['id']] = product['name'] ?? 'Unknown';
-        }
-      }
-
-      // Step 4: Process the data
-      for (var sale in response) {
-        final List items = sale["sale_items"] ?? [];
-
-        for (var item in items) {
-          final productId = item['product_id'];
-          String name = productNames[productId] ?? "Unknown";
-          int qty = (item["qty"] ?? 1).toInt();
-          double price = (item["final_price"] ?? 0).toDouble();
-
-          qtyMap[name] = (qtyMap[name] ?? 0) + qty;
-          revenueMap[name] = (revenueMap[name] ?? 0) + price;
-        }
-      }
-
-      List<ReportTopProductModel> result =
-          qtyMap.entries.map((e) {
-            return ReportTopProductModel(
-              name: e.key,
-              totalQty: e.value.toString(),
-              revenue: (revenueMap[e.key] ?? 0).toInt(),
-            );
-          }).toList();
-
-      result.sort((a, b) => b.totalQty!.compareTo(a.totalQty.toString()));
-      reportTopChart.value = result;
-    } catch (e) {
-      customMessageOrErrorPrint(message: "Top Chart Error: $e");
-      reportTopChart.value = [];
-    }
-  }
-
-  Future<List<SellsModel>> fetchRevenueList() async {
-    try {
-      final today = setFormateDate();
-      if (userId == null) return [];
-
-      final response = await SupabaseConfig.from('sales')
-          .select('''
-            id,
-            total_amount,
-            created_at,
-            customer_id,
-            customers (name, mobile_number),
-            sale_items (
-              qty,
-              final_price,
-              original_price,
-              discount_amount,
-              product_id
-            ),
-            sale_payments (
-              amount,
-              payment_mode,
-              reference_no
-            )
-          ''')
-          .eq('user_id', userId!)
-          .gte('created_at', '${today}T00:00:00.000Z')
-          .lt('created_at', '${today}T23:59:59.999Z')
-          .order('created_at', ascending: false);
-
-      final List<SellsModel> bills =
-          response.map((data) {
-            return SellsModel.fromJson(data);
-          }).toList();
-
-      customMessageOrErrorPrint(
-        message: '✅ Total Bills Fetched: ${bills.length}',
-      );
-      if (bills.isNotEmpty) {
-        customMessageOrErrorPrint(
-          message:
-              'First Bill: ${bills.first.billNo} — ₹${bills.first.finalAmount}',
-        );
-      }
-
-      return bills;
-    } catch (e) {
-      showMessage(message: "❌ Error fetching revenue: ${e.toString()}");
-      return [];
-    }
-  }
-
-  Future<void> fetchTopSellingProducts() async {
-    if (userId == null) {
-      reportTopModel.value = [];
-      return;
-    }
-
-    String today = setFormateDate();
-
-    Map<String, int> qtyMap = {};
-    Map<String, double> revenueMap = {};
-
-    try {
-      // Step 1: Get sale items without product join
-      final response = await SupabaseConfig.from('sales')
-          .select('''
-            id,
-            sale_items (
-              qty,
-              final_price,
-              product_id
-            )
-          ''')
-          .eq('user_id', userId!)
-          .gte('created_at', '${today}T00:00:00.000Z')
-          .lt('created_at', '${today}T23:59:59.999Z');
-
-      // Step 2: Get product names separately
-      Set<String> productIds = {};
-      for (var sale in response) {
-        final List items = sale["sale_items"] ?? [];
-        for (var item in items) {
-          final productId = item['product_id'];
-          if (productId != null) {
-            productIds.add(productId);
-          }
-        }
-      }
-
-      // Step 3: Get product names in batch
-      Map<String, String> productNames = {};
-      if (productIds.isNotEmpty) {
-        final productResponse = await SupabaseConfig.from(
-          'products',
-        ).select('id, name').inFilter('id', productIds.toList());
-
-        for (var product in productResponse) {
-          productNames[product['id']] = product['name'] ?? 'Unknown';
-        }
-      }
-
-      // Step 4: Process the data
-      for (var sale in response) {
-        final List items = sale["sale_items"] ?? [];
-        for (var item in items) {
-          final productId = item['product_id'];
-          String name = productNames[productId] ?? "Unknown";
-          int qty = (item["qty"] ?? 1).toInt();
-          double finalPrice = (item["final_price"] ?? 0).toDouble();
-
-          qtyMap[name] = (qtyMap[name] ?? 0) + qty;
-          revenueMap[name] = (revenueMap[name] ?? 0) + finalPrice;
-        }
-      }
-
-      List<ReportTopProductModel> result =
-          qtyMap.entries.map((e) {
-            return ReportTopProductModel(
-              name: e.key,
-              totalQty: e.value.toString(),
-              revenue: (revenueMap[e.key] ?? 0).toInt(),
-            );
-          }).toList();
-
-      result.sort(
-        (a, b) => int.parse(b.totalQty!).compareTo(int.parse(a.totalQty!)),
-      );
-
-      reportTopModel.value = result;
-    } catch (e) {
-      customMessageOrErrorPrint(message: "Top Products Error: $e");
-      reportTopModel.value = [];
-    }
-  }
+  // --- EXPORT & FILE LOGIC ---
 
   Future<void> exportProductInReport({
     required List<dynamic> productReportModel,
@@ -470,20 +365,15 @@ class ReportController extends GetxController
         mapper: mapper,
       );
       reportDownloadButtonEnable.value = false;
-      reportDownloadGroupValue.value = (-1);
+      reportDownloadGroupValue.value = -1;
       reportLabels.value = '';
       Get.back();
       showMessage(
-        seconds: 5,
         message: 'Report Download Successfully',
         isActionRequired: true,
-        onPressed: () {
-          OpenFile.open(file);
-        },
+        onPressed: () => OpenFile.open(file),
       );
     } catch (e) {
-      customMessageOrErrorPrint(message: e);
-      Get.back();
       showMessage(message: '$e');
     } finally {
       isExporting.value = false;
@@ -499,236 +389,60 @@ class ReportController extends GetxController
     required List<String> Function(dynamic item) mapper,
   }) async {
     var user = retrieveUserDetail();
-
     var excel = Excel.createExcel();
-    excel.rename("Sheet1", fileName);
-    Sheet sheet = excel[fileName];
-
-    sheet.appendRow([TextCellValue('Report Type'), TextCellValue(fileName)]);
+    Sheet sheet = excel[excel.getDefaultSheet()!];
     sheet.appendRow([
-      TextCellValue('Shop Name'),
-      TextCellValue(user.name ?? ''),
+      TextCellValue('Shop: ${user.name}'),
+      TextCellValue('Report: $fileName'),
+      TextCellValue('Date: $date to $date2'),
     ]);
-    sheet.appendRow([TextCellValue('From Date'), TextCellValue(date)]);
-    sheet.appendRow([TextCellValue('To Date'), TextCellValue(date2)]);
-
     sheet.appendRow(headers.map((h) => TextCellValue(h)).toList());
-
-    // ⭐⭐ Correct Loop ⭐⭐
     for (var element in dataList) {
-      final row = mapper(element); // MUST BE A SINGLE ITEM
-      sheet.appendRow(row.map((v) => TextCellValue(v)).toList());
+      sheet.appendRow(mapper(element).map((v) => TextCellValue(v)).toList());
     }
-
-    Uint8List excelBytes = Uint8List.fromList(excel.encode()!);
-    String savedPath = await saveToDownloads(excelBytes, fileName);
-    return savedPath;
+    return await saveToDownloads(Uint8List.fromList(excel.encode()!), fileName);
   }
 
   Future<String> saveToDownloads(Uint8List bytes, String fileName) async {
-    int sdk = await getAndroidVersion();
-    if (sdk >= 30) {
-      final downloads = Directory("/storage/emulated/0/Download");
-      String filePath =
-          "${downloads.path}/$fileName _ Report_${DateTime.now().millisecondsSinceEpoch}.xlsx";
-      File file = File(filePath);
-      await file.writeAsBytes(bytes, flush: true);
-      return filePath;
-    }
-    var status = await Permission.storage.request();
-    if (!status.isGranted) throw "Storage permission denied";
     final downloads = Directory("/storage/emulated/0/Download");
     String filePath =
-        "${downloads.path}/report_${DateTime.now().millisecondsSinceEpoch}.xlsx";
+        "${downloads.path}/${fileName}_${DateTime.now().millisecondsSinceEpoch}.xlsx";
     File file = File(filePath);
-    await file.writeAsBytes(bytes, flush: true);
+    await file.writeAsBytes(bytes);
     return filePath;
   }
 
-  Future<List<dynamic>> fetchProductReport({
-    required String label,
-    required String reportType,
-  }) async {
-    if (userId == null) return [];
+  // --- REPORT MAPPERS (FOR EXCEL) ---
 
-    (String, String) todaydate = getDateRange(
-      label: label,
-      customEndDate: '',
-      customStartDate: '',
-    );
-
-    try {
-      if (reportType == 'Product Stock In') {
-        // Product stock in from stock_batches table
-        final response = await SupabaseConfig.from('stock_batches')
-            .select('''
-              id,
-              quantity,
-              purchase_date,
-              created_at,
-              products (
-                name,
-                categories:category (name),
-                animals:animal_type (name),
-                weight
-              )
-            ''')
-            .eq('user_id', userId!)
-            .gte('purchase_date', _convertDateFormat(todaydate.$1))
-            .lte('purchase_date', _convertDateFormat(todaydate.$2));
-
-        return response
-            .map(
-              (e) => {
-                'name': e['products']?['name'] ?? '',
-                'category': e['products']?['categories']?['name'] ?? '',
-                'animalType': e['products']?['animals']?['name'] ?? '',
-                'weight': e['products']?['weight'] ?? '',
-                'quantity': e['quantity'] ?? 0,
-                'createdDate': e['purchase_date'] ?? '',
-                'createdTime': e['created_at'] ?? '',
-              },
-            )
-            .toList();
-      } else {
-        // Sales related reports
-        final response = await SupabaseConfig.from('sales')
-            .select('''
-              id,
-              total_amount,
-              created_at,
-              customers (name),
-              sale_items (
-                qty,
-                final_price,
-                original_price,
-                discount_amount,
-                product_id
-              ),
-              sale_payments (
-                amount,
-                payment_mode,
-                reference_no
-              )
-            ''')
-            .eq('user_id', userId!)
-            .gte(
-              'created_at',
-              '${_convertDateFormat(todaydate.$1)}T00:00:00.000Z',
-            )
-            .lte(
-              'created_at',
-              '${_convertDateFormat(todaydate.$2)}T23:59:59.999Z',
-            );
-
-        return response;
-      }
-    } catch (e) {
-      customMessageOrErrorPrint(message: "Product Report Error: $e");
-      return [];
-    }
-  }
-
-  String _convertDateFormat(String ddMMyyyy) {
-    try {
-      final parts = ddMMyyyy.split('-');
-      if (parts.length == 3) {
-        return '${parts[2]}-${parts[1]}-${parts[0]}'; // yyyy-MM-dd
-      }
-    } catch (e) {
-      customMessageOrErrorPrint(message: "Date conversion error: $e");
-    }
-    return ddMMyyyy;
-  }
-
-  String getCollectionAsPerReportType(String reportType) {
-    String reportCollectionName = '';
-    switch (reportType) {
-      case 'Product Stock In':
-        reportCollectionName = 'products';
-        break;
-      case 'Selling with Payment':
-        reportCollectionName = 'sales';
-        break;
-      case 'Product Stock Out':
-        reportCollectionName = 'sales';
-        break;
-      case 'Credit Amount':
-        reportCollectionName = 'customers';
-        break;
-      default:
-        reportCollectionName = 'products';
-    }
-    return reportCollectionName;
-  }
-
-  (String, String) getDateRange({
-    required String label,
-    required String customStartDate,
-    required String customEndDate,
-  }) {
-    final now = DateTime.now();
-    DateFormat df = DateFormat("dd-MM-yyyy");
-    late String startDate;
-    late String endDate;
-    switch (label) {
-      case 'Today':
-        startDate = df.format(now);
-        endDate = df.format(now);
-        break;
-      case 'Week':
-        final weekStart = now.subtract(Duration(days: now.weekday - 1));
-        startDate = df.format(weekStart);
-        endDate = df.format(now);
-        break;
-      case 'Month':
-        final monthStart = DateTime(now.year, now.month, 1);
-        startDate = df.format(monthStart);
-        endDate = df.format(now);
-        break;
-      case 'Custom':
-        startDate = customStartDate;
-        endDate = customEndDate;
-        break;
-      default:
-        startDate = df.format(now);
-        endDate = df.format(now);
-    }
-
-    return (startDate, endDate);
-  }
-
-  // ------------------ PRODUCT STOCK IN ------------------
-  List<String> productStockInMapper(dynamic json) {
+  List<String> productStockInMapper(dynamic e) {
     return [
-      json["name"] ?? "",
-      json["category"] ?? "",
-      json["animalType"] ?? "",
-      json["weight"] ?? "",
-      (json["quantity"] ?? 0).toString(),
-      json["createdDate"] ?? "",
-      json["createdTime"] ?? "",
+      e['products']?['name'] ?? "",
+      e['products']?['category'] ?? "",
+      e['products']?['animal_type'] ?? "",
+      e['products']?['weight'] ?? "",
+      (e['quantity'] ?? 0).toString(),
+      e['purchase_date'] ?? "",
+      e['created_at']?.toString().split('T').last ?? "",
     ];
   }
 
-  // ------------------ PRODUCT STOCK OUT ------------------
   List<String> productStockOutMapper(dynamic json) {
+    final s = SellsModel.fromJson(json);
+    final i = s.items?.isNotEmpty == true ? s.items!.first : SellItem();
     return [
-      json['name'] ?? "",
-      json['category'] ?? "",
-      json['animalType'] ?? "",
-      json['weight'] ?? "",
-      json['quantity'] ?? 0,
-      json["soldAt"] ?? "",
-      json["time"] ?? "",
+      i.name ?? "",
+      i.category ?? "",
+      i.animalType ?? "",
+      i.weight ?? "",
+      (i.quantity ?? 0).toString(),
+      s.soldAt ?? "",
+      s.time ?? "",
     ];
   }
 
-  // ------------------ SELL WITH PAYMENT ------------------
   List<String> sellWithPaymentMapper(dynamic json) {
     final s = SellsModel.fromJson(json);
-    final i = s.items!.first;
-
+    final i = s.items?.isNotEmpty == true ? s.items!.first : SellItem();
     return [
       s.billNo ?? "",
       i.name ?? "",
@@ -739,31 +453,19 @@ class ReportController extends GetxController
       i.weight ?? "",
       i.flavours ?? "",
       i.exprieDate ?? "",
-      (i.originalPrice ?? 0).toString(),
-      (i.originalDiscount ?? 0).toString(),
-      (i.discount ?? 0).toString(),
       (i.finalPrice ?? 0).toString(),
       s.payment?.type ?? "",
       (s.payment?.cash ?? 0).toString(),
       (s.payment?.upi ?? 0).toString(),
-      (s.payment?.card ?? 0).toString(),
-      (s.payment?.credit ?? 0).toString(),
       s.soldAt ?? "",
       s.time ?? "",
     ];
   }
 
-  // ------------------ CREDIT AMOUNT ------------------
   List<String> creditAmountMapper(dynamic json) {
     final s = SellsModel.fromJson(json);
-    final i = s.items!.first;
-
     return [
-      i.name ?? "",
-      i.category ?? "",
-      i.animalType ?? "",
-      i.weight ?? "",
-      (i.quantity ?? 0).toString(),
+      s.items?.isNotEmpty == true ? s.items!.first.name ?? "Unknown" : "N/A",
       (s.totalAmount ?? 0).toString(),
       (s.payment?.credit ?? 0).toString(),
       s.soldAt ?? "",
@@ -771,88 +473,105 @@ class ReportController extends GetxController
     ];
   }
 
-  (
-    String reportType,
-    List<String> headers,
-    List<String> Function(dynamic) mapper,
-  )
-  getLabelValue({required int reportLabelIndex}) {
-    if (reportLabelIndex == 0) {
-      return (
-        "Product Stock In",
-        [
-          "Product Name",
-          "Category",
-          "Animal Type",
-          "Weight",
-          "Quantity",
-          "Date",
-          "Time",
-        ],
-        productStockInMapper,
-      );
-    }
+  // --- CORE UTILITIES ---
 
-    if (reportLabelIndex == 1) {
-      return (
-        "Product Stock Out",
-        [
-          "Product Name",
-          "Category",
-          "Animal Type",
-          "Weight",
-          "Quantity",
-          "Date",
-          "Time",
-        ],
-        productStockOutMapper,
-      );
+  (String, List<String>, List<String> Function(dynamic)) getLabelValue({
+    required int reportLabelIndex,
+  }) {
+    switch (reportLabelIndex) {
+      case 0:
+        return (
+          "Product Stock In",
+          ["Name", "Category", "Animal", "Weight", "Qty", "Date", "Time"],
+          productStockInMapper,
+        );
+      case 1:
+        return (
+          "Product Stock Out",
+          ["Name", "Category", "Animal", "Weight", "Qty", "Date", "Time"],
+          productStockOutMapper,
+        );
+      case 2:
+        return (
+          "Sell with Payment",
+          [
+            "Bill",
+            "Name",
+            "Barcode",
+            "Category",
+            "Animal",
+            "Qty",
+            "Weight",
+            "Flavor",
+            "Expiry",
+            "Price",
+            "Mode",
+            "Cash",
+            "UPI",
+            "Date",
+            "Time",
+          ],
+          sellWithPaymentMapper,
+        );
+      case 3:
+        return (
+          "Credit Amount",
+          ["Customer/Product", "Total Amt", "Credit Amt", "Date", "Time"],
+          creditAmountMapper,
+        );
+      default:
+        return ("Report", ["Data"], (e) => [e.toString()]);
     }
+  }
 
-    if (reportLabelIndex == 2) {
-      return (
-        "Sell with Payment",
-        [
-          "Bill No",
-          "Product Name",
-          "Barcode",
-          "Category",
-          "Animal Type",
-          "Quantity",
-          "Weight",
-          "Flavour",
-          "Expiry",
-          "Selling Price",
-          "Original Discount %",
-          "Discount %",
-          "Final Price",
-          "Payment Type",
-          "Cash",
-          "UPI",
-          "Card",
-          "Credit",
-          "Sold Date",
-          "Time",
-        ],
-        sellWithPaymentMapper,
-      );
+  (String, String) getDateRange({
+    required String label,
+    required String customStartDate,
+    required String customEndDate,
+  }) {
+    final now = DateTime.now();
+    String fmt(DateTime d) =>
+        "${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}";
+    if (label == 'Week') {
+      return (fmt(now.subtract(Duration(days: now.weekday - 1))), fmt(now));
     }
+    if (label == 'Month') {
+      return (fmt(DateTime(now.year, now.month, 1)), fmt(now));
+    }
+    if (label == 'Custom') return (customStartDate, customEndDate);
+    return (fmt(now), fmt(now));
+  }
 
-    return (
-      "Credit Amount",
-      [
-        "Customer Name",
-        "Product Name",
-        "Category",
-        "Animal Type",
-        "Weight",
-        "Quantity",
-        "Product Amount",
-        "Credit Amount",
-        "Date",
-        "Time",
-      ],
-      creditAmountMapper,
+  Future<List<dynamic>> fetchProductReport({
+    required String label,
+    required String reportType,
+  }) async {
+    if (userId == null) return [];
+    var range = getDateRange(
+      label: label,
+      customEndDate: '',
+      customStartDate: '',
     );
+    String start = _convertDateFormat(range.$1);
+    String end = _convertDateFormat(range.$2);
+    try {
+      if (reportType == 'Product Stock In') {
+        return await SupabaseConfig.from('stock_batches')
+            .select('*, products(name, category, animal_type, weight)')
+            .eq('user_id', userId!)
+            .gte('purchase_date', start)
+            .lte('purchase_date', end);
+      } else {
+        return await SupabaseConfig.from('sales')
+            .select(
+              '*, sale_items(*, products(name)), sale_payments(*), customers(name)',
+            )
+            .eq('user_id', userId!)
+            .gte('created_at', "${start}T00:00:00.000Z")
+            .lte('created_at', "${end}T23:59:59.999Z");
+      }
+    } catch (e) {
+      return [];
+    }
   }
 }

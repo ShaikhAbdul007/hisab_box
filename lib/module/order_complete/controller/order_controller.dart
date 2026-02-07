@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
@@ -9,18 +7,14 @@ import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../sell/model/print_model.dart';
 
 class OrderController extends GetxController with CacheManager {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-
+  final String? uid = SupabaseConfig.auth.currentUser?.id;
   TextEditingController mobileNumber = TextEditingController();
   TextEditingController name = TextEditingController();
   TextEditingController address = TextEditingController();
   TextEditingController description = TextEditingController();
-
   RxList<CustomerDetails> customerDetails = <CustomerDetails>[].obs;
-
   RxBool saveCustomerWithInvoiceLoading = false.obs;
   RxBool homeButtonVisible = true.obs;
-
   var data = Get.arguments;
 
   @override
@@ -91,40 +85,53 @@ class OrderController extends GetxController with CacheManager {
   Future<bool> saveCustomerWithInvoice({
     required PrintInvoiceModel invoice,
   }) async {
+    // 1. Check Internet & UID
+    final String? currentUid = uid;
+    if (currentUid == null) {
+      print("🚨 Error: No Authorized User Found");
+      return false;
+    }
+
     saveCustomerWithInvoiceLoading.value = true;
 
     try {
-      // 1️⃣ Check if customer exists by mobile_number
+      // 2. Data Clean-up (Preventing empty strings in non-required fields)
+      String cName = name.text.trim();
+      String cMobile = mobileNumber.text.trim();
+      String cAddress = address.text.trim();
+      String cDesc = description.text.trim();
+
+      if (cMobile.isEmpty) {
+        print("🚨 Error: Mobile number is required");
+        return false;
+      }
+
+      // 3. Customer Search (Checking existing)
       final customerResponse =
           await SupabaseConfig.from('customers')
               .select('id')
-              .eq('mobile_number', mobileNumber.text)
-              .eq('user_id', uid ?? '')
+              .eq('mobile_number', cMobile)
+              .eq('user_id', currentUid)
               .maybeSingle();
 
       String? customerId;
 
       if (customerResponse != null) {
         customerId = customerResponse['id'].toString();
-        // Update Existing
+        // Update Existing Customer
         await SupabaseConfig.from('customers')
-            .update({
-              "name": name.text,
-              "address": address.text,
-              "description": description.text,
-            })
+            .update({"name": cName, "address": cAddress, "description": cDesc})
             .eq('id', customerId);
       } else {
-        // Insert New Customer (Table columns: mobile_number, user_id, description, address, name)
+        // Insert New Customer
         final newCustomer =
             await SupabaseConfig.from('customers')
                 .insert({
-                  "user_id": uid,
-                  "name": name.text,
-                  "address": address.text,
-                  "mobile_number": mobileNumber.text,
-                  "description": description.text,
-                  "created_at": DateTime.now().toIso8601String(),
+                  "user_id": currentUid,
+                  "name": cName,
+                  "address": cAddress,
+                  "mobile_number": cMobile,
+                  "description": cDesc,
                 })
                 .select('id')
                 .single();
@@ -132,21 +139,24 @@ class OrderController extends GetxController with CacheManager {
         customerId = newCustomer['id'].toString();
       }
 
-      // 2️⃣ SALE TABLE UPDATE (Optional but Recommended)
-      // Agar tune sale pehle hi create kar di hai, toh usme customer_id update kar do
-      // Isse 'sales' aur 'customers' table link ho jayengi
-      /*
-    if (invoice.billNo != null) {
-       await SupabaseConfig.from('sales')
-          .update({'customer_id': customerId})
-          .eq('id', invoice.billNo!.replaceAll('HB-', ''));
-    }
-    */
+      // 4. Update Sales Table (Customer link karna)
+      // Invoice Bill No ko parse karke Sales ID nikalna
+      if (invoice.billNo != null) {
+        String cleanBillId = invoice.billNo!.replaceAll('HB-', '').trim();
+
+        // Ensure cleanBillId is a valid UUID before updating
+        if (cleanBillId.length >= 32) {
+          await SupabaseConfig.from(
+            'sales',
+          ).update({'customer_id': customerId}).eq('id', cleanBillId);
+          print("✅ Sale linked to customer");
+        }
+      }
 
       await loadAllCustomers();
       return true;
     } catch (e) {
-      print("🚨 Save Error: $e");
+      print("🚨 Save Customer Error: $e");
       return false;
     } finally {
       saveCustomerWithInvoiceLoading.value = false;

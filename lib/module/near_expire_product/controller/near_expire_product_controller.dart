@@ -1,13 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 
 import '../../inventory/model/product_model.dart';
 
 class NearExpireProductController extends GetxController with CacheManager {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final String? uid = SupabaseConfig.auth.currentUser?.id;
   RxList<ProductModel> nearExpProductList = <ProductModel>[].obs;
   RxBool isDataloading = false.obs;
 
@@ -20,92 +19,66 @@ class NearExpireProductController extends GetxController with CacheManager {
   Future<void> getNearExpiryProducts() async {
     isDataloading.value = true;
 
-    /// ❌ OLD
-    /// FirebaseFirestore.instance.collection('products').get();
+    try {
+      final List<ProductModel> cachedProducts = await retrieveProductList();
 
-    /// ✅ NEW: CACHE ONLY
-    final cachedProducts = await retrieveProductList();
+      if (cachedProducts.isEmpty) {
+        nearExpProductList.clear();
+        return;
+      }
 
-    if (cachedProducts.isEmpty) {
+      // 💡 Time ko zero kar rahe hain taaki sirf Date compare ho (Midnight normalization)
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final threeMonthsFromNow = today.add(const Duration(days: 90));
+
+      List<ProductModel> filteredList =
+          cachedProducts.where((product) {
+            if (product.expireDate == null || product.expireDate!.isEmpty) {
+              return false;
+            }
+
+            try {
+              DateTime expiryDate = _parseDate(product.expireDate!);
+
+              // ✅ LOGIC: Expiry date aaj ho ya aaj ke baad, PAR 3 mahine ke andar
+              // isAtSameMomentAs use kiya hai taaki aaj expire hone wale bhi dikhein
+              bool isExpireTodayOrAfter =
+                  expiryDate.isAtSameMomentAs(today) ||
+                  expiryDate.isAfter(today);
+              bool isWithinThreeMonths =
+                  expiryDate.isBefore(threeMonthsFromNow) ||
+                  expiryDate.isAtSameMomentAs(threeMonthsFromNow);
+
+              return isExpireTodayOrAfter && isWithinThreeMonths;
+            } catch (e) {
+              return false;
+            }
+          }).toList();
+
+      // 3. Sorting
+      filteredList.sort((a, b) {
+        DateTime dateA = _parseDate(a.expireDate!);
+        DateTime dateB = _parseDate(b.expireDate!);
+        return dateA.compareTo(dateB);
+      });
+
+      nearExpProductList.value = filteredList;
+      print("✅ Near Expiry Products Found: ${nearExpProductList.length}");
+    } catch (e) {
+      print("🚨 Error: $e");
+    } finally {
       isDataloading.value = false;
-      return;
     }
+  }
 
-    final today = DateTime.now();
-    final threeMonthsLater = DateTime(today.year, today.month + 3, today.day);
-
-    nearExpProductList.value =
-        cachedProducts.where((product) {
-          if (product.expireDate == null || product.expireDate!.isEmpty) {
-            return false;
-          }
-
-          try {
-            final expiryDate = DateFormat(
-              'dd-MM-yyyy',
-            ).parse(product.expireDate!);
-
-            return expiryDate.isAfter(today) &&
-                expiryDate.isBefore(threeMonthsLater);
-          } catch (_) {
-            return false;
-          }
-        }).toList();
-
-    isDataloading.value = false;
+  // Helper method sorting ke liye
+  DateTime _parseDate(String dateStr) {
+    try {
+      if (dateStr.split('-')[0].length == 4) return DateTime.parse(dateStr);
+      return DateFormat('dd-MM-yyyy').parse(dateStr);
+    } catch (_) {
+      return DateTime(2099); // Fallback for sorting
+    }
   }
 }
-
-
-
-// Future<void> getNearExpiryProducts() async {
-  //   isDataloading.value = true;
-  //   try {
-  //     final uid = _auth.currentUser?.uid;
-  //     if (uid == null) return;
-
-  //     // 1️⃣ Date range
-  //     final today = DateTime.now();
-  //     final threeMonthsLater = DateTime(today.year, today.month + 3, today.day);
-
-  //     // 2️⃣ Cache-first (IMPORTANT)
-  //     List<ProductModel> products = [];
-
-  //     final cachedProducts = await retrieveProductList();
-  //     if (cachedProducts.isNotEmpty) {
-  //       products = cachedProducts;
-  //     } else {
-  //       final snapshot =
-  //           await FirebaseFirestore.instance
-  //               .collection('users')
-  //               .doc(uid)
-  //               .collection("products")
-  //               .get();
-
-  //       products =
-  //           snapshot.docs.map((e) => ProductModel.fromJson(e.data())).toList();
-  //       saveProductList(products);
-  //     }
-
-  //     // 3️⃣ Local expiry filter (SAFE)
-  //     nearExpProductList.value =
-  //         products.where((product) {
-  //           if (product.expireDate == null || product.expireDate!.isEmpty) {
-  //             return false;
-  //           }
-
-  //           try {
-  //             final expiryDate = DateFormat(
-  //               'dd-MM-yyyy',
-  //             ).parse(product.expireDate!);
-
-  //             return expiryDate.isAfter(today) &&
-  //                 expiryDate.isBefore(threeMonthsLater);
-  //           } catch (e) {
-  //             return false;
-  //           }
-  //         }).toList();
-  //   } finally {
-  //     isDataloading.value = false;
-  //   }
-  // }

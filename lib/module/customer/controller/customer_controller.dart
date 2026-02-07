@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,14 +6,13 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/order_complete/controller/order_controller.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../order_complete/model/customer_details_model.dart';
 
 class CustomerController extends GetxController with CacheManager {
-  final _auth =
-      FirebaseAuth
-          .instance; // Agar auth bhi migrate ho gaya hai toh yahan userId logic badal sakte hain
+  // Controller ke upar ya function ke start mein ye line daalo
+  final String? uid = SupabaseConfig.auth.currentUser?.id;
+
+  // Agar auth bhi migrate ho gaya hai toh yahan userId logic badal sakte hain
   var orderController = Get.put(OrderController());
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
@@ -53,7 +51,7 @@ class CustomerController extends GetxController with CacheManager {
 
     // 🔥 2️⃣ FETCH FROM SUPABASE (SYNC)
     // Note: Assuming you have a way to get the current user's ID
-    final uid = _auth.currentUser?.uid;
+
     if (uid == null) {
       customDataLoading.value = false;
       return;
@@ -63,7 +61,7 @@ class CustomerController extends GetxController with CacheManager {
       // Firebase collection ki jagah Supabase table use kar rahe hain
       final List<dynamic> response = await SupabaseConfig.from('customers')
           .select()
-          .eq('user_id', uid)
+          .eq('user_id', uid ?? '')
           .order(
             'name',
             ascending: true,
