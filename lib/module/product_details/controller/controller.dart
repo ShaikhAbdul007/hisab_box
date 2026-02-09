@@ -143,98 +143,48 @@ class ProductController extends GetxController with CacheManager {
       final uid = SupabaseConfig.auth.currentUser?.id;
       if (uid == null) return;
 
-      // 1️⃣ Check Barcode for Multiple Barcodes Support [cite: 2026-01-31]
-      final existingBarcode =
-          await SupabaseConfig.from(
-            'product_barcodes',
-          ).select('product_id').eq('barcode', barcode).maybeSingle();
-
-      String productId;
-
-      if (existingBarcode != null) {
-        productId = existingBarcode['product_id'];
-      } else {
-        // 🆕 PRODUCTS Table Insert
-        final productResponse =
-            await SupabaseConfig.from('products')
-                .insert({
-                  'user_id': uid,
-                  'name': productName.text,
-                  'category': category.text,
-                  'animal_type': animalType.text,
-                  'flavour': flavor.text,
-                  'level': level.text,
-                  'rack': rack.text,
-                  'weight': weight.text,
-                  'is_loose_category': isLoose,
-                  'is_flavor_and_weight_not_required':
-                      isFlavorAndWeightNotRequired.value,
-                })
-                .select()
-                .single();
-
-        productId = productResponse['id'];
-
-        // BARCODE Insert
-        await SupabaseConfig.from(
-          'product_barcodes',
-        ).insert({'product_id': productId, 'barcode': barcode});
+      // 1️⃣ Check karo ki fields empty toh nahi hain
+      if (category.text.isEmpty || animalType.text.isEmpty) {
+        showMessage(
+          message: "❌ Category aur Animal Type select karna zaroori hai!",
+        );
+        return;
       }
 
-      final String targetLoc =
-          location.text.toLowerCase() == 'godown' ? 'godown' : 'shop';
-      final int qty = int.tryParse(quantity.text) ?? 0;
-      final double sPrice = double.tryParse(sellingPrice.text) ?? 0.0;
-      final double pPrice = double.tryParse(purchasePrice.text) ?? 0.0;
-      final double discAmt = double.tryParse(discount.text) ?? 0.0;
-      final String stockType = 'packet';
-      // 2️⃣ STOCK_BATCHES Insert (Date type columns)
-      await SupabaseConfig.from('stock_batches').insert({
-        'user_id': uid,
-        'product_id': productId,
-        'location': targetLoc,
-        'stock_type': stockType,
-        'purchase_price': pPrice,
-        'purchase_date': formatDateForDB(purchaseDate.text),
-        'expiry_date': formatDateForDB(exprieDate.text),
-        'quantity': qty,
-        'level': level.text,
-        'rack': rack.text,
-      });
+      // 2️⃣ RPC Call: Direct .text bhejo kyunki usme ID hi hai
+      await SupabaseConfig.client.rpc(
+        'add_new_product_with_stock',
+        params: {
+          'p_user_id': uid,
+          'p_name': productName.text.trim(),
+          'p_category': category.text.trim(), // '550e8400-e2...' jaisi ID
+          'p_animal_type': animalType.text.trim(),
+          'p_flavor': flavor.text,
+          'p_level': level.text,
+          'p_rack': rack.text,
+          'p_weight': weight.text,
+          'p_is_loose': isLoose, // RxBool hai toh .value zaroor lagayein
+          'p_barcode': barcode,
+          'p_qty': num.tryParse(quantity.text) ?? 0,
+          'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
+          'p_p_price': double.tryParse(purchasePrice.text) ?? 0.0,
+          'p_disc_amt': double.tryParse(discount.text) ?? 0.0,
+          'p_purchase_date': formatDateForDB(purchaseDate.text),
+          'p_expiry_date': formatDateForDB(exprieDate.text),
+          'p_location':
+              location.text.toLowerCase().contains('godown')
+                  ? 'godown'
+                  : 'shop',
+        },
+      );
 
-      // 3️⃣ STOCK_MOVEMENTS Insert (Using 'form_location' as per your schema)
-      await SupabaseConfig.from('stock_movements').insert({
-        'product_id': productId,
-        'user_id': uid,
-        'form_location': targetLoc,
-        'to_location': targetLoc,
-        'stock_type': stockType,
-        'movement_type': 'add',
-        'quantity': qty,
-        'price': sPrice,
-        'discount_percent': discAmt,
-        'final_price': sPrice - discAmt,
-        'reason': 'Initial Stock Entry',
-      });
-
-      // 4️⃣ PRODUCT_STOCK Insert (Insert only as per your rule)
-      await SupabaseConfig.from('product_stock').insert({
-        'product_id': productId,
-        'user_id': uid,
-        'location': targetLoc,
-        'stock_type': stockType,
-        'quantity': qty,
-        'selling_price': sPrice,
-        'discount': discAmt.toString(), // Schema says 'text' for discount
-        'is_active': true,
-      });
-
-      showMessage(message: "✅ Product and Stock added successfully!");
+      showMessage(message: "✅ Product successfully save ho gaya!");
       clear();
       Get.back(result: true);
     } catch (e) {
-      print("Insert Error: $e");
-      showMessage(message: "❌ Error: $e");
+      print("🚨 Transaction Error Detail: $e");
+      // Agar ab bhi UUID error aaye, toh iska matlab SQL function mein cast ki kami hai
+      showMessage(message: "❌ Database Error: $e");
     } finally {
       isSaveLoading.value = false;
     }
@@ -245,35 +195,38 @@ class ProductController extends GetxController with CacheManager {
   // ==========================================
   Future<void> saveNewLooseProduct({required String barcode}) async {
     isLooseProductSave.value = true;
-
     final uid = SupabaseConfig.auth.currentUser?.id;
+
     if (uid == null) {
+      showMessage(message: "❌ User session expired. Please login again.");
       isLooseProductSave.value = false;
       return;
     }
 
     try {
-      // 1️⃣ Barcode scan karke Product aur Shop Stock nikaalo
+      // 1️⃣ Fetch Product and ALL its stock entries for this user
+      // !inner join hata diya hai taaki agar koi ek stock miss bhi ho toh query fail na ho
       final response =
-          await SupabaseConfig.from('product_barcodes')
+          await SupabaseConfig.client
+              .from('product_barcodes')
               .select('''
           product_id,
-          products!inner (
-            name,
-            is_loose_category, 
-            product_stock!product_stock_product_id_fkey!inner (
-              id,
-              quantity,
-              location,
-              stock_type
+          products (
+            is_loose_category,
+            product_stock (
+              id, 
+              quantity, 
+              location, 
+              stock_type,
+              user_id
             )
           )
         ''')
               .eq('barcode', barcode)
               .maybeSingle();
 
-      if (response == null) {
-        showMessage(message: "❌ Product shop mein nahi mila!");
+      if (response == null || response['products'] == null) {
+        showMessage(message: "❌ Product ya Barcode system mein nahi mila!");
         return;
       }
 
@@ -281,60 +234,61 @@ class ProductController extends GetxController with CacheManager {
       final productData = response['products'];
       final List stockList = productData['product_stock'] ?? [];
 
-      // Specifically 'shop' aur 'packet' dhoondo
-      final packetEntry = stockList.firstWhere(
-        (s) => s['location'] == 'shop' && s['stock_type'] == 'packet',
-        orElse: () => null,
+      // 2️⃣ Filtering: Shop mein Packet Stock dhoondo jo isi user ka ho
+      final packetEntry = stockList.firstWhereOrNull(
+        (s) =>
+            s['location'].toString().toLowerCase().trim() == 'shop' &&
+            s['stock_type'].toString().toLowerCase().trim() == 'packet' &&
+            s['user_id'] == uid,
       );
 
-      // --- VALIDATIONS ---
-      if (packetEntry == null || (packetEntry['quantity'] ?? 0) <= 0) {
-        showMessage(message: "❌ Shop mein packet stock khatam hai!");
+      // DEBUGGING (Console check karein)
+      print("Full Stock List for Product: $stockList");
+      print("Found Packet Entry: $packetEntry");
+
+      // 3️⃣ Validations
+      if (packetEntry == null) {
+        showMessage(
+          message:
+              "❌ Is product ka 'Shop' mein koi 'Packet' stock entry nahi mili!",
+        );
         return;
       }
 
-      // [cite: 2026-01-31] Check if loose is allowed
+      if ((packetEntry['quantity'] ?? 0) <= 0) {
+        showMessage(
+          message: "❌ Shop mein packet stock khatam ho gaya hai! (Qty: 0)",
+        );
+        return;
+      }
+
       if (productData['is_loose_category'] != true) {
-        showMessage(message: "❌ Ye product loose bechna mana hai!");
+        showMessage(message: "❌ Ye product loose bechna allowed nahi hai!");
         return;
       }
 
-      // 2️⃣ EXECUTION (No Upsert, Only Insert in Loose Table)
+      // 4️⃣ EXECUTION: Database Transaction Call
+      // looseQuantity aur sellingPrice controller se value le rahe hain
+      await SupabaseConfig.client.rpc(
+        'convert_packet_to_loose',
+        params: {
+          'p_user_id': uid,
+          'p_product_id': pId,
+          'p_packet_stock_id': packetEntry['id'], // UUID format
+          'p_loose_qty': int.tryParse(looseQuantity.text) ?? 0,
+          'p_selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
+          'p_reason': '1 Packet split into ${looseQuantity.text} pieces',
+        },
+      );
 
-      // A. Purane Packet Table se -1 Quantity update karo
-      await SupabaseConfig.from('product_stock')
-          .update({'quantity': (packetEntry['quantity'] ?? 0) - 1})
-          .eq('id', packetEntry['id']);
+      showMessage(message: "✅ Packet successfully converted to Loose!");
 
-      // B. Naya Record Loose Table mein INSERT karo (No Update/Upsert here)
-      // Har baar naya packet khulne par naya row banega
-      await SupabaseConfig.from('loose_stocks').insert({
-        'product_id': pId,
-        'user_id': uid,
-        'quantity': int.tryParse(looseQuantity.text) ?? 0,
-        'selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
-        // 'location' is table mein shop hi hogi by default
-      });
-
-      // C. History log maintain karo
-      await SupabaseConfig.from('stock_movements').insert({
-        'product_id': pId,
-        'user_id': uid,
-        'form_location': 'shop',
-        'stock_type': 'packet',
-        'movement_type': 'packet_to_loose',
-        'quantity': -1,
-        'reason': '1 Packet split into ${quantity.text} pieces',
-      });
-
-      showMessage(message: "✅ Naya Loose Stock Add ho gaya!");
-
+      // Cleanup and Go Back
       clear();
-
       Get.back(result: true);
     } catch (e) {
-      print("Error: $e");
-      showMessage(message: "❌ Kuch gadat hua, retry kar!");
+      print("🚨 Conversion Error Details: $e");
+      showMessage(message: "❌ Error: $e");
     } finally {
       isLooseProductSave.value = false;
     }

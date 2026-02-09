@@ -200,92 +200,57 @@ class ProductDetailsController extends GetxController with CacheManager {
     isSaveLoading.value = true;
 
     try {
-      // 1. Get IDs for Category and Animal Type from the observable lists
-      var categoryItem = categoryList.firstWhereOrNull(
-        (e) => e.name == category.text,
-      );
-      var animalItem = animalTypeList.firstWhereOrNull(
-        (e) => e.name == animalType.text,
-      );
+      // 1. IDs fetch karna (Same as your code)
+      var catId =
+          categoryList.firstWhereOrNull((e) => e.name == category.text)?.id;
+      var aniId =
+          animalTypeList.firstWhereOrNull((e) => e.name == animalType.text)?.id;
 
-      String? catId = categoryItem?.id;
-      String? aniId = animalItem?.id;
-
-      // 2. Get product ID from different sources
+      // 2. Product ID nikalna
       String? pid;
       var productData = data['product'];
-
       if (productData is ProductModel) {
         pid = productData.id;
       } else if (productData is LooseInvetoryModel) {
-        pid = productData.productId; // LooseInventoryModel uses productId
+        pid = productData.productId;
       } else {
         pid =
             productData['id']?.toString() ??
             productData['productId']?.toString();
       }
 
-      if (pid == null) {
-        showMessage(message: "❌ Product ID not found");
-        return;
-      }
+      if (pid == null) throw "Product ID not found";
 
-      // 3. Update Main Products Table (Name, Category, etc.)
-      await SupabaseConfig.from('products')
-          .update({
-            'name': productName.text,
-            'category': catId,
-            'animal_type': aniId,
-            'flavour': flavor.text,
-            'weight': weight.text,
-            'is_flavor_and_weight_not_required':
-                isFlavorAndWeightNotRequired.value,
-            'is_loose_category': isLoosed,
-          })
-          .eq('id', pid);
+      // 3. EXECUTION: Single Transaction Call
+      await SupabaseConfig.client.rpc(
+        'update_product_and_stock_transaction',
+        params: {
+          'p_pid': pid,
+          'p_user_id': userId,
+          'p_name': productName.text.trim(),
+          'p_cat_id': catId,
+          'p_ani_id': aniId,
+          'p_flavor': flavor.text,
+          'p_weight': weight.text,
+          'p_is_loose_cat': isLoosed, // is product loose-able?
+          'p_is_flavor_weight_req': isFlavorAndWeightNotRequired.value,
+          'p_is_loosed_entry': isLoosed, // are we updating loose table?
+          'p_qty': double.tryParse(quantity.text) ?? 0.0,
+          'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
+          'p_p_price': double.tryParse(purchasePrice.text) ?? 0.0,
+          'p_p_date': formatDateForDB(purchaseDate.text),
+          'p_e_date': formatDateForDB(exprieDate.text),
+          'p_location': location.text.toLowerCase().trim(),
+        },
+      );
 
-      // 4. Update appropriate stock table based on product type
-      if (isLoosed) {
-        // Update loose_stocks table
-        await SupabaseConfig.from('loose_stocks')
-            .update({
-              'quantity': int.tryParse(quantity.text) ?? 0,
-              'selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
-            })
-            .eq('product_id', pid)
-            .eq('user_id', userId!);
-      } else {
-        // Update product_stock table
-        await SupabaseConfig.from('product_stock')
-            .update({
-              'quantity': num.tryParse(quantity.text) ?? 0,
-              'selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
-              'location': location.text.toLowerCase(),
-              'stock_type': 'packet',
-            })
-            .eq('product_id', pid)
-            .eq('user_id', userId!)
-            .eq('location', location.text.toLowerCase());
-      }
-
-      // 5. Update stock_batches if needed (for purchase/expiry dates)
-      if (purchaseDate.text.isNotEmpty || exprieDate.text.isNotEmpty) {
-        await SupabaseConfig.from('stock_batches')
-            .update({
-              'purchase_price': double.tryParse(purchasePrice.text) ?? 0.0,
-              'purchase_date':
-                  purchaseDate.text.isNotEmpty ? purchaseDate.text : null,
-              'expiry_date':
-                  exprieDate.text.isNotEmpty ? exprieDate.text : null,
-            })
-            .eq('product_id', pid)
-            .eq('user_id', userId!);
-      }
-
+      // 4. Sab sahi raha toh list refresh karo
+      ();
       Get.back(result: true);
-      showMessage(message: '✅ Product Info updated.');
+      showMessage(message: '✅ Product & Stock Updated Safely.');
     } catch (e) {
-      showMessage(message: "❌ Error: $e");
+      print("🚨 Update Error: $e");
+      showMessage(message: "❌ Error: Update failed. Try again.");
     } finally {
       isSaveLoading.value = false;
     }

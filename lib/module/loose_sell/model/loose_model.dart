@@ -1,32 +1,31 @@
 class LooseInvetoryModel {
-  String? id; // loose_stocks table ki primary key (UUID)
-  String? productId; // product link karne ke liye
+  String? id;
+  String? productId;
   String? userId;
   String? name;
   String? category;
   String? animalType;
   int? quantity;
   double? sellingPrice;
-  double? purchasePrice; // Agar batches se join kiya hai
+  double? purchasePrice;
   String? weight;
   String? flavor;
   String? rack;
   String? level;
   String? expireDate;
   String? purchaseDate;
-  String? location; // Usually 'shop'
-  String? barcode; // Multiple barcodes handle karne ke liye
-  bool? isLooseCategory; // Database column name is_loose_category hai
-  bool? isActive; // Database column name is_active hai
+  String? location;
+  String? barcode;
+  bool? isLooseCategory;
+  bool? isActive;
   bool? isFlavorAndWeightNotRequired;
   String? color;
-  String? box; // For loose category products
-  String? stockType; // loose/packet
-  String? sellType; // Packet/Loose
+  String? box;
+  String? stockType;
+  String? sellType;
 
-  // Additional fields for database compatibility
-  String? categoryId; // For foreign key reference
-  String? animalTypeId; // For foreign key reference
+  String? categoryId;
+  String? animalTypeId;
   String? createdAt;
   String? updatedAt;
   int? discount;
@@ -64,7 +63,7 @@ class LooseInvetoryModel {
   });
 
   LooseInvetoryModel.fromJson(Map<String, dynamic> json) {
-    // 1. Direct from loose_stocks
+    // 1. Direct from loose_stocks table
     id = json['id']?.toString();
     productId = json['product_id']?.toString();
     userId = json['user_id']?.toString();
@@ -73,124 +72,103 @@ class LooseInvetoryModel {
     createdAt = json['created_at']?.toString();
     updatedAt = json['updated_at']?.toString();
 
-    // 2. Data from products table (if joined)
+    // 2. Data from joined products table
     if (json['products'] != null) {
       final p = json['products'];
-      name = p['name'];
-      flavor = p['flavour'];
-      weight = p['weight'];
-      rack = p['rack'];
-      level = p['level'];
-      color = p['color'];
-      box = p['box'];
+      name = p['name']?.toString();
+      flavor = p['flavour']?.toString(); // Variable 'flavor' -> DB 'flavour'
+      weight = p['weight']?.toString();
+      rack = p['rack']?.toString();
+      level = p['level']?.toString();
+      color = p['color']?.toString();
+      box = p['box']?.toString();
       isLooseCategory = p['is_loose_category'] ?? false;
       isFlavorAndWeightNotRequired =
           p['is_flavor_and_weight_not_required'] ?? false;
 
-      // Category handling - both name and ID
+      // Category handling (Relation check)
       if (p['categories'] != null) {
-        category = p['categories']['name'];
+        category = p['categories']['name']?.toString();
         categoryId = p['categories']['id']?.toString();
-      } else if (p['category'] != null) {
-        category = p['category'];
+      } else {
+        categoryId = p['category']?.toString();
       }
 
-      // Animal type handling - both name and ID
-      if (p['animals'] != null) {
-        animalType = p['animals']['name'];
-        animalTypeId = p['animals']['id']?.toString();
-      } else if (p['animal_type'] != null) {
-        animalType = p['animal_type'];
+      // Animal type handling (Relation check)
+      if (p['animal_categories'] != null) {
+        // Matching your table list
+        animalType = p['animal_categories']['name']?.toString();
+        animalTypeId = p['animal_categories']['id']?.toString();
+      } else {
+        animalTypeId = p['animal_type']?.toString();
       }
 
-      // 3. Location from product_stock (if available)
+      // 3. Location & Active Status from product_stock
       final stock = p['product_stock'] as List?;
       if (stock != null && stock.isNotEmpty) {
-        location = stock[0]['location'];
+        location = stock[0]['location']?.toString();
         isActive = stock[0]['is_active'] ?? true;
-        stockType = stock[0]['stock_type'];
-      } else {
-        // Fallback: check stock_batches for location
-        final batches = p['stock_batches'] as List?;
-        if (batches != null && batches.isNotEmpty) {
-          location = batches[0]['location'] ?? 'shop';
-          stockType = batches[0]['stock_type'];
-        } else {
-          location = 'shop'; // default fallback
-          stockType = 'loose'; // default for loose products
-        }
+        stockType = stock[0]['stock_type']?.toString();
       }
 
       // 4. Dates from stock_batches
       final batches = p['stock_batches'] as List?;
       if (batches != null && batches.isNotEmpty) {
-        purchaseDate = batches[0]['purchase_date'];
-        expireDate = batches[0]['expiry_date'];
+        purchaseDate = batches[0]['purchase_date']?.toString();
+        expireDate = batches[0]['expiry_date']?.toString();
         purchasePrice = double.tryParse(
           batches[0]['purchase_price']?.toString() ?? '0.0',
         );
       }
 
-      // 5. Barcode from product_barcodes (if available)
+      // 5. Barcode from product_barcodes
       final barcodes = p['product_barcodes'] as List?;
       if (barcodes != null && barcodes.isNotEmpty) {
-        barcode = barcodes[0]['barcode'];
+        barcode = barcodes[0]['barcode']?.toString();
       }
     } else {
-      // Direct field mapping if no join
-      name = json['name'];
-      category = json['category'];
-      animalType = json['animal_type'];
-      flavor = json['flavour'];
-      weight = json['weight'];
-      rack = json['rack'];
-      level = json['level'];
-      color = json['color'];
-      box = json['box'];
-      location = json['location'] ?? 'shop';
-      barcode = json['barcode'];
+      // Fallback for direct field mapping
+      name = json['name']?.toString();
+      flavor = json['flavour']?.toString();
+      weight = json['weight']?.toString();
+      rack = json['rack']?.toString();
+      level = json['level']?.toString();
       isLooseCategory = json['is_loose_category'] ?? false;
       isActive = json['is_active'] ?? true;
-      isFlavorAndWeightNotRequired =
-          json['is_flavor_and_weight_not_required'] ?? false;
-      stockType = json['stock_type'] ?? 'loose';
-      sellType = json['sell_type'];
+      location = json['location']?.toString() ?? 'shop';
+      stockType = json['stock_type']?.toString() ?? 'loose';
       discount = int.tryParse(json['discount']?.toString() ?? '0');
-      purchaseDate = json['purchase_date'];
-      expireDate = json['expiry_date'];
-      purchasePrice = double.tryParse(
-        json['purchase_price']?.toString() ?? '0.0',
-      );
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['product_id'] = productId;
-    data['user_id'] = userId;
-    data['quantity'] = quantity;
-    data['selling_price'] = sellingPrice;
-    data['name'] = name;
-    data['category'] = categoryId ?? category;
-    data['animal_type'] = animalTypeId ?? animalType;
-    data['flavour'] = flavor;
-    data['weight'] = weight;
-    data['rack'] = rack;
-    data['level'] = level;
-    data['color'] = color;
-    data['box'] = box;
-    data['location'] = location;
-    data['barcode'] = barcode;
-    data['is_loose_category'] = isLooseCategory;
-    data['is_active'] = isActive;
-    data['is_flavor_and_weight_not_required'] = isFlavorAndWeightNotRequired;
-    data['stock_type'] = stockType;
-    data['sell_type'] = sellType;
-    data['discount'] = discount;
-    data['purchase_date'] = purchaseDate;
-    data['expiry_date'] = expireDate;
-    data['purchase_price'] = purchasePrice;
-    return data;
+    return {
+      'id': id,
+      'product_id': productId,
+      'user_id': userId,
+      'quantity': quantity,
+      'selling_price': sellingPrice,
+      'name': name,
+      'category': categoryId ?? category, // Maps to 'category' column
+      'animal_type': animalTypeId ?? animalType, // Maps to 'animal_type' column
+      'flavour': flavor, // Maps to 'flavour' column
+      'weight': weight,
+      'rack': rack,
+      'level': level,
+      'color': color,
+      'box': box,
+      'location': location,
+      'is_loose_category': isLooseCategory,
+      'is_active': isActive,
+      'is_flavor_and_weight_not_required': isFlavorAndWeightNotRequired,
+      'stock_type': stockType,
+      'sell_type': sellType,
+      'discount':
+          discount
+              ?.toString(), // Database columns shows 'discount' in product_stock
+      'purchase_date': purchaseDate,
+      'expiry_date': expireDate,
+      'purchase_price': purchasePrice,
+    };
   }
 }

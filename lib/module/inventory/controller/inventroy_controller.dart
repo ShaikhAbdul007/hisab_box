@@ -75,8 +75,9 @@ class InventroyController extends GetxController with CacheManager {
               .eq('barcode', barcode)
               .maybeSingle();
 
-      if (res == null || res['products'] == null)
+      if (res == null || res['products'] == null) {
         return (false, ProductModel());
+      }
 
       final p = res['products'];
 
