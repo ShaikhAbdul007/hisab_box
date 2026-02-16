@@ -14,7 +14,7 @@ class BankdetailsController extends GetxController with CacheManager {
 
   RxBool bankDetailsUpi = false.obs;
   RxBool setBankDetailsUpi = false.obs;
-  RxBool bankDetailSavedButtonVisible = false.obs;
+  RxBool readOnly = false.obs;
 
   @override
   void onInit() {
@@ -61,7 +61,7 @@ class BankdetailsController extends GetxController with CacheManager {
           'bankName': response['bank_name'],
           'accountHolder': response['account_holder'],
         });
-        bankDetailSavedButtonVisible.value = false;
+        readOnly.value = true;
         bankNameController.text = details.bankName ?? "";
         accountHolderNameController.text = details.accountName ?? '';
         upiIdController.text = details.upiId ?? '';
@@ -93,7 +93,7 @@ class BankdetailsController extends GetxController with CacheManager {
 
       await getBankDetails();
       showMessage(message: 'Bank Details Saved Successfully');
-      bankDetailSavedButtonVisible.value = false;
+      readOnly.value = false;
     } catch (e) {
       print("🚨 Bank Save Error: $e");
       // User-friendly message

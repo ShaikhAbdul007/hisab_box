@@ -73,7 +73,7 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
-              height: 100,
+              height: 85,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -112,7 +112,7 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
-              height: 190,
+              height: 170,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -147,7 +147,7 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
-             height: 190,
+              height: 170,
 
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -185,7 +185,7 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
-           height: 190,
+              height: 170,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

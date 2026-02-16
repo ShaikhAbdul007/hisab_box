@@ -21,7 +21,7 @@ class BankdetailsView extends GetView<BankdetailsController> {
       appBarLabel: 'Bank Details',
       firstActionChild: InkWell(
         onTap: () {
-          controller.bankDetailSavedButtonVisible.value = !controller.bankDetailSavedButtonVisible.value;
+          controller.readOnly.value = !controller.readOnly.value;
         },
         child: Icon(
           CupertinoIcons.square_pencil_fill,
@@ -52,7 +52,9 @@ class BankdetailsView extends GetView<BankdetailsController> {
                             return null;
                           },
                         ),
+
                         setHeight(height: 5),
+
                         CommonTextField(
                           hintText: 'Account Holder Name',
                           label: 'Account Holder Name',
@@ -88,7 +90,7 @@ class BankdetailsView extends GetView<BankdetailsController> {
                         setHeight(height: 30),
                         Obx(
                           () =>
-                              controller.bankDetailSavedButtonVisible.value
+                              controller.readOnly.value
                                   ? CustomPadding(
                                     paddingOption: SymmetricPadding(
                                       horizontal: 30,
