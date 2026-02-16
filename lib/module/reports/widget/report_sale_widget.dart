@@ -34,7 +34,7 @@ class ReportSaleWidget extends StatelessWidget {
           //   ],
           // ),
           ReportCommonContiner(
-            height: 500,
+            height: 600,
             width: 500,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

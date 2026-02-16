@@ -21,33 +21,33 @@ class ReportOverviewWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Cash',
-                  labelValue: controller.totalCash.value.toStringAsFixed(2),
-                ),
+              ReportOverViewContainer(
+                width: 139,
+                height: 110,
+                label: 'Cash',
+                labelValue: controller.totalCash.value.toStringAsFixed(2),
               ),
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Upi',
-                  labelValue: controller.totalUpi.value.toStringAsFixed(2),
-                ),
+              ReportOverViewContainer(
+                width: 139,
+                height: 110,
+                label: 'Upi',
+                labelValue: controller.totalUpi.value.toStringAsFixed(2),
               ),
             ],
           ),
           Row(
             children: [
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Credit',
-                  labelValue: controller.totalCredit.value.toStringAsFixed(2),
-                ),
+              ReportOverViewContainer(
+                width: 139,
+                height: 110,
+                label: 'Credit',
+                labelValue: controller.totalCredit.value.toStringAsFixed(2),
               ),
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Card Machine',
-                  labelValue: controller.totalCard.value.toStringAsFixed(2),
-                ),
+              ReportOverViewContainer(
+                width: 139,
+                height: 110,
+                label: 'Card Machine',
+                labelValue: controller.totalCard.value.toStringAsFixed(2),
               ),
             ],
           ),
@@ -213,9 +213,8 @@ class ReportOverviewWidget extends StatelessWidget {
             ),
           ),
           ReportCommonContiner(
-            height: 200,
+            height: 210,
             width: 500,
-
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -308,8 +307,8 @@ class ReportOverViewContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ReportCommonContiner(
-      height: height,
-      width: width,
+      height: height.h,
+      width: width.w,
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

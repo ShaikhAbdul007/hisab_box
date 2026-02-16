@@ -359,7 +359,7 @@ class MobileScreen extends StatelessWidget {
                         children: [
                           setHeight(height: 5),
                           SizedBox(
-                            height: 150.h,
+                            height: 180.h,
                             width: 500.w,
                             child: GridView.builder(
                               gridDelegate:
