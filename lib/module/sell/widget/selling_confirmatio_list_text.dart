@@ -51,12 +51,12 @@ class SellingConfirmationListText extends StatelessWidget {
                     getStringLengthText(inventoryModel.name ?? ''),
                     style: CustomTextStyle.customPoppin(),
                   ),
-                  Text(
-                    getStringLengthText(inventoryModel.barcode ?? ''),
-                    style: CustomTextStyle.customRaleway(
-                      color: AppColors.greyColor,
-                    ),
-                  ),
+                  // Text(
+                  //   getStringLengthText(inventoryModel.barcode ?? ''),
+                  //   style: CustomTextStyle.customRaleway(
+                  //     color: AppColors.greyColor,
+                  //   ),
+                  // ),
                 ],
               ),
               Container(

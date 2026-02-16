@@ -9,7 +9,6 @@ import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/module/revenue/model/revenue_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-import '../../../helper/set_format_date.dart';
 import '../../../routes/route_name.dart';
 import '../model/grid_model.dart';
 
@@ -80,30 +79,47 @@ class HomeController extends GetxController with CacheManager {
     if (userId == null) return;
 
     try {
-      // Date filter ko ISO format mein set karo
+      // 1️⃣ IST (Local) Time ko UTC range mein badlein
       final DateTime now = DateTime.now();
-      final String startOfToday =
-          DateTime(now.year, now.month, now.day).toIso8601String();
-      final String endOfToday =
-          DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+      final DateTime localStart = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        0,
+        0,
+        0,
+      );
+      final DateTime localEnd = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        23,
+        59,
+        59,
+      );
 
+      final String startUtc = localStart.toUtc().toIso8601String();
+      final String endUtc = localEnd.toUtc().toIso8601String();
+
+      // 2️⃣ Database call with UTC range
       final response = await SupabaseConfig.from('sales')
           .select('total_amount')
           .eq('user_id', userId!)
-          .gte('created_at', startOfToday)
-          .lte('created_at', endOfToday);
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc);
 
       double total = 0;
-      if (response != null) {
-        for (var sale in response) {
-          total += (sale['total_amount'] ?? 0).toDouble();
-        }
+      final List<dynamic> data = response as List;
+      for (var sale in data) {
+        total += (sale['total_amount'] ?? 0).toDouble();
       }
 
+      // Value update
       totalBusRevenue.value = total;
-      print("💰 Today's Revenue: $total"); // Debugging ke liye
+      print("💰 Today's Revenue (UTC Corrected): $total");
     } catch (e) {
       print("🚨 Revenue Error: $e");
+      totalBusRevenue.value = 0.0; // Error case mein reset
     }
   }
 
@@ -130,7 +146,6 @@ class HomeController extends GetxController with CacheManager {
 
       stock.value = shopCount + godownCount;
     } catch (e) {
-      // Total Stock Error: $e
       stock.value = 0;
     }
   }
@@ -139,18 +154,13 @@ class HomeController extends GetxController with CacheManager {
     if (userId == null) return;
 
     try {
-      // Out of stock ka matlab: is_active ho aur quantity 0 ho
-      // select('count') use karna zyada fast hai length nikalne se
       final response = await SupabaseConfig.from('product_stock')
           .select('id')
           .eq('user_id', userId!)
           .eq('is_active', true)
           .eq('quantity', 0);
-
-      if (response != null) {
-        outOfStock.value = (response as List).length;
-        print("📦 Out of Stock Count: ${outOfStock.value}");
-      }
+      outOfStock.value = (response as List).length;
+      print("📦 Out of Stock Count: ${outOfStock.value}");
     } catch (e) {
       print("🚨 Out Of Stock Error: $e");
       outOfStock.value = 0;
@@ -175,51 +185,61 @@ class HomeController extends GetxController with CacheManager {
   Future<List<SellsModel>> fetchRevenueList() async {
     if (userId == null) return [];
 
+    // 1️⃣ Timezone Logic: Aaj ki shuruat (00:00) aur khatam (23:59) ko UTC mein convert karein
     final DateTime now = DateTime.now();
-    final String startOfToday =
-        DateTime(now.year, now.month, now.day).toIso8601String();
-    final String endOfToday =
-        DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+    final DateTime localStart = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    final DateTime localEnd = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      23,
+      59,
+      59,
+    );
+
+    // Supabase hamesha UTC format (.gte/lte) mangta hai accuracy ke liye
+    final String startUtc = localStart.toUtc().toIso8601String();
+    final String endUtc = localEnd.toUtc().toIso8601String();
 
     try {
-      // Query ekdum saaf kar di hai, koi extra comment ya symbol nahi hai
       final response = await SupabaseConfig.from('sales')
           .select('''
-          id,
-          bill_no,
-          total_amount,
-          created_at,
-          customer_id,
-          customers (name, mobile_number),
-          sale_items (
-            qty,
-            final_price,
-            original_price,
-            discount_amount,
-            product_id,
-            applied_discount_percent,
-            stock_type,
-            location,
-            products ( name )
-          ),
-          sale_payments (
-            amount,
-            payment_mode,
-            reference_no
-          )
-        ''')
+        id,
+        bill_no,
+        total_amount,
+        created_at,
+        customer_id,
+        customers (name, mobile_number),
+        sale_items (
+          qty,
+          final_price,
+          original_price,
+          discount_amount,
+          product_id,
+          applied_discount_percent,
+          stock_type,
+          location,
+          products ( name )
+        ),
+        sale_payments (
+          amount,
+          payment_mode,
+          reference_no
+        )
+      ''')
           .eq('user_id', userId!)
-          .gte('created_at', startOfToday)
-          .lte('created_at', endOfToday)
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc)
           .order('created_at', ascending: false);
 
       final List<dynamic> data = response as List;
+      print("Fetched Sales Count for Today: ${data.length}");
 
       return data.map((sale) {
         final List<dynamic> dbItems = sale['sale_items'] ?? [];
         final List<dynamic> dbPayments = sale['sale_payments'] ?? [];
 
-        // Mapping logic (Variable names wahi hain jo aapne mange the)
+        // 2️⃣ Items Mapping
         List<SellItem> mappedItems =
             dbItems.map((item) {
               return SellItem(
@@ -235,6 +255,7 @@ class HomeController extends GetxController with CacheManager {
               );
             }).toList();
 
+        // 3️⃣ Payment Modes Calculation
         double cash = 0, upi = 0, card = 0, credit = 0;
         for (var p in dbPayments) {
           String mode = p['payment_mode']?.toString().toLowerCase() ?? '';
@@ -262,8 +283,9 @@ class HomeController extends GetxController with CacheManager {
               dbPayments.isNotEmpty ? dbPayments.first['payment_mode'] : 'Cash',
         );
 
+        // 4️⃣ Final SellsModel Return
         return SellsModel(
-          billNo: sale['bill_no']?.toString() ?? sale['id'].toString(),
+          billNo: sale['bill_no'] ?? sale['id'].toString(),
           finalAmount: (sale['total_amount'] ?? 0).toDouble(),
           totalAmount: (sale['total_amount'] ?? 0).toDouble(),
           itemsCount: mappedItems.fold(

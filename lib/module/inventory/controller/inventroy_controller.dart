@@ -11,6 +11,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../helper/helper.dart';
 
 class InventroyController extends GetxController with CacheManager {
+  final userId = SupabaseConfig.auth.currentUser?.id;
   // Existing Variables
   RxList<ProductModel> scannedProductDetails = <ProductModel>[].obs;
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
@@ -18,8 +19,6 @@ class InventroyController extends GetxController with CacheManager {
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
   RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
-
-  final userId = SupabaseConfig.auth.currentUser?.id;
 
   RxBool isTreatSelected = false.obs;
   RxBool isCameraStop = false.obs;
@@ -105,16 +104,24 @@ class InventroyController extends GetxController with CacheManager {
   // ==========================================
   // 🔥 HANDLE SCAN (SELL PACKET OR LOOSE)
   // ==========================================
+
   Future<void> handleScan({
     required String barcode,
-    required String sellType, // 'Packet' or 'Loose'
+    required String sellType,
     required VoidCallback afterProductAdding,
     required VoidCallback qtyIsNotEnough,
   }) async {
     if (userId == null) return;
 
+    // 🎯 STEP 0: Pehle hi check karlo ki scan se value aa bhi rahi hai ya nahi
+    print("🔍 Scan Triggered: Barcode=$barcode, Type=$sellType");
+    if (barcode.isEmpty || barcode == "null") {
+      showMessage(message: "❌ Invalid Barcode Scanned");
+      return;
+    }
+
     try {
-      // 1. Barcode se sirf Product ID lo (Simple call)
+      // 1. Barcode se ID lo
       final bRes =
           await SupabaseConfig.from(
             'product_barcodes',
@@ -127,58 +134,46 @@ class InventroyController extends GetxController with CacheManager {
 
       final String pId = bRes['product_id'];
 
-      // 2. Product ki info lo (Bina stock join ke)
+      // 2. Product Info
       final pRes =
           await SupabaseConfig.from(
             'products',
           ).select('id, name, weight, flavour').eq('id', pId).maybeSingle();
 
-      if (pRes == null) {
-        showMessage(message: "❌ Product Info Not Found");
-        return;
-      }
+      if (pRes == null) return;
 
-      // 3. Stock direct table se fetch karo (No Joins!)
+      // 3. Stock Check (Double safe)
       dynamic stockData;
       if (sellType.toLowerCase() == 'loose') {
         stockData =
-            await SupabaseConfig.from('loose_stocks')
-                .select('quantity, selling_price')
-                .eq('product_id', pId)
-                .eq('user_id', userId!) // User ID check
-                .maybeSingle();
+            await SupabaseConfig.from(
+              'loose_stocks',
+            ).select().eq('product_id', pId).maybeSingle();
       } else {
         stockData =
             await SupabaseConfig.from('product_stock')
-                .select('quantity, selling_price')
+                .select()
                 .eq('product_id', pId)
                 .eq('stock_type', 'packet')
-                .eq('location', 'shop') // Sirf Shop ka stock
-                .eq('user_id', userId!)
                 .maybeSingle();
       }
 
-      // DEBUGGING: Console mein check karo kya aa raha hai
-      print("Bhai, Stock Data mila: $stockData");
-
       if (stockData == null) {
-        qtyIsNotEnough(); // Agar row hi nahi mili
+        qtyIsNotEnough();
         return;
       }
 
-      // String/Null ko safely handle karne ke liye tryParse
-      final int availableQty =
-          int.tryParse(stockData['quantity']?.toString() ?? '0') ?? 0;
+      final double availableQty =
+          double.tryParse(stockData['quantity']?.toString() ?? '0') ?? 0;
       final double price =
-          double.tryParse(stockData['selling_price']?.toString() ?? '0.0') ??
-          0.0;
+          double.tryParse(stockData['selling_price']?.toString() ?? '0') ?? 0;
 
       if (availableQty <= 0) {
-        qtyIsNotEnough(); // Stock 0 hai
+        qtyIsNotEnough();
         return;
       }
 
-      // 4. Cart logic (Same as before)
+      // 4. Cart Logic (Proper Mapping)
       final List<ProductModel> cartList = await retrieveCartProductList();
       final index = cartList.indexWhere(
         (p) => p.id == pId && p.sellType == sellType,
@@ -190,28 +185,34 @@ class InventroyController extends GetxController with CacheManager {
           return;
         }
         cartList[index].quantity = (cartList[index].quantity ?? 0) + 1;
+        cartList[index].barcode = barcode; // 🎯 Re-assign barcode
       } else {
-        cartList.add(
-          ProductModel(
-            barcode: barcode,
-            id: pId,
-            name: pRes['name'],
-            sellingPrice: price,
-            quantity: 1,
-            sellType: sellType,
-            isLoosed: sellType.toLowerCase() == 'loose',
-            flavor: pRes['flavour'],
-            weight: pRes['weight'],
-          ),
+        // 🎯 FORCE ASSIGN: Variable ko direct use karo
+        final newItem = ProductModel(
+          barcode: barcode, // Ye line pakka honi chahiye
+          id: pId,
+          name: pRes['name'],
+          sellingPrice: price,
+          quantity: 1.0,
+          sellType: sellType,
+          isLoosed: sellType.toLowerCase() == 'loose',
+          flavor: pRes['flavour'],
+          weight: pRes['weight'],
         );
+        cartList.add(newItem);
       }
 
+      // 5. Save and Refresh
       saveCartProductList(cartList);
+
+      // Sabse zaroori: GetX list ko manually update karo
       scannedProductDetails.assignAll(cartList);
+      scannedProductDetails.refresh();
+
       afterProductAdding();
+      print("✅ Cart Updated. Total items: ${scannedProductDetails.length}");
     } catch (e) {
       print("🚨 Final Scan Error: $e");
-      showMessage(message: "Error processing scan: $e");
     }
   }
 

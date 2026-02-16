@@ -54,17 +54,15 @@ class UserModel {
     return {
       "name": name,
       "email": email,
-      "password": password,
-      "mobileNo": mobileNo,
-      "alternateMobileNo": alternateMobileNo,
+      "mobile_no": mobileNo, // Snake_case as per table
+      "alternate_mobile_no": alternateMobileNo,
       "address": address,
       "city": city,
       "state": state,
       "pincode": pincode,
-      "shoptype": shoptype,
-      "discountPerProduct": discountPerProduct,
-      "profileImage": image,
-      "isSaved": isSaved,
+      "shop_type": shoptype,
+      "profile_image": image,
+      // "discountPerProduct": discountPerProduct, // Check if column exists in DB
     };
   }
 }

@@ -129,6 +129,7 @@ class ProductDetailsController extends GetxController with CacheManager {
     var productData = data['product'];
 
     if (productData is ProductModel) {
+      print('productData is $productData');
       // ProductModel case
       ProductModel p = productData;
       category.text = p.category ?? '';

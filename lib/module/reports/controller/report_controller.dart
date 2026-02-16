@@ -81,26 +81,49 @@ class ReportController extends GetxController
 
   Future<void> fetchPaymentSummary() async {
     if (userId == null) return;
-    final range = _getTodayRange();
+
+    // 1️⃣ IST to UTC Range Logic (Exact match for Supabase)
+    final DateTime now = DateTime.now();
+    final String startUtc =
+        DateTime(
+          now.year,
+          now.month,
+          now.day,
+          0,
+          0,
+          0,
+        ).toUtc().toIso8601String();
+    final String endUtc =
+        DateTime(
+          now.year,
+          now.month,
+          now.day,
+          23,
+          59,
+          59,
+        ).toUtc().toIso8601String();
 
     try {
-      // Hum 'sales' table se query shuru karenge kyunki user_id wahan hai
+      // 2️⃣ Querying sales with payment joins
       final response = await SupabaseConfig.from('sales')
           .select('sale_payments (amount, payment_mode)')
           .eq('user_id', userId!)
-          .gte('created_at', range.$1)
-          .lte('created_at', range.$2);
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc);
 
+      // Reset values before calculation
       totalCash.value = 0.0;
       totalUpi.value = 0.0;
       totalCard.value = 0.0;
       totalCredit.value = 0.0;
 
-      for (var sale in response) {
+      for (var sale in (response as List)) {
         final List payments = sale['sale_payments'] ?? [];
         for (var p in payments) {
-          final mode = p['payment_mode']?.toString().toLowerCase() ?? '';
-          final amount = (p['amount'] ?? 0).toDouble();
+          final mode = p['payment_mode']?.toString().toLowerCase().trim() ?? '';
+          final amount =
+              double.tryParse(p['amount']?.toString() ?? '0.0') ?? 0.0;
+
           if (mode == 'cash') {
             totalCash.value += amount;
           } else if (mode == 'upi') {
@@ -112,111 +135,178 @@ class ReportController extends GetxController
           }
         }
       }
+      print("💳 Summary: Cash: ${totalCash.value}, UPI: ${totalUpi.value}");
     } catch (e) {
-      customMessageOrErrorPrint(message: "Payment Summary Error: $e");
+      print("🚨 Payment Summary Error: $e");
     }
   }
 
   Future<void> fetchTodaySalesAndProfit() async {
     if (userId == null) return;
-    final range = _getTodayRange();
+
+    // 1️⃣ IST to UTC Range Logic
+    final DateTime now = DateTime.now();
+    final String startUtc =
+        DateTime(
+          now.year,
+          now.month,
+          now.day,
+          0,
+          0,
+          0,
+        ).toUtc().toIso8601String();
+    final String endUtc =
+        DateTime(
+          now.year,
+          now.month,
+          now.day,
+          23,
+          59,
+          59,
+        ).toUtc().toIso8601String();
+
     totalProfit.value = 0.0;
     totalRevenue.value = 0.0;
 
     try {
+      // 2️⃣ Ek hi baar mein Sales aur Items fetch karein
       final response = await SupabaseConfig.from('sales')
           .select('total_amount, sale_items(qty, final_price, product_id)')
           .eq('user_id', userId!)
-          .gte('created_at', range.$1)
-          .lte('created_at', range.$2);
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc);
 
+      if ((response as List).isEmpty) return;
+
+      double tempRevenue = 0.0;
+      double tempProfit = 0.0;
+
+      // Saare unique product IDs nikal lo taaki purchase price ek baar mein fetch ho sake
+      Set<String> productIds = {};
       for (var sale in response) {
-        totalRevenue.value += (sale['total_amount'] ?? 0).toDouble();
-        final List items = sale['sale_items'] ?? [];
-
-        for (var item in items) {
-          double sellingPrice = (item['final_price'] ?? 0).toDouble();
-          int qty = (item['qty'] ?? 0).toInt();
-          String? pid = item['product_id'];
-
-          if (pid != null) {
-            // Har product ki purchase price stock_batches se uthao
-            final batchData =
-                await SupabaseConfig.from('stock_batches')
-                    .select('purchase_price')
-                    .eq('product_id', pid)
-                    .limit(1)
-                    .maybeSingle();
-
-            double purchasePrice =
-                (batchData?['purchase_price'] ?? 0).toDouble();
-            totalProfit.value += (sellingPrice - (purchasePrice * qty));
-          }
+        tempRevenue += (sale['total_amount'] ?? 0).toDouble();
+        for (var item in (sale['sale_items'] as List)) {
+          if (item['product_id'] != null) productIds.add(item['product_id']);
         }
       }
+
+      // 3️⃣ Optimization: Saare products ki purchase price ek hi baar mein fetch karo
+      Map<String, double> purchasePrices = {};
+      if (productIds.isNotEmpty) {
+        final batchResponse = await SupabaseConfig.from('stock_batches')
+            .select('product_id, purchase_price')
+            .inFilter('product_id', productIds.toList());
+
+        for (var batch in (batchResponse as List)) {
+          purchasePrices[batch['product_id']] =
+              (batch['purchase_price'] ?? 0.0).toDouble();
+        }
+      }
+
+      // 4️⃣ Profit Calculate karo (Memory se, database se nahi)
+      for (var sale in response) {
+        for (var item in (sale['sale_items'] as List)) {
+          double sellingPrice = (item['final_price'] ?? 0.0).toDouble();
+          int qty = (item['qty'] ?? 0).toInt();
+          String pid = item['product_id'] ?? '';
+
+          double purchasePrice = purchasePrices[pid] ?? 0.0;
+
+          // Profit = Total Selling Price - (Unit Purchase Price * Qty)
+          tempProfit += (sellingPrice - (purchasePrice * qty));
+        }
+      }
+
+      totalRevenue.value = tempRevenue;
+      totalProfit.value = tempProfit;
+
+      print("✅ Today's Revenue: $tempRevenue, Profit: $tempProfit");
     } catch (e) {
-      customMessageOrErrorPrint(message: "Profit Error: $e");
+      print("🚨 Profit Error: $e");
     }
   }
 
   Future<void> fetchTopSellingProductsChart() async {
     if (userId == null) return;
-    final range = _getTodayRange();
+
+    // 1️⃣ IST to UTC Range Logic (Consistency ke liye)
+    final DateTime now = DateTime.now();
+    final String startUtc =
+        DateTime(
+          now.year,
+          now.month,
+          now.day,
+          0,
+          0,
+          0,
+        ).toUtc().toIso8601String();
+    final String endUtc =
+        DateTime(
+          now.year,
+          now.month,
+          now.day,
+          23,
+          59,
+          59,
+        ).toUtc().toIso8601String();
 
     try {
-      // 1. Sales table se query start karo taaki filter sahi lage
       final response = await SupabaseConfig.from('sales')
           .select('''
-            id,
-            sale_items (
-              qty,
-              final_price,
-              products ( name )
-            )
-          ''')
+          id,
+          sale_items (
+            qty,
+            final_price,
+            products ( name )
+          )
+        ''')
           .eq('user_id', userId!)
-          .gte('created_at', range.$1)
-          .lte('created_at', range.$2);
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc);
 
-      if (response == null || (response as List).isEmpty) {
+      if ((response as List).isEmpty) {
         reportTopChart.value = [];
         return;
       }
 
+      // 2️⃣ Aggregation Map: Product Name -> {Qty, Revenue}
+      // Record type (int, double) use kiya hai efficiency ke liye
       Map<String, (int, double)> agg = {};
 
-      // 2. Data ko loop karke aggregate karo
-      for (var sale in response) {
+      for (var sale in (response as List)) {
         final List items = sale['sale_items'] ?? [];
         for (var item in items) {
-          // Products ka naam andar se nikalo
-          String name = item['products']?['name'] ?? 'Unknown';
-          int q = (item['qty'] ?? 0).toInt();
-          double r = (item['final_price'] ?? 0.0).toDouble();
+          String name = item['products']?['name'] ?? 'Unknown Product';
+          int q = int.tryParse(item['qty']?.toString() ?? '0') ?? 0;
+          double r =
+              double.tryParse(item['final_price']?.toString() ?? '0.0') ?? 0.0;
 
           var current = agg[name] ?? (0, 0.0);
           agg[name] = (current.$1 + q, current.$2 + r);
         }
       }
 
-      // 3. Model mein map karo aur UI update karo
-      reportTopChart.value =
-          agg.entries
-              .map(
-                (e) => ReportTopProductModel(
-                  name: e.key,
-                  totalQty: e.value.$1.toString(),
-                  revenue: e.value.$2.toInt(),
-                ),
-              )
-              .toList();
+      // 3️⃣ Map to Model and Sort
+      List<ReportTopProductModel> list =
+          agg.entries.map((e) {
+            return ReportTopProductModel(
+              name: e.key,
+              totalQty: e.value.$1.toString(),
+              revenue: e.value.$2.toInt(),
+            );
+          }).toList();
 
-      // Sort kar do taaki top selling upar aaye
-      reportTopChart.sort(
-        (a, b) => int.parse(b.totalQty!).compareTo(int.parse(a.totalQty!)),
-      );
+      // Qty ke basis par descending sort (Sabse zyada bikne wala upar)
+      list.sort((a, b) {
+        int qtyA = int.tryParse(a.totalQty ?? '0') ?? 0;
+        int qtyB = int.tryParse(b.totalQty ?? '0') ?? 0;
+        return qtyB.compareTo(qtyA);
+      });
+
+      reportTopChart.value = list;
+      print("📊 Chart Data Updated: ${list.length} products found today.");
     } catch (e) {
-      customMessageOrErrorPrint(message: "Chart Error: $e");
+      print("🚨 Chart Error: $e");
       reportTopChart.value = [];
     }
   }
@@ -229,42 +319,51 @@ class ReportController extends GetxController
   Future<List<SellsModel>> fetchRevenueList() async {
     if (userId == null) return [];
 
+    // 1️⃣ IST (Local) Time ko UTC Range mein convert karein
     final DateTime now = DateTime.now();
-    final String startOfToday =
-        DateTime(now.year, now.month, now.day).toIso8601String();
-    final String endOfToday =
-        DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+    final DateTime localStart = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    final DateTime localEnd = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      23,
+      59,
+      59,
+    );
+
+    // Database filters ke liye UTC strings
+    final String startUtc = localStart.toUtc().toIso8601String();
+    final String endUtc = localEnd.toUtc().toIso8601String();
 
     try {
-      // Query ekdum saaf kar di hai, koi extra comment ya symbol nahi hai
       final response = await SupabaseConfig.from('sales')
           .select('''
-          id,
-          bill_no,
-          total_amount,
-          created_at,
-          customer_id,
-          customers (name, mobile_number),
-          sale_items (
-            qty,
-            final_price,
-            original_price,
-            discount_amount,
-            product_id,
-            applied_discount_percent,
-            stock_type,
-            location,
-            products ( name )
-          ),
-          sale_payments (
-            amount,
-            payment_mode,
-            reference_no
-          )
-        ''')
+        id,
+        bill_no,
+        total_amount,
+        created_at,
+        customer_id,
+        customers (name, mobile_number),
+        sale_items (
+          qty,
+          final_price,
+          original_price,
+          discount_amount,
+          product_id,
+          applied_discount_percent,
+          stock_type,
+          location,
+          products ( name )
+        ),
+        sale_payments (
+          amount,
+          payment_mode,
+          reference_no
+        )
+      ''')
           .eq('user_id', userId!)
-          .gte('created_at', startOfToday)
-          .lte('created_at', endOfToday)
+          .gte('created_at', startUtc) // ✅ UTC Start
+          .lte('created_at', endUtc) // ✅ UTC End
           .order('created_at', ascending: false);
 
       final List<dynamic> data = response as List;
@@ -273,7 +372,7 @@ class ReportController extends GetxController
         final List<dynamic> dbItems = sale['sale_items'] ?? [];
         final List<dynamic> dbPayments = sale['sale_payments'] ?? [];
 
-        // Mapping logic (Variable names wahi hain jo aapne mange the)
+        // 2️⃣ Items Mapping Logic
         List<SellItem> mappedItems =
             dbItems.map((item) {
               return SellItem(
@@ -289,19 +388,19 @@ class ReportController extends GetxController
               );
             }).toList();
 
+        // 3️⃣ Payment Calculations
         double cash = 0, upi = 0, card = 0, credit = 0;
         for (var p in dbPayments) {
           String mode = p['payment_mode']?.toString().toLowerCase() ?? '';
           double amt = (p['amount'] ?? 0).toDouble();
-          if (mode == 'cash') {
+          if (mode == 'cash')
             cash += amt;
-          } else if (mode == 'upi') {
+          else if (mode == 'upi')
             upi += amt;
-          } else if (mode == 'card') {
+          else if (mode == 'card')
             card += amt;
-          } else if (mode == 'credit') {
+          else if (mode == 'credit')
             credit += amt;
-          }
         }
 
         PaymentModel paymentObj = PaymentModel(
@@ -316,8 +415,9 @@ class ReportController extends GetxController
               dbPayments.isNotEmpty ? dbPayments.first['payment_mode'] : 'Cash',
         );
 
+        // 4️⃣ Return Sells Model
         return SellsModel(
-          billNo: sale['bill_no']?.toString() ?? sale['id'].toString(),
+          billNo: sale['bill_no'] ?? sale['id'].toString(),
           finalAmount: (sale['total_amount'] ?? 0).toDouble(),
           totalAmount: (sale['total_amount'] ?? 0).toDouble(),
           itemsCount: mappedItems.fold(
@@ -444,7 +544,7 @@ class ReportController extends GetxController
     final s = SellsModel.fromJson(json);
     final i = s.items?.isNotEmpty == true ? s.items!.first : SellItem();
     return [
-      s.billNo ?? "",
+      s.billNo.toString(),
       i.name ?? "",
       i.barcode ?? "",
       i.category ?? "",

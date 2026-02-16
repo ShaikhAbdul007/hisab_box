@@ -1,44 +1,38 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import '../../inventory/model/product_model.dart';
 
 class OutOfStockInventoryListText extends StatelessWidget {
   final ProductModel inventoryModel;
   final void Function() deleteOnTap;
+  final bool isDeleteLoading;
   const OutOfStockInventoryListText({
     super.key,
     required this.inventoryModel,
     required this.deleteOnTap,
+    required this.isDeleteLoading,
   });
 
   @override
   Widget build(BuildContext context) {
-    int color = int.parse(inventoryModel.color ?? '0');
     String rack = inventoryModel.rack ?? '';
     String level = inventoryModel.level ?? '';
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(5.r),
       ),
       margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
+      padding: SymmetricPadding(horizontal: 5, vertical: 4).getPadding(),
       child: Row(
         children: [
-          Container(
-            margin: SymmetricPadding(horizontal: 5).getPadding(),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(5),
-                bottomLeft: Radius.circular(5),
-              ),
-            ),
-            child: Icon(CupertinoIcons.cube, size: 27),
-          ),
-          setWidth(width: 5),
           Expanded(
             flex: 3,
             child: SingleChildScrollView(
@@ -62,33 +56,27 @@ class OutOfStockInventoryListText extends StatelessWidget {
                   },
                   Row(
                     children: [
-                      RichText(
-                        text: TextSpan(
-                          text: '${inventoryModel.animalType} ',
+                      Text(
+                        '${inventoryModel.animalType}',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.greyColor,
+                        ),
+                      ),
+                      if (inventoryModel.weight?.isNotEmpty ?? false) ...{
+                        Text(
+                          '/${inventoryModel.weight}',
                           style: CustomTextStyle.customOpenSans(
                             color: AppColors.greyColor,
                           ),
-                          children: [
-                            TextSpan(
-                              text: '${inventoryModel.weight} ',
-                              style: CustomTextStyle.customOpenSans(
-                                color: AppColors.greyColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            TextSpan(
-                              text: '${inventoryModel.category}  ',
-                              style: CustomTextStyle.customOpenSans(
-                                color: AppColors.greyColor,
-                              ),
-                            ),
-                          ],
+                        ),
+                      },
+                      Text(
+                        '/${inventoryModel.category}',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.greyColor,
                         ),
                       ),
-                    ],
-                  ),
-                  Row(
-                    children: [
+                      Icon(CupertinoIcons.map_pin, size: 15.sp),
                       Text(
                         level.isNotEmpty && rack.isNotEmpty
                             ? '${inventoryModel.location}/$level/$rack'
@@ -101,21 +89,12 @@ class OutOfStockInventoryListText extends StatelessWidget {
                           color: AppColors.greyColor,
                         ),
                       ),
-                      setWidth(width: 10),
-                      inventoryModel.isLoosed ?? false
-                          ? Text(
-                            'Loosed : ${inventoryModel.isLoosed}',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.redColor,
-                            ),
-                          )
-                          : Container(),
                     ],
                   ),
                   Row(
                     children: [
                       Text(
-                        inventoryModel.purchaseDate ?? '',
+                        formatDate(inventoryModel.purchaseDate ?? ''),
                         style: CustomTextStyle.customOpenSans(
                           color: AppColors.greyColor,
                         ),
@@ -127,31 +106,31 @@ class OutOfStockInventoryListText extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        inventoryModel.expireDate ?? '',
+                        formatDate(inventoryModel.expireDate ?? ''),
                         style: CustomTextStyle.customOpenSans(
                           color: AppColors.redColor,
                         ),
                       ),
                     ],
                   ),
-                  setHeight(height: 5),
                 ],
               ),
             ),
           ),
           Expanded(
-            child: CustomPadding(
-              paddingOption: OnlyPadding(right: 10),
-              child: Column(
-                children: [
-                  Text(
-                    '\u{20B9} ${inventoryModel.sellingPrice}',
-                    style: CustomTextStyle.customPoppin(
-                      color: AppColors.blackColor,
-                      fontSize: 18,
-                    ),
+            child: Column(
+              children: [
+                Icon(CupertinoIcons.cube_box_fill, size: 27, color: getColor()),
+                setHeight(height: 5),
+                Text(
+                  '\u{20B9} ${inventoryModel.sellingPrice}',
+                  style: CustomTextStyle.customPoppin(
+                    color: AppColors.blackColor,
+                    fontSize: 18,
                   ),
-                  RichText(
+                ),
+                FittedBox(
+                  child: RichText(
                     text: TextSpan(
                       text: inventoryModel.quantity.toString(),
                       style: CustomTextStyle.customOpenSans(
@@ -163,24 +142,22 @@ class OutOfStockInventoryListText extends StatelessWidget {
                         TextSpan(
                           text: ' in stock',
                           style: CustomTextStyle.customOpenSans(
-                            color: AppColors.greyColor,
+                            color: AppColors.blackColor,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  setHeight(height: 10),
-                  inventoryModel.quantity != 0
-                      ? SizedBox.shrink()
-                      : CommonButton(
-                        bgColor: AppColors.redColor,
-                        height: 25,
-                        radius: 6,
-                        label: 'Delete',
-                        onTap: deleteOnTap,
-                      ),
-                ],
-              ),
+                ),
+                CommonButton(
+                  isLoading: isDeleteLoading,
+                  height: 25,
+                  radius: 5,
+                  bgColor: AppColors.redColor,
+                  onTap: deleteOnTap,
+                  label: 'Delete',
+                ),
+              ],
             ),
           ),
         ],

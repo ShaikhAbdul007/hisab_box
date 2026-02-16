@@ -8,6 +8,7 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
 import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
@@ -34,6 +35,15 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
 
     String userName =
         user.name?.isNotEmpty ?? false ? user.name!.substring(0, 1) : "HB";
+
+    print(user.address);
+    print(user.alternateMobileNo);
+    print(user.mobileNo);
+    print(user.city);
+    bool isFileAvailable =
+        user.image != null &&
+        user.image!.isNotEmpty &&
+        File(user.image!).existsSync();
     double total = 0;
     double savedAmount = 0;
     int discountPercentage = 0;
@@ -47,7 +57,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               children: [
                 Row(
                   children: [
-                    user.image == null || user.image!.isEmpty
+                    user.image == null || !isFileAvailable
                         ? CircleAvatar(
                           radius: 50,
                           backgroundColor: AppColors.blackColor,
@@ -62,11 +72,10 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                         : CircleAvatar(
                           radius: 50,
                           backgroundColor: AppColors.blackColor,
-                          backgroundImage:
-                              user.image == null || user.image!.isEmpty
-                                  ? null
-                                  : FileImage(File(user.image ?? '')),
-                          child: Text(''),
+                          backgroundImage: FileImage(
+                            File(user.image!),
+                          ), // Ab crash nahi hoga
+                          child: const Text(''),
                         ),
                     setWidth(width: 15),
                     Column(
@@ -107,7 +116,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 setHeight(height: 10),
                 Flexible(
                   child: Text(
-                    "${user.address},${user.city},${user.pincode}",
+                    "${user.address?.toCapitalized() ?? ''},${user.city?.toCapitalized() ?? ''},${user.pincode?.toCapitalized() ?? ''}",
                     style: CustomTextStyle.customMontserrat(
                       fontSize: 18,
                       letterSpacing: 1.5,
@@ -127,7 +136,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                     Expanded(
                       child: Text(
-                        '${printInvoiceModel.billNo}',
+                        'HB-${printInvoiceModel.billNo}',
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -187,7 +196,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                     Expanded(
                       child: Text(
-                        paymentMethod,
+                        paymentMethod.toCapitalized(),
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -453,9 +462,7 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
                   data: data['product'].barcode,
                   height: 90,
                   width: 175,
-                  //drawText: true,
                 ),
-
                 const SizedBox(height: 2),
                 Text(
                   user.name ?? 'Hisab Box',
@@ -524,34 +531,3 @@ class BarcodeRichText extends StatelessWidget {
     );
   }
 }
-
-
- // if (discountPercentage != 0.0) ...{
-                //   Row(
-                //     children: [
-                //       Expanded(
-                //         flex: 4,
-                //         child: Text(
-                //           "Discount",
-                //           style: CustomTextStyle.customMontserrat(
-                //             fontWeight: FontWeight.w500,
-                //             fontSize: 18,
-                //           ),
-                //         ),
-                //       ),
-                //       const Expanded(child: SizedBox()),
-                //       Expanded(
-                //         flex: 3,
-                //         child: Text(
-                //           '₹ $discountPercentage',
-                //           textAlign: TextAlign.right,
-                //           style: CustomTextStyle.customMontserrat(
-                //             fontWeight: FontWeight.bold,
-                //             fontSize: 20,
-                //           ),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                //   setHeight(height: 10),
-                // },

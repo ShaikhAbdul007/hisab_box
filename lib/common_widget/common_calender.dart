@@ -13,32 +13,57 @@ Future<String> customDatePicker({
   final String? puchinout,
   DateTime? lastDate,
 }) async {
-  DateTime tempDate = DateFormat(dateFormat).parse(controller.value);
+  DateTime initialDatePickerDate;
+
+  try {
+    if (controller.value.isNotEmpty) {
+      DateTime parsed = DateFormat(dateFormat).parse(controller.value);
+
+      // Check: Kya parsed date firstDate se pehle toh nahi?
+      DateTime limit = firstDate ?? DateTime(1990);
+      if (parsed.isBefore(limit)) {
+        initialDatePickerDate = selectedDate;
+      } else {
+        initialDatePickerDate = parsed;
+      }
+    } else {
+      initialDatePickerDate = selectedDate;
+    }
+  } catch (e) {
+    // Agar parsing fail ho jaye (format mismatch)
+    initialDatePickerDate = selectedDate;
+  }
+
+  // Safety Check for lastDate: initialDate kabhi lastDate ke baad nahi ho sakti
+  DateTime effectiveLastDate = lastDate ?? DateTime(2100);
+  if (initialDatePickerDate.isAfter(effectiveLastDate)) {
+    initialDatePickerDate = effectiveLastDate;
+  }
+
   DateTime? pickedDate = await showDatePicker(
     builder: (context, child) {
       return Theme(
         data: Theme.of(context).copyWith(
           colorScheme: ColorScheme.light(
-            primary: Colors.grey.shade50, // header background color
-            onPrimary: AppColors.blackColor, // header text color
+            primary: Colors.grey.shade50,
+            onPrimary: AppColors.blackColor,
             onSurface: AppColors.blackColor,
-            onSurfaceVariant: AppColors.whiteColor, // body text color
+            onSurfaceVariant: AppColors.whiteColor,
           ),
           textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.redColor, // button text color
-            ),
+            style: TextButton.styleFrom(foregroundColor: AppColors.redColor),
           ),
         ),
         child: child!,
       );
     },
     context: context,
-    initialDate: controller.value.isNotEmpty ? tempDate : selectedDate,
+    initialDate: initialDatePickerDate, // Use our safe date
     firstDate: firstDate ?? DateTime(1990),
-    lastDate: lastDate ?? selectedDate,
+    lastDate: effectiveLastDate,
     initialEntryMode: DatePickerEntryMode.calendarOnly,
   );
+
   if (pickedDate != null) {
     String formatDate = DateFormat(dateFormat).format(pickedDate);
     controller.value = formatDate;

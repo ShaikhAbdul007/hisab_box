@@ -67,6 +67,7 @@ class InventoryListController extends GetxController
               is_loose_category, is_flavor_and_weight_not_required,
               categories(name),
               animal_categories(name),
+              product_barcodes(barcode),
               stock_batches!fk_stock_batches_products (
                 purchase_date,
                 expiry_date,
@@ -104,6 +105,7 @@ class InventoryListController extends GetxController
               is_loose_category, is_flavor_and_weight_not_required,
               categories(name),
               animal_categories(name),
+              product_barcodes(barcode),
               stock_batches!fk_stock_batches_products (
                 purchase_date,
                 expiry_date,
@@ -140,13 +142,19 @@ class InventoryListController extends GetxController
       productMap['discount'] = e['discount'];
       productMap['is_active'] = e['is_active'];
       productMap['is_loose'] = e['stock_type'] == 'loose';
-
+      final List? barcodeList = productMap['product_barcodes'] as List?;
+      if (barcodeList != null && barcodeList.isNotEmpty) {
+        // Pehla barcode uthao aur seedha productMap ki main key mein daal do
+        productMap['barcode'] = barcodeList[0]['barcode']?.toString();
+      } else {
+        productMap['barcode'] = ''; // Agar nahi hai toh empty string
+      }
       // Batch mapping
       final batches = productMap['stock_batches'] as List?;
       if (batches != null && batches.isNotEmpty) {
         productMap['purchase_date'] = batches[0]['purchase_date'];
         productMap['expiry_date'] = batches[0]['expiry_date'];
-        productMap['purchasePrice'] = batches[0]['purchase_price'];
+        productMap['purchase_price'] = batches[0]['purchase_price'];
       }
 
       return ProductModel.fromJson(productMap);

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -41,19 +43,31 @@ class SettingView extends GetView<SettingController> {
                   subtitleReq: true,
                   label: controller.storeName.value,
                   subtitle: controller.email.value,
-                  leading: CircleAvatar(
-                    backgroundColor: AppColors.blackColor,
-                    radius: 25,
-                    child: Text(
-                      controller.storeName.value.isNotEmpty
-                          ? controller.storeName.value.substring(0, 1)
-                          : 'H',
-                      style: CustomTextStyle.customRaleway(
-                        fontSize: 25,
-                        color: AppColors.whiteColor,
-                      ),
-                    ),
-                  ),
+                  leading:
+                      controller.profileImage.value != null
+                          ? ClipOval(
+                            child: Image.file(
+                              controller.profileImage.value!,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Text(
+                                  "HB",
+                                  style: TextStyle(
+                                    fontSize: 40,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                          : CircleAvatar(
+                            radius: 50,
+                            backgroundColor: AppColors.blackColor,
+                            // Ab crash nahi hoga
+                            child: const Text('HB'),
+                          ),
                 ),
               ),
             ),

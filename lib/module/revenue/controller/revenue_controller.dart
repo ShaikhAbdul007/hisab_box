@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-import '../../../helper/helper.dart';
 import '../model/revenue_model.dart';
 
 class RevenueController extends GetxController with CacheManager {
@@ -22,16 +21,9 @@ class RevenueController extends GetxController with CacheManager {
 
   void setSellList() async {
     final today = dayDate.value;
-
-    // 1️⃣ Cache check
-
-    // 2️⃣ Supabase fallback (Firebase replaced)
     final data = await fetchRevenueList();
     sellsList.value = data;
-
-    // 3️⃣ Cache save
     saveTodayRevenueCache(date: today, sells: data);
-
     _calculateTotal();
   }
 
@@ -43,24 +35,24 @@ class RevenueController extends GetxController with CacheManager {
     sellTotalAmount.value = total;
   }
 
-  // ==========================================
-  // 🔥 SUPABASE FETCH WITH MODEL MAPPING
-  // ==========================================
-
   Future<List<SellsModel>> fetchRevenueList() async {
     try {
-      isRevenueListLoading.value = true; // Replaced Firebase UID
+      isRevenueListLoading.value = true;
       if (uid == null) return [];
 
-      // Date filtering logic (Start and End of selected dayDate)
       final DateTime selectedDate = DateTime.parse(dayDate.value);
-      final String startOfToday =
+
+      // Timezone safe range
+      final String startUtc =
           DateTime(
             selectedDate.year,
             selectedDate.month,
             selectedDate.day,
-          ).toIso8601String();
-      final String endOfToday =
+            0,
+            0,
+            0,
+          ).toUtc().toIso8601String();
+      final String endUtc =
           DateTime(
             selectedDate.year,
             selectedDate.month,
@@ -68,65 +60,86 @@ class RevenueController extends GetxController with CacheManager {
             23,
             59,
             59,
-          ).toIso8601String();
+          ).toUtc().toIso8601String();
 
       final response = await SupabaseConfig.from('sales')
           .select('''
-          id,
-          bill_no,
-          total_amount,
-          created_at,
-          customer_id,
-          customers (name, mobile_number),
-          sale_items (
-            qty,
-            final_price,
-            original_price,
-            discount_amount,
-            product_id,
-            applied_discount_percent,
-            stock_type,
-            location,
-            products ( name )
-          ),
-          sale_payments (
-            amount,
-            payment_mode,
-            reference_no
+        id, bill_no, total_amount, created_at,
+        customers (name, mobile_number),
+        sale_items (
+          qty, final_price, original_price, discount_amount, product_id,
+          applied_discount_percent, stock_type, location,
+          products ( 
+            name, 
+            weight, 
+            flavour, 
+            animal_type, 
+            category,
+            is_loose_category,
+            is_flavor_and_weight_not_required,
+            categories(name),
+            animal_categories(name),
+            product_barcodes(barcode)
           )
-        ''')
-          .eq('user_id', uid ?? '')
-          .gte('created_at', startOfToday)
-          .lte('created_at', endOfToday)
+        ),
+        sale_payments (amount, payment_mode, reference_no)
+      ''')
+          .eq('user_id', uid!)
+          .gte('created_at', startUtc)
+          .lte('created_at', endUtc)
           .order('created_at', ascending: false);
 
-      final List<dynamic> data = response as List;
+      final List data = response as List;
 
-      // Supabase Data ko SellsModel mein map kar rahe hain (UI support ke liye)
       final List<SellsModel> bills =
           data.map((sale) {
-            final List<dynamic> dbItems = sale['sale_items'] ?? [];
-            final List<dynamic> dbPayments = sale['sale_payments'] ?? [];
+            final List dbItems = sale['sale_items'] ?? [];
+            final List dbPayments = sale['sale_payments'] ?? [];
 
-            // Map Items
+            // 🎯 Fix: Detailed Item Mapping
             List<SellItem> mappedItems =
                 dbItems.map((item) {
+                  final p = item['products'] ?? {};
+                  final List? barcodes = p['product_barcodes'] as List?;
+
                   return SellItem(
-                    name: item['products']?['name'] ?? 'Unknown',
-                    quantity: item['qty'] ?? 0,
+                    id: item['product_id'],
+                    name: p['name'] ?? 'Unknown',
+                    quantity: int.tryParse(item['qty']?.toString() ?? '0') ?? 0,
                     originalPrice: (item['original_price'] ?? 0).toDouble(),
                     finalPrice: (item['final_price'] ?? 0).toDouble(),
-                    discount: item['applied_discount_percent'] ?? 0,
-                    id: item['product_id'],
+                    discount:
+                        int.tryParse(
+                          item['applied_discount_percent']?.toString() ?? '0',
+                        ) ??
+                        0,
+
+                    // ✨ Missing Fields Fixed Here:
+                    barcode:
+                        (barcodes != null && barcodes.isNotEmpty)
+                            ? barcodes[0]['barcode']
+                            : '',
+                    category: p['categories']?['name'] ?? p['category'] ?? '',
+                    animalType:
+                        p['animal_categories']?['name'] ??
+                        p['animal_type'] ??
+                        '',
+                    weight: p['weight']?.toString() ?? '',
+                    flavours: p['flavour']?.toString() ?? '',
+                    isLooseCategory: p['is_loose_category'] ?? false,
+                    isFlavorAndWeightNotRequired:
+                        p['is_flavor_and_weight_not_required'] ?? false,
                     location: item['location'] ?? 'shop',
                     sellType: item['stock_type'] ?? 'packet',
+                    isLoose: item['stock_type'] == 'loose',
                   );
                 }).toList();
 
-            // Map Payments
+            // Payment Mapping (Same as before)
             double cash = 0, upi = 0, card = 0, credit = 0;
             for (var p in dbPayments) {
-              String mode = p['payment_mode']?.toString().toLowerCase() ?? '';
+              String mode =
+                  p['payment_mode']?.toString().toLowerCase().trim() ?? '';
               double amt = (p['amount'] ?? 0).toDouble();
               if (mode == 'cash') {
                 cash += amt;
@@ -139,16 +152,19 @@ class RevenueController extends GetxController with CacheManager {
               }
             }
 
+            DateTime createdTime =
+                DateTime.parse(sale['created_at'].toString()).toLocal();
+
             return SellsModel(
-              billNo: sale['bill_no']?.toString() ?? sale['id'].toString(),
+              billNo: sale['bill_no'] ?? 0,
               finalAmount: (sale['total_amount'] ?? 0).toDouble(),
               totalAmount: (sale['total_amount'] ?? 0).toDouble(),
               itemsCount: mappedItems.fold(
                 0,
                 (sum, item) => (sum ?? 0) + (item.quantity ?? 0),
               ),
-              soldAt: sale['created_at'].toString().split('T')[0],
-              time: sale['created_at'].toString().split('T')[1].split('.')[0],
+              soldAt: createdTime.toString().split(' ')[0],
+              time: createdTime.toString().split(' ')[1].split('.')[0],
               items: mappedItems,
               payment: PaymentModel(
                 cash: cash,
@@ -163,18 +179,11 @@ class RevenueController extends GetxController with CacheManager {
                         ? dbPayments.first['payment_mode']
                         : 'Cash',
               ),
-              isDiscountGiven: false,
-              discountValue: 0.0,
             );
           }).toList();
 
-      customMessageOrErrorPrint(
-        message: '✅ Total Bills Fetched: ${bills.length}',
-      );
-
       return bills;
     } catch (e) {
-      showMessage(message: "❌ Error fetching revenue: ${e.toString()}");
       print("🚨 Detail Error: $e");
       return [];
     } finally {

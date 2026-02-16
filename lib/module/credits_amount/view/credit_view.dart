@@ -9,7 +9,6 @@ import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/search.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
-
 import '../../../helper/helper.dart';
 import '../controller/credit_controller.dart';
 
@@ -24,7 +23,7 @@ class CreditView extends GetView<CredtiController> {
       body: CustomPadding(
         paddingOption: SymmetricPadding(horizontal: 8.0),
         child: RefreshIndicator.adaptive(
-          onRefresh: () => controller.fetchAllCustomers(),
+          onRefresh: () => controller.fetchCreditCustomers(),
           child: Column(
             children: [
               setHeight(height: 10),

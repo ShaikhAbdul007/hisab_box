@@ -1,5 +1,5 @@
 class SellsModel {
-  final String? billNo;
+  final int? billNo;
   final bool? isDiscountGiven;
   final double? discountValue;
   final double? finalAmount;

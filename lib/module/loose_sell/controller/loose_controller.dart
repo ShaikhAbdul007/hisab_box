@@ -143,11 +143,6 @@ class LooseController extends GetxController with CacheManager {
           .eq('user_id', userId!)
           .order('created_at', ascending: false);
 
-      if (response == null) {
-        productList.clear();
-        return;
-      }
-
       final List data = response as List;
 
       // DEBUG: Console mein check karo ki kya batches ke andar data aa raha hai?

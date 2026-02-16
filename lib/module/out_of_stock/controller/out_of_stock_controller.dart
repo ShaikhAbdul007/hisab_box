@@ -1,17 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 
 import '../../inventory/model/product_model.dart';
 
 class OutOfStockController extends GetxController with CacheManager {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final uid = SupabaseConfig.auth.currentUser?.id;
+
   RxBool isDataLoading = false.obs;
+  RxBool isDeleteLoading = false.obs;
   var productList = <ProductModel>[].obs;
   RxString searchText = ''.obs;
   TextEditingController searchController = TextEditingController();
@@ -33,157 +32,117 @@ class OutOfStockController extends GetxController with CacheManager {
   }
 
   Future<void> loadOutOfStockProducts() async {
-    isDataLoading.value = true;
-
-    /// ❌ OLD
-    /// Firebase query with .get()
-
-    /// ✅ NEW: CACHE FILTER
-    final cachedProducts = await retrieveProductList();
-    final goDownCachedProducts = retrieveGodownProductList();
-
-    var tempProductList =
-        cachedProducts.where((p) => (p.quantity ?? 0) == 0).toList();
-    var tempGoDownProductList =
-        goDownCachedProducts.where((p) => (p.quantity ?? 0) == 0).toList();
-    productList.value = [...tempGoDownProductList, ...tempProductList];
-    isDataLoading.value = false;
-  }
-
-  Future<void> markProductInactive({required ProductModel product}) async {
-    final uid = _auth.currentUser?.uid;
     if (uid == null) return;
     isDataLoading.value = true;
-    List<ProductModel> tempUpdatedShop = [];
-    List<ProductModel> tempUpdatedGodown = [];
 
     try {
-      // 1️⃣ Decide collection based on location
-      final String collectionName =
-          (product.location ?? '').toLowerCase() == 'godown'
-              ? 'godownProducts'
-              : 'products';
+      // 1. Direct Supabase Query - Un products ke liye jiniki quantity 0 hai
+      final response = await SupabaseConfig.from('product_stock')
+          .select('''
+          id,
+          quantity, 
+          location, 
+          selling_price, 
+          discount, 
+          stock_type, 
+          is_active,
+          products!fk_product_stock_products (
+            id, 
+            name, 
+            flavour, 
+            weight, 
+            rack, 
+            level,
+            is_loose_category, 
+            is_flavor_and_weight_not_required,
+            categories(name),
+            animal_categories(name),
+            product_barcodes(barcode),
+            stock_batches!fk_stock_batches_products (
+              purchase_date,
+              expiry_date
+            )
+          )
+        ''')
+          .eq('user_id', uid!)
+          .eq('quantity', 0) // 🔥 Main Filter: Sirf zero quantity wale
+          .eq('is_active', true)
+          .order('updated_at', ascending: false);
 
-      // 2️⃣ Firebase WRITE ONLY (no read)
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection(collectionName)
-          .doc(product.barcode)
-          .update({
-            'isActive': false,
-            'updatedDate': setFormateDate(),
-            'updatedTime': setFormateDate('hh:mm a'),
-          });
+      final List dataList = response as List;
+      print("🚩 Out of Stock Items Found: ${dataList.length}");
 
-      // 3️⃣ Cache update (location aware)
-      if (collectionName == 'products') {
-        final cachedShop = await retrieveProductList();
-        final updatedShop =
-            cachedShop.where((p) => p.barcode != product.barcode).toList();
+      // 2. Mapping to ProductModel
+      List<ProductModel> outOfStockList =
+          dataList.map((e) {
+            final p = e['products'] ?? {};
+            final List? barcodes = p['product_barcodes'] as List?;
+            final List? batches = p['stock_batches'] as List?;
 
-        saveProductList(updatedShop);
+            // ProductModel ke variables ke saath mapping
+            Map<String, dynamic> mappedData = {
+              ...p,
+              'id': e['id'], // product_stock ki ID
+              'quantity': e['quantity'],
+              'selling_price': e['selling_price'],
+              'location': e['location'],
+              'discount': e['discount'],
+              'stock_type': e['stock_type'],
+              'category': p['categories']?['name'],
+              'animal_type': p['animal_categories']?['name'],
+              'barcodes':
+                  (barcodes != null && barcodes.isNotEmpty)
+                      ? barcodes[0]['barcode']
+                      : null,
+              'purchase_date':
+                  (batches != null && batches.isNotEmpty)
+                      ? batches[0]['purchase_date']
+                      : 0.0,
+              'expiry_date':
+                  (batches != null && batches.isNotEmpty)
+                      ? batches[0]['expiry_date']
+                      : null,
+            };
 
-        // Refresh out-of-stock UI
-        tempUpdatedShop =
-            updatedShop.where((p) => (p.quantity ?? 0) == 0).toList();
-        saveProductList(updatedShop);
-      } else {
-        final cachedGodown = retrieveGodownProductList();
-        final updatedGodown =
-            cachedGodown.where((p) => p.barcode != product.barcode).toList();
+            return ProductModel.fromJson(mappedData);
+          }).toList();
 
-        saveGodownProductList(updatedGodown);
-        tempUpdatedGodown =
-            updatedGodown.where((p) => (p.quantity ?? 0) == 0).toList();
-      }
-
-      productList.value = [...tempUpdatedShop, ...tempUpdatedGodown];
-
-      // ❌ No dashboard clear
-      // ❌ No firebase read
-      // ✅ Cache is source of truth
+      // 3. Update the UI List
+      productList.value = outOfStockList;
     } catch (e) {
-      showMessage(message: somethingWentMessage);
+      print("🚨 OutOfStock Fetch Error: $e");
+      showMessage(message: "Error loading out of stock products");
     } finally {
       isDataLoading.value = false;
     }
   }
+
+  // 'int productId' ko badal kar 'String productId' kar do
+  Future<void> deactivateSpecificProduct({required String productId}) async {
+    isDeleteLoading.value = true;
+    try {
+      // 🎯 Filter 'id' par lagao, 'product_id' par nahi
+      final response =
+          await SupabaseConfig.from('product_stock')
+              .update({'is_active': false})
+              .eq('id', productId)
+              .eq('user_id', uid ?? '')
+              .select(); // Select se confirm hoga ki update hua ya nahi
+
+      if (response.isNotEmpty) {
+        showMessage(message: 'Product marked as Inactive');
+        print("✅ Update Success: $response");
+      } else {
+        print("⚠️ No row found with ID: $productId");
+      }
+
+      // 2. Refresh the list (Await lagana zaroori hai)
+      await loadOutOfStockProducts();
+    } catch (e) {
+      print("🚨 Deactivate Error: $e");
+      showMessage(message: "Failed to deactivate: $e");
+    } finally {
+      isDeleteLoading.value = false;
+    }
+  }
 }
-
-
-// Future<void> markProductInactive({required ProductModel product}) async {
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-
-  //   isDataLoading.value = true;
-
-  //   try {
-  //     // 1️⃣ Firebase update (ONLY WRITE)
-  //     await FirebaseFirestore.instance
-  //         .collection('users')
-  //         .doc(uid)
-  //         .collection('products')
-  //         .doc(product.barcode) // assuming barcode = docId
-  //         .update({'isActive': false, 'updatedDate': setFormateDate()});
-
-  //     // 2️⃣ Cache update (NO FIREBASE READ)
-  //     final cachedProducts = await retrieveProductList();
-
-  //     final updatedList =
-  //         cachedProducts.where((p) => p.barcode != product.barcode).toList();
-
-  //     saveProductList(updatedList);
-
-  //     // 3️⃣ Recalculate dashboard numbers (NO FIREBASE)
-  //     // recalculateDashboardFromCache();
-
-  //     // 4️⃣ Refresh OUT-OF-STOCK UI (remaining products)
-  //     productList.value =
-  //         updatedList.where((p) => (p.quantity ?? 0) == 0).toList();
-  //   } catch (e) {
-  //     showMessage(message: somethingWentMessage);
-  //   } finally {
-  //     isDataLoading.value = false;
-  //   }
-  // }
-
-
-
-//fetchAllProducts();
-   
-//Future<void> fetchAllProducts() async {
-  //   isDataLoading.value = true;
-
-  //   // 1️⃣ Cache-first
-  //   final cachedProducts = await retrieveProductList();
-
-  //   if (cachedProducts.isNotEmpty) {
-  //     productList.value =
-  //         cachedProducts.where((p) => (p.quantity ?? 0) == 0).toList();
-
-  //     isDataLoading.value = false;
-  //     return;
-  //   }
-
-  //   // 2️⃣ Firebase fallback (only once)
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) {
-  //     isDataLoading.value = false;
-  //     return;
-  //   }
-
-  //   final snapshot =
-  //       await FirebaseFirestore.instance
-  //           .collection('users')
-  //           .doc(uid)
-  //           .collection('products')
-  //           .where('quantity', isEqualTo: 0)
-  //           .where('isActive', isEqualTo: true)
-  //           .get();
-
-  //   productList.value =
-  //       snapshot.docs.map((doc) => ProductModel.fromJson(doc.data())).toList();
-
-  //   isDataLoading.value = false;
-  // }

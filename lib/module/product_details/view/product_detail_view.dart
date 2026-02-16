@@ -10,7 +10,6 @@ import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_calender.dart';
-import '../../../common_widget/common_container.dart';
 import '../../../common_widget/common_dropdown.dart';
 import '../../../common_widget/common_padding.dart';
 import '../../../common_widget/common_progressbar.dart';
@@ -538,7 +537,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               );
             },
           ),
-          setHeight(height: 12),
+          setHeight(height: 50),
         ],
       ),
     );

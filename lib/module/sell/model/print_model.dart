@@ -1,5 +1,5 @@
 class PrintInvoiceModel {
-  final String? billNo;
+  final int? billNo;
   final bool? discount;
   final double? discountValue;
   final double? finalAmount;
@@ -131,7 +131,7 @@ class SellItem {
     id = json['id'] ?? '';
     purchasePrice = json['purchasePrice'] ?? 0.0;
     weight = json['weight'] ?? '';
-    flavours = json['flavours'] ?? '';
+    flavours = json['flavour'] ?? '';
     animalType = json['animalType'] ?? '';
     color = json['color'] ?? '';
     box = json['box'] ?? 0;
@@ -166,7 +166,7 @@ class SellItem {
     data['id'] = id;
     data['purchasePrice'] = purchasePrice;
     data['weight'] = weight;
-    data['flavours'] = flavours;
+    data['flavour'] = flavours;
     data['animalType'] = animalType;
     data['color'] = color;
     data['box'] = box;

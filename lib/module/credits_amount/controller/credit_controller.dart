@@ -1,70 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
-
-import '../../../helper/helper.dart';
-
-// class CredtiController extends GetxController with CacheManager {
-//   final uid = FirebaseAuth.instance.currentUser?.uid;
-
-//   RxBool customDataLoading = false.obs;
-//   RxString searchText = ''.obs;
-//   RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
-//   TextEditingController searchController = TextEditingController();
-
-//   @override
-//   void onInit() {
-//     fetchAllCustomers();
-//     super.onInit();
-//   }
-
-//   void searchProduct(String value) {
-//     searchText.value = value;
-//     searchController.text = value;
-//   }
-
-//   void clear() {
-//     searchController.clear();
-//     searchText.value = '';
-//   }
-
-//   /// ⚡ INSTANT – no invoice scan
-//   double calculateTotalCredit(CustomerDetails customer) {
-//     return customer.totalCredit; // 🔥 already pre-calculated in Firestore
-//   }
-
-//   Future<void> fetchAllCustomers() async {
-//     try {
-//       customDataLoading.value = true;
-
-//       final snapshot =
-//           await FirebaseFirestore.instance
-//               .collection('users')
-//               .doc(uid)
-//               .collection('customers')
-//               .where('totalCredit', isGreaterThan: 0) // 🔥 only dues customers
-//               .orderBy('totalCredit', descending: true)
-//               .get();
-
-//       customerDetailList.value =
-//           snapshot.docs
-//               .map((doc) => CustomerDetails.fromJson(doc.data()))
-//               .toList();
-//     } catch (e) {
-//       customMessageOrErrorPrint(message: "Fetch customers error: $e");
-//       customerDetailList.clear();
-//     } finally {
-//       customDataLoading.value = false;
-//     }
-//   }
-// }
+import 'package:inventory/supabase_db/supabase_client.dart';
 
 class CredtiController extends GetxController with CacheManager {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-
+  final uid = SupabaseConfig.auth.currentUser?.id ?? '';
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
   RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
@@ -72,7 +13,7 @@ class CredtiController extends GetxController with CacheManager {
 
   @override
   void onInit() {
-    fetchAllCustomers(); // 👈 cache-first
+    fetchCreditCustomers();
     super.onInit();
   }
 
@@ -94,60 +35,69 @@ class CredtiController extends GetxController with CacheManager {
   // ===================================================
   // 🔥 CACHE FIRST → FIREBASE FALLBACK
   // ===================================================
-  Future<void> fetchAllCustomers() async {
+  Future<void> fetchCreditCustomers() async {
     try {
       customDataLoading.value = true;
 
-      // 1️⃣ LOAD FROM CACHE
-      final cacheList = await retrieveCustomerList();
-      if (cacheList.isNotEmpty) {
-        customerDetailList.value =
-            cacheList.where((c) => c.totalCredit > 0).toList()
-              ..sort((a, b) => b.totalCredit.compareTo(a.totalCredit));
+      // 1️⃣ SUPABASE QUERY
+      // Hum customers uthayenge aur unke sales aur un sales ke payments join karenge
+      final response = await SupabaseConfig.from('customers')
+          .select('''
+          id, 
+          name, 
+          mobile_number, 
+          address,
+          sales (
+            id,
+            total_amount,
+            created_at,
+            sale_payments (
+              credit_amount,
+              created_at
+            )
+          )
+        ''')
+          .eq('user_id', uid);
 
-        return;
+      final List data = response as List;
+      List<CustomerDetails> creditList = [];
+
+      // 2️⃣ MAPPING & CALCULATING CREDIT
+      for (var customer in data) {
+        double totalPendingCredit = 0;
+        List<dynamic> sales = customer['sales'] ?? [];
+
+        for (var sale in sales) {
+          List<dynamic> payments = sale['sale_payments'] ?? [];
+          for (var payment in payments) {
+            double credit = (payment['credit_amount'] ?? 0).toDouble();
+            if (credit > 0) {
+              totalPendingCredit += credit;
+            }
+          }
+        }
+        // Agar customer par udhaari hai, toh hi list mein add karo
+        if (totalPendingCredit > 0) {
+          creditList.add(
+            CustomerDetails(
+              id: customer['id'],
+              name: customer['name'],
+              //  mobileNumber: customer['mobile_number'],
+              address: customer['address'],
+              totalCredit:
+                  totalPendingCredit, // Ye field aapke model mein honi chahiye
+              //  lastTransactionDate: lastCreditDate,
+            ),
+          );
+        }
       }
 
-      // 2️⃣ FIREBASE (ONLY IF CACHE EMPTY)
-      if (uid == null) {
-        customerDetailList.clear();
-        return;
-      }
+      // 3️⃣ SORTING (Sabse zyada udhaari wala upar)
+      creditList.sort((a, b) => b.totalCredit.compareTo(a.totalCredit));
 
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('customers')
-              .where('totalCredit', isGreaterThan: 0)
-              .orderBy('totalCredit', descending: true)
-              .get();
-
-      final list =
-          snapshot.docs
-              .map((doc) => CustomerDetails.fromJson(doc.data()))
-              .toList();
-
-      customerDetailList.value = list;
-
-      // 3️⃣ SAVE TO CACHE (FULL CUSTOMER LIST)
-      // ⚠️ cache me sirf credit wale nahi,
-      // poori list jati hai (future reuse ke liye)
-      final fullSnapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('customers')
-              .get();
-
-      final fullList =
-          fullSnapshot.docs
-              .map((e) => CustomerDetails.fromJson(e.data()))
-              .toList();
-
-      saveCustomerList(fullList);
+      customerDetailList.value = creditList;
     } catch (e) {
-      customMessageOrErrorPrint(message: "Fetch customers error: $e");
+      print("🚨 Fetch Credit Customers Error: $e");
       customerDetailList.clear();
     } finally {
       customDataLoading.value = false;

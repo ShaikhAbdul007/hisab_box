@@ -47,35 +47,25 @@ String formatDateTime(
 }
 
 String formatDateForDB(String dateStr) {
+  if (dateStr.isEmpty) return DateTime.now().toIso8601String().split('T')[0];
+
   try {
-    // Agar date "01-02-2026" ya "01/02/2026" format mein hai
-    // Toh usey '-' ya '/' se split karo
-    List<String> parts =
-        dateStr.contains('-') ? dateStr.split('-') : dateStr.split('/');
+    // 1. Pehle readable string ko DateTime object mein badlo
+    // Aapka UI format 'dd-MM-yyyy' hai toh wahi use karein
+    DateFormat inputFormat = DateFormat('dd-MM-yyyy');
+    DateTime parsedDate = inputFormat.parse(dateStr);
 
-    if (parts.length == 3) {
-      String day = parts[0].padLeft(2, '0');
-      String month = parts[1].padLeft(2, '0');
-      String year = parts[2];
-
-      // Agar year pehle likha hai (YYYY-MM-DD) toh parts change karlo
-      if (year.length != 4) {
-        // Agar pehla part year hai
-        return dateStr; // Pehle se sahi format mein hai
-      }
-
-      // Database ke liye YYYY-MM-DD banakar return karo
-      return "$year-$month-$day";
-    }
-
-    // Agar split nahi hua toh simple parse try karo
-    DateTime parsed = DateTime.parse(dateStr);
-    return "${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}";
+    // 2. Ab usey DB format (yyyy-MM-dd) mein convert karo
+    return DateFormat('yyyy-MM-dd').format(parsedDate);
   } catch (e) {
-    print("Parsing Error: $e");
-    // Agar sab fail ho jaye toh aaj ki date bhej do backup ke liye
-    DateTime now = DateTime.now();
-    return "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    print("🚨 Parsing Error: $e. Input was: $dateStr");
+
+    // Agar parsing fail ho (e.g. already ISO format ho), toh try DateTime.parse
+    try {
+      return DateTime.parse(dateStr).toIso8601String().split('T')[0];
+    } catch (_) {
+      return DateFormat('yyyy-MM-dd').format(DateTime.now());
+    }
   }
 }
 

@@ -76,7 +76,7 @@ class OrderView extends GetView<OrderController> {
                   style: CustomTextStyle.customPoppin(fontSize: 25),
                   children: [
                     TextSpan(
-                      text: '${controller.data.finalAmount}',
+                      text: '${controller.data.totalAmount}',
                       style: CustomTextStyle.customNato(
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,

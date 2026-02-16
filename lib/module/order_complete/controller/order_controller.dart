@@ -15,20 +15,25 @@ class OrderController extends GetxController with CacheManager {
   RxList<CustomerDetails> customerDetails = <CustomerDetails>[].obs;
   RxBool saveCustomerWithInvoiceLoading = false.obs;
   RxBool homeButtonVisible = true.obs;
-  var data = Get.arguments;
+
+  late PrintInvoiceModel data;
 
   @override
   void onInit() {
-    loadAllCustomers(); // 👈 cache-first
-    if (data != null) {
+    if (Get.arguments != null) {
+      data = Get.arguments as PrintInvoiceModel;
       setButtonValue();
     }
+    loadAllCustomers();
     super.onInit();
   }
 
   void setButtonValue() {
-    if (data.payment.credit != 0.0) {
+    // 3. Ab ye error nahi dega kyunki 'data' ab Model ban chuka hai
+    if (data.payment != null && (data.payment!.credit > 0)) {
       homeButtonVisible.value = false;
+    } else {
+      homeButtonVisible.value = true;
     }
   }
 
@@ -37,11 +42,6 @@ class OrderController extends GetxController with CacheManager {
   // ===============================
   Future<List<CustomerDetails>> loadAllCustomers() async {
     // 1️⃣ LOAD FROM CACHE
-    final cacheList = await retrieveCustomerList();
-    if (cacheList.isNotEmpty) {
-      customerDetails.value = cacheList;
-      return customerDetails;
-    }
 
     // 2️⃣ FALLBACK TO SUPABASE
     if (uid == null) return [];
@@ -85,28 +85,16 @@ class OrderController extends GetxController with CacheManager {
   Future<bool> saveCustomerWithInvoice({
     required PrintInvoiceModel invoice,
   }) async {
-    // 1. Check Internet & UID
     final String? currentUid = uid;
-    if (currentUid == null) {
-      print("🚨 Error: No Authorized User Found");
-      return false;
-    }
+    if (currentUid == null) return false;
 
     saveCustomerWithInvoiceLoading.value = true;
 
     try {
-      // 2. Data Clean-up (Preventing empty strings in non-required fields)
-      String cName = name.text.trim();
       String cMobile = mobileNumber.text.trim();
-      String cAddress = address.text.trim();
-      String cDesc = description.text.trim();
+      if (cMobile.isEmpty) return false;
 
-      if (cMobile.isEmpty) {
-        print("🚨 Error: Mobile number is required");
-        return false;
-      }
-
-      // 3. Customer Search (Checking existing)
+      // 1. Customer Search
       final customerResponse =
           await SupabaseConfig.from('customers')
               .select('id')
@@ -114,49 +102,45 @@ class OrderController extends GetxController with CacheManager {
               .eq('user_id', currentUid)
               .maybeSingle();
 
-      String? customerId;
+      dynamic customerId; // dynamic rakho taaki type ka locha na ho
 
       if (customerResponse != null) {
-        customerId = customerResponse['id'].toString();
-        // Update Existing Customer
+        customerId = customerResponse['id'];
         await SupabaseConfig.from('customers')
-            .update({"name": cName, "address": cAddress, "description": cDesc})
+            .update({
+              "name": name.text.trim(),
+              "address": address.text.trim(),
+              "description": description.text.trim(),
+            })
             .eq('id', customerId);
       } else {
-        // Insert New Customer
         final newCustomer =
             await SupabaseConfig.from('customers')
                 .insert({
                   "user_id": currentUid,
-                  "name": cName,
-                  "address": cAddress,
+                  "name": name.text.trim(),
+                  "address": address.text.trim(),
                   "mobile_number": cMobile,
-                  "description": cDesc,
+                  "description": description.text.trim(),
                 })
                 .select('id')
                 .single();
-
-        customerId = newCustomer['id'].toString();
+        customerId = newCustomer['id'];
       }
 
-      // 4. Update Sales Table (Customer link karna)
-      // Invoice Bill No ko parse karke Sales ID nikalna
-      if (invoice.billNo != null) {
-        String cleanBillId = invoice.billNo!.replaceAll('HB-', '').trim();
+      // 2. 🎯 TARGET FIX: Sales Update
 
-        // Ensure cleanBillId is a valid UUID before updating
-        if (cleanBillId.length >= 32) {
-          await SupabaseConfig.from(
-            'sales',
-          ).update({'customer_id': customerId}).eq('id', cleanBillId);
-          print("✅ Sale linked to customer");
-        }
-      }
+      await SupabaseConfig.from('sales')
+          .update({'customer_id': customerId})
+          .eq(
+            'bill_no',
+            invoice.billNo.toString(),
+          ); // 🚩 Yahan error aa raha hai agar saleId UUID nahi hai
 
       await loadAllCustomers();
       return true;
     } catch (e) {
-      print("🚨 Save Customer Error: $e");
+      print("🚨 Save Customer Error Details: $e");
       return false;
     } finally {
       saveCustomerWithInvoiceLoading.value = false;

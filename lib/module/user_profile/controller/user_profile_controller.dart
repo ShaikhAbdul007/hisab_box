@@ -7,7 +7,8 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
-
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../setting/model/user_model.dart';
 
 class UserProfileController extends GetxController with CacheManager {
@@ -35,10 +36,33 @@ class UserProfileController extends GetxController with CacheManager {
 
   // ---------------- IMAGE PICK ----------------
   Future<void> pickImage() async {
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      profileImage.value = File(image.path);
-      print(profileImage.value?.path);
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50, // 🎯 Performance ke liye quality thodi kam kar do
+      );
+
+      if (image != null) {
+        // 1. Permanent folder ka path lo
+        final Directory appDocDir = await getApplicationDocumentsDirectory();
+
+        // 2. Ek unique file name banao (timestamp ke saath)
+        String fileName =
+            "profile_${DateTime.now().millisecondsSinceEpoch}${p.extension(image.path)}";
+        String permanentPath = p.join(appDocDir.path, fileName);
+
+        // 3. Image ko Cache se Permanent folder mein copy karo
+        final File savedImage = await File(image.path).copy(permanentPath);
+
+        // 4. Update state
+        profileImage.value = savedImage;
+
+        print("✅ Image Saved Permanently at: ${profileImage.value?.path}");
+
+        // 🎯 Ab database mein ye profileImage.value!.path save karna
+      }
+    } catch (e) {
+      print("🚨 Error picking/saving image: $e");
     }
   }
 
@@ -52,6 +76,7 @@ class UserProfileController extends GetxController with CacheManager {
     }
 
     final String formatCreatedAt = setFormateDate();
+    final String updatedDateTimeAt = formatDateForDB(formatCreatedAt);
 
     try {
       final updatedData = {
@@ -63,7 +88,7 @@ class UserProfileController extends GetxController with CacheManager {
         "state": stateController.text.trim(),
         "mobile_no": mobileController.text.trim(),
         "alternate_mobile_no": alternativeMobileController.text.trim(),
-        "updated_at": formatCreatedAt,
+        "updated_at": updatedDateTimeAt,
         "profile_image": profileImage.value?.path ?? '',
       };
 

@@ -10,6 +10,7 @@ import 'package:inventory/module/near_expire_product/binding/near_expire_product
 import 'package:inventory/module/near_expire_product/view/near_expire_product_view.dart';
 import 'package:inventory/module/order_complete/binding/order_binding.dart';
 import 'package:inventory/module/order_complete/view/order_view.dart';
+import 'package:inventory/module/revenue/binding/revenue_detail_binding.dart';
 import 'package:inventory/module/revenue/view/revenue_detail_view.dart';
 import 'package:inventory/module/security/privacy_policy.dart';
 import 'package:inventory/module/security/term_and_condition.dart';
@@ -216,7 +217,7 @@ class AppRoutes {
     GetPage(
       name: AppRouteName.revenueDetailView,
       page: () => RevenueDetailView(),
-      //binding: RevenueBinding(),
+      binding: RevenueDetailBinding(),
     ),
     GetPage(
       name: AppRouteName.looseCategory,

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
@@ -18,6 +19,15 @@ class BankdetailsView extends GetView<BankdetailsController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: 'Bank Details',
+      firstActionChild: InkWell(
+        onTap: () {
+          controller.readOnly.value = !controller.readOnly.value;
+        },
+        child: Icon(
+          CupertinoIcons.square_pencil_fill,
+          color: AppColors.blackColor,
+        ),
+      ),
       body: CustomPadding(
         paddingOption: SymmetricPadding(horizontal: 12.0),
         child: Form(
@@ -61,9 +71,7 @@ class BankdetailsView extends GetView<BankdetailsController> {
                             return null;
                           },
                         ),
-
                         setHeight(height: 5),
-
                         CommonTextField(
                           hintText: 'UPI ID',
                           label: 'UPI ID',
@@ -81,19 +89,25 @@ class BankdetailsView extends GetView<BankdetailsController> {
 
                         setHeight(height: 30),
                         Obx(
-                          () => CustomPadding(
-                            paddingOption: SymmetricPadding(horizontal: 30),
-                            child: CommonButton(
-                              isLoading: controller.bankDetailsUpi.value,
-                              label: 'Save',
-                              onTap: () {
-                                if (formkeys.currentState!.validate()) {
-                                  unfocus();
-                                  controller.saveBankDetails();
-                                }
-                              },
-                            ),
-                          ),
+                          () =>
+                              controller.readOnly.value
+                                  ? CustomPadding(
+                                    paddingOption: SymmetricPadding(
+                                      horizontal: 30,
+                                    ),
+                                    child: CommonButton(
+                                      isLoading:
+                                          controller.bankDetailsUpi.value,
+                                      label: 'Save',
+                                      onTap: () {
+                                        if (formkeys.currentState!.validate()) {
+                                          unfocus();
+                                          controller.saveBankDetails();
+                                        }
+                                      },
+                                    ),
+                                  )
+                                  : Container(),
                         ),
                       ],
                     ),

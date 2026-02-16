@@ -13,6 +13,7 @@ class SupabaseConfig {
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce, // secure by default
+        // 🎯 Token apne aap refresh hoga, user logout nahi hoga
       ),
     );
 

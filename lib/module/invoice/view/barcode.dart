@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:get/get.dart';
 import 'package:inventory/module/invoice/widget/invoice_printer.dart';
-import 'package:inventory/helper/logger.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_button.dart';
@@ -16,8 +15,6 @@ class BarcodeView extends GetView<BardcodeController> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put<BardcodeController>(BardcodeController());
-
     // Print single label
 
     return CommonAppbar(
@@ -28,34 +25,43 @@ class BarcodeView extends GetView<BardcodeController> {
             isLoading: controller.isPrintingLoading.value,
             label: "Print Simple",
             onTap: () async {
-              controller.isPrintingLoading.value = true;
-              AppLogger.info('Starting simple print operation', 'BarcodeView');
-              String bluetoothAddress =
-                  controller.retrievePrinterAddress() ?? '';
-              bool checkBluetooth =
-                  await controller.checkBluetoothConnectivity();
+              // controller.isPrintingLoading.value = true;
+              // AppLogger.info('Starting simple print operation', 'BarcodeView');
+              // String bluetoothAddress =
+              //     controller.retrievePrinterAddress() ?? '';
+              // bool checkBluetooth =
+              //     await controller.checkBluetoothConnectivity();
 
-              if (checkBluetooth == true && bluetoothAddress.isNotEmpty) {
-                await controller.printBarcodeLabelsFromSavedPrinter(
-                  barcode: controller.data['product'].barcode,
-                  quantity: controller.data['product'].quantity,
-                );
-
-                controller.isPrintingLoading.value = false;
-              } else {
-                controller.isPrintingLoading.value = false;
-                commonBottomSheet(
-                  label: 'Bluetooth Info',
-                  onPressed: () {
-                    Get.back();
-                  },
-                  child: BluetoothInfoWidget(),
-                );
-              }
+              // if (checkBluetooth == true && bluetoothAddress.isNotEmpty) {
+              //   // await controller.printBarcodeLabelsFromSavedPrinter(
+              //   //   barcode: controller.data['product'].barcode,
+              //   //   quantity: controller.data['product'].quantity,
+              //   // );
+              //   print('barcode: ${controller.data['product'].barcode}');
+              //   print('quantity: ${controller.data['product'].quantity}');
+              //   controller.isPrintingLoading.value = false;
+              // } else {
+              //   controller.isPrintingLoading.value = false;
+              //   commonBottomSheet(
+              //     label: 'Bluetooth Info',
+              //     onPressed: () {
+              //       Get.back();
+              //     },
+              //     child: BluetoothInfoWidget(),
+              //   );
+              // }
             },
           ),
         ),
-        setWidth(width: 10),
+        setHeight(height: 50),
+        CommonButton(
+          label: '',
+          onTap: () {
+            print('onTap Print Simple');
+            // print('barcode: ${controller.data['product'].barcode}');
+            // print('quantity: ${controller.data['product'].quantity}');
+          },
+        ),
       ],
       body: BarcodePrinterView(
         data: controller.data,

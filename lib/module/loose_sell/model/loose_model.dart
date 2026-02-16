@@ -95,11 +95,20 @@ class LooseInvetoryModel {
       }
 
       // Animal type handling (Relation check)
-      if (p['animal_categories'] != null) {
-        // Matching your table list
-        animalType = p['animal_categories']['name']?.toString();
-        animalTypeId = p['animal_categories']['id']?.toString();
+      // Animal type handling (Database alias: animals)
+      if (p['animals'] != null) {
+        // Agar animals ek object hai (Single Relation)
+        if (p['animals'] is Map) {
+          animalType = p['animals']['name']?.toString();
+          animalTypeId = p['animals']['id']?.toString();
+        }
+        // Agar animals ek list hai
+        else if (p['animals'] is List && p['animals'].isNotEmpty) {
+          animalType = p['animals'][0]['name']?.toString();
+          animalTypeId = p['animals'][0]['id']?.toString();
+        }
       } else {
+        // Fallback agar alias kaam na kare toh direct field se lo
         animalTypeId = p['animal_type']?.toString();
       }
 

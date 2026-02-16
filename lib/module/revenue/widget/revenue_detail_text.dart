@@ -19,11 +19,9 @@ class RevenueDetailList extends StatelessWidget {
         borderRadius: BorderRadius.circular(5.r),
       ),
       margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
+      padding: SymmetricPadding(horizontal: 5, vertical: 4).getPadding(),
       child: Row(
         children: [
-          setWidth(width: 5),
-          Icon(CupertinoIcons.cube, size: 30.sp),
-          setWidth(width: 5),
           Expanded(
             flex: 2,
             child: Column(
@@ -82,30 +80,18 @@ class RevenueDetailList extends StatelessWidget {
                     ),
                   ],
                 ),
-                setHeight(height: 5),
-                // Row(
-                //   children: [
-                //     Text(
-                //       revenueModel.,
-                //       style: CustomTextStyle.customPoppin(
-                //         color: AppColors.greyColor,
-                //       ),
-                //     ),
-                //     setWidth(width: 10),
-                //     Text(
-                //       revenueModel.time,
-                //       style: CustomTextStyle.customPoppin(
-                //         color: AppColors.greyColor,
-                //       ),
-                //     ),
-                //   ],
-                // ),
               ],
             ),
           ),
           Expanded(
             child: Column(
               children: [
+                Icon(
+                  CupertinoIcons.cube_box_fill,
+                  size: 27,
+                  color: AppColors.greenAccentColor,
+                ),
+                setHeight(height: 5),
                 Text(
                   '\u{20B9}${revenueModel.finalPrice}',
                   style: CustomTextStyle.customPoppin(

@@ -98,13 +98,21 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                                   .value
                                                   .text,
                                             )
-                                    ? OutOfStockInventoryListText(
-                                      inventoryModel: inventoryList,
-                                      deleteOnTap: () {
-                                        controller.markProductInactive(
-                                          product: inventoryList,
-                                        );
-                                      },
+                                    ? Obx(
+                                      () => OutOfStockInventoryListText(
+                                        isDeleteLoading:
+                                            controller.isDeleteLoading.value,
+                                        inventoryModel: inventoryList,
+                                        deleteOnTap: () {
+                                          controller.deactivateSpecificProduct(
+                                            productId:
+                                                controller
+                                                    .productList[index]
+                                                    .id ??
+                                                '',
+                                          );
+                                        },
+                                      ),
                                     )
                                     : Container(),
                           );

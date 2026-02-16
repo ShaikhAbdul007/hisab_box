@@ -290,7 +290,7 @@ class RecentActivitySellingListText extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  billModel.billNo ?? '',
+                  billModel.billNo.toString(),
                   style: CustomTextStyle.customPoppin(fontSize: 17),
                 ),
                 setHeight(height: 2),

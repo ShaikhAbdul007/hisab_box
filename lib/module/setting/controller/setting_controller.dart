@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
@@ -20,7 +22,7 @@ class SettingController extends GetxController with CacheManager {
   RxString shoptype = ''.obs;
   RxBool isUserlogout = false.obs;
   RxBool discountPerProduct = false.obs;
-
+  Rx<File?> profileImage = Rx<File?>(null);
   @override
   void onInit() {
     getUserName();
@@ -43,6 +45,10 @@ class SettingController extends GetxController with CacheManager {
         email.value = user.email ?? '';
         shoptype.value = user.shoptype ?? '';
         discountPerProduct.value = user.discountPerProduct ?? false;
+        profileImage.value =
+            user.image != null && user.image!.isNotEmpty
+                ? File(user.image!)
+                : null;
         return;
       }
 
@@ -59,7 +65,10 @@ class SettingController extends GetxController with CacheManager {
         email.value = userDatas.email ?? '';
         shoptype.value = userDatas.shoptype ?? '';
         discountPerProduct.value = userDatas.discountPerProduct ?? false;
-
+        profileImage.value =
+            userDatas.image != null && userDatas.image!.isNotEmpty
+                ? File(userDatas.image!)
+                : null;
         // 🔥 SAVE TO CACHE
         saveUserData(userDatas);
       }

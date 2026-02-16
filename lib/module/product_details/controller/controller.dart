@@ -203,9 +203,15 @@ class ProductController extends GetxController with CacheManager {
       return;
     }
 
+    // Input Validation
+    if (looseQuantity.text.isEmpty || sellingPrice.text.isEmpty) {
+      showMessage(message: "❌ Please enter loose quantity and selling price.");
+      isLooseProductSave.value = false;
+      return;
+    }
+
     try {
-      // 1️⃣ Fetch Product and ALL its stock entries for this user
-      // !inner join hata diya hai taaki agar koi ek stock miss bhi ho toh query fail na ho
+      // 1️⃣ Fetch Product and Stock details
       final response =
           await SupabaseConfig.client
               .from('product_barcodes')
@@ -234,7 +240,8 @@ class ProductController extends GetxController with CacheManager {
       final productData = response['products'];
       final List stockList = productData['product_stock'] ?? [];
 
-      // 2️⃣ Filtering: Shop mein Packet Stock dhoondo jo isi user ka ho
+      // 2️⃣ Filtering: Shop mein Packet Stock dhoondo
+      // Database schema ke hisaab se 'packet' aur 'shop' exact match hone chahiye
       final packetEntry = stockList.firstWhereOrNull(
         (s) =>
             s['location'].toString().toLowerCase().trim() == 'shop' &&
@@ -242,23 +249,16 @@ class ProductController extends GetxController with CacheManager {
             s['user_id'] == uid,
       );
 
-      // DEBUGGING (Console check karein)
-      print("Full Stock List for Product: $stockList");
-      print("Found Packet Entry: $packetEntry");
-
       // 3️⃣ Validations
       if (packetEntry == null) {
         showMessage(
-          message:
-              "❌ Is product ka 'Shop' mein koi 'Packet' stock entry nahi mili!",
+          message: "❌ Is product ka Shop mein 'Packet' stock nahi mila!",
         );
         return;
       }
 
       if ((packetEntry['quantity'] ?? 0) <= 0) {
-        showMessage(
-          message: "❌ Shop mein packet stock khatam ho gaya hai! (Qty: 0)",
-        );
+        showMessage(message: "❌ Shop mein packet stock khatam ho gaya hai!");
         return;
       }
 
@@ -268,26 +268,28 @@ class ProductController extends GetxController with CacheManager {
       }
 
       // 4️⃣ EXECUTION: Database Transaction Call
-      // looseQuantity aur sellingPrice controller se value le rahe hain
+      // p_loose_qty ko 'num' rakha hai taaki SQL ke NUMERIC type se match kare
       await SupabaseConfig.client.rpc(
         'convert_packet_to_loose',
         params: {
           'p_user_id': uid,
           'p_product_id': pId,
-          'p_packet_stock_id': packetEntry['id'], // UUID format
-          'p_loose_qty': int.tryParse(looseQuantity.text) ?? 0,
+          'p_packet_stock_id': packetEntry['id'],
+          'p_loose_qty': num.tryParse(looseQuantity.text) ?? 0,
           'p_selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
-          'p_reason': '1 Packet split into ${looseQuantity.text} pieces',
+          'p_reason':
+              '1 Packet converted to ${looseQuantity.text} loose pieces',
         },
       );
 
       showMessage(message: "✅ Packet successfully converted to Loose!");
 
-      // Cleanup and Go Back
-      clear();
-      Get.back(result: true);
+      // UI Cleanup
+      clear(); // Aapka controller clear method
+      Get.back(result: true); // Screen band karke refresh trigger karega
     } catch (e) {
       print("🚨 Conversion Error Details: $e");
+      // Hint: Agar yahan 'Multiple Candidates' error aaye, toh wahi DROP SQL chalana hai.
       showMessage(message: "❌ Error: $e");
     } finally {
       isLooseProductSave.value = false;

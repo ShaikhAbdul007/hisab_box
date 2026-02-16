@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
@@ -19,16 +21,11 @@ class SellListAfterScanController extends GetxController with CacheManager {
   RxList<DiscountModel> discountList = <DiscountModel>[].obs;
   RxList<DiscountModel> productDiscount = <DiscountModel>[].obs;
   TextEditingController quantity = TextEditingController();
-
-  TextEditingController cashPaidController = TextEditingController(text: '0.0');
-  TextEditingController upiPaidController = TextEditingController(text: '0.0');
-  TextEditingController cardPaidController = TextEditingController(text: '0.0');
-  TextEditingController creditPaidController = TextEditingController(
-    text: '0.0',
-  );
-  TextEditingController roundOffPaidController = TextEditingController(
-    text: '0.0',
-  );
+  TextEditingController cashPaidController = TextEditingController();
+  TextEditingController upiPaidController = TextEditingController();
+  TextEditingController cardPaidController = TextEditingController();
+  TextEditingController creditPaidController = TextEditingController();
+  TextEditingController roundOffPaidController = TextEditingController();
   TextEditingController name = TextEditingController();
   RxList<TextEditingController> perProductDiscount =
       <TextEditingController>[].obs;
@@ -203,51 +200,70 @@ class SellListAfterScanController extends GetxController with CacheManager {
     isStockOver.value = false;
     var current = productList[index];
 
-    int availableQty = 0;
+    // 🎯 DEBUG: Console mein check karo ID aa rahi hai ya nahi
+    print("🔍 Checking Live Stock for ID: ${current.id}");
 
-    if (current.sellType?.toLowerCase() == 'loose') {
-      final looseList = await retrieveLoosedProductList();
-      final loose = looseList.firstWhereOrNull(
-        (e) => e.barcode == current.barcode,
-      );
-      if (loose == null) {
-        showSnackBar(error: "Loose product not found in SHOP");
-        return;
-      }
-      availableQty = loose.quantity ?? 0;
-    } else {
-      final products = await retrieveProductList();
-      final prod = products.firstWhereOrNull(
-        (e) => e.barcode == current.barcode,
-      );
-      if (prod == null) {
-        showSnackBar(error: "Product not found");
-        return;
-      }
-      availableQty = prod.quantity?.toInt() ?? 0;
-    }
+    double availableQty = 0.0;
 
-    if (isIncrement) {
-      if ((current.quantity ?? 0) < availableQty) {
-        current.quantity = (current.quantity ?? 0) + 1;
+    try {
+      if (current.sellType?.toLowerCase() == 'loose') {
+        // --- DIRECT SUPABASE CHECK (Loose) ---
+        final looseRes =
+            await SupabaseConfig.from('loose_stocks')
+                .select('quantity')
+                .eq('product_id', current.id ?? '')
+                .maybeSingle();
+
+        if (looseRes == null) {
+          showSnackBar(error: "Loose product stock not found in Database");
+          return;
+        }
+        availableQty =
+            double.tryParse(looseRes['quantity']?.toString() ?? '0.0') ?? 0.0;
       } else {
-        isStockOver.value = true;
-        showSnackBar(
-          error:
-              "Product is out of stock\nYou cannot add more than available stock.",
-        );
-        return;
-      }
-    } else {
-      if ((current.quantity ?? 1) > 1) {
-        current.quantity = (current.quantity ?? 1) - 1;
-      }
-    }
+        // --- DIRECT SUPABASE CHECK (Packet) ---
+        final stockRes =
+            await SupabaseConfig.from('product_stock')
+                .select('quantity')
+                .eq('product_id', current.id ?? "")
+                .eq('stock_type', 'packet')
+                .eq('location', 'shop')
+                .maybeSingle();
 
-    productList[index] = current;
-    saveCartProductList(productList);
-    discountCalculateAsPerProduct(index);
-    calculateTotalWithDiscount();
+        if (stockRes == null) {
+          showSnackBar(error: "Packet stock not found in Database");
+          return;
+        }
+        availableQty =
+            double.tryParse(stockRes['quantity']?.toString() ?? '0.0') ?? 0.0;
+      }
+
+      // 2. Increment/Decrement Logic
+      if (isIncrement) {
+        if ((current.quantity ?? 0) < availableQty) {
+          current.quantity = (current.quantity ?? 0) + 1;
+        } else {
+          isStockOver.value = true;
+          showSnackBar(error: "Out of Stock! Only $availableQty available.");
+          return;
+        }
+      } else {
+        if ((current.quantity ?? 1) > 1) {
+          current.quantity = (current.quantity ?? 1) - 1;
+        }
+      }
+
+      // 3. UI Update and Save Cart
+      productList[index] = current;
+      saveCartProductList(productList); // Cart save karna zaroori hai
+
+      discountCalculateAsPerProduct(index);
+      calculateTotalWithDiscount();
+      productList.refresh();
+    } catch (e) {
+      print("🚨 Live Update Error: $e");
+      showSnackBar(error: "Connection error. Please try again.");
+    }
   }
 
   Future<void> saleConfirmed({required RxBool isLoading}) async {
@@ -355,9 +371,9 @@ class SellListAfterScanController extends GetxController with CacheManager {
     if (userId == null) return false;
 
     try {
-      // 1. Prepare Stock Updates & Calculations (Exactly as you did)
+      // 1. Stock Updates & Calculations
       List<Map<String, dynamic>> stockUpdates = [];
-      double finalAmount = 0;
+      double itemsTotalAmount = 0;
 
       for (final product in scannedProductDetails) {
         final update = await prepareStockUpdate(
@@ -367,40 +383,66 @@ class SellListAfterScanController extends GetxController with CacheManager {
         stockUpdates.add(update);
       }
 
-      for (var item in sellItems) finalAmount += item.finalPrice ?? 0;
+      for (var item in sellItems) {
+        itemsTotalAmount += item.finalPrice ?? 0;
+      }
 
       final roundOff = double.tryParse(roundOffPaidController.text) ?? 0;
       final finalPayable = double.parse(
-        (finalAmount - roundOff).toStringAsFixed(2),
+        (itemsTotalAmount - roundOff).toStringAsFixed(2),
       );
 
-      // 2. Build Payment Records
-      List<Map<String, dynamic>> paymentRecords = [];
-      if (double.parse(cashPaidController.text) > 0) {
-        paymentRecords.add({
-          'amount': double.parse(cashPaidController.text),
-          'payment_mode': 'cash',
-        });
-      }
-      if (double.parse(upiPaidController.text) > 0) {
-        paymentRecords.add({
-          'amount': double.parse(upiPaidController.text),
-          'payment_mode': 'upi',
-        });
-      }
-      // ... baaki payments add kar lena ...
+      // 2. Build Smart Payment Record (Matching your New Table Columns)
+      double cash = double.tryParse(cashPaidController.text) ?? 0;
+      double upi = double.tryParse(upiPaidController.text) ?? 0;
+      double card = double.tryParse(cardPaidController.text) ?? 0;
+      double credit = double.tryParse(creditPaidController.text) ?? 0;
+
+      // Check if partial
+      int modesCount = 0;
+      if (cash > 0) modesCount++;
+      if (upi > 0) modesCount++;
+      if (card > 0) modesCount++;
+      if (credit > 0) modesCount++;
+
+      // 🎯 Ye Map aapke RPC ke JSONB parameter mein jayega
+      List<Map<String, dynamic>> paymentRecords = [
+        {
+          'payment_mode':
+              modesCount > 1
+                  ? 'partial'
+                  : (cash > 0
+                      ? 'cash'
+                      : upi > 0
+                      ? 'upi'
+                      : card > 0
+                      ? 'card'
+                      : 'credit'),
+          'amount': finalPayable,
+          'cash_amount': cash,
+          'upi_amount': upi,
+          'card_amount': card,
+          'credit_amount': credit,
+          'round_off_amount': roundOff,
+          'is_partial': modesCount > 1,
+        },
+      ];
 
       // 3. Build Sale Items
+      // 3. Build Sale Items (Keys exact database columns se match honi chahiye)
       final saleItemsData =
           sellItems
               .map(
                 (item) => {
                   'product_id': item.id,
                   'qty': item.quantity,
-                  'original_price': item.originalPrice,
+                  'original_price':
+                      item.originalPrice ??
+                      item.finalPrice ??
+                      0, // 👈 Null check add kiya
                   'discount_amount':
                       (item.originalPrice ?? 0) - (item.finalPrice ?? 0),
-                  'final_price': item.finalPrice,
+                  'final_price': item.finalPrice ?? 0,
                   'location': item.location ?? 'shop',
                   'stock_type': item.isLoose == true ? 'loose' : 'packet',
                   'applied_discount_percent': item.discount ?? 0,
@@ -409,33 +451,55 @@ class SellListAfterScanController extends GetxController with CacheManager {
               )
               .toList();
 
-      // 4. 🔥 EXECUTE TRANSACTION (One single call!)
-      final String saleId = await SupabaseConfig.client.rpc(
+      // 4. 🔥 EXECUTE TRANSACTION
+      final dynamic response = await SupabaseConfig.client.rpc(
         'process_sale_transaction',
         params: {
           'p_user_id': userId,
           'p_total_amount': finalPayable,
           'p_sale_items': saleItemsData,
-          'p_payments': paymentRecords,
+          'p_payments': paymentRecords, // 🎯 Full Settlement Data sent here
           'p_stock_updates': stockUpdates,
         },
       );
 
-      // 5. Prepare Print Data (Successful only if transaction passed)
+      final Map<String, dynamic> result = jsonDecode(response.toString());
+
+      final int databaseBillNo = result['bill_no'];
+
+      // 5. Print Data
+      final paymentMapForPrint = buildPaymentMap(
+        totalAmount: itemsTotalAmount,
+        cashPaid: cash,
+        upiPaid: upi,
+        cardPaid: card,
+        creditPaid: credit,
+        roundOffPaid: roundOff,
+      );
+
       final saleData = {
-        'billNo': 'HB-$saleId',
+        'billNo': databaseBillNo,
         'soldAt': setFormateDate(),
         'time': setFormateDate('hh:mm:ss a'),
         'totalAmount': finalPayable,
+        'payment': paymentMapForPrint,
         'items': sellItems.map((e) => e.toJson()).toList(),
       };
 
       printInvoice.value = PrintInvoiceModel.fromJson(saleData);
       scannedProductDetails.clear();
+
+      // Clear controllers after success
+      cashPaidController.clear();
+      upiPaidController.clear();
+      cardPaidController.clear();
+      creditPaidController.clear();
+      roundOffPaidController.clear();
+
       return true;
     } catch (e) {
       print("🚨 Sale Failed: $e");
-      showMessage(message: "Sale Error: Operation rolled back.");
+      showMessage(message: "Sale Error: $e");
       return false;
     } finally {
       isLoading.value = false;
