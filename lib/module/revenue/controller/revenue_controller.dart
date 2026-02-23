@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
-import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Aapki Local DB file
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import '../model/revenue_model.dart';
 
-class RevenueController extends GetxController with CacheManager {
+class RevenueController extends GetxController with LocalService {
   final uid = SupabaseConfig.auth.currentUser?.id;
   RxBool isRevenueListLoading = false.obs;
   var sellsList = <SellsModel>[].obs;
@@ -19,12 +19,25 @@ class RevenueController extends GetxController with CacheManager {
     super.onInit();
   }
 
+  // 🔥 Flow: Pehle Hive se data dikhao, fir background mein Supabase se sync karo
   void setSellList() async {
     final today = dayDate.value;
-    final data = await fetchRevenueList();
-    sellsList.value = data;
-    saveTodayRevenueCache(date: today, sells: data);
-    _calculateTotal();
+
+    // 1. Hive se purana data uthao (Immediate Display)
+    final cachedData = LocalService.getRevenueFromLocal(today);
+    if (cachedData.isNotEmpty) {
+      sellsList.value = cachedData;
+      _calculateTotal();
+    }
+
+    // 2. Supabase se fresh data lao
+    final freshData = await fetchRevenueList();
+    if (freshData.isNotEmpty) {
+      sellsList.value = freshData;
+      _calculateTotal();
+      // 3. Naye data ko Hive mein save/update karo
+      await LocalService.saveRevenueToLocal(today, freshData);
+    }
   }
 
   void _calculateTotal() {
@@ -42,7 +55,7 @@ class RevenueController extends GetxController with CacheManager {
 
       final DateTime selectedDate = DateTime.parse(dayDate.value);
 
-      // Timezone safe range
+      // Timezone safe range for exact day
       final String startUtc =
           DateTime(
             selectedDate.year,
@@ -70,19 +83,17 @@ class RevenueController extends GetxController with CacheManager {
           qty, final_price, original_price, discount_amount, product_id,
           applied_discount_percent, stock_type, location,
           products ( 
-            name, 
-            weight, 
-            flavour, 
-            animal_type, 
-            category,
-            is_loose_category,
-            is_flavor_and_weight_not_required,
+            name, weight, flavour, animal_type, category,
+            is_loose_category, is_flavor_and_weight_not_required,
             categories(name),
             animal_categories(name),
             product_barcodes(barcode)
           )
         ),
-        sale_payments (amount, payment_mode, reference_no)
+        sale_payments (
+          amount, payment_mode, reference_no, round_off_amount,
+          cash_amount, upi_amount, card_amount, credit_amount
+        )
       ''')
           .eq('user_id', uid!)
           .gte('created_at', startUtc)
@@ -96,7 +107,7 @@ class RevenueController extends GetxController with CacheManager {
             final List dbItems = sale['sale_items'] ?? [];
             final List dbPayments = sale['sale_payments'] ?? [];
 
-            // 🎯 Fix: Detailed Item Mapping
+            // Detailed Item Mapping
             List<SellItem> mappedItems =
                 dbItems.map((item) {
                   final p = item['products'] ?? {};
@@ -113,8 +124,6 @@ class RevenueController extends GetxController with CacheManager {
                           item['applied_discount_percent']?.toString() ?? '0',
                         ) ??
                         0,
-
-                    // ✨ Missing Fields Fixed Here:
                     barcode:
                         (barcodes != null && barcodes.isNotEmpty)
                             ? barcodes[0]['barcode']
@@ -135,21 +144,14 @@ class RevenueController extends GetxController with CacheManager {
                   );
                 }).toList();
 
-            // Payment Mapping (Same as before)
-            double cash = 0, upi = 0, card = 0, credit = 0;
+            // 🎯 Payment Mapping with Schema Columns
+            double cash = 0, upi = 0, card = 0, credit = 0, roundOffAmt = 0;
             for (var p in dbPayments) {
-              String mode =
-                  p['payment_mode']?.toString().toLowerCase().trim() ?? '';
-              double amt = (p['amount'] ?? 0).toDouble();
-              if (mode == 'cash') {
-                cash += amt;
-              } else if (mode == 'upi') {
-                upi += amt;
-              } else if (mode == 'card') {
-                card += amt;
-              } else if (mode == 'credit') {
-                credit += amt;
-              }
+              cash += (p['cash_amount'] ?? 0).toDouble();
+              upi += (p['upi_amount'] ?? 0).toDouble();
+              card += (p['card_amount'] ?? 0).toDouble();
+              credit += (p['credit_amount'] ?? 0).toDouble();
+              roundOffAmt += (p['round_off_amount'] ?? 0.0).toDouble();
             }
 
             DateTime createdTime =
@@ -172,8 +174,8 @@ class RevenueController extends GetxController with CacheManager {
                 card: card,
                 credit: credit,
                 totalAmount: (sale['total_amount'] ?? 0).toDouble(),
-                isRoundOff: false,
-                roundOffAmount: 0.0,
+                isRoundOff: roundOffAmt != 0,
+                roundOffAmount: roundOffAmt,
                 type:
                     dbPayments.isNotEmpty
                         ? dbPayments.first['payment_mode']
@@ -184,7 +186,7 @@ class RevenueController extends GetxController with CacheManager {
 
       return bills;
     } catch (e) {
-      print("🚨 Detail Error: $e");
+      print("🚨 Revenue Fetch Error: $e");
       return [];
     } finally {
       isRevenueListLoading.value = false;

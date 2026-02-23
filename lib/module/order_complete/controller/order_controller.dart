@@ -94,7 +94,7 @@ class OrderController extends GetxController with CacheManager {
       String cMobile = mobileNumber.text.trim();
       if (cMobile.isEmpty) return false;
 
-      // 1. Customer Search
+      // 1. Customer Search/Create
       final customerResponse =
           await SupabaseConfig.from('customers')
               .select('id')
@@ -102,7 +102,7 @@ class OrderController extends GetxController with CacheManager {
               .eq('user_id', currentUid)
               .maybeSingle();
 
-      dynamic customerId; // dynamic rakho taaki type ka locha na ho
+      dynamic customerId;
 
       if (customerResponse != null) {
         customerId = customerResponse['id'];
@@ -129,13 +129,27 @@ class OrderController extends GetxController with CacheManager {
       }
 
       // 2. 🎯 TARGET FIX: Sales Update
+      // Hum bill_no ko int mein convert kar rahe hain aur user_id ka check laga rahe hain
+      final int numericBillNo = int.tryParse(invoice.billNo.toString()) ?? 0;
 
-      await SupabaseConfig.from('sales')
-          .update({'customer_id': customerId})
-          .eq(
-            'bill_no',
-            invoice.billNo.toString(),
-          ); // 🚩 Yahan error aa raha hai agar saleId UUID nahi hai
+      final updateRes =
+          await SupabaseConfig.from('sales')
+              .update({'customer_id': customerId})
+              .eq(
+                'bill_no',
+                numericBillNo,
+              ) // 🔥 String ki jagah Int bhej rahe hain
+              .eq(
+                'user_id',
+                currentUid,
+              ) // 🔥 Security: Sirf apni hi dukan ka bill update ho
+              .select();
+
+      if (updateRes.isEmpty) {
+        print("⚠️ Warning: Sales table mein Bill No $numericBillNo nahi mila!");
+      } else {
+        print("✅ Success: Customer linked to Bill No $numericBillNo");
+      }
 
       await loadAllCustomers();
       return true;

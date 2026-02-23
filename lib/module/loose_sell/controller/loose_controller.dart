@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
 import '../model/loose_model.dart';
 
-class LooseController extends GetxController with CacheManager {
+class LooseController extends GetxController with LocalService {
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController amount = TextEditingController();
   TextEditingController quantity = TextEditingController();
@@ -15,9 +15,11 @@ class LooseController extends GetxController with CacheManager {
   TextEditingController addSubtractQty = TextEditingController();
   TextEditingController newSellingPrice = TextEditingController();
   TextEditingController name = TextEditingController();
+
   RxBool isDataLoading = false.obs;
   RxBool isSaveLoading = false.obs;
   RxBool isInventoryScanSelected = false.obs;
+
   var productList = <LooseInvetoryModel>[].obs;
   String? id;
   RxList<LooseCategoryModel> looseCategoryModelList =
@@ -29,7 +31,6 @@ class LooseController extends GetxController with CacheManager {
   @override
   void onInit() {
     fetchLosseList();
-    isInventoryScanSelectedValue();
     super.onInit();
   }
 
@@ -37,26 +38,55 @@ class LooseController extends GetxController with CacheManager {
     await fetchLooseProduct();
   }
 
-  void isInventoryScanSelectedValue() async {
-    bool isInventoryScanSelecteds = await retrieveInventoryScan();
-    isInventoryScanSelected.value = isInventoryScanSelecteds;
+  // 🔥 FLOW: Hive -> Supabase -> Hive Update
+  Future<void> fetchLooseProduct() async {
+    if (userId == null) return;
+
+    // 1. Pehle Hive se data lo (Instant UI Show)
+    final cachedData = LocalService.getCachedLooseProducts();
+    if (cachedData.isNotEmpty) {
+      productList.value = cachedData;
+      print("📦 Hive se data mil gaya: ${cachedData.length}");
+    }
+
+    // 2. Supabase se fetch karo (Fallback & Update)
+    isDataLoading.value =
+        productList.isEmpty; // Loading tabhi jab cache khali ho
+    try {
+      final response = await SupabaseConfig.from('loose_stocks')
+          .select('''
+          id, quantity, selling_price, product_id, user_id, created_at, updated_at,
+          products!fk_loose_stocks_products (
+            id, name, flavour, weight, rack, level,
+            is_loose_category, is_flavor_and_weight_not_required,
+            categories:category (id, name), 
+            animals:animal_type (id, name),
+            product_barcodes!fk_product_barcodes_products (barcode),
+            product_stock!fk_product_stock_products (location, stock_type, is_active),
+            stock_batches (purchase_date, expiry_date, purchase_price, location, stock_type)
+          )
+        ''')
+          .eq('user_id', userId!)
+          .order('created_at', ascending: false);
+
+      final List data = response as List;
+      final List<LooseInvetoryModel> freshList =
+          data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
+
+      // 3. UI Update aur Hive Update
+      productList.value = freshList;
+      await LocalService.saveLooseProducts(freshList);
+      print("✅ Supabase se data sync ho gaya aur Hive update ho gaya");
+    } catch (e) {
+      print("🚨 Fetch Error: $e");
+      if (productList.isEmpty)
+        showMessage(message: "Check internet connection");
+    } finally {
+      isDataLoading.value = false;
+    }
   }
 
-  void qtyClear() {
-    addSubtractQty.clear();
-  }
-
-  void searchProduct(String value) {
-    searchText.value = value;
-    searchController.text = searchText.value;
-  }
-
-  void setQuantitydata(int index) {
-    sellingPrice.text = productList[index].sellingPrice.toString();
-    updateQuantity.text = productList[index].quantity.toString();
-  }
-
-  // 🔥 UPDATE QUANTITY (SUPABASE)
+  // 🔥 UPDATE: Supabase Update -> Hive Refresh
   void updateProductQuantity({
     required String barcode,
     required bool add,
@@ -64,7 +94,6 @@ class LooseController extends GetxController with CacheManager {
     if (userId == null) return;
     isSaveLoading.value = true;
     try {
-      // Current stock fetch
       final response =
           await SupabaseConfig.from('product_stock')
               .select('quantity')
@@ -79,85 +108,39 @@ class LooseController extends GetxController with CacheManager {
         final num finalQty =
             add ? prevQty + newQtyInput : prevQty - newQtyInput;
 
+        // Supabase Update
         await SupabaseConfig.from('product_stock')
             .update({'quantity': finalQty, 'selling_price': sPrice})
             .eq('product_id', barcode)
             .eq('user_id', userId!);
 
-        removelooseInvetoryKeyModel();
         Get.back();
         qtyClear();
-        showMessage(message: '✅ Quantity updated.');
+        showMessage(message: '✅ Quantity updated in Cloud & Hive.');
+
+        // Refresh Flow (Auto updates Hive)
         await fetchLooseProduct();
       }
     } catch (e) {
-      print("Update Error: $e");
+      print("🚨 Update Error: $e");
+      showMessage(message: "Update failed: No Internet");
     } finally {
       isSaveLoading.value = false;
     }
   }
 
-  // 🔥 FETCH LOOSE PRODUCTS (EXPLICIT JOIN)
-  Future<void> fetchLooseProduct() async {
-    if (userId == null) return;
-    isDataLoading.value = true;
+  void qtyClear() {
+    addSubtractQty.clear();
+  }
 
-    try {
-      final response = await SupabaseConfig.from('loose_stocks')
-          .select('''
-          id,
-          quantity,
-          selling_price,
-          product_id,
-          user_id,
-          created_at,
-          updated_at,
-          products!fk_loose_stocks_products (
-            id, 
-            name, 
-            flavour, 
-            weight,
-            rack,
-            level,
-            is_loose_category,
-            is_flavor_and_weight_not_required,
-            categories:category (id, name), 
-            animals:animal_type (id, name),
-            product_stock!fk_product_stock_products (
-              location,
-              stock_type,
-              is_active
-            ),
-            product_barcodes!fk_product_barcodes_products (
-              barcode
-            ),
-            stock_batches (
-              purchase_date,
-              expiry_date,
-              purchase_price,
-              location,
-              stock_type
-            )
-          )
-        ''')
-          .eq('user_id', userId!)
-          .order('created_at', ascending: false);
+  void searchProduct(String value) {
+    searchText.value = value;
+    searchController.text = searchText.value;
+  }
 
-      final List data = response as List;
-
-      // DEBUG: Console mein check karo ki kya batches ke andar data aa raha hai?
-      if (data.isNotEmpty && data[0]['products'] != null) {
-        print("📅 Batch Data Check: ${data[0]['products']['stock_batches']}");
-      }
-
-      productList.value =
-          data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
-      saveLoosedProductList(productList);
-    } catch (e) {
-      print("🚨 Date Fetch Error: $e");
-    } finally {
-      isDataLoading.value = false;
-    }
+  void setQuantitydata(int index) {
+    sellingPrice.text = productList[index].sellingPrice.toString();
+    updateQuantity.text = productList[index].quantity.toString();
   }
 
   void clear() {

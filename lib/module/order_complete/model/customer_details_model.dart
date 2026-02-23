@@ -4,6 +4,7 @@ class CustomerDetails {
   String? createdAt;
   String? mobile;
   String? name;
+  int? billNo;
 
   double totalPurchase = 0;
   double totalPaid = 0;
@@ -15,6 +16,7 @@ class CustomerDetails {
     this.mobile,
     this.name,
     this.id,
+    this.billNo,
     this.totalPurchase = 0,
     this.totalPaid = 0,
     this.totalCredit = 0,
@@ -30,6 +32,7 @@ class CustomerDetails {
       totalPurchase: (json["totalPurchase"] ?? 0).toDouble(),
       totalPaid: (json["totalPaid"] ?? 0).toDouble(),
       totalCredit: (json["totalCredit"] ?? 0).toDouble(),
+      billNo: json["bill_no"] ?? 0,
     );
   }
 
@@ -42,6 +45,7 @@ class CustomerDetails {
       "totalPurchase": totalPurchase,
       "totalPaid": totalPaid,
       "totalCredit": totalCredit,
+      'bill_no': billNo,
     };
   }
 }

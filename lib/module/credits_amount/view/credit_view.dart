@@ -23,7 +23,7 @@ class CreditView extends GetView<CredtiController> {
       body: CustomPadding(
         paddingOption: SymmetricPadding(horizontal: 8.0),
         child: RefreshIndicator.adaptive(
-          onRefresh: () => controller.fetchCreditCustomers(),
+          onRefresh: () => controller.fetchCreditReports(),
           child: Column(
             children: [
               setHeight(height: 10),
@@ -83,12 +83,23 @@ class CreditView extends GetView<CredtiController> {
                                             style:
                                                 CustomTextStyle.customMontserrat(),
                                           ),
-                                          trailing: Text(
-                                            totalCredit > 0
-                                                ? "₹ $totalCredit"
-                                                : "₹ 0",
-                                            style:
-                                                CustomTextStyle.customOpenSans(),
+                                          trailing: Column(
+                                            children: [
+                                              Text(
+                                                totalCredit > 0
+                                                    ? "₹ $totalCredit"
+                                                    : "₹ 0",
+                                                style:
+                                                    CustomTextStyle.customOpenSans(),
+                                              ),
+                                              Text(
+                                                totalCredit > 0
+                                                    ? "₹ $totalCredit"
+                                                    : "₹ 0",
+                                                style:
+                                                    CustomTextStyle.customOpenSans(),
+                                              ),
+                                            ],
                                           ),
                                         )
                                         : Container(),

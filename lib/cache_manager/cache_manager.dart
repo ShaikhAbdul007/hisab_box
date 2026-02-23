@@ -39,25 +39,25 @@ mixin class CacheManager {
     box.write(Key.inventoryScan.toString(), value);
   }
 
-  void saveCategoryModel(List<CategoryModel> category) {
-    final storeList = category.map((e) => e.toJson()).toList();
-    box.write(Key.categoryValue.toString(), storeList);
-  }
+  // void saveCategoryModel(List<CategoryModel> category) {
+  //   final storeList = category.map((e) => e.toJson()).toList();
+  //   box.write(Key.categoryValue.toString(), storeList);
+  // }
 
-  void saveAnimalCategoryModel(List<CategoryModel> category) {
-    final storeList = category.map((e) => e.toJson()).toList();
-    box.write(Key.animalCategoryValue.toString(), storeList);
-  }
+  // void saveAnimalCategoryModel(List<CategoryModel> category) {
+  //   final storeList = category.map((e) => e.toJson()).toList();
+  //   box.write(Key.animalCategoryValue.toString(), storeList);
+  // }
 
-  void saveProductList(List<ProductModel> product) {
-    final productList = product.map((e) => e.toJson()).toList();
-    box.write(Key.product.toString(), productList);
-  }
+  // void saveProductList(List<ProductModel> product) {
+  //   final productList = product.map((e) => e.toJson()).toList();
+  //   box.write(Key.product.toString(), productList);
+  // }
 
-  void saveLoosedProductList(List<LooseInvetoryModel> loosedProduct) {
-    final loosedProductList = loosedProduct.map((e) => e.toJson()).toList();
-    box.write(Key.looseInvetoryKey.toString(), loosedProductList);
-  }
+  // void saveLoosedProductList(List<LooseInvetoryModel> loosedProduct) {
+  //   final loosedProductList = loosedProduct.map((e) => e.toJson()).toList();
+  //   box.write(Key.looseInvetoryKey.toString(), loosedProductList);
+  // }
 
   void saveCartProductList(List<ProductModel> product) {
     final productList = product.map((e) => e.toJson()).toList();
@@ -117,39 +117,39 @@ mixin class CacheManager {
     return BankModel();
   }
 
-  Future<List<CategoryModel>> retrieveCategoryModel() async {
-    final storedList = box.read(Key.categoryValue.toString());
-    if (storedList != null && storedList is List) {
-      return storedList.map((e) => CategoryModel.fromJson(e)).toList();
-    }
-    return [];
-  }
+  // Future<List<CategoryModel>> retrieveCategoryModel() async {
+  //   final storedList = box.read(Key.categoryValue.toString());
+  //   if (storedList != null && storedList is List) {
+  //     return storedList.map((e) => CategoryModel.fromJson(e)).toList();
+  //   }
+  //   return [];
+  // }
 
-  Future<List<CategoryModel>> retrieveAnimalCategoryModel() async {
-    final storedList = box.read(Key.animalCategoryValue.toString());
-    if (storedList != null && storedList is List) {
-      return storedList.map((e) => CategoryModel.fromJson(e)).toList();
-    }
-    return [];
-  }
+  // Future<List<CategoryModel>> retrieveAnimalCategoryModel() async {
+  //   final storedList = box.read(Key.animalCategoryValue.toString());
+  //   if (storedList != null && storedList is List) {
+  //     return storedList.map((e) => CategoryModel.fromJson(e)).toList();
+  //   }
+  //   return [];
+  // }
 
-  Future<List<ProductModel>> retrieveProductList() async {
-    final productList = box.read(Key.product.toString());
-    if (productList != null && productList is List) {
-      return productList.map((e) => ProductModel.fromJson(e)).toList();
-    }
-    return [];
-  }
+  // Future<List<ProductModel>> retrieveProductList() async {
+  //   final productList = box.read(Key.product.toString());
+  //   if (productList != null && productList is List) {
+  //     return productList.map((e) => ProductModel.fromJson(e)).toList();
+  //   }
+  //   return [];
+  // }
 
-  Future<List<LooseInvetoryModel>> retrieveLoosedProductList() async {
-    final loosedProductList = box.read(Key.looseInvetoryKey.toString());
-    if (loosedProductList != null && loosedProductList is List) {
-      return loosedProductList
-          .map((e) => LooseInvetoryModel.fromJson(e))
-          .toList();
-    }
-    return [];
-  }
+  // Future<List<LooseInvetoryModel>> retrieveLoosedProductList() async {
+  //   final loosedProductList = box.read(Key.looseInvetoryKey.toString());
+  //   if (loosedProductList != null && loosedProductList is List) {
+  //     return loosedProductList
+  //         .map((e) => LooseInvetoryModel.fromJson(e))
+  //         .toList();
+  //   }
+  //   return [];
+  // }
 
   Future<List<ProductModel>> retrieveCartProductList() async {
     final productList = box.read(Key.cartProduct.toString());
@@ -247,103 +247,103 @@ mixin class CacheManager {
 
   // ================= DISCOUNT CACHE =================
 
-  void saveDiscountCache(List<DiscountModel> list) {
-    box.write(
-      Key.discountCache.toString(),
-      list.map((e) => e.toJson()).toList(),
-    );
-  }
+  // void saveDiscountCache(List<DiscountModel> list) {
+  //   box.write(
+  //     Key.discountCache.toString(),
+  //     list.map((e) => e.toJson()).toList(),
+  //   );
+  // }
 
-  List<DiscountModel> getDiscountCache() {
-    final data = box.read(Key.discountCache.toString());
-    if (data != null && data is List) {
-      return data.map((e) => DiscountModel.fromJson(e)).toList();
-    }
-    return [];
-  }
+  // List<DiscountModel> getDiscountCache() {
+  //   final data = box.read(Key.discountCache.toString());
+  //   if (data != null && data is List) {
+  //     return data.map((e) => DiscountModel.fromJson(e)).toList();
+  //   }
+  //   return [];
+  // }
 
-  void saveTodayRevenueCache({
-    required String date,
-    required List<SellsModel> sells,
-  }) {
-    box.write(Key.todayRevenueCache.toString(), {
-      'date': date,
-      'sells': sells.map((e) => e.toJson()).toList(),
-    });
-  }
+  // void saveTodayRevenueCache({
+  //   required String date,
+  //   required List<SellsModel> sells,
+  // }) {
+  //   box.write(Key.todayRevenueCache.toString(), {
+  //     'date': date,
+  //     'sells': sells.map((e) => e.toJson()).toList(),
+  //   });
+  // }
 
-  Map<String, dynamic>? getTodayRevenueCache() {
-    return box.read(Key.todayRevenueCache.toString());
-  }
+  // Map<String, dynamic>? getTodayRevenueCache() {
+  //   return box.read(Key.todayRevenueCache.toString());
+  // }
 
-  void clearTodayRevenueCache() {
-    box.remove(Key.todayRevenueCache.toString());
-  }
+  // void clearTodayRevenueCache() {
+  //   box.remove(Key.todayRevenueCache.toString());
+  // }
 
-  void saveTodayReportCache(Map<String, dynamic> data) {
-    box.write(Key.todayReportCache.toString(), data);
-  }
+  // void saveTodayReportCache(Map<String, dynamic> data) {
+  //   box.write(Key.todayReportCache.toString(), data);
+  // }
 
-  Map<String, dynamic>? getTodayReportCache() {
-    return box.read(Key.todayReportCache.toString());
-  }
+  // Map<String, dynamic>? getTodayReportCache() {
+  //   return box.read(Key.todayReportCache.toString());
+  // }
 
-  void recalculateInventoryDashboardOnly() async {
-    final products = await retrieveProductList();
-    final loose = await retrieveLoosedProductList();
-    final godownProducts = retrieveGodownProductList(); // 🔥 ADD GODOWN
-    final existing = getDashboardCache() ?? {};
-    // 🔥 TOTAL STOCK = SHOP + GODOWN
-    final totalStock = products.length + godownProducts.length;
+  // void recalculateInventoryDashboardOnly() async {
+  //   final products = await retrieveProductList();
+  //   final loose = await retrieveLoosedProductList();
+  //   final godownProducts = retrieveGodownProductList(); // 🔥 ADD GODOWN
+  //   final existing = getDashboardCache() ?? {};
+  //   // 🔥 TOTAL STOCK = SHOP + GODOWN
+  //   final totalStock = products.length + godownProducts.length;
 
-    box.write(Key.dashboardCache.toString(), {
-      ...existing, // 🔥 preserve sales & revenue
-      'stock': totalStock, // 🔥 Combined shop + godown
-      'shopStock': products.length, // 🔥 Separate shop count (optional)
-      'godownStock':
-          godownProducts.length, // 🔥 Separate godown count (optional)
-      'outOfStock': products.where((e) => (e.quantity ?? 0) == 0).length,
-      'looseStock': loose.length,
-      'updatedAt': DateTime.now().millisecondsSinceEpoch,
-    });
-  }
+  //   box.write(Key.dashboardCache.toString(), {
+  //     ...existing, // 🔥 preserve sales & revenue
+  //     'stock': totalStock, // 🔥 Combined shop + godown
+  //     'shopStock': products.length, // 🔥 Separate shop count (optional)
+  //     'godownStock':
+  //         godownProducts.length, // 🔥 Separate godown count (optional)
+  //     'outOfStock': products.where((e) => (e.quantity ?? 0) == 0).length,
+  //     'looseStock': loose.length,
+  //     'updatedAt': DateTime.now().millisecondsSinceEpoch,
+  //   });
+  // }
 
-  void clearTodayReportCache() {
-    box.remove(Key.todayReportCache.toString());
-  }
+  // void clearTodayReportCache() {
+  //   box.remove(Key.todayReportCache.toString());
+  // }
 
-  void saveTodaySellCache({
-    required String date,
-    required List<SaleModel> sells,
-  }) {
-    box.write(Key.todaySellCache.toString(), {
-      'date': date,
-      'sells': sells.map((e) => e.toJson()).toList(),
-    });
-  }
+  // void saveTodaySellCache({
+  //   required String date,
+  //   required List<SaleModel> sells,
+  // }) {
+  //   box.write(Key.todaySellCache.toString(), {
+  //     'date': date,
+  //     'sells': sells.map((e) => e.toJson()).toList(),
+  //   });
+  // }
 
-  Map<String, dynamic>? getTodaySellCache() {
-    return box.read(Key.todaySellCache.toString());
-  }
+  // Map<String, dynamic>? getTodaySellCache() {
+  //   return box.read(Key.todaySellCache.toString());
+  // }
 
-  void clearTodaySellCache() {
-    box.remove(Key.todaySellCache.toString());
-  }
+  // void clearTodaySellCache() {
+  //   box.remove(Key.todaySellCache.toString());
+  // }
 
-  void saveGodownProductList(List<ProductModel> list) {
-    box.write(
-      Key.godownProduct.toString(),
-      list.map((e) => e.toJson()).toList(),
-    );
-  }
+  // void saveGodownProductList(List<ProductModel> list) {
+  //   box.write(
+  //     Key.godownProduct.toString(),
+  //     list.map((e) => e.toJson()).toList(),
+  //   );
+  // }
 
-  List<ProductModel> retrieveGodownProductList() {
-    final data = box.read(Key.godownProduct.toString());
-    if (data != null && data is List) {
-      return data.map((e) => ProductModel.fromJson(e)).toList();
-    }
-    return [];
-  }
+  // List<ProductModel> retrieveGodownProductList() {
+  //   final data = box.read(Key.godownProduct.toString());
+  //   if (data != null && data is List) {
+  //     return data.map((e) => ProductModel.fromJson(e)).toList();
+  //   }
+  //   return [];
+  // }
 }
 
 enum Key {

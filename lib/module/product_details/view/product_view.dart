@@ -65,11 +65,20 @@ class ProductView extends GetView<ProductController> {
                   Flexible(
                     child: Obx(
                       () =>
-                          controller.categoryList.isEmpty
+                          controller.categoryListLoading.value
                               ? Center(
                                 child: CommonProgressbar(
                                   color: AppColors.blackColor,
                                 ),
+                              )
+                              : controller.categoryList.isEmpty
+                              ? CommonDropDown(
+                                errorText: emptyCategory,
+                                listItems: controller.categoryList,
+                                hintText: 'Category',
+                                notifyParent: (val) {
+                                  controller.category.text = val.id;
+                                },
                               )
                               : CommonDropDown(
                                 errorText: emptyCategory,
@@ -84,11 +93,20 @@ class ProductView extends GetView<ProductController> {
                   Flexible(
                     child: Obx(
                       () =>
-                          controller.animalTypeList.isEmpty
+                          controller.animalCategoryListLoading.value
                               ? Center(
                                 child: CommonProgressbar(
                                   color: AppColors.blackColor,
                                 ),
+                              )
+                              : controller.animalTypeList.isEmpty
+                              ? CommonDropDown(
+                                errorText: emptyCategory,
+                                listItems: controller.animalTypeList,
+                                hintText: 'Animal Type',
+                                notifyParent: (val) {
+                                  controller.category.text = val.id;
+                                },
                               )
                               : CommonDropDown(
                                 errorText: emptyAnimalCategory,

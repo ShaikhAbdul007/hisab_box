@@ -3,16 +3,18 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/logger.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../helper/helper.dart';
 
-class InventroyController extends GetxController with CacheManager {
+class InventroyController extends GetxController
+    with CacheManager, LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
-  // Existing Variables
+
+  // Existing Variables (Nahi badle gaye)
   RxList<ProductModel> scannedProductDetails = <ProductModel>[].obs;
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
@@ -57,7 +59,7 @@ class InventroyController extends GetxController with CacheManager {
   }
 
   // ==========================================
-  // 🔥 EXISTING PRODUCT CHECK (MULTI-TABLE JOIN)
+  // 🔥 EXISTING PRODUCT CHECK (HIVE FIRST)
   // ==========================================
   Future<(bool existProductOrNot, ProductModel productModels)>
   existingProductInfo(String barcode) async {
@@ -65,34 +67,45 @@ class InventroyController extends GetxController with CacheManager {
     isExistingProductInfo.value = true;
 
     try {
-      // Sirf category aur basic details fetch karo
-      final res =
-          await SupabaseConfig.from('product_barcodes')
-              .select(
-                'product_id, products!fk_product_barcodes_products(id, name, flavour, weight, is_loose_category)',
-              )
-              .eq('barcode', barcode)
-              .maybeSingle();
+      // 1. Sabse pehle Hive (LocalService) mein dhoondo (Offline First)
+      final localProduct = LocalService.searchByBarcode(barcode);
 
-      if (res == null || res['products'] == null) {
-        return (false, ProductModel());
+      if (localProduct != null) {
+        existProductName.value = localProduct.name ?? '';
+        isExistingProductInfo.value = false;
+        print("📦 Found in Local Cache: ${localProduct.name}");
+        return (true, localProduct);
+      } else {
+        final res =
+            await SupabaseConfig.from('product_barcodes')
+                .select(
+                  'product_id, products!fk_product_barcodes_products(id, name, flavour, weight, is_loose_category)',
+                )
+                .eq('barcode', barcode)
+                .maybeSingle();
+
+        if (res == null || res['products'] == null) {
+          return (false, ProductModel());
+        }
+
+        final p = res['products'];
+        final model = ProductModel(
+          id: p['id'],
+          name: p['name'],
+          barcode: barcode,
+          isLoosed: p['is_loose_category'] ?? false,
+          flavor: p['flavour'],
+          weight: p['weight'],
+          animalType: p['animalType'],
+          location: p['location'],
+          isActive: p['isActive'],
+        );
+
+        existProductName.value = model.name ?? '';
+        return (true, model);
       }
 
-      final p = res['products'];
-
-      final model = ProductModel(
-        id: p['id'],
-        name: p['name'],
-        barcode: barcode,
-        isLoosed:
-            p['is_loose_category'] ??
-            false, // Ye batayega ki Pop-up dikhana hai ya nahi
-        flavor: p['flavour'],
-        weight: p['weight'],
-      );
-
-      existProductName.value = model.name ?? '';
-      return (true, model);
+      // 2. Agar Hive mein nahi hai, tabhi Supabase jao (Net Check)
     } catch (e) {
       print("🚨 Info Error: $e");
       return (false, ProductModel());
@@ -102,9 +115,8 @@ class InventroyController extends GetxController with CacheManager {
   }
 
   // ==========================================
-  // 🔥 HANDLE SCAN (SELL PACKET OR LOOSE)
+  // 🔥 HANDLE SCAN (OFFLINE-READY)
   // ==========================================
-
   Future<void> handleScan({
     required String barcode,
     required String sellType,
@@ -113,106 +125,107 @@ class InventroyController extends GetxController with CacheManager {
   }) async {
     if (userId == null) return;
 
-    // 🎯 STEP 0: Pehle hi check karlo ki scan se value aa bhi rahi hai ya nahi
-    print("🔍 Scan Triggered: Barcode=$barcode, Type=$sellType");
-    if (barcode.isEmpty || barcode == "null") {
-      showMessage(message: "❌ Invalid Barcode Scanned");
-      return;
-    }
-
     try {
-      // 1. Barcode se ID lo
-      final bRes =
-          await SupabaseConfig.from(
-            'product_barcodes',
-          ).select('product_id').eq('barcode', barcode).maybeSingle();
+      // 🎯 STEP 1: Search in Hive (Offline First)
+      ProductModel? product = LocalService.searchByBarcode(barcode);
 
-      if (bRes == null) {
-        showMessage(message: "❌ Barcode Not Found");
-        return;
-      }
+      // 🎯 STEP 2: If not in Hive, Fetch from Supabase with Nested Join
+      if (product == null) {
+        print("☁️ Hive mein nahi mila, Supabase se fetch kar raha hoon...");
 
-      final String pId = bRes['product_id'];
-
-      // 2. Product Info
-      final pRes =
-          await SupabaseConfig.from(
-            'products',
-          ).select('id, name, weight, flavour').eq('id', pId).maybeSingle();
-
-      if (pRes == null) return;
-
-      // 3. Stock Check (Double safe)
-      dynamic stockData;
-      if (sellType.toLowerCase() == 'loose') {
-        stockData =
-            await SupabaseConfig.from(
-              'loose_stocks',
-            ).select().eq('product_id', pId).maybeSingle();
-      } else {
-        stockData =
-            await SupabaseConfig.from('product_stock')
-                .select()
-                .eq('product_id', pId)
-                .eq('stock_type', 'packet')
+        final res =
+            await SupabaseConfig.from('product_barcodes')
+                .select('''
+          product_id,
+          barcode,
+          products!inner (
+            *,
+            product_stock!inner (*)
+          )
+        ''')
+                .eq('barcode', barcode)
                 .maybeSingle();
+
+        if (res != null) {
+          // Nested data nikalna (products -> product_stock)
+          final Map<String, dynamic> pData = res['products'];
+          final List<dynamic> sDataList = pData['product_stock'] ?? [];
+
+          // Model banana
+          product = ProductModel.fromJson(pData);
+
+          // Stock data manually map karna (kyunki products ke andar nested list hai)
+          if (sDataList.isNotEmpty) {
+            product.quantity =
+                double.tryParse(sDataList[0]['quantity'].toString()) ?? 0;
+            product.sellingPrice =
+                double.tryParse(sDataList[0]['selling_price'].toString()) ?? 0;
+          }
+
+          product.barcode = barcode; // Scanned barcode set karna
+          print("✅ Found in Supabase: ${product.name}");
+        } else {
+          showMessage(message: "❌ Product Not Found in Database");
+          return;
+        }
       }
 
-      if (stockData == null) {
-        qtyIsNotEnough();
-        return;
-      }
-
-      final double availableQty =
-          double.tryParse(stockData['quantity']?.toString() ?? '0') ?? 0;
-      final double price =
-          double.tryParse(stockData['selling_price']?.toString() ?? '0') ?? 0;
+      // 🎯 STEP 3: Stock Check
+      // Local data mein quantity update ho sakti hai stream se, isliye hamesha latest lein
+      double availableQty =
+          double.tryParse(product.quantity?.toString() ?? '0') ?? 0;
 
       if (availableQty <= 0) {
-        qtyIsNotEnough();
+        qtyIsNotEnough(); // UI par "Out of Stock" dikhayega
         return;
       }
 
-      // 4. Cart Logic (Proper Mapping)
+      // 🎯 STEP 4: Cart Logic
       final List<ProductModel> cartList = await retrieveCartProductList();
+
+      // Product ID se check karo cart mein (pId ki jagah product.id)
       final index = cartList.indexWhere(
-        (p) => p.id == pId && p.sellType == sellType,
+        (p) => p.id == product?.id && p.sellType == sellType,
       );
 
       if (index != -1) {
+        // Agar cart mein quantity stock se zyada ho rahi hai
         if ((cartList[index].quantity ?? 0) >= availableQty) {
           qtyIsNotEnough();
           return;
         }
         cartList[index].quantity = (cartList[index].quantity ?? 0) + 1;
-        cartList[index].barcode = barcode; // 🎯 Re-assign barcode
+        cartList[index].barcode =
+            barcode; // Barcode update in case multiple barcodes used
       } else {
-        // 🎯 FORCE ASSIGN: Variable ko direct use karo
-        final newItem = ProductModel(
-          barcode: barcode, // Ye line pakka honi chahiye
-          id: pId,
-          name: pRes['name'],
-          sellingPrice: price,
-          quantity: 1.0,
-          sellType: sellType,
-          isLoosed: sellType.toLowerCase() == 'loose',
-          flavor: pRes['flavour'],
-          weight: pRes['weight'],
+        // Naya item cart mein add karna
+        cartList.add(
+          ProductModel(
+            barcode: barcode,
+            id: product.id,
+            name: product.name,
+            sellingPrice: product.sellingPrice,
+            discount: product.discount,
+            quantity: 1.0,
+            sellType: sellType,
+            isLoosed: sellType.toLowerCase() == 'loose',
+            flavor: product.flavor,
+            weight: product.weight,
+          ),
         );
-        cartList.add(newItem);
       }
 
-      // 5. Save and Refresh
+      // 🎯 STEP 5: Save and UI Update
       saveCartProductList(cartList);
-
-      // Sabse zaroori: GetX list ko manually update karo
       scannedProductDetails.assignAll(cartList);
       scannedProductDetails.refresh();
 
+      // Feedback
+      player?.play(AssetSource('sounds/beep.mp3'));
       afterProductAdding();
-      print("✅ Cart Updated. Total items: ${scannedProductDetails.length}");
     } catch (e) {
       print("🚨 Final Scan Error: $e");
+      showMessage(message: "Error processing scan");
     }
   }
 
@@ -223,5 +236,12 @@ class InventroyController extends GetxController with CacheManager {
   Future<void> stopCameraAfterDetect(BarcodeCapture barcodes) async {
     barcodeValue.value = barcodes.barcodes.first.rawValue.toString();
     mobileScannerController.stop();
+  }
+
+  @override
+  void onClose() {
+    mobileScannerController.dispose();
+    player?.dispose();
+    super.onClose();
   }
 }

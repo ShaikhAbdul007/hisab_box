@@ -178,7 +178,7 @@ class PaymentModel {
   final double card;
   final double credit;
   final double totalAmount;
-  final bool isRoundOff;
+  final bool? isRoundOff;
   final double roundOffAmount;
   final String? type;
 
@@ -188,7 +188,7 @@ class PaymentModel {
     required this.card,
     required this.credit,
     required this.totalAmount,
-    required this.isRoundOff,
+    this.isRoundOff,
     required this.roundOffAmount,
     required this.type,
   });

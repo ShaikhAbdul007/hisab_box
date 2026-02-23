@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/helper.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService import
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 
 class InventoryListController extends GetxController
-    with GetSingleTickerProviderStateMixin, CacheManager {
+    with GetSingleTickerProviderStateMixin, CacheManager, LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
 
   var productList = <ProductModel>[].obs;
@@ -47,16 +47,33 @@ class InventoryListController extends GetxController
     super.onReady();
   }
 
+  // 🔥 MODIFIED: Pehle Local DB se data dikhayega, phir Supabase se sync karega
   void fetchAllInventory() async {
+    isDataLoading.value = true;
     if (userId == null) return;
-    await Future.wait([listenShopProducts(), listenGodownProducts()]);
+
+    // 1. Instant Loading from Hive
+    final cachedData = LocalService.getCachedProducts();
+    if (cachedData.isNotEmpty) {
+      productList.value = cachedData;
+      // UI ko categorize karna zaroori hai local data ke liye bhi
+      shopProductList.value =
+          cachedData.where((p) => p.location == 'shop').toList();
+      goDownProductList.value =
+          cachedData.where((p) => p.location == 'godown').toList();
+      print("📦 Local Data Loaded Successfully");
+    } else {
+      // 2. Network Sync in Background
+      await Future.wait([listenShopProducts(), listenGodownProducts()]);
+    }
+
+    isDataLoading.value = false;
   }
 
-  // 🔥 SHOP PRODUCTS
-  // 🔥 SHOP PRODUCTS (Explicit Relationship Version)
   Future<void> listenShopProducts() async {
     if (userId == null) return;
-    isDataLoading.value = true;
+    // Loading tabhi true karo agar local data na ho, taaki screen flicker na kare
+    if (productList.isEmpty) isDataLoading.value = true;
 
     try {
       final response = await SupabaseConfig.from('product_stock')
@@ -86,13 +103,13 @@ class InventoryListController extends GetxController
       print("✅ Shop Data Loaded: ${shopProductList.length} items");
     } catch (e) {
       print("🚨 Shop Fetch Error: $e");
-      showMessage(message: "Shop Error: $e");
+      // Agar handshake error aaye, toh user ko batado par data screen par rahega
+      // showMessage(message: "Using offline data. Error: $e");
     } finally {
       isDataLoading.value = false;
     }
   }
 
-  // ================= GODOWN PRODUCTS =================
   Future<void> listenGodownProducts() async {
     if (userId == null) return;
 
@@ -124,16 +141,13 @@ class InventoryListController extends GetxController
       print("✅ Godown Data Loaded: ${goDownProductList.length} items");
     } catch (e) {
       print("🚨 Godown Fetch Error: $e");
-      showMessage(message: "Godown Error: $e");
     }
   }
 
-  // ================= HELPER: MAPPING LOGIC =================
   List<ProductModel> _mapToProductModel(List dataList) {
     return dataList.map((e) {
       final productMap = Map<String, dynamic>.from(e['products']);
 
-      // Flatten nested data
       productMap['category'] = productMap['categories']?['name'];
       productMap['animal_type'] = productMap['animal_categories']?['name'];
       productMap['quantity'] = e['quantity'];
@@ -142,14 +156,18 @@ class InventoryListController extends GetxController
       productMap['discount'] = e['discount'];
       productMap['is_active'] = e['is_active'];
       productMap['is_loose'] = e['stock_type'] == 'loose';
+
       final List? barcodeList = productMap['product_barcodes'] as List?;
       if (barcodeList != null && barcodeList.isNotEmpty) {
-        // Pehla barcode uthao aur seedha productMap ki main key mein daal do
         productMap['barcode'] = barcodeList[0]['barcode']?.toString();
+        // 🔥 Multi-barcode support ke liye poori list ko JSON mein daal rahe hain
+        productMap['all_barcodes'] =
+            barcodeList.map((b) => b['barcode'].toString()).toList();
       } else {
-        productMap['barcode'] = ''; // Agar nahi hai toh empty string
+        productMap['barcode'] = '';
+        productMap['all_barcodes'] = [];
       }
-      // Batch mapping
+
       final batches = productMap['stock_batches'] as List?;
       if (batches != null && batches.isNotEmpty) {
         productMap['purchase_date'] = batches[0]['purchase_date'];
@@ -163,6 +181,10 @@ class InventoryListController extends GetxController
 
   void updateMainProductList() {
     productList.value = [...shopProductList, ...goDownProductList];
+
+    // 🔥 Hive mein save kar rahe hain taaki next time app khulte hi data mil jaye
+    LocalService.saveProducts(productList);
+
     isDataLoading.value = false;
   }
 

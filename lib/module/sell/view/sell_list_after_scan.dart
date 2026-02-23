@@ -212,12 +212,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                                 ),
                               ),
                               removeOnTap: () {
-                                controller.productList.remove(
-                                  controller.productList[index],
-                                );
-                                controller.saveProductList(
-                                  controller.productList,
-                                );
+                                controller.deleteProductFromCart(index);
                               },
                               minusOnTap: () {
                                 controller.updateQuantity(false, index);
@@ -289,49 +284,3 @@ class DiscountRadioButton extends StatelessWidget {
     );
   }
 }
-
-
-
- // final upiDetails = UPIDetails(
-                  //   upiID: "8892359294@ybl",
-                  //   payeeName: "GoldenPets",
-                  //   amount: 100,
-                  // );
-                  // commonBottomSheet(
-                  //   label: 'Scan Qr Code',
-                  //   onPressed: () {
-                  //     Get.back();
-                  //   },
-                  //   child: Column(
-                  //     mainAxisSize: MainAxisSize.min,
-                  //     children: [
-                  //       UPIPaymentQRCode(
-                  //         upiDetails: upiDetails,
-                  //         size: 200,
-                  //         eyeStyle: const QrEyeStyle(
-                  //           eyeShape: QrEyeShape.square,
-                  //           color: AppColors.greyColor,
-                  //         ),
-                  //       ),
-                  //       setHeight(height: 50),
-                  //       CommonButton(
-                  //         label: 'Print',
-                  //         onTap: () {
-                           
-                  //         },
-                  //       ),
-                  //       setHeight(height: 20),
-                  //     ],
-                  //   ),
-                  // );
-
-                  // Obx(
-                        //   () => Text(
-                        //     controller.discountPerProduct.value
-                        //         ? controller.finalTotal.value.toString()
-                        //         : controller.isDiscountGiven.value
-                        //         ? controller.discountPrice.value.toString()
-                        //         : controller.getTotalAmount().toString(),
-                        //     style: CustomTextStyle.customUbuntu(fontSize: 20),
-                        //   ),
-                        // ),

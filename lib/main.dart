@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
@@ -18,6 +19,7 @@ void main() async {
   await dotenv.load(fileName: ".env");
   await SupabaseConfig.init();
   await ScreenUtil.ensureScreenSize();
+  await LocalService.initHive();
   await GetStorage.init();
 
   checkResponse();

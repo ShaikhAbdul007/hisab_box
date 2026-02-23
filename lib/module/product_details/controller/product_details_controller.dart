@@ -1,8 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../helper/helper.dart';
@@ -10,8 +9,7 @@ import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 
-class ProductDetailsController extends GetxController with CacheManager {
-  // Supabase Config use kar rahe hain
+class ProductDetailsController extends GetxController with LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
 
   final inventoryScanKey = GlobalKey<FormState>();
@@ -19,10 +17,9 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
   RxList<ProductModel> productList = <ProductModel>[].obs;
-  RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
+  RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
 
-  // Controllers (Wahi rakhe hain jo tune diye)
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
   TextEditingController looseSellingPrice = TextEditingController();
@@ -62,7 +59,7 @@ class ProductDetailsController extends GetxController with CacheManager {
   }
 
   // ==========================================
-  // 🔥 STOCK TRANSFER (SUPABASE INSERT)
+  // 🔥 STOCK TRANSFER (SUPABASE + SYNC)
   // ==========================================
   Future<void> requestStockTransfer({
     required ProductModel product,
@@ -101,36 +98,30 @@ class ProductDetailsController extends GetxController with CacheManager {
   }
 
   CategoryModel? getSelectedCategory({
-    required String categorysId, // Isme ab ID ya Name aa sakta hai
+    required String categorysId,
     String categoryType = '',
   }) {
     try {
       if (categoryType == 'animal') {
-        // Animal types list mein se dhoondo
         return animalTypeList.firstWhere(
           (e) => e.name == categorysId || e.id == categorysId,
           orElse: () => CategoryModel(),
         );
       } else {
-        // Main categories list mein se dhoondo
         return categoryList.firstWhere(
           (e) => e.name == categorysId || e.id == categorysId,
           orElse: () => CategoryModel(),
         );
       }
     } catch (e) {
-      // Error finding category: $e
       return null;
     }
   }
 
   void setData() {
-    // Handle both ProductModel and LooseInventoryModel
     var productData = data['product'];
 
     if (productData is ProductModel) {
-      print('productData is $productData');
-      // ProductModel case
       ProductModel p = productData;
       category.text = p.category ?? '';
       animalType.text = p.animalType ?? '';
@@ -149,7 +140,6 @@ class ProductDetailsController extends GetxController with CacheManager {
       purchaseDate.text = p.purchaseDate ?? '';
       exprieDate.text = p.expireDate ?? '';
     } else if (productData is LooseInvetoryModel) {
-      // LooseInventoryModel case
       LooseInvetoryModel l = productData;
       category.text = l.category ?? '';
       animalType.text = l.animalType ?? '';
@@ -162,13 +152,12 @@ class ProductDetailsController extends GetxController with CacheManager {
       purchasePrice.text = l.purchasePrice.toString();
       flavor.text = l.flavor ?? '';
       weight.text = l.weight ?? '';
-      isLoose = true; // Always true for loose products
+      isLoose = true;
       location.text = l.location ?? '';
       discount.text = l.discount.toString();
       purchaseDate.text = l.purchaseDate ?? '';
       exprieDate.text = l.expireDate ?? '';
     } else {
-      // Fallback for dynamic/Map case
       Map<String, dynamic> p = productData as Map<String, dynamic>;
       category.text = p['category']?.toString() ?? '';
       animalType.text = p['animalType']?.toString() ?? '';
@@ -190,7 +179,7 @@ class ProductDetailsController extends GetxController with CacheManager {
   }
 
   // ==========================================
-  // 🔥 UPDATE PRODUCT (RELATIONAL UPDATE)
+  // 🔥 UPDATE: Supabase RPC -> Hive Local Update
   // ==========================================
   void updateProductQuantity({
     required String barcode,
@@ -201,13 +190,11 @@ class ProductDetailsController extends GetxController with CacheManager {
     isSaveLoading.value = true;
 
     try {
-      // 1. IDs fetch karna (Same as your code)
       var catId =
           categoryList.firstWhereOrNull((e) => e.name == category.text)?.id;
       var aniId =
           animalTypeList.firstWhereOrNull((e) => e.name == animalType.text)?.id;
 
-      // 2. Product ID nikalna
       String? pid;
       var productData = data['product'];
       if (productData is ProductModel) {
@@ -222,7 +209,7 @@ class ProductDetailsController extends GetxController with CacheManager {
 
       if (pid == null) throw "Product ID not found";
 
-      // 3. EXECUTION: Single Transaction Call
+      // 1. Transactional Update (Cloud)
       await SupabaseConfig.client.rpc(
         'update_product_and_stock_transaction',
         params: {
@@ -233,9 +220,9 @@ class ProductDetailsController extends GetxController with CacheManager {
           'p_ani_id': aniId,
           'p_flavor': flavor.text,
           'p_weight': weight.text,
-          'p_is_loose_cat': isLoosed, // is product loose-able?
+          'p_is_loose_cat': isLoosed,
           'p_is_flavor_weight_req': isFlavorAndWeightNotRequired.value,
-          'p_is_loosed_entry': isLoosed, // are we updating loose table?
+          'p_is_loosed_entry': isLoosed,
           'p_qty': double.tryParse(quantity.text) ?? 0.0,
           'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
           'p_p_price': double.tryParse(purchasePrice.text) ?? 0.0,
@@ -245,56 +232,108 @@ class ProductDetailsController extends GetxController with CacheManager {
         },
       );
 
-      // 4. Sab sahi raha toh list refresh karo
-      ();
+      // 2. Local Sync: Hive mein purana data update karna
+      // Hum direct list fetch karke Hive overwrite kar rahe hain taaki data consistency bani rahe
+      await refreshAllLocalData(isLoosed: isLoosed);
       Get.back(result: true);
       showMessage(message: '✅ Product & Stock Updated Safely.');
     } catch (e) {
       print("🚨 Update Error: $e");
-      showMessage(message: "❌ Error: Update failed. Try again.");
+      showMessage(message: "❌ Error: Update failed. Check Internet.");
     } finally {
       isSaveLoading.value = false;
     }
   }
 
+  // 🔥 Helper function for full Hive refresh
+  Future<void> refreshAllLocalData({required bool isLoosed}) async {
+    if (userId == null) return;
+    if (isLoosed == true) {
+      try {
+        final response = await SupabaseConfig.from('products')
+            .select('*, product_stock!inner(*)')
+            .eq('user_id', userId!)
+            .eq('product_stock.is_active', true);
+
+        final freshList =
+            (response as List).map((e) => ProductModel.fromJson(e)).toList();
+        await LocalService.saveProducts(freshList);
+      } catch (e) {
+        print("🚨 Background Sync failed: $e");
+      }
+    } else {
+      try {
+        final response = await SupabaseConfig.from('loose_stocks')
+            .select('''
+          id, quantity, selling_price, product_id, user_id, created_at, updated_at,
+          products!fk_loose_stocks_products (
+            id, name, flavour, weight, rack, level,
+            is_loose_category, is_flavor_and_weight_not_required,
+            categories:category (id, name), 
+            animals:animal_type (id, name),
+            product_barcodes!fk_product_barcodes_products (barcode),
+            product_stock!fk_product_stock_products (location, stock_type, is_active),
+            stock_batches (purchase_date, expiry_date, purchase_price, location, stock_type)
+          )
+        ''')
+            .eq('user_id', userId!)
+            .order('created_at', ascending: false);
+
+        final List data = response as List;
+        final List<LooseInvetoryModel> loosedfreshList =
+            data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
+
+        // 3. UI Update aur Hive Update
+        looseInventoryLis.value = loosedfreshList;
+        await LocalService.saveLooseProducts(loosedfreshList);
+      } catch (e) {}
+    }
+  }
+
   // ==========================================
-  // 🔥 FETCH DATA (SUPABASE)
+  // 🔥 FETCH DATA (HIVE FIRST + FALLBACK)
   // ==========================================
   Future<void> fetchCategories() async {
-    var categorList = await retrieveCategoryModel();
-    if (categorList.isNotEmpty) {
-      categoryList.value = categorList;
-    } else {
-      if (userId == null) return;
-      try {
-        final List response = await SupabaseConfig.from(
-          'categories',
-        ).select().eq('user_id', userId!);
-        categoryList.value =
-            response.map((e) => CategoryModel.fromJson(e)).toList();
-        saveCategoryModel(categoryList);
-      } catch (e) {
-        // Error loading categories
-      }
+    // 1. Pehle Hive se load karo
+    final cached = LocalService.getCachedCategories();
+    if (cached.isNotEmpty) {
+      categoryList.value = cached;
+    }
+
+    // 2. Fallback to Supabase
+    if (userId == null) return;
+    try {
+      final List response = await SupabaseConfig.from(
+        'categories',
+      ).select().eq('user_id', userId!);
+      final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
+
+      categoryList.value = freshData;
+      await LocalService.saveCategories(freshData); // Hive Update
+    } catch (e) {
+      print("🚨 Category fetch error: $e");
     }
   }
 
   Future<void> fetchAnimalCategories() async {
-    var animalCategorList = await retrieveAnimalCategoryModel();
-    if (animalCategorList.isNotEmpty) {
-      animalTypeList.value = animalCategorList;
-    } else {
-      if (userId == null) return;
-      try {
-        final List response = await SupabaseConfig.from(
-          'animal_categories',
-        ).select().eq('user_id', userId!);
-        animalTypeList.value =
-            response.map((e) => CategoryModel.fromJson(e)).toList();
-        saveAnimalCategoryModel(animalTypeList);
-      } catch (e) {
-        // Error loading animal categories
-      }
+    // 1. Hive Load
+    final cached = LocalService.getCachedAnimalCategories();
+    if (cached.isNotEmpty) {
+      animalTypeList.value = cached;
+    }
+
+    // 2. Supabase Sync
+    if (userId == null) return;
+    try {
+      final List response = await SupabaseConfig.from(
+        'animal_categories',
+      ).select().eq('user_id', userId!);
+      final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
+
+      animalTypeList.value = freshData;
+      await LocalService.saveAnimalCategories(freshData); // Hive Update
+    } catch (e) {
+      print("🚨 Animal category error: $e");
     }
   }
 }

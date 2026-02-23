@@ -6,11 +6,23 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import '../../../helper/set_format_date.dart';
+import 'dart:async';
+import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
+import 'package:inventory/supabase_db/supabase_client.dart';
+import '../../../helper/app_message.dart';
+import '../../../helper/set_format_date.dart';
+import '../../inventory/model/product_model.dart'; // Ensure path is correct
+// Apne model ka sahi path check kar lena
 
-class NotificationController extends GetxController with CacheManager {
+class NotificationController extends GetxController
+    with CacheManager, LocalService {
   RxList<GoDownStockTransferToShopModel> pendingTransfers =
       <GoDownStockTransferToShopModel>[].obs;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Variable name same rakha hai, but Supabase ID use hogi
+  final userId = SupabaseConfig.auth.currentUser?.id;
   RxBool isTransferLoading = false.obs;
   StreamSubscription? _transferSub;
 
@@ -20,91 +32,84 @@ class NotificationController extends GetxController with CacheManager {
     super.onInit();
   }
 
-  void listenPendingTransfers() {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+  // ==========================================
+  // 🔥 FETCH/LISTEN (HIVE + SUPABASE FALLBACK)
+  // ==========================================
+  void listenPendingTransfers() async {
+    if (userId == null) return;
 
-    _transferSub = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('stockTransfers')
-        .where('status', isEqualTo: 'pending')
-        .snapshots()
-        .listen((snapshot) {
-          pendingTransfers.value =
-              snapshot.docs
-                  .map(
-                    (e) =>
-                        GoDownStockTransferToShopModel.fromJson(e.data(), e.id),
-                  )
-                  .toList();
-        });
+    // 1️⃣ Hive Cache Check
+    var localNotifications = LocalService.getPendingTransfers();
+    if (localNotifications.isNotEmpty) {
+      pendingTransfers.value = localNotifications;
+    }
+
+    // 2️⃣ Supabase Fetch (Fallback & Refresh)
+    try {
+      final response = await SupabaseConfig.from(
+        'stock_transfers',
+      ).select().eq('user_id', userId!).eq('status', 'pending');
+
+      List<GoDownStockTransferToShopModel> freshList =
+          (response as List)
+              .map(
+                (e) => GoDownStockTransferToShopModel.fromJson(
+                  e,
+                  e['id'].toString(),
+                ),
+              )
+              .toList();
+
+      pendingTransfers.value = freshList;
+
+      // 3️⃣ Save to Hive
+      await LocalService.savePendingTransfers(freshList);
+    } catch (e) {
+      print("🚨 Notification Fetch Error: $e");
+    }
   }
 
+  // ==========================================
+  // 🔥 ACCEPT TRANSFER (RPC TRANSACTION + HIVE SYNC)
+  // ==========================================
   Future<void> acceptTransfer(GoDownStockTransferToShopModel transfer) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
-
+    if (userId == null) return;
     isTransferLoading.value = true;
 
     try {
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        final transferRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('stockTransfers')
-            .doc(transfer.id);
+      // Supabase RPC use karna transaction ke liye best hai
+      // Is function mein Godown -Qty hoga aur Shop +Qty hoga
+      await SupabaseConfig.client.rpc(
+        'accept_stock_transfer',
+        params: {
+          'p_transfer_id': transfer.id,
+          'p_user_id': userId,
+          'p_barcode': transfer.barcode,
+          'p_qty': transfer.requestedQty,
+          'p_accepted_at': setFormateDate(),
+        },
+      );
 
-        final snap = await tx.get(transferRef);
-        if (!snap.exists) return;
+      // 🔥 UPDATE HIVE LOCALLY (Immediate Sync)
+      // Notification list se hatao
+      pendingTransfers.removeWhere((element) => element.id == transfer.id);
+      await LocalService.savePendingTransfers(pendingTransfers);
 
-        final data = snap.data()!;
-        if (data['status'] != 'pending') return;
+      // Local Stock Update (Hive)
+      // Shop stock badhao
+      double currentShopStock =
+          LocalService.getLocalStock(transfer.barcode ?? '', false) ?? 0;
+      await LocalService.updateLocalStock(
+        transfer.barcode ?? '',
+        currentShopStock + (transfer.requestedQty ?? 0),
+        false,
+      );
 
-        final int qty = data['requestedQty'];
-        final String barcode = data['barcode'];
-
-        final godownRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('godownProducts')
-            .doc(barcode);
-
-        final shopRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('products')
-            .doc(barcode);
-
-        final godownSnap = await tx.get(godownRef);
-        final int godownQty = (godownSnap['quantity'] ?? 0);
-
-        if (godownQty < qty) {
-          throw Exception("Godown stock insufficient");
-        }
-
-        tx.update(godownRef, {
-          'quantity': FieldValue.increment(-qty),
-          'updatedDate': setFormateDate(),
-        });
-
-        tx.set(shopRef, {
-          'quantity': FieldValue.increment(qty),
-          'location': 'shop',
-          'isActive': true,
-          'updatedDate': setFormateDate(),
-        }, SetOptions(merge: true));
-
-        tx.update(transferRef, {
-          'status': 'accepted',
-          'acceptedAt': setFormateDate(),
-        });
-      });
-
-      // 🔥 invalidate cache (intentional)
+      // 🔄 Purane invalidate cache methods
       removePoductModel();
       removeGodownProductList();
-      recalculateInventoryDashboardOnly();
+      // recalculateInventoryDashboardOnly(); // Iska logic dashboard controller mein handle hoga
+
       showMessage(message: "✅ Stock received in shop");
     } catch (e) {
       showMessage(message: "❌ ${e.toString()}");
@@ -113,18 +118,25 @@ class NotificationController extends GetxController with CacheManager {
     }
   }
 
+  // ==========================================
+  // 🔥 REJECT TRANSFER (SUPABASE + HIVE SYNC)
+  // ==========================================
   Future<void> rejectTransfer(GoDownStockTransferToShopModel transfer) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (userId == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('stockTransfers')
-        .doc(transfer.id)
-        .update({'status': 'rejected', 'rejectedAt': setFormateDate()});
+    try {
+      await SupabaseConfig.from('stock_transfers')
+          .update({'status': 'rejected', 'rejectedAt': setFormateDate()})
+          .eq('id', transfer.id);
 
-    showMessage(message: "❌ Transfer rejected");
+      // Hive Update
+      pendingTransfers.removeWhere((element) => element.id == transfer.id);
+      await LocalService.savePendingTransfers(pendingTransfers);
+
+      showMessage(message: "❌ Transfer rejected");
+    } catch (e) {
+      showMessage(message: "🚨 Reject Error: $e");
+    }
   }
 
   @override

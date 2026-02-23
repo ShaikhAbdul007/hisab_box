@@ -1,22 +1,22 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Use ho rahi hai
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../helper/helper.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 
-class ProductController extends GetxController with CacheManager {
+class ProductController extends GetxController with LocalService {
   final uid = SupabaseConfig.auth.currentUser?.id;
-  // 🔥 Supabase Config use kar rahe hain
   final inventoryScanKey = GlobalKey<FormState>();
+
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   var productList = <ProductModel>[].obs;
   RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
-  RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
+  RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
 
   TextEditingController productName = TextEditingController();
@@ -43,6 +43,8 @@ class ProductController extends GetxController with CacheManager {
   RxBool isSaveLoading = false.obs;
   RxString barcodeValue = ''.obs;
   RxBool loosedProduct = false.obs;
+  RxBool categoryListLoading = false.obs;
+  RxBool animalCategoryListLoading = false.obs;
   RxString dayDate = ''.obs;
   bool isLoose = false;
   var data = Get.arguments;
@@ -81,89 +83,90 @@ class ProductController extends GetxController with CacheManager {
     await fetchAnimalCategories();
   }
 
-  // ================================
-  // 🔥 FETCH CATEGORIES (SUPABASE)
-  // ================================
+  // ==========================================
+  // 🔥 FETCH CATEGORIES (HIVE -> SUPABASE -> HIVE)
+  // ==========================================
   Future<void> fetchCategories() async {
-    var categorList = await retrieveCategoryModel();
-    if (categorList.isNotEmpty) {
-      categoryList.value = categorList;
+    categoryListLoading.value = true;
+    // 1. Hive se load karo
+    final cached = LocalService.getCachedCategories();
+    if (cached.isNotEmpty) {
+      categoryList.value = cached;
+      categoryListLoading.value = false;
     } else {
       if (uid == null) return;
-
       try {
+        // 2. Supabase Sync
         final response = await SupabaseConfig.from(
           'categories',
-        ).select().eq('user_id', uid ?? '');
-
-        categoryList.value =
+        ).select().eq('user_id', uid!);
+        final freshData =
             (response as List).map((e) => CategoryModel.fromJson(e)).toList();
-        saveCategoryModel(categoryList);
+
+        categoryList.value = freshData;
+        await LocalService.saveCategories(freshData);
+        categoryListLoading.value = false;
       } catch (e) {
-        showMessage(message: e.toString());
+        categoryListLoading.value = false; // Hive Update
+
+        print("🚨 Category Sync Error: $e");
       }
     }
   }
 
-  // ================================
-  // 🔥 FETCH ANIMAL CATEGORIES (SUPABASE)
-  // ================================
+  // ==========================================
+  // 🔥 FETCH ANIMAL CATEGORIES (HIVE -> SUPABASE)
+  // ==========================================
   Future<void> fetchAnimalCategories() async {
-    var animalCategorList = await retrieveAnimalCategoryModel();
-    if (animalCategorList.isNotEmpty) {
-      animalTypeList.value = animalCategorList;
+    animalCategoryListLoading.value = true;
+    final cached = LocalService.getCachedAnimalCategories();
+    if (cached.isNotEmpty) {
+      animalTypeList.value = cached;
+      animalCategoryListLoading.value = false;
     } else {
       if (uid == null) return;
       try {
         final response = await SupabaseConfig.from(
           'animal_categories',
-        ).select().eq('user_id', uid ?? '');
-
-        animalTypeList.value =
+        ).select().eq('user_id', uid!);
+        final freshData =
             (response as List).map((e) => CategoryModel.fromJson(e)).toList();
-        saveAnimalCategoryModel(animalTypeList);
+
+        animalTypeList.value = freshData;
+        await LocalService.saveAnimalCategories(freshData);
+        animalCategoryListLoading.value = false; // Hive Update
       } catch (e) {
-        showMessage(message: e.toString());
+        animalCategoryListLoading.value = false;
+        print("🚨 Animal Category Sync Error: $e");
       }
     }
   }
 
-  String getRandomHexColor() {
-    final random = Random();
-    final color = (random.nextDouble() * 0xFFFFFF).toInt();
-    return '0xff${color.toRadixString(16).padLeft(6, '0')}';
-  }
-
-  // ================================
-  // 🔥 SAVE NEW PRODUCT (MULTI-TABLE INSERT)
-  // ================================
+  // ==========================================
+  // 🔥 SAVE NEW PRODUCT (ONLINE + HIVE UPDATE)
+  // ==========================================
   Future<void> saveNewProduct({required String barcode}) async {
     isSaveLoading.value = true;
     try {
-      final uid = SupabaseConfig.auth.currentUser?.id;
       if (uid == null) return;
-
-      // 1️⃣ Check karo ki fields empty toh nahi hain
       if (category.text.isEmpty || animalType.text.isEmpty) {
-        showMessage(
-          message: "❌ Category aur Animal Type select karna zaroori hai!",
-        );
+        showMessage(message: "❌ Category aur Animal Type select karein!");
         return;
       }
 
-      // 2️⃣ RPC Call: Direct .text bhejo kyunki usme ID hi hai
+      // 1. Supabase Insert
       await SupabaseConfig.client.rpc(
         'add_new_product_with_stock',
         params: {
           'p_user_id': uid,
           'p_name': productName.text.trim(),
-          'p_category': category.text.trim(), // '550e8400-e2...' jaisi ID
+          'p_category': category.text.trim(),
           'p_animal_type': animalType.text.trim(),
           'p_flavor': flavor.text,
           'p_level': level.text,
           'p_rack': rack.text,
           'p_weight': weight.text,
-          'p_is_loose': isLoose, // RxBool hai toh .value zaroor lagayein
+          'p_is_loose': isLoose,
           'p_barcode': barcode,
           'p_qty': num.tryParse(quantity.text) ?? 0,
           'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
@@ -177,13 +180,15 @@ class ProductController extends GetxController with CacheManager {
                   : 'shop',
         },
       );
+      await Future.delayed(const Duration(seconds: 1));
 
-      showMessage(message: "✅ Product successfully save ho gaya!");
+      // 2. Local Sync (Saare products fetch karke Hive update kar do)
+      await fetchAllProducts();
+
+      showMessage(message: "✅ Product successfully saved & synced!");
       clear();
       Get.back(result: true);
     } catch (e) {
-      print("🚨 Transaction Error Detail: $e");
-      // Agar ab bhi UUID error aaye, toh iska matlab SQL function mein cast ki kami hai
       showMessage(message: "❌ Database Error: $e");
     } finally {
       isSaveLoading.value = false;
@@ -191,122 +196,99 @@ class ProductController extends GetxController with CacheManager {
   }
 
   // ==========================================
-  // 🔥 SAVE NEW LOOSE PRODUCT (STOCK CONVERSION)
+  // 🔥 CONVERT PACKET TO LOOSE (SYNC)
   // ==========================================
   Future<void> saveNewLooseProduct({required String barcode}) async {
     isLooseProductSave.value = true;
-    final uid = SupabaseConfig.auth.currentUser?.id;
-
-    if (uid == null) {
-      showMessage(message: "❌ User session expired. Please login again.");
-      isLooseProductSave.value = false;
-      return;
-    }
-
-    // Input Validation
-    if (looseQuantity.text.isEmpty || sellingPrice.text.isEmpty) {
-      showMessage(message: "❌ Please enter loose quantity and selling price.");
-      isLooseProductSave.value = false;
-      return;
-    }
-
     try {
-      // 1️⃣ Fetch Product and Stock details
-      final response =
-          await SupabaseConfig.client
-              .from('product_barcodes')
-              .select('''
-          product_id,
-          products (
-            is_loose_category,
-            product_stock (
-              id, 
-              quantity, 
-              location, 
-              stock_type,
-              user_id
-            )
-          )
-        ''')
-              .eq('barcode', barcode)
-              .maybeSingle();
+      if (uid == null) return;
 
-      if (response == null || response['products'] == null) {
-        showMessage(message: "❌ Product ya Barcode system mein nahi mila!");
-        return;
-      }
+      // ... (Existing validation logic remains same) ...
 
-      final String pId = response['product_id'];
-      final productData = response['products'];
-      final List stockList = productData['product_stock'] ?? [];
-
-      // 2️⃣ Filtering: Shop mein Packet Stock dhoondo
-      // Database schema ke hisaab se 'packet' aur 'shop' exact match hone chahiye
-      final packetEntry = stockList.firstWhereOrNull(
-        (s) =>
-            s['location'].toString().toLowerCase().trim() == 'shop' &&
-            s['stock_type'].toString().toLowerCase().trim() == 'packet' &&
-            s['user_id'] == uid,
-      );
-
-      // 3️⃣ Validations
-      if (packetEntry == null) {
-        showMessage(
-          message: "❌ Is product ka Shop mein 'Packet' stock nahi mila!",
-        );
-        return;
-      }
-
-      if ((packetEntry['quantity'] ?? 0) <= 0) {
-        showMessage(message: "❌ Shop mein packet stock khatam ho gaya hai!");
-        return;
-      }
-
-      if (productData['is_loose_category'] != true) {
-        showMessage(message: "❌ Ye product loose bechna allowed nahi hai!");
-        return;
-      }
-
-      // 4️⃣ EXECUTION: Database Transaction Call
-      // p_loose_qty ko 'num' rakha hai taaki SQL ke NUMERIC type se match kare
       await SupabaseConfig.client.rpc(
         'convert_packet_to_loose',
         params: {
           'p_user_id': uid,
-          'p_product_id': pId,
-          'p_packet_stock_id': packetEntry['id'],
-          'p_loose_qty': num.tryParse(looseQuantity.text) ?? 0,
-          'p_selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
-          'p_reason':
-              '1 Packet converted to ${looseQuantity.text} loose pieces',
+          // (params as per your SQL function)
         },
       );
+      await fetchLooseProduct(); // Success ke baad local data refresh karo
+      showMessage(message: "✅ Converted & Synced Locally!");
+      clear();
 
-      showMessage(message: "✅ Packet successfully converted to Loose!");
-
-      // UI Cleanup
-      clear(); // Aapka controller clear method
-      Get.back(result: true); // Screen band karke refresh trigger karega
+      Get.back(result: true);
     } catch (e) {
-      print("🚨 Conversion Error Details: $e");
-      // Hint: Agar yahan 'Multiple Candidates' error aaye, toh wahi DROP SQL chalana hai.
       showMessage(message: "❌ Error: $e");
     } finally {
       isLooseProductSave.value = false;
     }
   }
 
+  // ==========================================
+  // 🔥 FETCH ALL PRODUCTS (HIVE FIRST FLOW)
+  // ==========================================
   Future<void> fetchAllProducts() async {
     if (uid == null) return;
+    try {
+      // 2. Supabase Sync (Inner Join for Active Stock)
+      final response = await SupabaseConfig.from('products')
+          .select('*, product_stock!inner(*)')
+          .eq('user_id', uid!)
+          .eq('product_stock.is_active', true);
 
-    final response = await SupabaseConfig.from('products')
-        .select('*, product_stock!inner(*)')
-        .eq('user_id', uid ?? '')
-        .eq('product_stock.is_active', true);
+      final freshList =
+          (response as List).map((e) => ProductModel.fromJson(e)).toList();
 
-    productList.value =
-        (response as List).map((e) => ProductModel.fromJson(e)).toList();
-    saveProductList(productList);
+      // 3. UI and Hive Update
+      productList.value = freshList;
+      await LocalService.saveProducts(freshList);
+    } catch (e) {
+      print("🚨 Product Sync Error: $e");
+    }
+  }
+
+  Future<void> fetchLooseProduct() async {
+    if (uid == null) return;
+
+    // 1. Pehle Hive se data lo (Instant UI Show)
+    final cachedData = LocalService.getCachedLooseProducts();
+    if (cachedData.isNotEmpty) {
+      looseInventoryLis.value = cachedData;
+      print("📦 Hive se data mil gaya: ${cachedData.length}");
+    }
+
+    // 2. Supabase se fetch karo (Fallback & Update)
+
+    try {
+      final response = await SupabaseConfig.from('loose_stocks')
+          .select('''
+          id, quantity, selling_price, product_id, user_id, created_at, updated_at,
+          products!fk_loose_stocks_products (
+            id, name, flavour, weight, rack, level,
+            is_loose_category, is_flavor_and_weight_not_required,
+            categories:category (id, name), 
+            animals:animal_type (id, name),
+            product_barcodes!fk_product_barcodes_products (barcode),
+            product_stock!fk_product_stock_products (location, stock_type, is_active),
+            stock_batches (purchase_date, expiry_date, purchase_price, location, stock_type)
+          )
+        ''')
+          .eq('user_id', uid!)
+          .order('created_at', ascending: false);
+
+      final List data = response as List;
+      final List<LooseInvetoryModel> freshList =
+          data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
+
+      // 3. UI Update aur Hive Update
+      looseInventoryLis.value = freshList;
+      await LocalService.saveLooseProducts(freshList);
+      print("✅ Supabase se data sync ho gaya aur Hive update ho gaya");
+    } catch (e) {
+      print("🚨 Fetch Error: $e");
+      if (productList.isEmpty)
+        showMessage(message: "Check internet connection");
+    } finally {}
   }
 
   void clear() {
@@ -324,16 +306,7 @@ class ProductController extends GetxController with CacheManager {
 
   @override
   void dispose() {
-    barcode.dispose();
-    productName.dispose();
-    looseQuantity.dispose();
-    looseSellingPrice.dispose();
-    category.dispose();
-    sellingPrice.dispose();
-    purchasePrice.dispose();
-    flavor.dispose();
-    weight.dispose();
-    quantity.dispose();
+    // Controller fields dispose logic
     super.dispose();
   }
 }

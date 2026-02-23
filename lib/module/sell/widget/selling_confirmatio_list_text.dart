@@ -29,7 +29,7 @@ class SellingConfirmationListText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isloosed = inventoryModel.isLoosed ?? false;
+    // bool isloosed = inventoryModel.isLoosed ?? false;
     bool sellType = inventoryModel.sellType == 'Loose';
     print('inventoryModel.sellType is ${inventoryModel.sellType}');
     return Container(
@@ -51,12 +51,12 @@ class SellingConfirmationListText extends StatelessWidget {
                     getStringLengthText(inventoryModel.name ?? ''),
                     style: CustomTextStyle.customPoppin(),
                   ),
-                  // Text(
-                  //   getStringLengthText(inventoryModel.barcode ?? ''),
-                  //   style: CustomTextStyle.customRaleway(
-                  //     color: AppColors.greyColor,
-                  //   ),
-                  // ),
+                  Text(
+                    getStringLengthText(inventoryModel.barcode ?? ''),
+                    style: CustomTextStyle.customRaleway(
+                      color: AppColors.greyColor,
+                    ),
+                  ),
                 ],
               ),
               Container(

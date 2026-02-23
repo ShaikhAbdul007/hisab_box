@@ -1,64 +1,70 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
 import '../model/sell_model.dart';
 
-class SellController extends GetxController with CacheManager {
-  final _auth = FirebaseAuth.instance;
+class SellController extends GetxController with CacheManager, LocalService {
+  // Purane variable names same rakhe hain
+  final userId = SupabaseConfig.auth.currentUser?.id;
   RxBool isSellListLoading = false.obs;
   var sellsList = <SaleModel>[].obs;
   RxString dayDate = ''.obs;
+
   @override
   void onInit() {
     dayDate.value = setFormateDate();
     setSellList();
-
     super.onInit();
   }
 
+  // ==========================================
+  // 🔥 SET SELL LIST (HIVE + FALLBACK)
+  // ==========================================
   void setSellList() async {
     final today = dayDate.value;
 
-    // 1️⃣ Cache check
-    final cache = getTodaySellCache();
-    if (cache != null && cache['date'] == today) {
-      sellsList.value =
-          (cache['sells'] as List).map((e) => SaleModel.fromMap(e)).toList();
-      return;
+    // 1️⃣ Hive Cache Check (Custom local function)
+    final cacheData = LocalService.getTodaySales(today);
+    if (cacheData.isNotEmpty) {
+      sellsList.value = cacheData;
+      print("📦 Sales loaded from Hive");
     }
 
-    // 2️⃣ Firebase fallback
+    // 2️⃣ Supabase Fallback (Background fetch for sync)
     final data = await fetchSales();
-    sellsList.value = data;
 
-    // 3️⃣ Cache save
-    saveTodaySellCache(date: today, sells: data);
+    if (data.isNotEmpty) {
+      sellsList.value = data;
+      // 3️⃣ Cache save (Update Hive)
+      await LocalService.saveTodaySales(today, data);
+    }
   }
 
+  // ==========================================
+  // 🔥 FETCH SALES (SUPABASE + GROUPING LOGIC)
+  // ==========================================
   Future<List<SaleModel>> fetchSales() async {
     isSellListLoading.value = true;
     try {
-      final uid = _auth.currentUser?.uid;
-      if (uid == null) return [];
+      if (userId == null) return [];
 
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('sales')
-              .where('soldAt', isEqualTo: dayDate.value)
-              .get();
+      // Supabase se aaj ki sales uthao
+      final response = await SupabaseConfig.from(
+        'sales',
+      ).select().eq('user_id', userId!).eq('soldAt', dayDate.value);
 
+      final List rawData = response as List;
       final Map<String, SaleModel> salesByBarcode = {};
 
-      for (var doc in snapshot.docs) {
-        final sale = SaleModel.fromMap(doc.data());
+      for (var item in rawData) {
+        final sale = SaleModel.fromMap(item);
         final barcode = sale.barcode;
 
         if (salesByBarcode.containsKey(barcode)) {
           final existing = salesByBarcode[barcode]!;
+          // Grouping logic (Quantity sum karna) jaisa aapne pucha tha
           salesByBarcode[barcode] = SaleModel(
             sellingPrice: existing.sellingPrice,
             animalType: existing.animalType,
@@ -80,6 +86,9 @@ class SellController extends GetxController with CacheManager {
       }
 
       return salesByBarcode.values.toList();
+    } catch (e) {
+      print("🚨 Fetch Sales Error: $e");
+      return [];
     } finally {
       isSellListLoading.value = false;
     }

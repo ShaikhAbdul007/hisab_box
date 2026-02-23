@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,6 +9,8 @@ import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/module/revenue/model/revenue_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
+import 'package:inventory/helper/set_format_date.dart'; // 🔥 Date Helper
 import '../../../routes/route_name.dart';
 import '../model/grid_model.dart';
 
@@ -54,11 +56,66 @@ class HomeController extends GetxController with CacheManager {
   Future<void> loadDashboard() async {
     isListLoading.value = true;
 
-    // Direct Supabase se load karo, cache nahi
+    // 1️⃣ [NEW] Pehle Hive se load karo taaki UI zero na dikhe
+    _loadFromHive();
+
+    // 2️⃣ Background mein Supabase se load karo
     await _loadFromSupabase();
+
+    // 3️⃣ Final Grid refresh
     await getDashBoardList();
 
     isListLoading.value = false;
+  }
+
+  // ================= [NEW] HIVE DATA LOADING =================
+
+  void _loadFromHive() {
+    try {
+      // Get Revenue from stats
+      Map<String, dynamic> stats = LocalService.getDailyReportStats();
+      totalBusRevenue.value =
+          (double.tryParse(stats['total_sales']?.toString() ?? '0.0') ?? 0.0);
+
+      // Get Stock counts from cached lists
+      outOfStock.value = LocalService.getCachedOutOfStockProducts().length;
+      stock.value = LocalService.getCachedProducts().length;
+      looseStock.value = LocalService.getCachedLooseProducts().length;
+
+      // Get Recent Sales list
+      final String todayDate = setFormateDate('yyyy-MM-dd');
+      var cachedSales = LocalService.getTodaySales(todayDate);
+
+      sellsList.value =
+          cachedSales
+              .map(
+                (s) => SellsModel(
+                  billNo: int.parse(s.billNo),
+                  finalAmount: s.amountAfterDiscount,
+                  totalAmount: s.amount,
+                  soldAt: s.soldAt,
+                  time: s.time,
+                  itemsCount: s.quantity,
+                  items: [],
+                  payment: PaymentModel(
+                    totalAmount: s.amountAfterDiscount,
+                    type: 'Sale',
+                    cash: 0.0,
+                    upi: 0.0,
+                    card: 0.0,
+                    credit: 0.0,
+                    roundOffAmount: 0.0,
+                    isRoundOff: false,
+                  ),
+                ),
+              )
+              .toList();
+
+      getDashBoardList();
+      update();
+    } catch (e) {
+      print("🚨 Hive Load Error: $e");
+    }
   }
 
   // ================= SUPABASE DATA LOADING =================
@@ -70,16 +127,24 @@ class HomeController extends GetxController with CacheManager {
       getOutOfStock(),
       getTotalLooseStock(),
     ]);
+
+    // [NEW] Sync Cloud Revenue to Local Stats
+    _syncSupabaseToHive();
+
     sellsList.value = await fetchRevenueList();
+  }
+
+  void _syncSupabaseToHive() async {
+    Map<String, dynamic> stats = LocalService.getDailyReportStats();
+    stats['total_sales'] = totalBusRevenue.value;
+    await LocalService.saveDailyReportStats(stats);
   }
 
   // ================= DASHBOARD FUNCTIONS =================
 
   Future<void> getTotalRevenue() async {
     if (userId == null) return;
-
     try {
-      // 1️⃣ IST (Local) Time ko UTC range mein badlein
       final DateTime now = DateTime.now();
       final DateTime localStart = DateTime(
         now.year,
@@ -101,50 +166,41 @@ class HomeController extends GetxController with CacheManager {
       final String startUtc = localStart.toUtc().toIso8601String();
       final String endUtc = localEnd.toUtc().toIso8601String();
 
-      // 2️⃣ Database call with UTC range
       final response = await SupabaseConfig.from('sales')
           .select('total_amount')
           .eq('user_id', userId!)
           .gte('created_at', startUtc)
           .lte('created_at', endUtc);
-
       double total = 0;
       final List<dynamic> data = response as List;
       for (var sale in data) {
         total += (sale['total_amount'] ?? 0).toDouble();
       }
-
-      // Value update
       totalBusRevenue.value = total;
       print("💰 Today's Revenue (UTC Corrected): $total");
     } catch (e) {
       print("🚨 Revenue Error: $e");
-      totalBusRevenue.value = 0.0; // Error case mein reset
+      totalBusRevenue.value = 0.0;
     }
   }
 
   Future<void> getTotalStock() async {
     if (userId == null) return;
-
     try {
-      // Shop products - simple count by getting length
       final shopResponse = await SupabaseConfig.from('product_stock')
           .select('id')
           .eq('user_id', userId!)
           .eq('is_active', true)
           .eq('location', 'shop');
 
-      // Godown products - simple count by getting length
       final godownResponse = await SupabaseConfig.from('product_stock')
           .select('id')
           .eq('user_id', userId!)
           .eq('is_active', true)
           .eq('location', 'godown');
 
-      final shopCount = (shopResponse as List).length;
-      final godownCount = (godownResponse as List).length;
-
-      stock.value = shopCount + godownCount;
+      stock.value =
+          (shopResponse as List).length + (godownResponse as List).length;
     } catch (e) {
       stock.value = 0;
     }
@@ -152,7 +208,6 @@ class HomeController extends GetxController with CacheManager {
 
   Future<void> getOutOfStock() async {
     if (userId == null) return;
-
     try {
       final response = await SupabaseConfig.from('product_stock')
           .select('id')
@@ -160,32 +215,25 @@ class HomeController extends GetxController with CacheManager {
           .eq('is_active', true)
           .eq('quantity', 0);
       outOfStock.value = (response as List).length;
-      print("📦 Out of Stock Count: ${outOfStock.value}");
     } catch (e) {
-      print("🚨 Out Of Stock Error: $e");
       outOfStock.value = 0;
     }
   }
 
   Future<void> getTotalLooseStock() async {
     if (userId == null) return;
-
     try {
       final response = await SupabaseConfig.from(
         'loose_stocks',
       ).select('id').eq('user_id', userId!);
-
       looseStock.value = (response as List).length;
     } catch (e) {
-      // Loose Stock Error: $e
       looseStock.value = 0;
     }
   }
 
   Future<List<SellsModel>> fetchRevenueList() async {
     if (userId == null) return [];
-
-    // 1️⃣ Timezone Logic: Aaj ki shuruat (00:00) aur khatam (23:59) ko UTC mein convert karein
     final DateTime now = DateTime.now();
     final DateTime localStart = DateTime(now.year, now.month, now.day, 0, 0, 0);
     final DateTime localEnd = DateTime(
@@ -197,35 +245,20 @@ class HomeController extends GetxController with CacheManager {
       59,
     );
 
-    // Supabase hamesha UTC format (.gte/lte) mangta hai accuracy ke liye
     final String startUtc = localStart.toUtc().toIso8601String();
     final String endUtc = localEnd.toUtc().toIso8601String();
 
     try {
       final response = await SupabaseConfig.from('sales')
           .select('''
-        id,
-        bill_no,
-        total_amount,
-        created_at,
-        customer_id,
+        id, bill_no, total_amount, created_at, customer_id,
         customers (name, mobile_number),
         sale_items (
-          qty,
-          final_price,
-          original_price,
-          discount_amount,
-          product_id,
-          applied_discount_percent,
-          stock_type,
-          location,
+          qty, final_price, original_price, discount_amount, product_id,
+          applied_discount_percent, stock_type, location,
           products ( name )
         ),
-        sale_payments (
-          amount,
-          payment_mode,
-          reference_no
-        )
+        sale_payments ( amount, payment_mode, reference_no )
       ''')
           .eq('user_id', userId!)
           .gte('created_at', startUtc)
@@ -233,13 +266,10 @@ class HomeController extends GetxController with CacheManager {
           .order('created_at', ascending: false);
 
       final List<dynamic> data = response as List;
-      print("Fetched Sales Count for Today: ${data.length}");
-
       return data.map((sale) {
         final List<dynamic> dbItems = sale['sale_items'] ?? [];
         final List<dynamic> dbPayments = sale['sale_payments'] ?? [];
 
-        // 2️⃣ Items Mapping
         List<SellItem> mappedItems =
             dbItems.map((item) {
               return SellItem(
@@ -255,8 +285,7 @@ class HomeController extends GetxController with CacheManager {
               );
             }).toList();
 
-        // 3️⃣ Payment Modes Calculation
-        double cash = 0, upi = 0, card = 0, credit = 0;
+        double cash = 0, upi = 0, card = 0, credit = 0, roundOffAmount = 0;
         for (var p in dbPayments) {
           String mode = p['payment_mode']?.toString().toLowerCase() ?? '';
           double amt = (p['amount'] ?? 0).toDouble();
@@ -268,22 +297,11 @@ class HomeController extends GetxController with CacheManager {
             card += amt;
           } else if (mode == 'credit') {
             credit += amt;
+          } else if (mode == 'roundoffAmount') {
+            roundOffAmount += amt;
           }
         }
 
-        PaymentModel paymentObj = PaymentModel(
-          cash: cash,
-          upi: upi,
-          card: card,
-          credit: credit,
-          totalAmount: (sale['total_amount'] ?? 0).toDouble(),
-          isRoundOff: false,
-          roundOffAmount: 0.0,
-          type:
-              dbPayments.isNotEmpty ? dbPayments.first['payment_mode'] : 'Cash',
-        );
-
-        // 4️⃣ Final SellsModel Return
         return SellsModel(
           billNo: sale['bill_no'] ?? sale['id'].toString(),
           finalAmount: (sale['total_amount'] ?? 0).toDouble(),
@@ -295,13 +313,21 @@ class HomeController extends GetxController with CacheManager {
           soldAt: sale['created_at'].toString().split('T')[0],
           time: sale['created_at'].toString().split('T')[1].split('.')[0],
           items: mappedItems,
-          payment: paymentObj,
-          isDiscountGiven: false,
-          discountValue: 0.0,
+          payment: PaymentModel(
+            roundOffAmount: roundOffAmount,
+            cash: cash,
+            upi: upi,
+            card: card,
+            credit: credit,
+            totalAmount: (sale['total_amount'] ?? 0).toDouble(),
+            type:
+                dbPayments.isNotEmpty
+                    ? dbPayments.first['payment_mode']
+                    : 'Cash',
+          ),
         );
       }).toList();
     } catch (e) {
-      print("🚨 Revenue List Error: $e");
       return [];
     }
   }
@@ -332,6 +358,6 @@ class HomeController extends GetxController with CacheManager {
         icon: CupertinoIcons.info,
         numbers: looseStock.value.toDouble(),
       ),
-    ];
+    ]; // 🔥 Ensure UI Rebuilds
   }
 }

@@ -34,7 +34,7 @@ class InventroyList extends GetView<InventoryListController> {
                       data: {'flag': true},
                     );
                     if (res == true) {
-                      // await controller.fetchAllProducts();
+                      controller.fetchAllInventory();
                     }
                   },
                   child: CommonContainer(

@@ -74,14 +74,14 @@ class ProductModel {
   });
 
   ProductModel.fromJson(Map<String, dynamic> json) {
-    id = json['id']?.toString();
-    barcode = json['barcode']?.toString();
+    id = json['id'];
+    barcode = json['barcode'];
     name = json['name']?.toString();
-    sellType = json['sell_type']?.toString();
-    location = json['location']?.toString();
-    stockType = json['stock_type']?.toString();
-    userId = json['user_id']?.toString();
-    box = json['box']?.toString();
+    sellType = json['sell_type'];
+    location = json['location'];
+    stockType = json['stock_type'];
+    userId = json['user_id'];
+    box = json['box'];
 
     // Category handling - both name and ID
     if (json['category'] is String) {
@@ -171,6 +171,7 @@ class ProductModel {
       'sell_type': sellType,
       'location': location,
       // Stock fields
+      'barcode': barcode,
       'quantity': quantity,
       'selling_price': sellingPrice,
       'purchase_price': purchasePrice,

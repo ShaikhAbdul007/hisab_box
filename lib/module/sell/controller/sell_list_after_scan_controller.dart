@@ -1,11 +1,12 @@
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../routes/route_name.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
@@ -15,7 +16,8 @@ import '../../discount/model/discount_model.dart';
 import '../../../helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
 
-class SellListAfterScanController extends GetxController with CacheManager {
+class SellListAfterScanController extends GetxController
+    with CacheManager, LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
   List<ProductModel> scannedProductDetails = [];
   RxList<DiscountModel> discountList = <DiscountModel>[].obs;
@@ -45,6 +47,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
   RxBool isOnlineLoading = false.obs;
   RxBool isAmountValidCheck = false.obs;
   RxBool isStockOver = false.obs;
+  RxBool isStockLoading = false.obs; // Added for loading state
   RxBool isDiscountGiven = false.obs;
   RxBool isPrintingLoading = false.obs;
   RxBool isSaveLoading = false.obs;
@@ -85,7 +88,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     productList.value = dataList;
     scannedProductDetails = productList;
     perProductDiscount.value = List.generate(productList.length, (i) {
-      return TextEditingController(text: '0');
+      return TextEditingController(text: dataList[i].discount.toString());
     });
     sellingPriceList.value = List.generate(productList.length, (i) {
       return productList[i].sellingPrice!.toDouble() *
@@ -116,8 +119,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
   void openPaymentDialog(double amount) {
     paymentMethodTotalAmount.value = amount;
     remainingAmount.value = amount;
-
-    // Initially only first field editable
     allEditable.value = false;
   }
 
@@ -149,12 +150,38 @@ class SellListAfterScanController extends GetxController with CacheManager {
     if (entered > total) {
       isAmountValidCheck.value = false;
       valid = false;
-      // invalid
     } else {
       isAmountValidCheck.value = true;
       valid = true;
     }
     return valid;
+  }
+
+  // 🔥 DELETE PRODUCT FROM CART (With Hive Sync)
+  void deleteProductFromCart(int index) async {
+    try {
+      // 1. Local List se remove karo
+      productList.removeAt(index);
+
+      // 2. Selling Price aur Discount controllers ki lists bhi update karo (Taaki index out of bounds na ho)
+      if (sellingPriceList.length > index) sellingPriceList.removeAt(index);
+      if (perProductDiscount.length > index) perProductDiscount.removeAt(index);
+
+      // 3. Hive (Cache Manager) mein updated list save karo
+      // Ye aapka existing 'saveCartProductList' function use karega
+      saveCartProductList(productList);
+
+      // 4. Totals recalculate karo
+      calculateTotalWithDiscount();
+
+      // 5. UI Refresh
+      productList.refresh();
+
+      showMessage(message: "Product removed from cart");
+    } catch (e) {
+      print("🚨 Delete Error: $e");
+      showMessage(message: "Could not remove product");
+    }
   }
 
   void calculateDiscount() {
@@ -187,7 +214,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
 
   void calculateTotalWithDiscount() {
     finalTotal.value = 0; // reset first
-    if (sellingPriceList.length.isGreaterThan(0)) {
+    if (sellingPriceList.isNotEmpty) {
       for (int i = 0; i < sellingPriceList.length; i++) {
         finalTotal.value += sellingPriceList[i];
       }
@@ -196,49 +223,40 @@ class SellListAfterScanController extends GetxController with CacheManager {
     }
   }
 
+  // 🔥 UPDATE QUANTITY WITH HIVE FALLBACK & SYNC
   Future<void> updateQuantity(bool isIncrement, int index) async {
     isStockOver.value = false;
     var current = productList[index];
-
-    // 🎯 DEBUG: Console mein check karo ID aa rahi hai ya nahi
-    print("🔍 Checking Live Stock for ID: ${current.id}");
-
     double availableQty = 0.0;
+    bool isLoose = current.sellType?.toLowerCase() == 'loose';
 
     try {
-      if (current.sellType?.toLowerCase() == 'loose') {
-        // --- DIRECT SUPABASE CHECK (Loose) ---
-        final looseRes =
-            await SupabaseConfig.from('loose_stocks')
+      // 1. FALLBACK: Pehle Hive se stock check karo (Multiple Barcode logic handle ho jayegi)
+      var localStock = LocalService.getLocalStock(current.id ?? '', isLoose);
+
+      if (localStock != null) {
+        availableQty = localStock;
+      } else {
+        // 2. Agar Hive mein nahi hai, toh Supabase se fetch karo
+        final table = isLoose ? 'loose_stocks' : 'product_stock';
+        final res =
+            await SupabaseConfig.from(table)
                 .select('quantity')
                 .eq('product_id', current.id ?? '')
                 .maybeSingle();
 
-        if (looseRes == null) {
-          showSnackBar(error: "Loose product stock not found in Database");
-          return;
-        }
         availableQty =
-            double.tryParse(looseRes['quantity']?.toString() ?? '0.0') ?? 0.0;
-      } else {
-        // --- DIRECT SUPABASE CHECK (Packet) ---
-        final stockRes =
-            await SupabaseConfig.from('product_stock')
-                .select('quantity')
-                .eq('product_id', current.id ?? "")
-                .eq('stock_type', 'packet')
-                .eq('location', 'shop')
-                .maybeSingle();
+            double.tryParse(res?['quantity']?.toString() ?? '0.0') ?? 0.0;
 
-        if (stockRes == null) {
-          showSnackBar(error: "Packet stock not found in Database");
-          return;
-        }
-        availableQty =
-            double.tryParse(stockRes['quantity']?.toString() ?? '0.0') ?? 0.0;
+        // 3. Hive mein save kar do for next time
+        await LocalService.updateLocalStock(
+          current.id ?? '',
+          availableQty,
+          isLoose,
+        );
       }
 
-      // 2. Increment/Decrement Logic
+      // Logic for Increment/Decrement
       if (isIncrement) {
         if ((current.quantity ?? 0) < availableQty) {
           current.quantity = (current.quantity ?? 0) + 1;
@@ -253,16 +271,15 @@ class SellListAfterScanController extends GetxController with CacheManager {
         }
       }
 
-      // 3. UI Update and Save Cart
+      // UI Update and Hive Cart Update
       productList[index] = current;
-      saveCartProductList(productList); // Cart save karna zaroori hai
+      saveCartProductList(productList);
 
       discountCalculateAsPerProduct(index);
       calculateTotalWithDiscount();
       productList.refresh();
     } catch (e) {
-      print("🚨 Live Update Error: $e");
-      showSnackBar(error: "Connection error. Please try again.");
+      print("🚨 Stock Error: $e");
     }
   }
 
@@ -284,16 +301,28 @@ class SellListAfterScanController extends GetxController with CacheManager {
     }
   }
 
+  // 🔥 FETCH DISCOUNTS WITH HIVE FALLBACK
   Future<void> fetchDiscounts() async {
     if (userId == null) return;
 
+    // 1. Pehle Hive se uthao
+    var localDiscounts = LocalService.getDiscountsFromLocal();
+    if (localDiscounts.isNotEmpty) {
+      discountList.value = localDiscounts;
+    }
+
     try {
+      // 2. Background mein Supabase se fetch karo sync rakhne ke liye
       final response = await SupabaseConfig.from(
         'discounts',
       ).select('*').eq('user_id', userId!);
 
-      discountList.value =
+      var freshDiscounts =
           response.map((data) => DiscountModel.fromJson(data)).toList();
+      discountList.value = freshDiscounts;
+
+      // 3. Hive Update
+      await LocalService.saveDiscountsToLocal(freshDiscounts);
     } catch (e) {
       customMessageOrErrorPrint(message: "Discount Error: $e");
     }
@@ -303,66 +332,32 @@ class SellListAfterScanController extends GetxController with CacheManager {
     required String userId,
     required ProductModel product,
   }) async {
-    try {
-      if (product.sellType?.toLowerCase() == 'loose') {
-        // Loose stock update
-        final response =
-            await SupabaseConfig.from('loose_stocks')
-                .select('id, quantity')
-                .eq('user_id', userId)
-                .eq('product_id', product.id ?? product.barcode ?? '')
-                .maybeSingle();
+    bool isLoose = product.sellType?.toLowerCase() == 'loose';
+    String table = isLoose ? 'loose_stocks' : 'product_stock';
 
-        if (response == null) {
-          throw Exception("Loose product not found: ${product.barcode}");
-        }
+    final response =
+        await SupabaseConfig.from(table)
+            .select('id, quantity')
+            .eq('user_id', userId)
+            .eq('product_id', product.id ?? '')
+            .maybeSingle();
 
-        final currentQty = response['quantity'] ?? 0;
-        final sellQty = product.quantity ?? 1;
+    if (response == null) throw Exception("Product not found");
 
-        if (currentQty < sellQty) {
-          throw Exception("Not enough loose stock for ${product.name}");
-        }
+    double currentQty = (response['quantity'] ?? 0).toDouble();
+    double sellQty = (product.quantity ?? 1).toDouble();
+    double newQty = currentQty - sellQty;
 
-        return {
-          'table': 'loose_stocks',
-          'id': response['id'],
-          'newQty': currentQty - sellQty,
-          'productId': product.id ?? product.barcode ?? '',
-        };
-      } else {
-        // Regular product stock update
-        final response =
-            await SupabaseConfig.from('product_stock')
-                .select('id, quantity')
-                .eq('user_id', userId)
-                .eq('product_id', product.id ?? product.barcode ?? '')
-                .maybeSingle();
-
-        if (response == null) {
-          throw Exception("Product not found: ${product.barcode}");
-        }
-
-        final currentQty = response['quantity'] ?? 0;
-        final sellQty = product.quantity ?? 1;
-
-        if (currentQty < sellQty) {
-          throw Exception("Not enough stock for ${product.name}");
-        }
-
-        return {
-          'table': 'product_stock',
-          'id': response['id'],
-          'newQty': currentQty - sellQty,
-          'productId': product.id ?? product.barcode ?? '',
-        };
-      }
-    } catch (e) {
-      print(e.toString());
-      throw Exception("Stock check failed: $e");
-    }
+    return {
+      'table': table,
+      'id': response['id'],
+      'newQty': newQty,
+      'productId': product.id ?? '',
+      'isLoose': isLoose,
+    };
   }
 
+  // 🔥 CONFIRM SALE WITH HIVE SYNC
   Future<bool> confirmSale({
     required List<SellItem> sellItems,
     required RxBool isLoading,
@@ -371,7 +366,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
     if (userId == null) return false;
 
     try {
-      // 1. Stock Updates & Calculations
       List<Map<String, dynamic>> stockUpdates = [];
       double itemsTotalAmount = 0;
 
@@ -392,20 +386,13 @@ class SellListAfterScanController extends GetxController with CacheManager {
         (itemsTotalAmount - roundOff).toStringAsFixed(2),
       );
 
-      // 2. Build Smart Payment Record (Matching your New Table Columns)
       double cash = double.tryParse(cashPaidController.text) ?? 0;
       double upi = double.tryParse(upiPaidController.text) ?? 0;
       double card = double.tryParse(cardPaidController.text) ?? 0;
       double credit = double.tryParse(creditPaidController.text) ?? 0;
 
-      // Check if partial
-      int modesCount = 0;
-      if (cash > 0) modesCount++;
-      if (upi > 0) modesCount++;
-      if (card > 0) modesCount++;
-      if (credit > 0) modesCount++;
+      int modesCount = [cash, upi, card, credit].where((m) => m > 0).length;
 
-      // 🎯 Ye Map aapke RPC ke JSONB parameter mein jayega
       List<Map<String, dynamic>> paymentRecords = [
         {
           'payment_mode':
@@ -428,18 +415,13 @@ class SellListAfterScanController extends GetxController with CacheManager {
         },
       ];
 
-      // 3. Build Sale Items
-      // 3. Build Sale Items (Keys exact database columns se match honi chahiye)
       final saleItemsData =
           sellItems
               .map(
                 (item) => {
                   'product_id': item.id,
                   'qty': item.quantity,
-                  'original_price':
-                      item.originalPrice ??
-                      item.finalPrice ??
-                      0, // 👈 Null check add kiya
+                  'original_price': item.originalPrice ?? item.finalPrice ?? 0,
                   'discount_amount':
                       (item.originalPrice ?? 0) - (item.finalPrice ?? 0),
                   'final_price': item.finalPrice ?? 0,
@@ -451,55 +433,120 @@ class SellListAfterScanController extends GetxController with CacheManager {
               )
               .toList();
 
-      // 4. 🔥 EXECUTE TRANSACTION
+      // EXECUTE TRANSACTION
       final dynamic response = await SupabaseConfig.client.rpc(
         'process_sale_transaction',
         params: {
           'p_user_id': userId,
           'p_total_amount': finalPayable,
           'p_sale_items': saleItemsData,
-          'p_payments': paymentRecords, // 🎯 Full Settlement Data sent here
+          'p_payments': paymentRecords,
           'p_stock_updates': stockUpdates,
         },
       );
 
       final Map<String, dynamic> result = jsonDecode(response.toString());
 
-      final int databaseBillNo = result['bill_no'];
+      // =========================================================================
+      // 🟢 START: NEW LOCAL SYNC LOGIC (Dashboard & Report Updates)
+      // =========================================================================
 
-      // 5. Print Data
-      final paymentMapForPrint = buildPaymentMap(
-        totalAmount: itemsTotalAmount,
-        cashPaid: cash,
-        upiPaid: upi,
-        cardPaid: card,
-        creditPaid: credit,
-        roundOffPaid: roundOff,
-      );
+      // 1. [NEW] Aaj ki date nikaalo Hive key ke liye
+      final String todayDate = setFormateDate('yyyy-MM-dd');
+
+      // 2. [NEW] Nayi sale ka data SaleModel ke format mein ready karo (Recent Activity ke liye)
+      final newSaleForLocal = {
+        'billNo': result['bill_no'].toString(),
+        'soldAt': setFormateDate(),
+        'time': setFormateDate('hh:mm:ss a'),
+        'amountAfterDiscount': finalPayable,
+        'amount': itemsTotalAmount,
+        'barcode': sellItems.isNotEmpty ? sellItems.first.barcode : '',
+        'name':
+            sellItems.length > 1
+                ? "Multiple Items"
+                : (sellItems.isNotEmpty ? sellItems.first.name : "Sale"),
+        'quantity': sellItems.length,
+        'category': '',
+        'animalType': '',
+        'flavor': '',
+        'weight': '',
+        'discountValue': 0.0,
+        'sellingPrice': finalPayable,
+      };
+
+      // 3. [NEW] Today's Sales list update karo (Home Screen ki bottom list)
+      List<SaleModel> currentTodaySales = LocalService.getTodaySales(todayDate);
+      currentTodaySales.insert(0, SaleModel.fromMap(newSaleForLocal));
+      await LocalService.saveTodaySales(todayDate, currentTodaySales);
+
+      // 4. [NEW] Dashboard Stats update karo (Home & Overview cards: Cash, UPI, Credit)
+      Map<String, dynamic> stats = LocalService.getDailyReportStats();
+      stats['total_sales'] =
+          (double.tryParse(stats['total_sales']?.toString() ?? '0.0') ?? 0.0) +
+          finalPayable;
+      stats['cash_total'] =
+          (double.tryParse(stats['cash_total']?.toString() ?? '0.0') ?? 0.0) +
+          cash;
+      stats['upi_total'] =
+          (double.tryParse(stats['upi_total']?.toString() ?? '0.0') ?? 0.0) +
+          upi;
+      stats['card_total'] =
+          (double.tryParse(stats['card_total']?.toString() ?? '0.0') ?? 0.0) +
+          card;
+      stats['credit_total'] =
+          (double.tryParse(stats['credit_total']?.toString() ?? '0.0') ?? 0.0) +
+          credit;
+      await LocalService.saveDailyReportStats(stats);
+
+      // 5. [NEW] Stock & Out of Stock update (Dashboard card "Out of Stock")
+      List<ProductModel> outOfStockList =
+          LocalService.getCachedOutOfStockProducts();
+      for (var update in stockUpdates) {
+        await LocalService.updateStock(
+          update['productId'],
+          update['newQty'],
+        ); // Local stock update
+
+        if (update['newQty'] <= 0) {
+          // Agar stock 0 hua, toh out of stock list mein add karo
+          var product = productList.firstWhere(
+            (p) => p.id == update['productId'],
+          );
+          if (!outOfStockList.any((p) => p.id == product.id)) {
+            outOfStockList.add(product);
+          }
+        }
+      }
+      await LocalService.saveOutOfStockProducts(outOfStockList);
+
+      // =========================================================================
+      // 🔴 END: NEW LOCAL SYNC LOGIC
+      // =========================================================================
 
       final saleData = {
-        'billNo': databaseBillNo,
+        'billNo': result['bill_no'],
         'soldAt': setFormateDate(),
         'time': setFormateDate('hh:mm:ss a'),
         'totalAmount': finalPayable,
-        'payment': paymentMapForPrint,
+        'payment': buildPaymentMap(
+          totalAmount: itemsTotalAmount,
+          cashPaid: cash,
+          upiPaid: upi,
+          cardPaid: card,
+          creditPaid: credit,
+          roundOffPaid: roundOff,
+        ),
         'items': sellItems.map((e) => e.toJson()).toList(),
       };
 
       printInvoice.value = PrintInvoiceModel.fromJson(saleData);
       scannedProductDetails.clear();
-
-      // Clear controllers after success
-      cashPaidController.clear();
-      upiPaidController.clear();
-      cardPaidController.clear();
-      creditPaidController.clear();
-      roundOffPaidController.clear();
+      clear();
 
       return true;
     } catch (e) {
       print("🚨 Sale Failed: $e");
-      showMessage(message: "Sale Error: $e");
       return false;
     } finally {
       isLoading.value = false;
@@ -514,26 +561,20 @@ class SellListAfterScanController extends GetxController with CacheManager {
     required num creditPaid,
     required num roundOffPaid,
   }) {
-    int paymentCount = 0;
-    if (cashPaid > 0) paymentCount++;
-    if (upiPaid > 0) paymentCount++;
-    if (cardPaid > 0) paymentCount++;
-    if (creditPaid > 0) paymentCount++;
-    String type;
-    if (paymentCount > 1) {
-      type = "partial";
-    } else if (cashPaid > 0) {
-      type = "cash";
-    } else if (upiPaid > 0) {
-      type = "upi";
-    } else if (cardPaid > 0) {
-      type = "card";
-    } else if (creditPaid > 0) {
-      type = "credit";
-    } else {
-      type = "unknown";
-    }
-    bool isRoundOffApplied = roundOffPaid != 0;
+    int count =
+        [cashPaid, upiPaid, cardPaid, creditPaid].where((m) => m > 0).length;
+    String type =
+        count > 1
+            ? "partial"
+            : (cashPaid > 0
+                ? "cash"
+                : upiPaid > 0
+                ? "upi"
+                : cardPaid > 0
+                ? "card"
+                : creditPaid > 0
+                ? "credit"
+                : "unknown");
 
     return {
       "type": type.capitalizeFirst,
@@ -543,21 +584,21 @@ class SellListAfterScanController extends GetxController with CacheManager {
       "card": cardPaid,
       "credit": creditPaid,
       "roundOffAmount": roundOffPaid,
-      "isRoundOff": isRoundOffApplied,
+      "isRoundOff": roundOffPaid != 0,
     };
   }
 
   List<SellItem> getPrintReadyList() {
+    sellList.clear();
     for (int i = 0; i < productList.length; i++) {
       var p = productList[i];
-      var discount = int.parse(perProductDiscount[i].text);
       sellList.add(
         SellItem(
           name: p.name,
           quantity: p.quantity?.toInt() ?? 0,
           originalPrice: p.sellingPrice,
           originalDiscount: p.discount,
-          discount: discount,
+          discount: int.tryParse(perProductDiscount[i].text) ?? 0,
           finalPrice: sellingPriceList[i],
           category: p.category,
           barcode: p.barcode.toString(),
@@ -577,544 +618,3 @@ class SellListAfterScanController extends GetxController with CacheManager {
     return sellList;
   }
 }
-
-
-
- //updateDashboardRevenue(finalAmount);
-
-      // removelooseInvetoryKeyModel();
-      //removePoductModel();
-
-// void updateQuantity(bool isIncrement, int index) async {
-  //   int? pexistingQty;
-  //   int? existingLooseQty;
-  //   final uid = _auth.currentUser?.uid;
-  //   isStockOver.value = false;
-  //   final productRef = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('products')
-  //       .doc(productList[index].barcode);
-  //   final looseProductRef = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('looseProducts')
-  //       .doc(productList[index].barcode);
-  //   final existingDoc = await productRef.get();
-  //   final existingLooseDoc = await looseProductRef.get();
-  //   if (existingDoc.exists) {
-  //     pexistingQty = existingDoc['quantity'];
-  //   }
-  //   if (existingLooseDoc.exists) {
-  //     existingLooseQty = existingLooseDoc['quantity'];
-  //   }
-  //   var current = productList[index];
-  //   if (isIncrement) {
-  //     if (pexistingQty != null) {
-  //       if ((current.quantity ?? 0) < pexistingQty) {
-  //         current.quantity = (current.quantity ?? 0) + 1;
-  //       } else {
-  //         isStockOver.value = true;
-  //         showSnackBar(
-  //           error:
-  //               "Product is out of stock\nYou cannot add more than available stock.",
-  //         );
-  //       }
-  //     } else if (existingLooseQty != null) {
-  //       if ((current.quantity ?? 0) < existingLooseQty) {
-  //         current.quantity = (current.quantity ?? 0) + 1;
-  //       } else {
-  //         isStockOver.value = true;
-  //         showSnackBar(
-  //           error:
-  //               "Product is out of stock\nYou cannot add more than available stock.",
-  //         );
-  //       }
-  //     }
-  //   } else {
-  //     if ((current.quantity ?? 1) > 1) {
-  //       current.quantity = (current.quantity ?? 1) - 1;
-  //     }
-  //   }
-  //   productList[index] = current;
-  //   saveCartProductList(productList);
-  //   discountCalculateAsPerProduct(index);
-  //   calculateTotalWithDiscount();
-  // }
-
-  // Future<void> updateQuantity(bool isIncrement, int index) async {
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-
-  //   isStockOver.value = false;
-  //   var current = productList[index];
-
-  //   int availableQty = 0;
-
-  //   // ===============================
-  //   // 1️⃣ FETCH STOCK BASED ON sellType
-  //   // ===============================
-  //   if (current.sellType?.toLowerCase() == 'loose') {
-  //     final looseRef = FirebaseFirestore.instance
-  //         .collection('users')
-  //         .doc(uid)
-  //         .collection('looseProducts')
-  //         .doc(current.barcode);
-
-  //     final snap = await looseRef.get();
-  //     if (!snap.exists) {
-  //       showSnackBar(error: "Loose product stock not found");
-  //       return;
-  //     }
-
-  //     availableQty = snap['quantity'] ?? 0;
-  //   } else {
-  //     final productRef =
-  //         FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('products')
-  //             .where('barcode', isEqualTo: current.barcode)
-  //             .limit(1)
-  //             .get();
-
-  //     final query = await productRef;
-  //     if (query.docs.isEmpty) {
-  //       showSnackBar(error: "Product stock not found");
-  //       return;
-  //     }
-
-  //     availableQty = query.docs.first['quantity'] ?? 0;
-  //   }
-
-  //   // ===============================
-  //   // 2️⃣ UPDATE QTY
-  //   // ===============================
-  //   if (isIncrement) {
-  //     if ((current.quantity ?? 0) < availableQty) {
-  //       current.quantity = (current.quantity ?? 0) + 1;
-  //     } else {
-  //       isStockOver.value = true;
-  //       showSnackBar(
-  //         error:
-  //             "Product is out of stock\nYou cannot add more than available stock.",
-  //       );
-  //       return;
-  //     }
-  //   } else {
-  //     if ((current.quantity ?? 1) > 1) {
-  //       current.quantity = (current.quantity ?? 1) - 1;
-  //     }
-  //   }
-
-  //   // ===============================
-  //   // 3️⃣ SAVE & RECALCULATE
-  //   // ===============================
-  //   productList[index] = current;
-  //   saveCartProductList(productList);
-
-  //   discountCalculateAsPerProduct(index);
-  //   calculateTotalWithDiscount();
-  // }
-
-  // 🚀 REMOVED - Bill generation now inside main transaction
-  // Future<String> generateBillNo() async {
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return "HBX0001";
-
-  //   final counterRef = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('bill')
-  //       .doc('billNo');
-
-  //   return FirebaseFirestore.instance.runTransaction((transaction) async {
-  //     final snapshot = await transaction.get(counterRef);
-
-  //     int newBillNo = 1;
-
-  //     if (snapshot.exists) {
-  //       newBillNo = (snapshot.data()?['lastBillNo'] ?? 0) + 1;
-  //     }
-
-  //     transaction.set(counterRef, {'lastBillNo': newBillNo});
-
-  //     return "HB-$newBillNo";
-  //   });
-  // }
-
-  // 🚀 REMOVED - Products fetched from cache only
-  // Future<void> fetchAllProducts() async {
-  //   final uid = _auth.currentUser?.uid;
-  //   final productSnapshot =
-  //       await FirebaseFirestore.instance
-  //           .collection('users')
-  //           .doc(uid)
-  //           .collection('products')
-  //           .where('quantity')
-  //           .get();
-  //   var productLists =
-  //       productSnapshot.docs
-  //           .map((doc) => ProductModel.fromJson(doc.data()))
-  //           .toList();
-  //   saveProductList(productLists);
-  // }
-
-
-
-  // Future<bool> confirmSale({
-  //   required List<SellItem> sellItems,
-  //   required RxBool isLoading,
-  // }) async {
-  //   isLoading.value = true;
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return false;
-  //   try {
-  //     var now = DateTime.now();
-  //     String formatDate = DateFormat('dd-MM-yyyy').format(now);
-  //     String formatTime = DateFormat('hh:mm:ss a').format(now);
-  //     List<Map<String, dynamic>> productUpdates = [];
-  //     List<Map<String, dynamic>> items = []; // 👈 all items in one list
-  //     double totalAmount = 0;
-  //     double finalAmount = 0;
-  //     // 🔹 STEP 1: Process each scanned product
-  //     for (var product in scannedProductDetails) {
-  //       if (product.barcode == null && product.id == null) continue;
-  //       DocumentReference? productRef;
-  //       Map<String, dynamic> productData = {};
-  //       // 🔹 Fetch product details & update logic
-  //       if (product.isLooseCategory == true || product.isLoosed == false) {
-  //         // Loose Category Product
-  //         productData = {
-  //           'name': product.name ?? "",
-  //           'category': product.category ?? "Loose Category",
-  //           'flavours': product.flavor ?? "",
-  //           'weight': product.weight ?? "0.0",
-  //           'box': product.box ?? "0.0",
-  //         };
-  //       }
-  //        else if (product.isLoosed == true ||
-  //           product.isLooseCategory == false) {
-  //         // Loose Product (from looseProducts)
-  //         productRef = FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('looseProducts')
-  //             .doc(product.barcode);
-  //         final snapshot = await productRef.get();
-  //         if (!snapshot.exists) {
-  //           showMessage(message: "❌ Loose product not found: ${product.id}");
-  //           return false;
-  //         }
-  //         productData = snapshot.data() as Map<String, dynamic>;
-  //         int currentQty = productData['quantity'] ?? 0;
-  //         if (currentQty < (product.quantity ?? 1)) {
-  //           showMessage(
-  //             message: "❌ Not enough stock for ${productData['name']}",
-  //           );
-  //           return false;
-  //         }
-  //         // Add update for transaction
-  //         productUpdates.add({
-  //           "ref": productRef,
-  //           "newQty": currentQty - (product.quantity ?? 1),
-  //         });
-  //       }
-  //       else {
-  //         // Normal Product (from products collection)
-  //         final querySnapshot =
-  //             await FirebaseFirestore.instance
-  //                 .collection('users')
-  //                 .doc(uid)
-  //                 .collection('products')
-  //                 .where('barcode', isEqualTo: product.barcode)
-  //                 .limit(1)
-  //                 .get();
-
-  //         if (querySnapshot.docs.isEmpty) {
-  //           showMessage(message: "❌ Product not found: ${product.barcode}");
-  //           return false;
-  //         }
-
-  //         final snapshot = querySnapshot.docs.first;
-  //         productRef = snapshot.reference;
-  //         productData = snapshot.data();
-
-  //         int currentQty = productData['quantity'] ?? 0;
-  //         if (currentQty < (product.quantity ?? 1)) {
-  //           showMessage(
-  //             message: "❌ Not enough stock for ${productData['name']}",
-  //           );
-  //           return false;
-  //         }
-
-  //         productUpdates.add({
-  //           "ref": productRef,
-  //           "newQty": currentQty - (product.quantity ?? 1),
-  //         });
-  //       }
-  //     }
-
-  //     // 🔹 Generate Bill Number
-  //     String newBillNo = await generateBillNo();
-
-  //     // 🔹 STEP 2: Update inventory in transaction
-  //     await FirebaseFirestore.instance.runTransaction((transaction) async {
-  //       for (var update in productUpdates) {
-  //         transaction.update(update['ref'], {
-  //           'quantity': update['newQty'],
-  //           'updatedDate': formatDate,
-  //           'updatedTime': formatTime,
-  //         });
-  //       }
-  //     });
-  //     for (var item in sellItems) {
-  //       totalAmount += item.originalPrice ?? 0;
-  //       finalAmount += item.finalPrice ?? 0;
-  //     }
-
-  //     // 🔹 STEP 3: Save final sale document
-  //     final paymentData = buildPaymentMap(
-  //       totalAmount: totalAmount,
-  //       roundOffPaid: double.parse(roundOffPaidController.text),
-  //       cashPaid: double.parse(cashPaidController.text),
-  //       upiPaid: double.parse(upiPaidController.text),
-  //       cardPaid: double.parse(cardPaidController.text),
-  //       creditPaid: double.parse(creditPaidController.text),
-  //     );
-
-  //     double roundOffAmount = double.tryParse(roundOffPaidController.text) ?? 0;
-  //     double finalPayableAmount = double.parse(
-  //       (finalAmount - roundOffAmount).toStringAsFixed(2),
-  //     );
-  //     final saleData = {
-  //       'billNo': newBillNo,
-  //       'soldAt': formatDate,
-  //       'time': formatTime,
-  //       'totalAmount': totalAmount,
-  //       'discount': isDiscountGiven.value,
-  //       'discountValue': discountValue.value,
-  //       'finalAmount': finalPayableAmount,
-  //       'itemsCount': items.length,
-  //       'items': sellItems.map((e) => e.toJson()).toList(),
-  //       'payment': paymentData,
-  //     };
-  //     printInvoice.value = PrintInvoiceModel.fromJson(saleData);
-  //     await FirebaseFirestore.instance
-  //         .collection('users')
-  //         .doc(uid)
-  //         .collection('sales')
-  //         .add(saleData);
-  //     fetchAllProducts();
-  //     scannedProductDetails.clear();
-  //     return true;
-  //   } catch (e) {
-  //     showMessage(message: "❌ Error: ${e.toString()}");
-  //     return false;
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
-
-// Future<void> fetchLooseCategory() async {
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-
-  //   try {
-  //     final snapshot =
-  //         await FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('looseSellCategory')
-  //             .get();
-
-  //     looseCategoryModelList.value =
-  //         snapshot.docs.map((doc) {
-  //           final data = doc.data();
-  //           data['id'] = doc.id;
-  //           return LooseCategoryModel.fromJson(data);
-  //         }).toList();
-  //   } on FirebaseAuthException catch (e) {
-  //     showMessage(message: e.toString());
-  //   } finally {}
-  // }
-
-
-// Future<bool> confirmSale({required String paymentMethod}) async {
-  //   isSaleLoading.value = false;
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return false;
-
-  //   try {
-  //     var now = DateTime.now();
-  //     String formatDate = DateFormat('dd-MM-yyyy').format(now);
-  //     String formatTime = DateFormat('hh:mm a').format(now);
-
-  //     List<Map<String, dynamic>> saleLogs = [];
-  //     List<Map<String, dynamic>> productUpdates = [];
-
-  //     // 🔹 STEP 1: Sare products process karo
-  //     for (var product in scannedProductDetails) {
-  //       print(product.name);
-  //       print(product.isLooseCategory);
-  //       print(product.isLoosed);
-  //       print(product.barcode);
-  //       if (product.barcode == null && product.id == null) continue;
-
-  //       DocumentReference? productRef;
-  //       Map<String, dynamic> productData = {};
-
-  //       if (product.isLooseCategory == true || product.isLoosed == false) {
-  //         // 🔹 Loose Category (no stock check, no inventory update)
-  //         productData = {
-  //           'name': product.name ?? "",
-  //           'category': product.category ?? "Loose Category",
-  //           'flavours': product.flavor ?? "",
-  //           'weight': product.weight ?? "0.0",
-  //           'box': product.box ?? "0.0",
-  //         };
-  //       } else if (product.isLoosed == true ||
-  //           product.isLooseCategory == false) {
-  //         // 🔹 Loose Product
-  //         productRef = FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('looseProducts')
-  //             .doc(product.barcode);
-
-  //         final snapshot = await productRef.get();
-  //         if (!snapshot.exists) {
-  //           showMessage(message: "❌ Loose product not found: ${product.id}");
-  //           return false;
-  //         }
-
-  //         productData = snapshot.data() as Map<String, dynamic>;
-  //         int currentQty = productData['quantity'] ?? 0;
-  //         if (currentQty < (product.quantity ?? 1)) {
-  //           showMessage(
-  //             message: "❌ Not enough stock for ${productData['name']}",
-  //           );
-  //           return false;
-  //         }
-
-  //         // 🔹 Update list me store karo
-  //         productUpdates.add({
-  //           "ref": productRef,
-  //           "newQty": currentQty - (product.quantity ?? 1),
-  //         });
-  //       } else {
-  //         // 🔹 Normal Product
-  //         final querySnapshot =
-  //             await FirebaseFirestore.instance
-  //                 .collection('users')
-  //                 .doc(uid)
-  //                 .collection('products')
-  //                 .where('barcode', isEqualTo: product.barcode)
-  //                 .limit(1)
-  //                 .get();
-
-  //         if (querySnapshot.docs.isEmpty) {
-  //           showMessage(message: "❌ Product not found: ${product.barcode}");
-  //           return false;
-  //         }
-
-  //         final snapshot = querySnapshot.docs.first;
-  //         productRef = snapshot.reference;
-  //         productData = snapshot.data();
-
-  //         int currentQty = productData['quantity'] ?? 0;
-  //         if (currentQty < (product.quantity ?? 1)) {
-  //           showMessage(
-  //             message: "❌ Not enough stock for ${productData['name']}",
-  //           );
-  //           return false;
-  //         }
-
-  //         // 🔹 Update list me store karo
-  //         productUpdates.add({
-  //           "ref": productRef,
-  //           "newQty": currentQty - (product.quantity ?? 1),
-  //         });
-  //       }
-  //       String newBillNo =
-  //           'HBX${billNo.value}${DateTime.now().millisecondsSinceEpoch}';
-
-  //       // 🔹 Sale log banao (sab me common)
-  //       saleLogs.add({
-  //         'billNo': newBillNo,
-  //         'paymentMethod': paymentMethod,
-  //         'barcode': product.barcode ?? "",
-  //         'name': productData['name'] ?? "",
-  //         'quantity': product.quantity ?? 1,
-  //         'category': productData['category'] ?? "",
-  //         'flavor': productData['flavours'] ?? "",
-  //         'weight': productData['weight'] ?? "0.0",
-  //         'soldAt': formatDate,
-  //         'time': formatTime,
-  //         'box': productData['box'] ?? "0.0",
-  //         'sellingPrice': product.sellingPrice ?? 0,
-  //         'amount': (product.sellingPrice ?? 0) * (product.quantity ?? 1),
-  //         'discount': isDiscountGiven.value,
-  //         'discountValue': discountValue.value,
-  //         'finalAmount':
-  //             isDiscountGiven.value
-  //                 ? discountPrice.value
-  //                 : (product.sellingPrice ?? 0) * (product.quantity ?? 1),
-  //         'isLoose': product.isLoosed ?? false,
-  //         'isLooseCategory': product.isLooseCategory ?? false,
-  //       });
-  //     }
-
-  //     // 🔹 STEP 2: Transaction me sirf updates karo
-  //     await FirebaseFirestore.instance.runTransaction((transaction) async {
-  //       for (var update in productUpdates) {
-  //         transaction.update(update['ref'], {
-  //           'quantity': update['newQty'],
-  //           'updatedDate': formatDate,
-  //           'updatedTime': formatTime,
-  //         });
-  //       }
-  //     });
-
-  //     // 🔹 STEP 3: Sale logs save karo
-  //     for (var log in saleLogs) {
-  //       await FirebaseFirestore.instance
-  //           .collection('users')
-  //           .doc(uid)
-  //           .collection('sales')
-  //           .add(log);
-  //     }
-
-  //     scannedProductDetails.clear();
-  //     return true;
-  //   } catch (e) {
-  //     showMessage(message: "❌ Error: ${e.toString()}");
-  //     return false;
-  //   } finally {
-  //     isSaleLoading.value = false;
-  //   }
-  // }
-
-
-  // Future<void> fetchDiscounts() async {
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-
-  //   try {
-  //     final snapshot =
-  //         await FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(uid)
-  //             .collection('discounts')
-  //             .get();
-  //     discountList.value =
-  //         snapshot.docs.map((doc) {
-  //           final data = doc.data();
-  //           data['id'] = doc.id;
-  //           return DiscountModel.fromJson(data);
-  //         }).toList();
-  //   } on FirebaseAuthException catch (e) {
-  //     showMessage(message: e.toString());
-  //   }
-  // }

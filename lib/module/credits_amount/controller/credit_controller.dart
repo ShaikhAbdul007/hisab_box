@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 
@@ -13,7 +14,7 @@ class CredtiController extends GetxController with CacheManager {
 
   @override
   void onInit() {
-    fetchCreditCustomers();
+    fetchCreditReports();
     super.onInit();
   }
 
@@ -35,70 +36,55 @@ class CredtiController extends GetxController with CacheManager {
   // ===================================================
   // 🔥 CACHE FIRST → FIREBASE FALLBACK
   // ===================================================
-  Future<void> fetchCreditCustomers() async {
+  Future<void> fetchCreditReports() async {
     try {
       customDataLoading.value = true;
 
-      // 1️⃣ SUPABASE QUERY
-      // Hum customers uthayenge aur unke sales aur un sales ke payments join karenge
-      final response = await SupabaseConfig.from('customers')
+      // 🎯 Filter 'sales' table ke 'user_id' par lagaya hai kyunki payment mein nahi hai
+      final response = await SupabaseConfig.from('sale_payments')
           .select('''
-          id, 
-          name, 
-          mobile_number, 
-          address,
-          sales (
-            id,
-            total_amount,
-            created_at,
-            sale_payments (
-              credit_amount,
-              created_at
+          credit_amount,
+          created_at,
+          payment_mode,
+          sales!inner (
+            bill_no,
+            user_id,
+            customers (
+              name,
+              mobile_number
             )
           )
         ''')
-          .eq('user_id', uid);
+          .gt('credit_amount', 0)
+          .eq('sales.user_id', uid) // 🔥 YE CHANGE KIYA HAI
+          .order('created_at', ascending: false);
 
       final List data = response as List;
       List<CustomerDetails> creditList = [];
 
-      // 2️⃣ MAPPING & CALCULATING CREDIT
-      for (var customer in data) {
-        double totalPendingCredit = 0;
-        List<dynamic> sales = customer['sales'] ?? [];
+      for (var item in data) {
+        double amount =
+            double.tryParse(item['credit_amount'].toString()) ?? 0.0;
+        var saleObj = item['sales'];
+        var customerObj = saleObj != null ? saleObj['customers'] : null;
 
-        for (var sale in sales) {
-          List<dynamic> payments = sale['sale_payments'] ?? [];
-          for (var payment in payments) {
-            double credit = (payment['credit_amount'] ?? 0).toDouble();
-            if (credit > 0) {
-              totalPendingCredit += credit;
-            }
-          }
-        }
-        // Agar customer par udhaari hai, toh hi list mein add karo
-        if (totalPendingCredit > 0) {
-          creditList.add(
-            CustomerDetails(
-              id: customer['id'],
-              name: customer['name'],
-              //  mobileNumber: customer['mobile_number'],
-              address: customer['address'],
-              totalCredit:
-                  totalPendingCredit, // Ye field aapke model mein honi chahiye
-              //  lastTransactionDate: lastCreditDate,
-            ),
-          );
-        }
+        String displayName =
+            (customerObj != null && customerObj['name'] != null)
+                ? customerObj['name']
+                : "Walk-in (Bill #${saleObj['bill_no']})";
+
+        creditList.add(
+          CustomerDetails(
+            name: displayName,
+            totalCredit: amount,
+            address: formatDateTime(item['created_at'].toString()), // Kab diya
+          ),
+        );
       }
 
-      // 3️⃣ SORTING (Sabse zyada udhaari wala upar)
-      creditList.sort((a, b) => b.totalCredit.compareTo(a.totalCredit));
-
-      customerDetailList.value = creditList;
+      customerDetailList.assignAll(creditList);
     } catch (e) {
-      print("🚨 Fetch Credit Customers Error: $e");
-      customerDetailList.clear();
+      print("🚨 Detailed Credit Error: $e");
     } finally {
       customDataLoading.value = false;
     }

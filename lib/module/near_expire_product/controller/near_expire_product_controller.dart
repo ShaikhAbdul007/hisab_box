@@ -1,9 +1,9 @@
 import 'package:get/get.dart';
-import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../inventory/model/product_model.dart';
 
-class NearExpireProductController extends GetxController with CacheManager {
+class NearExpireProductController extends GetxController with LocalService {
   final String? uid = SupabaseConfig.auth.currentUser?.id;
   RxList<ProductModel> nearExpProductList = <ProductModel>[].obs;
   RxBool isDataloading = false.obs;
@@ -14,16 +14,26 @@ class NearExpireProductController extends GetxController with CacheManager {
     super.onInit();
   }
 
+  // 🔥 FLOW: Hive Load -> Supabase Fetch -> Hive Sync
   Future<void> getNearExpiryProducts() async {
     if (uid == null) return;
-    isDataloading.value = true;
+
+    // 1️⃣ STEP 1: Pehle Hive (Local DB) se data uthao
+    final cachedExpiry = LocalService.getCachedExpiryProducts();
+    if (cachedExpiry.isNotEmpty) {
+      nearExpProductList.value = cachedExpiry;
+      print("📦 Near Expiry Data loaded from Hive: ${cachedExpiry.length}");
+    }
+
+    // 2️⃣ STEP 2: Supabase se fresh data laao (Fallback)
+    // Loading tabhi dikhao agar local mein kuch na ho
+    isDataloading.value = nearExpProductList.isEmpty;
 
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final threeMonthsFromNow = now.add(const Duration(days: 90));
 
-      // 🎯 Query: stock_batches se start, products join, aur product_stock se price
       final response = await SupabaseConfig.from('stock_batches')
           .select('''
           id,
@@ -54,7 +64,6 @@ class NearExpireProductController extends GetxController with CacheManager {
         final productData = batch['products'];
         if (productData == null) continue;
 
-        // Product stock se selling price nikalna (Location ignore karke)
         final stockList = productData['product_stock'] as List?;
         final sellingPrice =
             (stockList != null && stockList.isNotEmpty)
@@ -65,22 +74,15 @@ class NearExpireProductController extends GetxController with CacheManager {
           productData,
         );
 
-        // --- Batch & Location Data ---
         productMap['purchase_date'] = batch['purchase_date'];
         productMap['expiry_date'] = batch['expiry_date'];
         productMap['purchase_price'] =
             (batch['purchase_price'] ?? 0).toDouble();
         productMap['quantity'] = (batch['quantity'] ?? 0).toDouble();
-        productMap['location'] =
-            batch['location'] ?? 'N/A'; // Shop or Godown dono aayenge
+        productMap['location'] = batch['location'] ?? 'N/A';
         productMap['stock_type'] = batch['stock_type'] ?? 'packet';
-
-        // --- Prices & Mapping ---
         productMap['selling_price'] = sellingPrice.toDouble();
-        productMap['sellingPrice'] =
-            sellingPrice.toDouble(); // Model compatibility
-
-        // --- Meta Data ---
+        productMap['sellingPrice'] = sellingPrice.toDouble();
         productMap['category'] = productData['categories']?['name'] ?? '';
         productMap['animal_type'] =
             productData['animal_categories']?['name'] ?? '';
@@ -91,7 +93,6 @@ class NearExpireProductController extends GetxController with CacheManager {
                 ? barcodes[0]['barcode']
                 : '';
 
-        // --- Date Compatibility ---
         productMap['purchaseDate'] = batch['purchase_date'];
         productMap['expireDate'] = batch['expiry_date'];
 
@@ -107,22 +108,16 @@ class NearExpireProductController extends GetxController with CacheManager {
         return dateA.compareTo(dateB);
       });
 
+      // 3️⃣ STEP 3: UI update karo aur Hive mein save karo
       nearExpProductList.value = expiryProducts;
-      print("✅ Total Expiry Items: ${nearExpProductList.length}");
+      await LocalService.saveExpiryProducts(expiryProducts);
+
+      print("✅ Hive updated with ${expiryProducts.length} expiry items");
     } catch (e) {
-      print("🚨 Expiry Fetch Error: $e");
+      print("🚨 Expiry Sync Error: $e");
+      // Fallback: Agar error aata hai (Airtel error), toh purana data screen par rahega
     } finally {
       isDataloading.value = false;
     }
   }
-
-  // Helper method sorting ke liye
-  // DateTime _parseDate(String dateStr) {
-  //   try {
-  //     if (dateStr.split('-')[0].length == 4) return DateTime.parse(dateStr);
-  //     return DateFormat('dd-MM-yyyy').parse(dateStr);
-  //   } catch (_) {
-  //     return DateTime(2099); // Fallback for sorting
-  //   }
-  // }
 }

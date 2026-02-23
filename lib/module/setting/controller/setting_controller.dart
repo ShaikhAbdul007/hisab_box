@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
@@ -85,6 +86,7 @@ class SettingController extends GetxController with CacheManager {
     try {
       await SupabaseConfig.auth.signOut();
       removeBox();
+      LocalService.clearAllCache();
       Get.back();
       showMessage(message: logout);
       AppRoutes.navigateRoutes(routeName: AppRouteName.login);

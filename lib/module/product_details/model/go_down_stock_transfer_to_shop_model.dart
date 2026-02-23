@@ -19,10 +19,21 @@ class GoDownStockTransferToShopModel {
   ) {
     return GoDownStockTransferToShopModel(
       id: id,
-      barcode: json['barcode'],
-      productName: json['productName'],
-      requestedQty: json['requestedQty'],
-      status: json['status'],
+      barcode: json['barcode'] ?? '',
+      productName: json['productName'] ?? '',
+      requestedQty: json['requestedQty'] ?? 0,
+      status: json['status'] ?? 'pending',
     );
+  }
+
+  // 🔥 Map return karega taaki Hive aur Supabase ise samajh sakein
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'barcode': barcode,
+      'productName': productName,
+      'requestedQty': requestedQty,
+      'status': status,
+    };
   }
 }

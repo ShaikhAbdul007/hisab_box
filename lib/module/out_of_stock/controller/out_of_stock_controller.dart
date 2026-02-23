@@ -1,12 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-
 import '../../inventory/model/product_model.dart';
 
-class OutOfStockController extends GetxController with CacheManager {
+class OutOfStockController extends GetxController with LocalService {
   final uid = SupabaseConfig.auth.currentUser?.id;
 
   RxBool isDataLoading = false.obs;
@@ -31,12 +30,22 @@ class OutOfStockController extends GetxController with CacheManager {
     searchController.text = searchText.value;
   }
 
+  // 🔥 FLOW: Hive Load -> Supabase Sync -> Hive Update
   Future<void> loadOutOfStockProducts() async {
     if (uid == null) return;
-    isDataLoading.value = true;
+
+    // 1️⃣ STEP 1: Pehle Hive (Local DB) se data uthao
+    final cachedOutOfStock = LocalService.getCachedOutOfStockProducts();
+    if (cachedOutOfStock.isNotEmpty) {
+      productList.value = cachedOutOfStock;
+      print("📦 Out of Stock loaded from Hive: ${cachedOutOfStock.length}");
+    }
+
+    // 2️⃣ STEP 2: Supabase se fresh data laao (Fallback)
+    isDataLoading.value =
+        productList.isEmpty; // Loading tabhi jab cache khali ho
 
     try {
-      // 1. Direct Supabase Query - Un products ke liye jiniki quantity 0 hai
       final response = await SupabaseConfig.from('product_stock')
           .select('''
           id,
@@ -65,24 +74,22 @@ class OutOfStockController extends GetxController with CacheManager {
           )
         ''')
           .eq('user_id', uid!)
-          .eq('quantity', 0) // 🔥 Main Filter: Sirf zero quantity wale
+          .eq('quantity', 0)
           .eq('is_active', true)
           .order('updated_at', ascending: false);
 
       final List dataList = response as List;
-      print("🚩 Out of Stock Items Found: ${dataList.length}");
 
-      // 2. Mapping to ProductModel
+      // 3️⃣ STEP 3: Mapping logic
       List<ProductModel> outOfStockList =
           dataList.map((e) {
             final p = e['products'] ?? {};
             final List? barcodes = p['product_barcodes'] as List?;
             final List? batches = p['stock_batches'] as List?;
 
-            // ProductModel ke variables ke saath mapping
             Map<String, dynamic> mappedData = {
               ...p,
-              'id': e['id'], // product_stock ki ID
+              'id': e['id'],
               'quantity': e['quantity'],
               'selling_price': e['selling_price'],
               'location': e['location'],
@@ -90,14 +97,14 @@ class OutOfStockController extends GetxController with CacheManager {
               'stock_type': e['stock_type'],
               'category': p['categories']?['name'],
               'animal_type': p['animal_categories']?['name'],
-              'barcodes':
+              'barcode':
                   (barcodes != null && barcodes.isNotEmpty)
                       ? barcodes[0]['barcode']
                       : null,
               'purchase_date':
                   (batches != null && batches.isNotEmpty)
                       ? batches[0]['purchase_date']
-                      : 0.0,
+                      : null,
               'expiry_date':
                   (batches != null && batches.isNotEmpty)
                       ? batches[0]['expiry_date']
@@ -107,40 +114,45 @@ class OutOfStockController extends GetxController with CacheManager {
             return ProductModel.fromJson(mappedData);
           }).toList();
 
-      // 3. Update the UI List
+      // 4️⃣ STEP 4: UI Refresh aur Hive update
       productList.value = outOfStockList;
+      await LocalService.saveOutOfStockProducts(outOfStockList);
+      print("✅ Out of Stock Synced with Supabase & Hive Updated");
     } catch (e) {
       print("🚨 OutOfStock Fetch Error: $e");
-      showMessage(message: "Error loading out of stock products");
+      if (productList.isEmpty) showMessage(message: "Error loading products");
     } finally {
       isDataLoading.value = false;
     }
   }
 
-  // 'int productId' ko badal kar 'String productId' kar do
+  // 🔥 UPDATE/DELETE: Supabase Update -> Local UI & Hive Update
   Future<void> deactivateSpecificProduct({required String productId}) async {
     isDeleteLoading.value = true;
     try {
-      // 🎯 Filter 'id' par lagao, 'product_id' par nahi
+      // 1. Supabase Update
       final response =
           await SupabaseConfig.from('product_stock')
               .update({'is_active': false})
               .eq('id', productId)
               .eq('user_id', uid ?? '')
-              .select(); // Select se confirm hoga ki update hua ya nahi
+              .select();
 
       if (response.isNotEmpty) {
         showMessage(message: 'Product marked as Inactive');
-        print("✅ Update Success: $response");
-      } else {
-        print("⚠️ No row found with ID: $productId");
+
+        // 2. Local Update (Turant UI se hatane ke liye aur Hive sync ke liye)
+        productList.removeWhere((item) => item.id == productId);
+        await LocalService.saveOutOfStockProducts(productList);
+
+        print("✅ Inactive Success & Hive Updated locally");
       }
 
-      // 2. Refresh the list (Await lagana zaroori hai)
+      // 3. Final Sync from server
       await loadOutOfStockProducts();
     } catch (e) {
       print("🚨 Deactivate Error: $e");
-      showMessage(message: "Failed to deactivate: $e");
+      showMessage(message: "Failed to deactivate: Check Internet");
     } finally {
       isDeleteLoading.value = false;
     }
