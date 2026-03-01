@@ -138,10 +138,11 @@ class LooseSell extends GetView<LooseController> {
       titleStyle: CustomTextStyle.customNato(fontSize: 0),
       titlePadding: EdgeInsets.zero,
       barrierDismissible: false,
-      content: LooseInventoryUpdatePopupComponent(
-        controller: controller,
-        index: index,
-      ),
+      content: Container(),
+      // LooseInventoryUpdatePopupComponent(
+      //   controller: controller,
+      //   index: index,
+      // ),
     );
   }
 }

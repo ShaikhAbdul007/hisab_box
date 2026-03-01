@@ -1,105 +1,63 @@
 import 'package:get/get.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
 import '../../inventory/model/product_model.dart';
 
 class NearExpireProductController extends GetxController with LocalService {
   final String? uid = SupabaseConfig.auth.currentUser?.id;
+  final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
+
   RxList<ProductModel> nearExpProductList = <ProductModel>[].obs;
   RxBool isDataloading = false.obs;
 
   @override
   void onInit() {
     getNearExpiryProducts();
+
+    // 🔥 Live Sync: Agar GlobalStore mein products update honge,
+    // toh expiry list khud update ho jayegi.
+    ever(globalStore.allProducts, (_) => getNearExpiryProducts());
+
     super.onInit();
   }
 
-  // 🔥 FLOW: Hive Load -> Supabase Fetch -> Hive Sync
+  // 🔥 FLOW: RAM (GlobalStore) -> Filter -> Update UI -> Sync Hive
   Future<void> getNearExpiryProducts() async {
     if (uid == null) return;
 
-    // 1️⃣ STEP 1: Pehle Hive (Local DB) se data uthao
-    final cachedExpiry = LocalService.getCachedExpiryProducts();
-    if (cachedExpiry.isNotEmpty) {
-      nearExpProductList.value = cachedExpiry;
-      print("📦 Near Expiry Data loaded from Hive: ${cachedExpiry.length}");
-    }
-
-    // 2️⃣ STEP 2: Supabase se fresh data laao (Fallback)
-    // Loading tabhi dikhao agar local mein kuch na ho
-    isDataloading.value = nearExpProductList.isEmpty;
-
     try {
+      // 1️⃣ Pehle Hive (Local DB) se data load karo instant view ke liye
+      final cachedExpiry = LocalService.getCachedExpiryProducts();
+      if (cachedExpiry.isNotEmpty && nearExpProductList.isEmpty) {
+        nearExpProductList.value = cachedExpiry;
+      }
+
+      // Loader tabhi dikhao jab RAM khali ho (Usually zarurat nahi padegi)
+      isDataloading.value = globalStore.allProducts.isEmpty;
+
+      // 2️⃣ STEP 2: GlobalStore (RAM) se data filter karo (NO SUPABASE CALL)
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final threeMonthsFromNow = now.add(const Duration(days: 90));
 
-      final response = await SupabaseConfig.from('stock_batches')
-          .select('''
-          id,
-          expiry_date,
-          purchase_date,
-          purchase_price,
-          quantity,
-          location,
-          stock_type,
-          products (
-            id, name, flavour, weight, rack, level,
-            categories(name),
-            animal_categories(name),
-            product_barcodes(barcode),
-            product_stock (
-              selling_price
-            )
-          )
-        ''')
-          .eq('user_id', uid!)
-          .filter('expiry_date', 'gte', today.toIso8601String())
-          .filter('expiry_date', 'lte', threeMonthsFromNow.toIso8601String());
+      // Global list se wo products nikalo jinki date 90 din ke andar hai
+      List<ProductModel> expiryProducts =
+          globalStore.allProducts.where((product) {
+            if (product.expireDate == null || product.expireDate!.isEmpty)
+              return false;
 
-      final List dataList = response as List;
-      List<ProductModel> expiryProducts = [];
+            DateTime? expiryDate = DateTime.tryParse(product.expireDate!);
+            if (expiryDate == null) return false;
 
-      for (var batch in dataList) {
-        final productData = batch['products'];
-        if (productData == null) continue;
+            // Filter: Aaj se 90 din ke beech mein
+            return expiryDate.isAfter(
+                  today.subtract(const Duration(days: 1)),
+                ) &&
+                expiryDate.isBefore(threeMonthsFromNow);
+          }).toList();
 
-        final stockList = productData['product_stock'] as List?;
-        final sellingPrice =
-            (stockList != null && stockList.isNotEmpty)
-                ? (stockList[0]['selling_price'] ?? 0.0)
-                : 0.0;
-
-        final Map<String, dynamic> productMap = Map<String, dynamic>.from(
-          productData,
-        );
-
-        productMap['purchase_date'] = batch['purchase_date'];
-        productMap['expiry_date'] = batch['expiry_date'];
-        productMap['purchase_price'] =
-            (batch['purchase_price'] ?? 0).toDouble();
-        productMap['quantity'] = (batch['quantity'] ?? 0).toDouble();
-        productMap['location'] = batch['location'] ?? 'N/A';
-        productMap['stock_type'] = batch['stock_type'] ?? 'packet';
-        productMap['selling_price'] = sellingPrice.toDouble();
-        productMap['sellingPrice'] = sellingPrice.toDouble();
-        productMap['category'] = productData['categories']?['name'] ?? '';
-        productMap['animal_type'] =
-            productData['animal_categories']?['name'] ?? '';
-
-        final barcodes = productData['product_barcodes'] as List?;
-        productMap['barcode'] =
-            (barcodes != null && barcodes.isNotEmpty)
-                ? barcodes[0]['barcode']
-                : '';
-
-        productMap['purchaseDate'] = batch['purchase_date'];
-        productMap['expireDate'] = batch['expiry_date'];
-
-        expiryProducts.add(ProductModel.fromJson(productMap));
-      }
-
-      // Sort by date
+      // Sort by date (Sabse pehle expire hone wala upar)
       expiryProducts.sort((a, b) {
         DateTime dateA =
             DateTime.tryParse(a.expireDate ?? '') ?? DateTime(2100);
@@ -109,13 +67,14 @@ class NearExpireProductController extends GetxController with LocalService {
       });
 
       // 3️⃣ STEP 3: UI update karo aur Hive mein save karo
-      nearExpProductList.value = expiryProducts;
+      nearExpProductList.assignAll(expiryProducts);
       await LocalService.saveExpiryProducts(expiryProducts);
 
-      print("✅ Hive updated with ${expiryProducts.length} expiry items");
+      print(
+        "✅ Expiry List Sync from GlobalStore: ${expiryProducts.length} items",
+      );
     } catch (e) {
-      print("🚨 Expiry Sync Error: $e");
-      // Fallback: Agar error aata hai (Airtel error), toh purana data screen par rahega
+      print("🚨 Expiry Calculation Error: $e");
     } finally {
       isDataloading.value = false;
     }

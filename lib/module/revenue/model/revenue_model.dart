@@ -9,12 +9,16 @@ class SellsModel {
   final double? totalAmount;
   final List<SellItem>? items;
   final PaymentModel? payment;
+  final String? customerName; // 🔥 Ye add kiya
+  final String? customerMobile;
 
   SellsModel({
     this.billNo,
     this.isDiscountGiven,
     this.discountValue,
     this.finalAmount,
+    this.customerName, // 🔥
+    this.customerMobile,
     this.itemsCount,
     this.soldAt,
     this.time,
@@ -32,6 +36,8 @@ class SellsModel {
       itemsCount: json['itemsCount'],
       soldAt: json['soldAt'],
       time: json['time'],
+      customerName: json['customerName'] ?? '', // 🔥
+      customerMobile: json['customerMobile'] ?? '',
       totalAmount: (json['totalAmount'] ?? 0).toDouble(),
       items:
           (json['items'] as List<dynamic>?)
@@ -52,6 +58,8 @@ class SellsModel {
       'discountValue': discountValue,
       'finalAmount': finalAmount,
       'itemsCount': itemsCount,
+      'customerName': customerName, // 🔥
+      'customerMobile': customerMobile,
       'soldAt': soldAt,
       'time': time,
       'totalAmount': totalAmount,

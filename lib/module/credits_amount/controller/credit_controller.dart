@@ -4,9 +4,12 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
 
 class CredtiController extends GetxController with CacheManager {
   final uid = SupabaseConfig.auth.currentUser?.id ?? '';
+  final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
+
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
   RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
@@ -15,6 +18,10 @@ class CredtiController extends GetxController with CacheManager {
   @override
   void onInit() {
     fetchCreditReports();
+
+    // 🔥 Live Sync: Agar koi naya credit bill kat-ta hai, toh list khud update ho jayegi
+    ever(globalStore.allSalesList, (_) => fetchCreditReports());
+
     super.onInit();
   }
 
@@ -34,57 +41,47 @@ class CredtiController extends GetxController with CacheManager {
   }
 
   // ===================================================
-  // 🔥 CACHE FIRST → FIREBASE FALLBACK
+  // 🔥 OPTIMIZED: Ab ye RAM (GlobalStore) se data leta hai
   // ===================================================
   Future<void> fetchCreditReports() async {
     try {
       customDataLoading.value = true;
 
-      // 🎯 Filter 'sales' table ke 'user_id' par lagaya hai kyunki payment mein nahi hai
-      final response = await SupabaseConfig.from('sale_payments')
-          .select('''
-          credit_amount,
-          created_at,
-          payment_mode,
-          sales!inner (
-            bill_no,
-            user_id,
-            customers (
-              name,
-              mobile_number
-            )
-          )
-        ''')
-          .gt('credit_amount', 0)
-          .eq('sales.user_id', uid) // 🔥 YE CHANGE KIYA HAI
-          .order('created_at', ascending: false);
-
-      final List data = response as List;
-      List<CustomerDetails> creditList = [];
-
-      for (var item in data) {
-        double amount =
-            double.tryParse(item['credit_amount'].toString()) ?? 0.0;
-        var saleObj = item['sales'];
-        var customerObj = saleObj != null ? saleObj['customers'] : null;
-
-        String displayName =
-            (customerObj != null && customerObj['name'] != null)
-                ? customerObj['name']
-                : "Walk-in (Bill #${saleObj['bill_no']})";
-
-        creditList.add(
-          CustomerDetails(
-            name: displayName,
-            totalCredit: amount,
-            address: formatDateTime(item['created_at'].toString()), // Kab diya
-          ),
-        );
+      // Loader ke liye thoda delay agar list khali hai (UX ke liye)
+      if (globalStore.allSalesList.isEmpty) {
+        // Agar global store khali hai toh fetch mat karo, wait karo sync ka
+        customDataLoading.value = false;
+        return;
       }
 
+      // 1️⃣ STEP 1: GlobalStore ki sales list se sirf wo bills nikalo jisme credit hai
+      List<CustomerDetails> creditList = [];
+
+      for (var sale in globalStore.allSalesList) {
+        // Payment model se credit amount check karo
+        double creditAmt = sale.payment?.credit ?? 0.0;
+
+        if (creditAmt > 0) {
+          // Customer ka naam nikalo, agar nahi hai toh bill number dikhao
+          String displayName =
+              (sale.customerName != null && sale.customerName!.isNotEmpty)
+                  ? sale.customerName!
+                  : "Walk-in (Bill #${sale.billNo})";
+
+          creditList.add(
+            CustomerDetails(
+              name: displayName,
+              totalCredit: creditAmt,
+              address: "${sale.soldAt} ${sale.time}", // Date aur Time sync
+            ),
+          );
+        }
+      }
+
+      // 2️⃣ STEP 2: UI update karo
       customerDetailList.assignAll(creditList);
     } catch (e) {
-      print("🚨 Detailed Credit Error: $e");
+      print("🚨 RAM Credit Filter Error: $e");
     } finally {
       customDataLoading.value = false;
     }

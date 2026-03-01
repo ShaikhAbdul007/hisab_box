@@ -8,9 +8,20 @@ import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:inventory/local_db/local_db_service.dart';
+import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
+import '../../inventory/model/product_model.dart';
+import '../../loose_sell/model/loose_model.dart';
+import '../model/go_down_stock_transfer_to_shop_model.dart';
+import '../../revenue/model/revenue_model.dart'; // CategoryModel etc context
 
 class ProductDetailsController extends GetxController with LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
+  final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
 
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
@@ -179,7 +190,7 @@ class ProductDetailsController extends GetxController with LocalService {
   }
 
   // ==========================================
-  // 🔥 UPDATE: Supabase RPC -> Hive Local Update
+  // 🔥 UPDATE: Supabase RPC -> Global Sync -> Hive Update
   // ==========================================
   void updateProductQuantity({
     required String barcode,
@@ -232,9 +243,13 @@ class ProductDetailsController extends GetxController with LocalService {
         },
       );
 
-      // 2. Local Sync: Hive mein purana data update karna
-      // Hum direct list fetch karke Hive overwrite kar rahe hain taaki data consistency bani rahe
+      // 2. 🔥 GLOBAL SYNC: GlobalStore ko bolo fresh data laaye
+      // Isse RAM wala data update hoga aur poori app refresh ho jayegi
+      await globalStore.loadInitialData();
+
+      // 3. Local Sync: Hive mein data update karna
       await refreshAllLocalData(isLoosed: isLoosed);
+
       Get.back(result: true);
       showMessage(message: '✅ Product & Stock Updated Safely.');
     } catch (e) {
@@ -248,7 +263,8 @@ class ProductDetailsController extends GetxController with LocalService {
   // 🔥 Helper function for full Hive refresh
   Future<void> refreshAllLocalData({required bool isLoosed}) async {
     if (userId == null) return;
-    if (isLoosed == true) {
+    if (isLoosed == false) {
+      // Based on your logic if NOT loose
       try {
         final response = await SupabaseConfig.from('products')
             .select('*, product_stock!inner(*)')
@@ -279,59 +295,49 @@ class ProductDetailsController extends GetxController with LocalService {
             .eq('user_id', userId!)
             .order('created_at', ascending: false);
 
-        final List data = response as List;
+        final List dataResponse = response as List;
         final List<LooseInvetoryModel> loosedfreshList =
-            data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
+            dataResponse.map((e) => LooseInvetoryModel.fromJson(e)).toList();
 
-        // 3. UI Update aur Hive Update
         looseInventoryLis.value = loosedfreshList;
         await LocalService.saveLooseProducts(loosedfreshList);
-      } catch (e) {}
+      } catch (e) {
+        print("🚨 Loose Sync failed: $e");
+      }
     }
   }
 
-  // ==========================================
-  // 🔥 FETCH DATA (HIVE FIRST + FALLBACK)
-  // ==========================================
   Future<void> fetchCategories() async {
-    // 1. Pehle Hive se load karo
     final cached = LocalService.getCachedCategories();
     if (cached.isNotEmpty) {
       categoryList.value = cached;
     }
-
-    // 2. Fallback to Supabase
     if (userId == null) return;
     try {
       final List response = await SupabaseConfig.from(
         'categories',
       ).select().eq('user_id', userId!);
       final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-
       categoryList.value = freshData;
-      await LocalService.saveCategories(freshData); // Hive Update
+      await LocalService.saveCategories(freshData);
     } catch (e) {
       print("🚨 Category fetch error: $e");
     }
   }
 
   Future<void> fetchAnimalCategories() async {
-    // 1. Hive Load
     final cached = LocalService.getCachedAnimalCategories();
     if (cached.isNotEmpty) {
       animalTypeList.value = cached;
     }
-
-    // 2. Supabase Sync
     if (userId == null) return;
     try {
       final List response = await SupabaseConfig.from(
         'animal_categories',
       ).select().eq('user_id', userId!);
       final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-
       animalTypeList.value = freshData;
-      await LocalService.saveAnimalCategories(freshData); // Hive Update
+      await LocalService.saveAnimalCategories(freshData);
     } catch (e) {
       print("🚨 Animal category error: $e");
     }

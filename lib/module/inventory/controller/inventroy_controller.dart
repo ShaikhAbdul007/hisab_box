@@ -3,7 +3,8 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
+import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore for RAM Access
+import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
@@ -14,7 +15,7 @@ class InventroyController extends GetxController
     with CacheManager, LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
 
-  // Existing Variables (Nahi badle gaye)
+  // Existing Variables (Nahi badle gaye - As per your instruction)
   RxList<ProductModel> scannedProductDetails = <ProductModel>[].obs;
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
@@ -59,7 +60,7 @@ class InventroyController extends GetxController
   }
 
   // ==========================================
-  // 🔥 EXISTING PRODUCT CHECK (HIVE FIRST)
+  // 🔥 EXISTING PRODUCT CHECK (RAM FIRST)
   // ==========================================
   Future<(bool existProductOrNot, ProductModel productModels)>
   existingProductInfo(String barcode) async {
@@ -67,45 +68,41 @@ class InventroyController extends GetxController
     isExistingProductInfo.value = true;
 
     try {
-      // 1. Sabse pehle Hive (LocalService) mein dhoondo (Offline First)
-      final localProduct = LocalService.searchByBarcode(barcode);
+      // 1. RAM Sync Check (GlobalStore) - Based on Instruction [2026-01-31]
+      // Multiple barcodes ke liye humara map best hai.
+      final globalStore = Get.find<GlobalStore>();
+      var ramProductData = globalStore.barcodeToProductMap[barcode];
 
+      if (ramProductData != null) {
+        final model = ProductModel.fromJson(ramProductData.toJson());
+        existProductName.value = model.name ?? '';
+        isExistingProductInfo.value = false;
+        return (true, model);
+      }
+
+      // 2. Fallback to Hive (LocalService)
+      final localProduct = LocalService.searchByBarcode(barcode);
       if (localProduct != null) {
         existProductName.value = localProduct.name ?? '';
         isExistingProductInfo.value = false;
-        print("📦 Found in Local Cache: ${localProduct.name}");
         return (true, localProduct);
-      } else {
-        final res =
-            await SupabaseConfig.from('product_barcodes')
-                .select(
-                  'product_id, products!fk_product_barcodes_products(id, name, flavour, weight, is_loose_category)',
-                )
-                .eq('barcode', barcode)
-                .maybeSingle();
+      }
 
-        if (res == null || res['products'] == null) {
-          return (false, ProductModel());
-        }
+      // 3. Last Fallback to Supabase
+      final res =
+          await SupabaseConfig.from('product_barcodes')
+              .select('product_id, products!fk_product_barcodes_products(*)')
+              .eq('barcode', barcode)
+              .maybeSingle();
 
-        final p = res['products'];
-        final model = ProductModel(
-          id: p['id'],
-          name: p['name'],
-          barcode: barcode,
-          isLoosed: p['is_loose_category'] ?? false,
-          flavor: p['flavour'],
-          weight: p['weight'],
-          animalType: p['animalType'],
-          location: p['location'],
-          isActive: p['isActive'],
-        );
-
+      if (res != null && res['products'] != null) {
+        final model = ProductModel.fromJson(res['products']);
+        model.barcode = barcode;
         existProductName.value = model.name ?? '';
         return (true, model);
       }
 
-      // 2. Agar Hive mein nahi hai, tabhi Supabase jao (Net Check)
+      return (false, ProductModel());
     } catch (e) {
       print("🚨 Info Error: $e");
       return (false, ProductModel());
@@ -115,7 +112,7 @@ class InventroyController extends GetxController
   }
 
   // ==========================================
-  // 🔥 HANDLE SCAN (OFFLINE-READY)
+  // 🔥 HANDLE SCAN (RAM & MULTI-BARCODE READY)
   // ==========================================
   Future<void> handleScan({
     required String barcode,
@@ -126,79 +123,68 @@ class InventroyController extends GetxController
     if (userId == null) return;
 
     try {
-      // 🎯 STEP 1: Search in Hive (Offline First)
-      ProductModel? product = LocalService.searchByBarcode(barcode);
+      // 🎯 STEP 1: Search in RAM (GlobalStore Map)
+      final globalStore = Get.find<GlobalStore>();
+      ProductModel? product;
 
-      // 🎯 STEP 2: If not in Hive, Fetch from Supabase with Nested Join
+      var ramData = globalStore.barcodeToProductMap[barcode];
+      if (ramData != null) {
+        product = ProductModel.fromJson(ramData.toJson());
+        product.barcode = barcode; // Multiple barcode support
+      } else {
+        // Fallback to Hive if not in RAM
+        product = LocalService.searchByBarcode(barcode);
+      }
+
+      // 🎯 STEP 2: If still null, fetch from Supabase
       if (product == null) {
-        print("☁️ Hive mein nahi mila, Supabase se fetch kar raha hoon...");
-
         final res =
             await SupabaseConfig.from('product_barcodes')
-                .select('''
-          product_id,
-          barcode,
-          products!inner (
-            *,
-            product_stock!inner (*)
-          )
-        ''')
+                .select('*, products!inner(*, product_stock!inner(*))')
                 .eq('barcode', barcode)
                 .maybeSingle();
 
         if (res != null) {
-          // Nested data nikalna (products -> product_stock)
           final Map<String, dynamic> pData = res['products'];
           final List<dynamic> sDataList = pData['product_stock'] ?? [];
-
-          // Model banana
           product = ProductModel.fromJson(pData);
-
-          // Stock data manually map karna (kyunki products ke andar nested list hai)
           if (sDataList.isNotEmpty) {
             product.quantity =
                 double.tryParse(sDataList[0]['quantity'].toString()) ?? 0;
             product.sellingPrice =
                 double.tryParse(sDataList[0]['selling_price'].toString()) ?? 0;
           }
-
-          product.barcode = barcode; // Scanned barcode set karna
-          print("✅ Found in Supabase: ${product.name}");
+          product.barcode = barcode;
         } else {
-          showMessage(message: "❌ Product Not Found in Database");
+          showMessage(message: "❌ Product Not Found");
           return;
         }
       }
 
-      // 🎯 STEP 3: Stock Check
-      // Local data mein quantity update ho sakti hai stream se, isliye hamesha latest lein
+      // 🎯 STEP 3: Stock Check (RAM Based)
       double availableQty =
           double.tryParse(product.quantity?.toString() ?? '0') ?? 0;
 
       if (availableQty <= 0) {
-        qtyIsNotEnough(); // UI par "Out of Stock" dikhayega
+        qtyIsNotEnough();
         return;
       }
 
       // 🎯 STEP 4: Cart Logic
       final List<ProductModel> cartList = await retrieveCartProductList();
 
-      // Product ID se check karo cart mein (pId ki jagah product.id)
       final index = cartList.indexWhere(
         (p) => p.id == product?.id && p.sellType == sellType,
       );
 
       if (index != -1) {
-        // Agar cart mein quantity stock se zyada ho rahi hai
         if ((cartList[index].quantity ?? 0) >= availableQty) {
           qtyIsNotEnough();
           return;
         }
         cartList[index].quantity = (cartList[index].quantity ?? 0) + 1;
-        cartList[index].barcode =
-            barcode; // Barcode update in case multiple barcodes used
+        cartList[index].barcode = barcode; // Keep current scanned barcode
       } else {
-        // Naya item cart mein add karna
         cartList.add(
           ProductModel(
             barcode: barcode,
@@ -211,6 +197,7 @@ class InventroyController extends GetxController
             isLoosed: sellType.toLowerCase() == 'loose',
             flavor: product.flavor,
             weight: product.weight,
+            location: product.location,
           ),
         );
       }
@@ -220,11 +207,10 @@ class InventroyController extends GetxController
       scannedProductDetails.assignAll(cartList);
       scannedProductDetails.refresh();
 
-      // Feedback
       player?.play(AssetSource('sounds/beep.mp3'));
       afterProductAdding();
     } catch (e) {
-      print("🚨 Final Scan Error: $e");
+      print("🚨 Scan Error: $e");
       showMessage(message: "Error processing scan");
     }
   }

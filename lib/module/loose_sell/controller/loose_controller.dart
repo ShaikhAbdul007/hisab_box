@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Reference
 import 'package:inventory/local_db/local_db_service.dart';
+import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-import '../../../helper/helper.dart';
+import 'package:inventory/helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
-import '../model/loose_model.dart';
 
 class LooseController extends GetxController with LocalService {
+  // --- Text Controllers ---
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController amount = TextEditingController();
   TextEditingController quantity = TextEditingController();
@@ -16,21 +18,30 @@ class LooseController extends GetxController with LocalService {
   TextEditingController newSellingPrice = TextEditingController();
   TextEditingController name = TextEditingController();
 
+  // --- Observables & States ---
   RxBool isDataLoading = false.obs;
   RxBool isSaveLoading = false.obs;
   RxBool isInventoryScanSelected = false.obs;
-
   var productList = <LooseInvetoryModel>[].obs;
   String? id;
   RxList<LooseCategoryModel> looseCategoryModelList =
       <LooseCategoryModel>[].obs;
   RxString searchText = ''.obs;
 
+  // --- Dependencies ---
   final userId = SupabaseConfig.auth.currentUser?.id;
+  final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Instance
 
   @override
   void onInit() {
     fetchLosseList();
+
+    // 🔥 Realtime Listener: Jab bhi GlobalStore mein loose data badlega, UI update ho jayegi
+    ever(globalStore.allLooseProducts, (List<LooseInvetoryModel> updatedList) {
+      productList.assignAll(updatedList);
+      productList.refresh();
+    });
+
     super.onInit();
   }
 
@@ -38,20 +49,20 @@ class LooseController extends GetxController with LocalService {
     await fetchLooseProduct();
   }
 
-  // 🔥 FLOW: Hive -> Supabase -> Hive Update
+  // 🔥 FLOW: Hive (Instant) -> Supabase (Network Update) -> GlobalStore & Hive Sync
   Future<void> fetchLooseProduct() async {
     if (userId == null) return;
 
-    // 1. Pehle Hive se data lo (Instant UI Show)
+    // 1. Pehle Hive se data lo (Instant UI)
     final cachedData = LocalService.getCachedLooseProducts();
     if (cachedData.isNotEmpty) {
-      productList.value = cachedData;
+      productList.assignAll(cachedData);
       print("📦 Hive se data mil gaya: ${cachedData.length}");
     }
 
-    // 2. Supabase se fetch karo (Fallback & Update)
-    isDataLoading.value =
-        productList.isEmpty; // Loading tabhi jab cache khali ho
+    // 2. Loading handle karo (Sirf agar cache khali ho)
+    isDataLoading.value = productList.isEmpty;
+
     try {
       final response = await SupabaseConfig.from('loose_stocks')
           .select('''
@@ -73,59 +84,18 @@ class LooseController extends GetxController with LocalService {
       final List<LooseInvetoryModel> freshList =
           data.map((e) => LooseInvetoryModel.fromJson(e)).toList();
 
-      // 3. UI Update aur Hive Update
-      productList.value = freshList;
+      // 3. UI, Hive aur GlobalStore ko Sync karo
+      productList.assignAll(freshList);
       await LocalService.saveLooseProducts(freshList);
-      print("✅ Supabase se data sync ho gaya aur Hive update ho gaya");
+      globalStore.allLooseProducts.assignAll(freshList); // 🔥 Sync to RAM
+
+      print("✅ Supabase sync complete (Hive & GlobalStore updated)");
     } catch (e) {
       print("🚨 Fetch Error: $e");
       if (productList.isEmpty)
         showMessage(message: "Check internet connection");
     } finally {
       isDataLoading.value = false;
-    }
-  }
-
-  // 🔥 UPDATE: Supabase Update -> Hive Refresh
-  void updateProductQuantity({
-    required String barcode,
-    required bool add,
-  }) async {
-    if (userId == null) return;
-    isSaveLoading.value = true;
-    try {
-      final response =
-          await SupabaseConfig.from('product_stock')
-              .select('quantity')
-              .eq('product_id', barcode)
-              .eq('user_id', userId!)
-              .maybeSingle();
-
-      if (response != null) {
-        final num prevQty = response['quantity'] ?? 0;
-        final num newQtyInput = num.tryParse(addSubtractQty.text) ?? 0;
-        final double sPrice = double.tryParse(sellingPrice.text) ?? 0.0;
-        final num finalQty =
-            add ? prevQty + newQtyInput : prevQty - newQtyInput;
-
-        // Supabase Update
-        await SupabaseConfig.from('product_stock')
-            .update({'quantity': finalQty, 'selling_price': sPrice})
-            .eq('product_id', barcode)
-            .eq('user_id', userId!);
-
-        Get.back();
-        qtyClear();
-        showMessage(message: '✅ Quantity updated in Cloud & Hive.');
-
-        // Refresh Flow (Auto updates Hive)
-        await fetchLooseProduct();
-      }
-    } catch (e) {
-      print("🚨 Update Error: $e");
-      showMessage(message: "Update failed: No Internet");
-    } finally {
-      isSaveLoading.value = false;
     }
   }
 
@@ -148,3 +118,51 @@ class LooseController extends GetxController with LocalService {
     amount.clear();
   }
 }
+
+
+
+// // 🔥 UPDATE: Supabase Update -> Refresh Everything
+  // void updateProductQuantity({
+  //   required String barcode,
+  //   required bool add,
+  // }) async {
+  //   if (userId == null) return;
+  //   isSaveLoading.value = true;
+  //   try {
+  //     // Pehle current quantity fetch karo
+  //     final response =
+  //         await SupabaseConfig.from(
+  //               'loose_stocks',
+  //             ) // Fixed: logic for loose_stocks
+  //             .select('quantity')
+  //             .eq('product_id', barcode)
+  //             .eq('user_id', userId!)
+  //             .maybeSingle();
+
+  //     if (response != null) {
+  //       final num prevQty = response['quantity'] ?? 0;
+  //       final num newQtyInput = num.tryParse(addSubtractQty.text) ?? 0;
+  //       final double sPrice = double.tryParse(sellingPrice.text) ?? 0.0;
+  //       final num finalQty =
+  //           add ? prevQty + newQtyInput : prevQty - newQtyInput;
+
+  //       // Cloud Update
+  //       await SupabaseConfig.from('loose_stocks')
+  //           .update({'quantity': finalQty, 'selling_price': sPrice})
+  //           .eq('product_id', barcode)
+  //           .eq('user_id', userId!);
+
+  //       Get.back();
+  //       qtyClear();
+  //       showMessage(message: '✅ Quantity updated successfully.');
+
+  //       // Refresh flow (Auto syncs Hive and GlobalStore)
+  //       await fetchLooseProduct();
+  //     }
+  //   } catch (e) {
+  //     print("🚨 Update Error: $e");
+  //     showMessage(message: "Update failed: No Internet");
+  //   } finally {
+  //     isSaveLoading.value = false;
+  //   }
+  // }

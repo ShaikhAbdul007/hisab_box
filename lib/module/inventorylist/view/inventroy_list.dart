@@ -124,44 +124,40 @@ class InventroyList extends GetView<InventoryListController> {
                                       controller.shopProductList[index];
                                   return Obx(
                                     () =>
-                                        inventoryList.name!
+                                        // Purana ganda code:
+                                        // inventoryList.name!.toLowerCase().contains(...) ❌ (Crash point)
+                                        // Naya aur Safe code: ✅
+                                        (inventoryList.name ?? '')
                                                     .toLowerCase()
                                                     .contains(
                                                       controller
                                                           .searchText
-                                                          .value,
+                                                          .value
+                                                          .toLowerCase(),
                                                     ) ||
-                                                inventoryList.barcode!
+                                                (inventoryList.barcode ?? '')
                                                     .toLowerCase()
                                                     .contains(
                                                       controller
                                                           .searchController
-                                                          .value
-                                                          .text,
+                                                          .text
+                                                          .toLowerCase(),
                                                     ) ||
-                                                inventoryList.weight!
+                                                (inventoryList.weight ?? '')
                                                     .toLowerCase()
                                                     .contains(
                                                       controller
                                                           .searchController
-                                                          .value
-                                                          .text,
+                                                          .text
+                                                          .toLowerCase(),
                                                     ) ||
-                                                inventoryList.category!
+                                                (inventoryList.category ?? '')
                                                     .toLowerCase()
                                                     .contains(
                                                       controller
                                                           .searchController
-                                                          .value
-                                                          .text,
-                                                    ) ||
-                                                inventoryList.flavor!
-                                                    .toLowerCase()
-                                                    .contains(
-                                                      controller
-                                                          .searchController
-                                                          .value
-                                                          .text,
+                                                          .text
+                                                          .toLowerCase(),
                                                     )
                                             ? Hero(
                                               tag:

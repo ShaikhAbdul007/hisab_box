@@ -298,7 +298,20 @@ class MobileScreen extends StatelessWidget {
                 routeName: AppRouteName.nearExpireProduct,
               );
             },
-            child: Icon(CupertinoIcons.time_solid),
+            child: Obx(
+              () =>
+                  controller.nearExpiryCount.value > 0
+                      ? Badge.count(
+                        count: int.parse(
+                          controller.nearExpiryCount.value.toString(),
+                        ),
+                        isLabelVisible: true,
+                        backgroundColor: AppColors.redColor,
+
+                        child: Icon(CupertinoIcons.time_solid),
+                      )
+                      : Icon(CupertinoIcons.time_solid),
+            ),
           ),
           Obx(() {
             final count = controller.pendingTransfers.length;
