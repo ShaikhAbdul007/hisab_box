@@ -94,6 +94,9 @@ class SellListAfterScanController extends GetxController
 
   void setProductData() async {
     var dataList = await retrieveCartProductList();
+    for (final p in dataList) {
+      p.isLoosed ??= _isLooseProductModel(p);
+    }
     productList.assignAll(dataList);
     scannedProductDetails = productList;
     perProductDiscount.value = List.generate(productList.length, (i) {
@@ -214,8 +217,7 @@ class SellListAfterScanController extends GetxController
           sellItems.map((item) {
             return {
               'product_id': item.id, // uuid (NO NULL)
-              'stock_type':
-                  (item.isLoose == true) ? 'loose' : 'packet', // text (NO NULL)
+              'stock_type': _isLooseSellItem(item) ? 'loose' : 'packet',
               'qty': item.quantity?.toInt() ?? 1, // integer (NO NULL)
               'original_price': item.originalPrice ?? 0, // numeric (NO NULL)
               'final_price': item.finalPrice ?? 0, // numeric (NO NULL)
@@ -251,26 +253,50 @@ class SellListAfterScanController extends GetxController
       );
 
       final Map<String, dynamic> result = jsonDecode(response.toString());
+      final int? billNo =
+          result['bill_no'] is int
+              ? result['bill_no'] as int
+              : int.tryParse(result['bill_no']?.toString() ?? '');
 
-      // 🟢 RAM SYNC
-      globalStore.cashTotal.value += cash;
-      globalStore.upiTotal.value += upi;
-      globalStore.cardTotal.value += card;
-      globalStore.creditTotal.value += credit;
+      // 🟢 Realtime dedupe marker (totals realtime event se aayenge)
+      globalStore.markOptimisticBill(billNo);
 
+      // 🟢 Local stock RAM patch (instant inventory UX)
       for (var update in stockUpdates) {
-        String pId = update['productId'].toString();
-        for (var product in globalStore.barcodeToProductMap.values) {
-          if (product.id == pId) product.quantity = update['newQty'];
+        final String table = (update['table'] ?? '').toString();
+        final String pId = update['productId'].toString();
+        final num newQty =
+            update['newQty'] is num
+                ? update['newQty'] as num
+                : num.tryParse(update['newQty']?.toString() ?? '0') ?? 0;
+
+        if (table == 'product_stock') {
+          for (var product in globalStore.barcodeToProductMap.values) {
+            if (product.id == pId) {
+              product.quantity = newQty;
+            }
+          }
+          final int idx = globalStore.allProducts.indexWhere(
+            (p) => p.id == pId,
+          );
+          if (idx != -1) {
+            globalStore.allProducts[idx].quantity = newQty;
+          }
+        } else if (table == 'loose_stocks') {
+          final int idx = globalStore.allLooseProducts.indexWhere(
+            (p) => p.productId == pId,
+          );
+          if (idx != -1) {
+            globalStore.allLooseProducts[idx].quantity = newQty.toInt();
+          }
         }
-        int idx = globalStore.allProducts.indexWhere((p) => p.id == pId);
-        if (idx != -1) globalStore.allProducts[idx].quantity = update['newQty'];
       }
       globalStore.allProducts.refresh();
+      globalStore.allLooseProducts.refresh();
       globalStore.barcodeToProductMap.refresh();
 
       final saleData = {
-        'billNo': result['bill_no'],
+        'billNo': billNo ?? result['bill_no'],
         'soldAt': setFormateDate(),
         'time': setFormateDate('hh:mm:ss a'),
         'totalAmount': finalPayable,
@@ -286,8 +312,13 @@ class SellListAfterScanController extends GetxController
       };
 
       printInvoice.value = PrintInvoiceModel.fromJson(saleData);
+      // Reconcile server truth before completing flow.
+      // `isLoading` ke through existing CommonProgressbar button par show hota rahega.
+      await globalStore.loadInitialData();
+
       scannedProductDetails.clear();
-      clear();
+      clearPaymentInputs();
+      clearSellSessionData();
       return true;
     } catch (e) {
       print("🚨 Sale Failed: $e");
@@ -301,23 +332,53 @@ class SellListAfterScanController extends GetxController
     required String userId,
     required ProductModel product,
   }) async {
-    bool isLoose = product.sellType?.toLowerCase() == 'loose';
-    String table = isLoose ? 'loose_stocks' : 'product_stock';
-    final res =
-        await SupabaseConfig.from(table)
+    final bool isLoose = _isLooseProductModel(product);
+    final String expectedTable = isLoose ? 'loose_stocks' : 'product_stock';
+    final String oppositeTable =
+        expectedTable == 'loose_stocks' ? 'product_stock' : 'loose_stocks';
+    final String productId = product.id ?? '';
+
+    if (productId.isEmpty) {
+      throw Exception("Product ID missing in cart item for stock update");
+    }
+
+    final dynamic expectedRes =
+        await SupabaseConfig.from(expectedTable)
             .select('id, quantity')
             .eq('user_id', userId)
-            .eq('product_id', product.id ?? '')
+            .eq('product_id', productId)
             .maybeSingle();
-    if (res == null) throw Exception("Product not found");
-    double currentQty = (res['quantity'] ?? 0).toDouble();
+
+    // Strict validation: wrong stock table fallback silently accept nahi karenge.
+    if (expectedRes == null) {
+      final dynamic oppositeRes =
+          await SupabaseConfig.from(oppositeTable)
+              .select('id')
+              .eq('user_id', userId)
+              .eq('product_id', productId)
+              .maybeSingle();
+
+      if (oppositeRes != null) {
+        throw Exception(
+          "Stock type mismatch for product_id=$productId. "
+          "Expected=$expectedTable, found in $oppositeTable. "
+          "sellType=${product.sellType}, stockType=${product.stockType}, isLoose=${product.isLoosed}",
+        );
+      }
+
+      throw Exception(
+        "Stock row not found in $expectedTable for product_id=$productId",
+      );
+    }
+
+    double currentQty = (expectedRes['quantity'] ?? 0).toDouble();
     double sellQty = (product.quantity ?? 1).toDouble();
     return {
-      'table': table,
-      'id': res['id'],
+      'table': expectedTable,
+      'id': expectedRes['id'],
       'newQty': currentQty - sellQty,
-      'productId': product.id ?? '',
-      'isLoose': isLoose,
+      'productId': productId,
+      'isLoose': expectedTable == 'loose_stocks',
     };
   }
 
@@ -395,11 +456,23 @@ class SellListAfterScanController extends GetxController
           barcode: p.barcode.toString(),
           id: p.id,
           location: p.location,
-          isLoose: p.isLoosed,
+          sellType: p.sellType,
+          isLoose: _isLooseProductModel(p),
         ),
       );
     }
     return sellList;
+  }
+
+  bool _isLooseProductModel(ProductModel p) {
+    final sellType = (p.sellType ?? '').toLowerCase().trim();
+    final stockType = (p.stockType ?? '').toLowerCase().trim();
+    return p.isLoosed == true || sellType == 'loose' || stockType == 'loose';
+  }
+
+  bool _isLooseSellItem(SellItem item) {
+    final sellType = (item.sellType ?? '').toLowerCase().trim();
+    return item.isLoose == true || sellType == 'loose';
   }
 
   void deleteProductFromCart(int index) async {
@@ -448,13 +521,26 @@ class SellListAfterScanController extends GetxController
     return total;
   }
 
-  void clear() {
+  void clearPaymentInputs() {
     cashPaidController.text = '0.0';
     upiPaidController.text = '0.0';
     cardPaidController.text = '0.0';
     creditPaidController.text = '0.0';
     roundOffPaidController.text = '0.0';
+    paymentMethodTotalAmount.value = 0.0;
+    remainingAmount.value = 0.0;
+    allEditable.value = false;
+    isAmountValidCheck.value = true;
+  }
+
+  void clearSellSessionData() {
     productList.clear();
+    sellingPriceList.clear();
+    perProductDiscount.clear();
+    finalTotal.value = 0.0;
+    totalAmount.value = 0.0;
+    discountPrice.value = 0.0;
+    discountDifferenceAmount = 0.0;
   }
 
   Future<void> fetchDiscounts() async {

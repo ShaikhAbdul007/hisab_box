@@ -1,3 +1,20 @@
+Map<String, dynamic> _asStringMap(dynamic data) {
+  if (data is Map<String, dynamic>) return data;
+  if (data is Map) return Map<String, dynamic>.from(data);
+  return <String, dynamic>{};
+}
+
+double _toDouble(dynamic value) {
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '0') ?? 0.0;
+}
+
+int _toInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '0') ?? 0;
+}
+
 class SellsModel {
   final int? billNo;
   final bool? isDiscountGiven;
@@ -28,26 +45,67 @@ class SellsModel {
   });
 
   factory SellsModel.fromJson(Map<String, dynamic> json) {
+    final createdAtRaw = json['created_at']?.toString() ?? '';
+    final DateTime? createdAt = DateTime.tryParse(createdAtRaw);
+
+    final itemsRaw = (json['items'] ?? json['sale_items']) as List?;
+    final parsedItems =
+        itemsRaw?.map((e) => SellItem.fromJson(_asStringMap(e))).toList() ??
+        <SellItem>[];
+
+    final paymentRaw = json['payment'];
+    final salePayments = (json['sale_payments'] as List?);
+    final paymentMap =
+        paymentRaw != null
+            ? _asStringMap(paymentRaw)
+            : (salePayments != null && salePayments.isNotEmpty)
+            ? {
+              'cash': _toDouble(salePayments.first['cash_amount']),
+              'upi': _toDouble(salePayments.first['upi_amount']),
+              'card': _toDouble(salePayments.first['card_amount']),
+              'credit': _toDouble(salePayments.first['credit_amount']),
+              'totalAmount': _toDouble(json['total_amount']),
+              'roundOffAmount': _toDouble(
+                salePayments.first['round_off_amount'],
+              ),
+              'isRoundOff':
+                  _toDouble(salePayments.first['round_off_amount']) != 0,
+              'type':
+                  salePayments.first['payment_mode']?.toString().toUpperCase(),
+            }
+            : null;
+
+    final customers = _asStringMap(json['customers']);
+
     return SellsModel(
-      billNo: json['billNo'],
+      billNo: _toInt(json['billNo'] ?? json['bill_no']),
       isDiscountGiven: json['discount'],
-      discountValue: (json['discountValue'] ?? 0).toDouble(),
-      finalAmount: (json['finalAmount'] ?? 0).toDouble(),
-      itemsCount: json['itemsCount'],
-      soldAt: json['soldAt'],
-      time: json['time'],
-      customerName: json['customerName'] ?? '', // 🔥
-      customerMobile: json['customerMobile'] ?? '',
-      totalAmount: (json['totalAmount'] ?? 0).toDouble(),
-      items:
-          (json['items'] as List<dynamic>?)
-              ?.map((e) => SellItem.fromJson(e))
-              .toList() ??
-          [],
-      payment:
-          json['payment'] != null
-              ? PaymentModel.fromJson(json['payment'])
-              : null,
+      discountValue: _toDouble(json['discountValue']),
+      finalAmount: _toDouble(
+        json['finalAmount'] ?? json['totalAmount'] ?? json['total_amount'],
+      ),
+      itemsCount: _toInt(json['itemsCount'] ?? parsedItems.length),
+      soldAt:
+          json['soldAt']?.toString() ??
+          (createdAt != null
+              ? '${createdAt.year.toString().padLeft(4, '0')}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}'
+              : ''),
+      time:
+          json['time']?.toString() ??
+          (createdAt != null
+              ? '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}:${createdAt.second.toString().padLeft(2, '0')}'
+              : ''),
+      customerName:
+          json['customerName']?.toString() ??
+          customers['name']?.toString() ??
+          '',
+      customerMobile:
+          json['customerMobile']?.toString() ??
+          customers['mobile_number']?.toString() ??
+          '',
+      totalAmount: _toDouble(json['totalAmount'] ?? json['total_amount']),
+      items: parsedItems,
+      payment: paymentMap != null ? PaymentModel.fromJson(paymentMap) : null,
     );
   }
 
@@ -123,31 +181,58 @@ class SellItem {
   });
 
   SellItem.fromJson(Map<String, dynamic> json) {
-    name = json['name'] ?? '';
-    quantity = json['quantity'] ?? 0;
-    originalPrice = json['originalPrice'] ?? 0.0;
-    originalDiscount = json['originalDiscount'] ?? 0;
-    discount = json['discount'] ?? 0;
-    finalPrice = json['finalPrice'] ?? 0.0;
-    category = json['category'] ?? '';
-    barcode = json['barcode'] ?? '';
-    id = json['id'] ?? '';
-    sellType = json['sellType'] ?? '';
+    final products = _asStringMap(json['products']);
+    final productBarcodes = (products['product_barcodes'] as List?);
+    final categoriesMap = _asStringMap(products['categories']);
+    final animalCategoriesMap = _asStringMap(products['animal_categories']);
+
+    name = json['name']?.toString() ?? products['name']?.toString() ?? '';
+    quantity = _toInt(json['quantity'] ?? json['qty']);
+    originalPrice = _toDouble(json['originalPrice'] ?? json['original_price']);
+    originalDiscount = _toInt(json['originalDiscount']);
+    discount =
+        _toInt(
+          json['discount'] ??
+              json['applied_discount_percent'] ??
+              json['default_discount_percent'],
+        );
+    finalPrice = _toDouble(json['finalPrice'] ?? json['final_price']);
+    category =
+        json['category']?.toString() ??
+        categoriesMap['name']?.toString() ??
+        '';
+    barcode =
+        json['barcode']?.toString() ??
+        ((productBarcodes != null && productBarcodes.isNotEmpty)
+            ? productBarcodes.first['barcode']?.toString()
+            : '') ??
+        '';
+    id = json['id'] ?? json['product_id'] ?? '';
+    sellType =
+        json['sellType']?.toString() ?? json['stock_type']?.toString() ?? '';
     isActive = json['isActive'] ?? false;
-    purchasePrice = json['purchasePrice'] ?? 0.0;
-    weight = json['weight'] ?? '';
-    flavours = json['flavours'] ?? '';
-    animalType = json['animalType'] ?? '';
-    color = json['color'] ?? '';
-    box = json['box'] ?? 0;
-    perpiece = json['perpiece'] ?? 0;
-    isLoose = json['isLoose'] ?? false;
-    paymentMethod = json['paymentMethod'] ?? '';
+    purchasePrice = _toDouble(json['purchasePrice']);
+    weight = json['weight']?.toString() ?? products['weight']?.toString() ?? '';
+    flavours =
+        json['flavour']?.toString() ??
+        json['flavours']?.toString() ??
+        products['flavour']?.toString() ??
+        '';
+    animalType =
+        json['animal_type']?.toString() ??
+        json['animalType']?.toString() ??
+        animalCategoriesMap['name']?.toString() ??
+        '';
+    color = json['color']?.toString() ?? '';
+    box = _toInt(json['box']);
+    perpiece = _toInt(json['perpiece']);
+    isLoose = json['isLoose'] ?? (json['stock_type']?.toString() == 'loose');
+    paymentMethod = json['paymentMethod']?.toString() ?? '';
     isLooseCategory = json['isLooseCategory'] ?? false;
     isFlavorAndWeightNotRequired =
         json['isFlavorAndWeightNotRequired'] ?? false;
-    exprieDate = json['exprieDate'] ?? '';
-    location = json['location'] ?? '';
+    exprieDate = json['expiry_date']?.toString() ?? '';
+    location = json['location']?.toString() ?? '';
   }
 
   Map<String, dynamic> toJson() {
@@ -163,8 +248,8 @@ class SellItem {
     data['id'] = id;
     data['purchasePrice'] = purchasePrice;
     data['weight'] = weight;
-    data['flavours'] = flavours;
-    data['animalType'] = animalType;
+    data['flavour'] = flavours;
+    data['animal_type'] = animalType;
     data['color'] = color;
     data['box'] = box;
     data['isActive'] = isActive;
@@ -174,7 +259,7 @@ class SellItem {
     data['paymentMethod'] = paymentMethod;
     data['isLooseCategory'] = isLooseCategory;
     data['isFlavorAndWeightNotRequired'] = isFlavorAndWeightNotRequired;
-    data['exprieDate'] = exprieDate;
+    data['expiry_date'] = exprieDate;
     data['location'] = location;
     return data;
   }
@@ -203,14 +288,14 @@ class PaymentModel {
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
-      cash: (json['cash'] ?? 0).toDouble(),
-      upi: (json['upi'] ?? 0).toDouble(),
-      card: (json['card'] ?? 0).toDouble(),
-      credit: (json['credit'] ?? 0).toDouble(),
-      totalAmount: (json['totalAmount'] ?? 0).toDouble(),
+      cash: _toDouble(json['cash']),
+      upi: _toDouble(json['upi']),
+      card: _toDouble(json['card']),
+      credit: _toDouble(json['credit']),
+      totalAmount: _toDouble(json['totalAmount']),
       isRoundOff: json['isRoundOff'] ?? false,
-      roundOffAmount: (json['roundOffAmount'] ?? 0).toDouble(),
-      type: json['type'],
+      roundOffAmount: _toDouble(json['roundOffAmount']),
+      type: json['type']?.toString(),
     );
   }
 

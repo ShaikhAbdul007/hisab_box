@@ -82,7 +82,7 @@ class LooseInvetoryModel {
       level = p['level']?.toString();
       color = p['color']?.toString();
       box = p['box']?.toString();
-      isLooseCategory = p['is_loose_category'] ?? false;
+      isLooseCategory = p['is_loose_category'];
       isFlavorAndWeightNotRequired =
           p['is_flavor_and_weight_not_required'] ?? false;
 
@@ -142,7 +142,7 @@ class LooseInvetoryModel {
       weight = json['weight']?.toString();
       rack = json['rack']?.toString();
       level = json['level']?.toString();
-      isLooseCategory = json['is_loose_category'] ?? false;
+      isLooseCategory = json['is_loose_category'];
       isActive = json['is_active'] ?? true;
       location = json['location']?.toString() ?? 'shop';
       stockType = json['stock_type']?.toString() ?? 'loose';

@@ -47,39 +47,66 @@ class UserProfileView extends GetView<UserProfileController> {
                               CircleAvatar(
                                 radius: 55,
                                 backgroundColor: Colors.black,
-                                child:
-                                    controller.profileImage.value != null
-                                        ? ClipOval(
-                                          child: Image.file(
-                                            controller.profileImage.value!,
-                                            width: 110,
-                                            height: 110,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (
-                                              context,
-                                              error,
-                                              stackTrace,
-                                            ) {
-                                              print(
-                                                '🖼️ Image loading error: $error',
-                                              );
-                                              return Text(
-                                                "HB",
-                                                style: TextStyle(
-                                                  fontSize: 40,
-                                                  color: Colors.white,
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        )
-                                        : Text(
-                                          "HB",
-                                          style: TextStyle(
-                                            fontSize: 40,
-                                            color: Colors.white,
-                                          ),
-                                        ),
+                                child: (() {
+                                  final profile = controller.profileImage.value;
+                                  final profileUrl =
+                                      controller.profileImageUrl.value.trim();
+                                  final canShowImage =
+                                      profile != null && profile.existsSync();
+                                  if (canShowImage) {
+                                    return ClipOval(
+                                      child: Image.file(
+                                        profile,
+                                        width: 110,
+                                        height: 110,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return const Text(
+                                            "HB",
+                                            style: TextStyle(
+                                              fontSize: 40,
+                                              color: Colors.white,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }
+                                  if (profileUrl.isNotEmpty) {
+                                    return ClipOval(
+                                      child: Image.network(
+                                        profileUrl,
+                                        width: 110,
+                                        height: 110,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return const Text(
+                                            "HB",
+                                            style: TextStyle(
+                                              fontSize: 40,
+                                              color: Colors.white,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }
+                                  return const Text(
+                                    "HB",
+                                    style: TextStyle(
+                                      fontSize: 40,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                })(),
                               ),
                               controller.readOnly.value
                                   ? Container()

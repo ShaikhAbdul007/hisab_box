@@ -62,6 +62,56 @@ class InventroyController extends GetxController
   // ==========================================
   // 🔥 EXISTING PRODUCT CHECK (RAM FIRST)
   // ==========================================
+  bool _parseLooseFlag(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' ||
+          normalized == 't' ||
+          normalized == '1' ||
+          normalized == 'yes';
+    }
+    return false;
+  }
+
+  Future<void> _syncLooseCategoryFromDb(
+    String barcode,
+    ProductModel product,
+  ) async {
+    try {
+      final res =
+          await SupabaseConfig.from('product_barcodes')
+              .select('products!inner(is_loose_category)')
+              .eq('barcode', barcode)
+              .maybeSingle();
+
+      if (res == null) return;
+      final dynamic productsNode = res['products'];
+
+      Map<String, dynamic>? productMap;
+      if (productsNode is Map<String, dynamic>) {
+        productMap = productsNode;
+      } else if (productsNode is List && productsNode.isNotEmpty) {
+        final first = productsNode.first;
+        if (first is Map<String, dynamic>) {
+          productMap = first;
+        } else if (first is Map) {
+          productMap = Map<String, dynamic>.from(first);
+        }
+      } else if (productsNode is Map) {
+        productMap = Map<String, dynamic>.from(productsNode);
+      }
+
+      if (productMap == null) return;
+      product.isLooseCategory = _parseLooseFlag(
+        productMap['is_loose_category'],
+      );
+    } catch (_) {
+      // Keep existing value on any DB/read error.
+    }
+  }
+
   Future<(bool existProductOrNot, ProductModel productModels)>
   existingProductInfo(String barcode) async {
     if (userId == null) return (false, ProductModel());
@@ -75,6 +125,7 @@ class InventroyController extends GetxController
 
       if (ramProductData != null) {
         final model = ProductModel.fromJson(ramProductData.toJson());
+        await _syncLooseCategoryFromDb(barcode, model);
         existProductName.value = model.name ?? '';
         isExistingProductInfo.value = false;
         return (true, model);
@@ -83,6 +134,7 @@ class InventroyController extends GetxController
       // 2. Fallback to Hive (LocalService)
       final localProduct = LocalService.searchByBarcode(barcode);
       if (localProduct != null) {
+        await _syncLooseCategoryFromDb(barcode, localProduct);
         existProductName.value = localProduct.name ?? '';
         isExistingProductInfo.value = false;
         return (true, localProduct);
@@ -98,6 +150,7 @@ class InventroyController extends GetxController
       if (res != null && res['products'] != null) {
         final model = ProductModel.fromJson(res['products']);
         model.barcode = barcode;
+        await _syncLooseCategoryFromDb(barcode, model);
         existProductName.value = model.name ?? '';
         return (true, model);
       }
@@ -158,6 +211,42 @@ class InventroyController extends GetxController
         } else {
           showMessage(message: "❌ Product Not Found");
           return;
+        }
+      }
+
+      final productLocation = (product.location ?? '').trim().toLowerCase();
+      if (productLocation != 'shop') {
+        showMessage(message: 'Product should be in shop to sell.');
+        return;
+      }
+
+      // Loose sell/stock is allowed only for loose-category products.
+      if (sellType.toLowerCase() == 'loose' &&
+          product.isLooseCategory != true) {
+        showMessage(
+          message:
+              '${product.name ?? 'Selected'} product is not a loose category.',
+        );
+        return;
+      }
+
+      // 🎯 STEP 2.5: Loose sell ke liye loose_stocks ka live price/qty uthao
+      if (sellType.toLowerCase() == 'loose' && (product.id ?? '').isNotEmpty) {
+        final looseRes =
+            await SupabaseConfig.from('loose_stocks')
+                .select('quantity, selling_price')
+                .eq('user_id', userId!)
+                .eq('product_id', product.id ?? '')
+                .maybeSingle();
+
+        if (looseRes != null) {
+          product.quantity =
+              double.tryParse(looseRes['quantity']?.toString() ?? '0') ?? 0;
+          product.sellingPrice =
+              double.tryParse(looseRes['selling_price']?.toString() ?? '0') ??
+              0;
+          product.sellType = 'Loose';
+          product.isLoosed = true;
         }
       }
 

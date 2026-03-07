@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
@@ -8,16 +9,7 @@ import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:inventory/local_db/local_db_service.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
-import '../../inventory/model/product_model.dart';
-import '../../loose_sell/model/loose_model.dart';
-import '../model/go_down_stock_transfer_to_shop_model.dart';
-import '../../revenue/model/revenue_model.dart'; // CategoryModel etc context
 
 class ProductDetailsController extends GetxController with LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
@@ -47,6 +39,7 @@ class ProductDetailsController extends GetxController with LocalService {
   TextEditingController loooseProductName = TextEditingController();
   TextEditingController exprieDate = TextEditingController();
   TextEditingController purchaseDate = TextEditingController();
+  TextEditingController barcodeQytController = TextEditingController();
   RxList<CategoryModel> categoryModel = <CategoryModel>[].obs;
 
   RxBool isFlavorAndWeightNotRequired = true.obs;
@@ -141,15 +134,17 @@ class ProductDetailsController extends GetxController with LocalService {
       productName.text = p.name ?? '';
       barcode.text = p.barcode ?? '';
       quantity.text = p.quantity.toString();
+      barcodeQytController.text = p.quantity.toString();
+
       sellingPrice.text = p.sellingPrice.toString();
       purchasePrice.text = p.purchasePrice.toString();
       flavor.text = p.flavor ?? '';
       weight.text = p.weight.toString();
-      isLoose = p.isLoosed ?? false;
-      location.text = p.location ?? '';
+      isLoose = p.isLooseCategory ?? false;
+      location.text = p.location?.toCapitalized() ?? '';
       discount.text = p.discount.toString();
-      purchaseDate.text = p.purchaseDate ?? '';
-      exprieDate.text = p.expireDate ?? '';
+      purchaseDate.text = formatDateForUi(p.purchaseDate, emptyFallback: '');
+      exprieDate.text = formatDateForUi(p.expireDate, emptyFallback: '');
     } else if (productData is LooseInvetoryModel) {
       LooseInvetoryModel l = productData;
       category.text = l.category ?? '';
@@ -159,33 +154,44 @@ class ProductDetailsController extends GetxController with LocalService {
       productName.text = l.name ?? '';
       barcode.text = l.barcode ?? '';
       quantity.text = l.quantity.toString();
+      barcodeQytController.text = l.quantity.toString();
       sellingPrice.text = l.sellingPrice.toString();
       purchasePrice.text = l.purchasePrice.toString();
       flavor.text = l.flavor ?? '';
       weight.text = l.weight ?? '';
       isLoose = true;
-      location.text = l.location ?? '';
+      location.text = l.location?.toCapitalized() ?? '';
       discount.text = l.discount.toString();
-      purchaseDate.text = l.purchaseDate ?? '';
-      exprieDate.text = l.expireDate ?? '';
+      purchaseDate.text = formatDateForUi(l.purchaseDate, emptyFallback: '');
+      exprieDate.text = formatDateForUi(l.expireDate, emptyFallback: '');
     } else {
       Map<String, dynamic> p = productData as Map<String, dynamic>;
       category.text = p['category']?.toString() ?? '';
-      animalType.text = p['animalType']?.toString() ?? '';
+      animalType.text =
+          p['animalType']?.toString() ?? p['animal_type']?.toString() ?? '';
       isFlavorAndWeightNotRequired.value =
-          p['isFlavorAndWeightNotRequired'] ?? false;
+          p['isFlavorAndWeightNotRequired'] ??
+          p['is_flavor_and_weight_not_required'] ??
+          false;
       productName.text = p['name']?.toString() ?? '';
       barcode.text = p['barcode']?.toString() ?? '';
       quantity.text = p['quantity']?.toString() ?? '0';
+      barcodeQytController.text = p['quantity']?.toString() ?? '0';
       sellingPrice.text = p['sellingPrice']?.toString() ?? '0';
       purchasePrice.text = p['purchasePrice']?.toString() ?? '0';
-      flavor.text = p['flavor']?.toString() ?? '';
+      flavor.text = p['flavor']?.toString() ?? p['flavour']?.toString() ?? '';
       weight.text = p['weight']?.toString() ?? '';
       isLoose = p['isLoosed'] ?? p['isLooseCategory'] ?? false;
       location.text = p['location']?.toString() ?? '';
       discount.text = p['discount']?.toString() ?? '0';
-      purchaseDate.text = p['purchaseDate']?.toString() ?? '';
-      exprieDate.text = p['expireDate']?.toString() ?? '';
+      purchaseDate.text = formatDateForUi(
+        p['purchaseDate']?.toString() ?? p['purchase_date']?.toString(),
+        emptyFallback: '',
+      );
+      exprieDate.text = formatDateForUi(
+        p['expireDate']?.toString() ?? p['expiry_date']?.toString(),
+        emptyFallback: '',
+      );
     }
   }
 
@@ -201,10 +207,24 @@ class ProductDetailsController extends GetxController with LocalService {
     isSaveLoading.value = true;
 
     try {
-      var catId =
-          categoryList.firstWhereOrNull((e) => e.name == category.text)?.id;
-      var aniId =
-          animalTypeList.firstWhereOrNull((e) => e.name == animalType.text)?.id;
+      final selectedCategory = category.text.trim();
+      final selectedAnimal = animalType.text.trim();
+
+      final catId =
+          categoryList
+              .firstWhereOrNull(
+                (e) => e.id == selectedCategory || e.name == selectedCategory,
+              )
+              ?.id ??
+          (selectedCategory.isEmpty ? null : selectedCategory);
+
+      final aniId =
+          animalTypeList
+              .firstWhereOrNull(
+                (e) => e.id == selectedAnimal || e.name == selectedAnimal,
+              )
+              ?.id ??
+          (selectedAnimal.isEmpty ? null : selectedAnimal);
 
       String? pid;
       var productData = data['product'];
@@ -219,10 +239,11 @@ class ProductDetailsController extends GetxController with LocalService {
       }
 
       if (pid == null) throw "Product ID not found";
-
+      final pDate = formatDateForRpc(purchaseDate.text);
+      final eDate = formatDateForRpc(exprieDate.text);
       // 1. Transactional Update (Cloud)
       await SupabaseConfig.client.rpc(
-        'update_product_and_stock_transaction',
+        'update_product_and_stock_v2',
         params: {
           'p_pid': pid,
           'p_user_id': userId,
@@ -231,14 +252,14 @@ class ProductDetailsController extends GetxController with LocalService {
           'p_ani_id': aniId,
           'p_flavor': flavor.text,
           'p_weight': weight.text,
-          'p_is_loose_cat': isLoosed,
+          'p_is_loose_cat': isLoose,
           'p_is_flavor_weight_req': isFlavorAndWeightNotRequired.value,
           'p_is_loosed_entry': isLoosed,
           'p_qty': double.tryParse(quantity.text) ?? 0.0,
           'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
           'p_p_price': double.tryParse(purchasePrice.text) ?? 0.0,
-          'p_p_date': formatDateForDB(purchaseDate.text),
-          'p_e_date': formatDateForDB(exprieDate.text),
+          'p_p_date': pDate,
+          'p_e_date': eDate,
           'p_location': location.text.toLowerCase().trim(),
         },
       );
@@ -246,10 +267,8 @@ class ProductDetailsController extends GetxController with LocalService {
       // 2. 🔥 GLOBAL SYNC: GlobalStore ko bolo fresh data laaye
       // Isse RAM wala data update hoga aur poori app refresh ho jayegi
       await globalStore.loadInitialData();
-
       // 3. Local Sync: Hive mein data update karna
       await refreshAllLocalData(isLoosed: isLoosed);
-
       Get.back(result: true);
       showMessage(message: '✅ Product & Stock Updated Safely.');
     } catch (e) {

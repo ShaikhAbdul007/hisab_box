@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/gobal_controller.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
@@ -10,6 +11,7 @@ import '../../inventory/model/product_model.dart';
 
 class ProductController extends GetxController with LocalService {
   final uid = SupabaseConfig.auth.currentUser?.id;
+  final globalStore = Get.find<GlobalStore>();
   final inventoryScanKey = GlobalKey<FormState>();
 
   // Observables (Exactly as you had them)
@@ -145,7 +147,7 @@ class ProductController extends GetxController with LocalService {
       }
 
       await SupabaseConfig.client.rpc(
-        'add_new_product_with_stock',
+        'add_new_product_v2',
         params: {
           'p_user_id': uid,
           'p_name': productName.text.trim(),
@@ -155,26 +157,27 @@ class ProductController extends GetxController with LocalService {
           'p_level': level.text,
           'p_rack': rack.text,
           'p_weight': weight.text,
-          'p_is_loose': loosedProduct.value,
+          'p_is_loose': isLoose,
           'p_barcode': barcode,
           'p_qty': num.tryParse(quantity.text) ?? 0,
           'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
           'p_p_price': double.tryParse(purchasePrice.text) ?? 0.0,
           'p_disc_amt': double.tryParse(discount.text) ?? 0.0,
-          'p_purchase_date': formatDateForDB(purchaseDate.text),
-          'p_expiry_date': formatDateForDB(exprieDate.text),
+          'p_purchase_date': formatDateForRpc(purchaseDate.text),
+          'p_expiry_date': formatDateForRpc(exprieDate.text),
           'p_location':
               location.text.toLowerCase().contains('godown')
                   ? 'godown'
                   : 'shop',
         },
       );
-
+      await globalStore.loadInitialData();
       showMessage(message: "✅ Product Saved!");
       clear();
       // GlobalStore ka realtime sync is naye product ko khud utha lega.
       Get.back(result: true);
     } catch (e) {
+      print("Database Error: $e");
       showMessage(message: "❌ Database Error: $e");
     } finally {
       isSaveLoading.value = false;
@@ -186,16 +189,18 @@ class ProductController extends GetxController with LocalService {
     isLooseProductSave.value = true;
     try {
       if (uid == null) return;
-
       await SupabaseConfig.client.rpc(
         'convert_packet_to_loose',
         params: {
           'p_user_id': uid,
           'p_barcode': barcode,
           'p_qty': double.tryParse(looseQuantity.text) ?? 0,
-          'p_price': double.tryParse(looseSellingPrice.text) ?? 0,
+          'p_loose_qty': double.tryParse(looseQuantity.text) ?? 0,
+          'p_selling_price': double.tryParse(sellingPrice.text) ?? 0,
+          'p_reason': 'convert',
         },
       );
+      await globalStore.loadInitialData();
 
       showMessage(message: "✅ Converted & Synced!");
       clear();

@@ -459,24 +459,24 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
               children: [
                 BarcodeWidget(
                   barcode: Barcode.code128(),
-                  data: data['product'].barcode,
+                  data: user.name ?? '',
                   height: 90,
                   width: 175,
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  user.name ?? 'Hisab Box',
-                  style: CustomTextStyle.customMontserrat(
-                    fontSize: 20, // Even larger for maximum visibility
-                    fontWeight: FontWeight.w800, // Extra bold
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
+                // Text(
+                //   user.name ?? 'Hisab Box',
+                //   style: CustomTextStyle.customMontserrat(
+                //     fontSize: 20, // Even larger for maximum visibility
+                //     fontWeight: FontWeight.w800, // Extra bold
+                //   ),
+                //   maxLines: 1,
+                //   overflow: TextOverflow.ellipsis,
+                //   textAlign: TextAlign.center,
+                // ),
                 const SizedBox(height: 1),
                 Text(
-                  data['product'].name ?? '',
+                  data['productData']['product'].name ?? '',
                   style: CustomTextStyle.customMontserrat(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -487,7 +487,7 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  '${data['product'].flavor} | ${data['product'].weight} | ₹${data['product'].sellingPrice}',
+                  '${data['productData']['product'].flavor} | ${data['productData']['product'].weight} | ₹${data['productData']['product'].sellingPrice}',
                   style: CustomTextStyle.customMontserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

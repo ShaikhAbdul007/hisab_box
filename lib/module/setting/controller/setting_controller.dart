@@ -1,13 +1,12 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
+import 'package:inventory/supabase_db/storage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
@@ -24,6 +23,35 @@ class SettingController extends GetxController with CacheManager {
   RxBool isUserlogout = false.obs;
   RxBool discountPerProduct = false.obs;
   Rx<File?> profileImage = Rx<File?>(null);
+  RxString profileImageUrl = ''.obs;
+
+  File? _safeProfileFile(String path) {
+    final file = File(path);
+    return file.existsSync() ? file : null;
+  }
+
+  bool _hasRenderableImage(String? imageValue) {
+    final value = (imageValue ?? '').trim();
+    if (value.isEmpty) return false;
+    if (StorageService.isNetworkImage(value)) return true;
+    return File(value).existsSync();
+  }
+
+  void _setProfileSource(String? imageValue) {
+    final value = (imageValue ?? '').trim();
+    if (StorageService.isNetworkImage(value)) {
+      profileImageUrl.value = value;
+      profileImage.value = null;
+      return;
+    }
+    profileImageUrl.value = '';
+    if (value.isEmpty) {
+      profileImage.value = null;
+      return;
+    }
+    profileImage.value = _safeProfileFile(value);
+  }
+
   @override
   void onInit() {
     getUserName();
@@ -46,11 +74,10 @@ class SettingController extends GetxController with CacheManager {
         email.value = user.email ?? '';
         shoptype.value = user.shoptype ?? '';
         discountPerProduct.value = user.discountPerProduct ?? false;
-        profileImage.value =
-            user.image != null && user.image!.isNotEmpty
-                ? File(user.image!)
-                : null;
-        return;
+        _setProfileSource(user.image);
+        if (_hasRenderableImage(user.image)) {
+          return;
+        }
       }
 
       // 2️⃣ FETCH FROM SUPABASE
@@ -66,10 +93,7 @@ class SettingController extends GetxController with CacheManager {
         email.value = userDatas.email ?? '';
         shoptype.value = userDatas.shoptype ?? '';
         discountPerProduct.value = userDatas.discountPerProduct ?? false;
-        profileImage.value =
-            userDatas.image != null && userDatas.image!.isNotEmpty
-                ? File(userDatas.image!)
-                : null;
+        _setProfileSource(userDatas.image);
         // 🔥 SAVE TO CACHE
         saveUserData(userDatas);
       }

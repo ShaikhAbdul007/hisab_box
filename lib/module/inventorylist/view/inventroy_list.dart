@@ -17,6 +17,8 @@ import '../../../routes/routes.dart';
 import '../controller/inventory_list_controller.dart';
 import '../widget/inventory_list_text.dart';
 
+enum _InventoryModeMenu { scan, manual }
+
 class InventroyList extends GetView<InventoryListController> {
   const InventroyList({super.key});
 
@@ -24,26 +26,113 @@ class InventroyList extends GetView<InventoryListController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: 'Product List',
+      // firstActionChild: Obx(
+      //   () =>
+      //       controller.isInventoryScanSelected.value
+      //           ? InkWell(
+      //             onTap: () async {
+      //               var res = await AppRoutes.futureNavigationToRoute(
+      //                 routeName: AppRouteName.inventoryView,
+      //                 data: {'flag': true},
+      //               );
+      //               if (res == true) {
+      //                 controller.fetchAllInventory();
+      //               }
+      //             },
+      //             child: CommonContainer(
+      //               height: 40,
+      //               width: 40,
+      //               radius: 10,
+      //               color: AppColors.whiteColor,
+      //               child: Icon(
+      //                 CupertinoIcons.barcode_viewfinder,
+      //                 color: AppColors.blackColor,
+      //               ),
+      //             ),
+      //           )
+      //           : Container(),
+      // ),
       secondActionChild: Obx(
         () =>
             controller.isInventoryScanSelected.value
-                ? InkWell(
-                  onTap: () async {
-                    var res = await AppRoutes.futureNavigationToRoute(
-                      routeName: AppRouteName.inventoryView,
-                      data: {'flag': true},
-                    );
-                    if (res == true) {
-                      controller.fetchAllInventory();
+                ? PopupMenuButton<_InventoryModeMenu>(
+                  enabled: true,
+                  color: AppColors.whiteColor,
+                  constraints: BoxConstraints(
+                    maxHeight: 200.h,
+                    maxWidth: 200.w,
+                    minHeight: 40.h,
+                    minWidth: 60.w,
+                  ),
+                  position: PopupMenuPosition.under,
+                  borderRadius: BorderRadius.circular(200.r),
+                  tooltip: 'Mode',
+                  onSelected: (_InventoryModeMenu value) async {
+                    if (value.name == 'scan') {
+                      var res = await AppRoutes.futureNavigationToRoute(
+                        routeName: AppRouteName.inventoryView,
+                        data: {'flag': true},
+                      );
+                      if (res == true) {
+                        controller.fetchAllInventory();
+                      }
+                    } else {
+                      await AppRoutes.futureNavigationToRoute(
+                        routeName: AppRouteName.generateBarcode,
+                        data: {'flag': true},
+                      );
                     }
                   },
+                  itemBuilder:
+                      (context) => [
+                        PopupMenuItem<_InventoryModeMenu>(
+                          value: _InventoryModeMenu.scan,
+                          child: Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.barcode_viewfinder,
+                                size: 18,
+                                color:
+                                    controller.isInventoryScanSelected.value
+                                        ? AppColors.blackColor
+                                        : AppColors.greyColor,
+                              ),
+                              setWidth(width: 8),
+                              Text(
+                                'Scan',
+                                style: CustomTextStyle.customOpenSans(),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<_InventoryModeMenu>(
+                          value: _InventoryModeMenu.manual,
+                          child: Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.pencil,
+                                size: 18,
+                                color:
+                                    !controller.isInventoryScanSelected.value
+                                        ? AppColors.blackColor
+                                        : AppColors.greyColor,
+                              ),
+                              setWidth(width: 8),
+                              Text(
+                                'Manual',
+                                style: CustomTextStyle.customOpenSans(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                   child: CommonContainer(
                     height: 40,
                     width: 40,
                     radius: 10,
                     color: AppColors.whiteColor,
                     child: Icon(
-                      CupertinoIcons.barcode_viewfinder,
+                      CupertinoIcons.ellipsis_vertical,
                       color: AppColors.blackColor,
                     ),
                   ),

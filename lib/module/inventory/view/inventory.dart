@@ -122,7 +122,14 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
-    if (product.isLoosed == true) {
+    final productLocation = (product.location ?? '').trim().toLowerCase();
+    if (productLocation != 'shop') {
+      showMessage(message: 'Product should be in shop to sell.');
+      controller.mobileScannerController.start();
+      return;
+    }
+
+    if (product.isLooseCategory == true) {
       checkProductStatusDialog(
         label: 'Is this product sold in Packet or Loose?',
         packetOnTap: () {
@@ -201,17 +208,29 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
-    final res = await AppRoutes.futureNavigationToRoute(
-      routeName: AppRouteName.productView,
-      data: {
-        'barcode': scannedValue,
-        'flag': true,
-        'productName': product.name,
-      },
-    );
+    final productLocation = (product.location ?? '').trim().toLowerCase();
+    final canAddInLooseInventory =
+        product.isLooseCategory == true && productLocation == 'shop';
 
-    if (res == true) {
+    if (canAddInLooseInventory == false) {
+      showMessage(
+        message:
+            '${product.name ?? 'This'} product can be added to loose only if it is packet and not in shop.',
+      );
       controller.mobileScannerController.start();
+      return;
+    } else {
+      final res = await AppRoutes.futureNavigationToRoute(
+        routeName: AppRouteName.productView,
+        data: {
+          'barcode': scannedValue,
+          'flag': true,
+          'productName': product.name,
+        },
+      );
+      if (res == true) {
+        controller.mobileScannerController.start();
+      }
     }
   }
 

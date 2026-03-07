@@ -19,6 +19,30 @@ class BardcodeController extends GetxController
   BluetoothDevice? _printer;
   var data = Get.arguments;
 
+  String _toEscPosSafe(String value) {
+    const fallback = '?';
+    final normalized = value
+        .replaceAll('₹', 'Rs.')
+        .replaceAll('–', '-')
+        .replaceAll('—', '-')
+        .replaceAll('’', "'")
+        .replaceAll('‘', "'")
+        .replaceAll('“', '"')
+        .replaceAll('”', '"');
+
+    final buffer = StringBuffer();
+    for (final rune in normalized.runes) {
+      if (rune >= 32 && rune <= 255) {
+        buffer.writeCharCode(rune);
+      } else if (rune == 10 || rune == 13 || rune == 9) {
+        buffer.writeCharCode(rune);
+      } else {
+        buffer.write(fallback);
+      }
+    }
+    return buffer.toString();
+  }
+
   @override
   void onInit() {
     checkBluetoothConnectivitys();
@@ -48,6 +72,16 @@ class BardcodeController extends GetxController
 
     // 1. Data Cleaning
     final barcodeData = barcodeNo.toUpperCase().trim();
+    final product = data['productData']['product'];
+    final String priceText =
+        (product.sellingPrice is num)
+            ? (product.sellingPrice as num).toStringAsFixed(0)
+            : '${product.sellingPrice}';
+    final String shopName = _toEscPosSafe(user.name ?? 'Hisab Box');
+    final String productName = _toEscPosSafe('${product.name}');
+    final String detailLine = _toEscPosSafe(
+      '${product.flavor} | ${product.weight} | Rs.$priceText',
+    );
 
     for (int i = 0; i < quantity; i++) {
       bytes += gen.reset();
@@ -59,26 +93,37 @@ class BardcodeController extends GetxController
         height: 55,
         width: 3,
         align: PosAlign.center,
+        textPos: BarcodeText.none,
       );
 
       // 3. Text Formatting
       bytes += gen.text(
-        user.name ?? 'Hisab Box',
+        shopName,
         styles: PosStyles(
           align: PosAlign.center,
-          // bold: true
+          fontType: PosFontType.fontB,
+          height: PosTextSize.size5,
+          width: PosTextSize.size1,
         ),
       );
       bytes += gen.text(
-        data['product'].name,
+        productName,
         styles: PosStyles(
           align: PosAlign.center,
-          // bold: true
+          fontType: PosFontType.fontB,
+          height: PosTextSize.size5,
+          width: PosTextSize.size1,
         ),
       );
+
       bytes += gen.text(
-        '${data['product'].flavor} | ${data['product'].weight} | ₹${data['product'].sellingPrice}',
-        styles: PosStyles(align: PosAlign.center),
+        detailLine,
+        styles: PosStyles(
+          align: PosAlign.center,
+          fontType: PosFontType.fontB,
+          height: PosTextSize.size5, // 1..8
+          width: PosTextSize.size1,
+        ),
       );
 
       // 4. Critical: Label Gap Detection

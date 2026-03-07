@@ -6,6 +6,43 @@ String setFormateDate([String dateFormat = 'dd-MM-yyyy']) {
   return todayDate;
 }
 
+DateTime? parseAppDate(String? value) {
+  if (value == null) return null;
+  final input = value.trim();
+  if (input.isEmpty) return null;
+
+  try {
+    return DateFormat('dd-MM-yyyy').parseStrict(input);
+  } catch (_) {}
+
+  try {
+    return DateFormat('yyyy-MM-dd').parseStrict(input);
+  } catch (_) {}
+
+  try {
+    return DateTime.parse(input);
+  } catch (_) {}
+
+  return null;
+}
+
+String setFormatForDb(String dateStr) {
+  return formatDateForDB(dateStr);
+}
+
+String formatDateForUi(
+  String? dateStr, {
+  String emptyFallback = '--/--/----',
+}) {
+  if (dateStr == null || dateStr.trim().isEmpty || dateStr == 'null') {
+    return emptyFallback;
+  }
+
+  final parsed = parseAppDate(dateStr);
+  if (parsed == null) return dateStr;
+  return DateFormat('dd-MM-yyyy').format(parsed);
+}
+
 String setDateFormated(
   String dateString, {
   String fromFormat = 'yyyy-MM-ddTHH:mm:ss.SSSZ',
@@ -47,26 +84,22 @@ String formatDateTime(
 }
 
 String formatDateForDB(String dateStr) {
-  if (dateStr.isEmpty) return DateTime.now().toIso8601String().split('T')[0];
+  final value = dateStr.trim();
+  if (value.isEmpty) return DateTime.now().toIso8601String().split('T')[0];
 
-  try {
-    // 1. Pehle readable string ko DateTime object mein badlo
-    // Aapka UI format 'dd-MM-yyyy' hai toh wahi use karein
-    DateFormat inputFormat = DateFormat('dd-MM-yyyy');
-    DateTime parsedDate = inputFormat.parse(dateStr);
-
-    // 2. Ab usey DB format (yyyy-MM-dd) mein convert karo
-    return DateFormat('yyyy-MM-dd').format(parsedDate);
-  } catch (e) {
-    print("🚨 Parsing Error: $e. Input was: $dateStr");
-
-    // Agar parsing fail ho (e.g. already ISO format ho), toh try DateTime.parse
-    try {
-      return DateTime.parse(dateStr).toIso8601String().split('T')[0];
-    } catch (_) {
-      return DateFormat('yyyy-MM-dd').format(DateTime.now());
-    }
+  final parsed = parseAppDate(value);
+  if (parsed == null) {
+    return DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
+  return DateFormat('yyyy-MM-dd').format(parsed);
+}
+
+String formatDateForRpc(String dateStr) {
+  final value = dateStr.trim();
+  if (value.isEmpty) return setFormateDate();
+  final parsed = parseAppDate(value);
+  if (parsed == null) return setFormateDate();
+  return DateFormat('dd-MM-yyyy').format(parsed);
 }
 
 String getStringLengthText(String value) {
@@ -94,21 +127,5 @@ String getshortStringLengthText({required String value, int size = 15}) {
 }
 
 String formatDate(String? dateStr) {
-  if (dateStr == null || dateStr.isEmpty || dateStr == 'null') {
-    return '--/--/----'; // Agar date na ho toh crash nahi hoga
-  }
-
-  try {
-    // String ko DateTime mein badlo
-    DateTime dateTime = DateTime.parse(dateStr);
-
-    // dd-mm-yyyy format mein set karo
-    String day = dateTime.day.toString().padLeft(2, '0');
-    String month = dateTime.month.toString().padLeft(2, '0');
-    String year = dateTime.year.toString();
-
-    return "$day-$month-$year";
-  } catch (e) {
-    return dateStr; // Agar parse fail ho jaye toh original string hi de do
-  }
+  return formatDateForUi(dateStr);
 }

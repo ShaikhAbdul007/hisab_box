@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
-import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/keys/keys.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
@@ -28,89 +27,46 @@ class GenerateBarcodeComponent extends StatelessWidget {
       paddingOption: SymmetricPadding(horizontal: 10.0),
       child: SingleChildScrollView(
         child: Form(
-          key: inventoryScanKey,
+          key: controller.inventoryScanKey,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             spacing: 10,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 50.r,
-                    backgroundColor: AppColors.whiteColor,
-                    child: Icon(CupertinoIcons.cube, size: 50.r),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        CommonTextField(
-                          validator: (quantity) {
-                            if (quantity!.isEmpty) {
-                              return emptyBarcode;
-                            } else {
-                              return null;
-                            }
-                          },
-                          contentPadding:
-                              SymmetricPadding(
-                                vertical: 5,
-                                horizontal: 5,
-                              ).getPadding(),
-                          inputLength: 5,
-                          keyboardType: TextInputType.number,
-                          hintText: 'Enter Barcode',
-                          label: 'Enter Barcode',
-                          controller: controller.barcode,
-                        ),
-                        CustomPadding(
-                          paddingOption: OnlyPadding(right: 15.0, top: 5),
-                          child: InkWell(
-                            onTap: () {
-                              // controller.
-                            },
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                'Auto Generate Barcode',
-                                style: CustomTextStyle.customPoppin(
-                                  fontSize: 10,
-                                  color: AppColors.deepPurple,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        CommonTextField(
-                          validator: (quantity) {
-                            if (quantity!.isEmpty) {
-                              return emptyProductName;
-                            } else {
-                              return null;
-                            }
-                          },
-                          contentPadding:
-                              SymmetricPadding(
-                                vertical: 5,
-                                horizontal: 5,
-                              ).getPadding(),
-                          hintText: 'Enter product name',
-                          label: 'Product Name',
-                          controller: controller.productName,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              InventoryBottomsheetComponentText(
+                readOnly1: true,
+                controller1: controller.barcode,
+                controller2: controller.productName,
+                label1: 'Barcode',
+                hintText1: 'Enter barcode',
+                hintText2: 'Enter product name',
+                label2: 'Product Name',
+                validator2: (name) {
+                  if (name!.isEmpty) {
+                    return emptyProductName;
+                  } else {
+                    return null;
+                  }
+                },
               ),
               Row(
                 children: [
                   Flexible(
                     child: Obx(
                       () =>
-                          controller.categoryList.isEmpty
+                          controller.categoryListLoading.value
                               ? Center(
                                 child: CommonProgressbar(
                                   color: AppColors.blackColor,
                                 ),
+                              )
+                              : controller.categoryList.isEmpty
+                              ? CommonDropDown(
+                                errorText: emptyCategory,
+                                listItems: controller.categoryList,
+                                hintText: 'Category',
+                                notifyParent: (val) {
+                                  controller.category.text = val.id;
+                                },
                               )
                               : CommonDropDown(
                                 errorText: emptyCategory,
@@ -125,11 +81,20 @@ class GenerateBarcodeComponent extends StatelessWidget {
                   Flexible(
                     child: Obx(
                       () =>
-                          controller.animalTypeList.isEmpty
+                          controller.animalCategoryListLoading.value
                               ? Center(
                                 child: CommonProgressbar(
                                   color: AppColors.blackColor,
                                 ),
+                              )
+                              : controller.animalTypeList.isEmpty
+                              ? CommonDropDown(
+                                errorText: emptyCategory,
+                                listItems: controller.animalTypeList,
+                                hintText: 'Animal Type',
+                                notifyParent: (val) {
+                                  controller.category.text = val.id;
+                                },
                               )
                               : CommonDropDown(
                                 errorText: emptyAnimalCategory,
@@ -174,6 +139,9 @@ class GenerateBarcodeComponent extends StatelessWidget {
                       hintText: 'Select isLoose',
                       notifyParent: (val) {
                         controller.isLoose = val;
+                        customMessageOrErrorPrint(
+                          message: ' controller.isLoose ${controller.isLoose}',
+                        );
                       },
                     ),
                   ),
@@ -211,16 +179,9 @@ class GenerateBarcodeComponent extends StatelessWidget {
               InventoryBottomsheetComponentText(
                 inputLength1: 2,
                 keyboardType1: TextInputType.number,
-                hintText2: 'Location',
-                label2: 'Location',
-                controller2: controller.location,
-                validator2: (location) {
-                  if (location!.isEmpty) {
-                    return emptyLocation;
-                  } else {
-                    return null;
-                  }
-                },
+                hintText2: 'Level',
+                label2: 'Level',
+                controller2: controller.level,
                 hintText1: 'Enter discount',
                 label1: 'Discount (%)',
                 controller1: controller.discount,
@@ -231,6 +192,44 @@ class GenerateBarcodeComponent extends StatelessWidget {
                     return null;
                   }
                 },
+              ),
+              Row(
+                children: [
+                  Flexible(
+                    child: CommonTextField(
+                      // validator: (expire) {
+                      //   if (expire!.isEmpty) {
+                      //     return emptyExpire;
+                      //   } else {
+                      //     return null;
+                      //   }
+                      // },
+                      contentPadding:
+                          SymmetricPadding(
+                            vertical: 5,
+                            horizontal: 5,
+                          ).getPadding(),
+
+                      hintText: 'Rack',
+                      label: 'Rack',
+                      controller: controller.rack,
+                    ),
+                  ),
+                  Flexible(
+                    child: CommonDropDown(
+                      isModelValueEnabled: false,
+                      errorText: 'Select Location',
+                      listItems: ['Shop', 'Godown'],
+                      hintText: 'Location',
+                      notifyParent: (val) {
+                        controller.location.text = val;
+                        customMessageOrErrorPrint(
+                          message: ' controller.isLoose ${controller.isLoose}',
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
               Row(
                 children: [
@@ -356,10 +355,13 @@ class GenerateBarcodeComponent extends StatelessWidget {
               Obx(
                 () => CommonButton(
                   isLoading: controller.isSaveLoading.value,
-                  label: saveAndPrintButton,
+                  label: saveButton,
                   onTap: () async {
-                    if (inventoryScanKey.currentState!.validate()) {
+                    if (controller.inventoryScanKey.currentState!.validate()) {
                       unfocus();
+                      controller.saveNewProduct(
+                        barcode: controller.barcode.text,
+                      );
                     }
                   },
                 ),

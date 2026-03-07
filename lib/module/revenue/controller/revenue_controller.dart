@@ -4,7 +4,6 @@ import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/gobal_controller.dart';
 import '../model/revenue_model.dart';
-import '../../sell/model/sell_model.dart';
 
 class RevenueController extends GetxController with LocalService {
   final uid = SupabaseConfig.auth.currentUser?.id;
@@ -19,7 +18,6 @@ class RevenueController extends GetxController with LocalService {
   @override
   void onInit() {
     dayDate.value = setFormateDate();
-    dayDate.value = formatDateForDB(dayDate.value);
 
     // 1. Pehle local (Hive) se uthao instant UI ke liye
     loadFromLocal();
@@ -51,10 +49,10 @@ class RevenueController extends GetxController with LocalService {
     // Hum GlobalStore se direct data RAM se utha rahe hain.
     final freshData = await fetchRevenueList();
 
-    if (freshData.isNotEmpty) {
-      sellsList.assignAll(freshData);
-      _calculateTotal();
+    sellsList.assignAll(freshData);
+    _calculateTotal();
 
+    if (freshData.isNotEmpty) {
       // Local cache update kar do taaki agli baar loadFromLocal fast chale
       final today = dayDate.value;
       await LocalService.saveRevenueToLocal(today, freshData);
@@ -75,10 +73,20 @@ class RevenueController extends GetxController with LocalService {
       // Loader sirf tab dikhao agar list ekdum khali ho
       isRevenueListLoading.value = sellsList.isEmpty;
 
-      // --- [ZERO SUPABASE CALL LOGIC] ---
-      // Hum GlobalStore mein pehle hi aaj ki sales maintain kar rahe hain.
-      // Bas wahi list return kar do.
-      return globalStore.allSalesList;
+      final selectedDate = dayDate.value;
+
+      final DateTime parsedDate = parseAppDate(selectedDate) ?? DateTime.now();
+      final dbData = await globalStore.fetchSalesByDate(parsedDate);
+      if (dbData.isNotEmpty) return dbData;
+
+      final filtered =
+          globalStore.allSalesList.where((sale) {
+            final soldDate = formatDateForUi(sale.soldAt);
+            return soldDate == selectedDate;
+          }).toList();
+      if (filtered.isNotEmpty) return filtered;
+
+      return LocalService.getRevenueFromLocal(selectedDate);
     } catch (e) {
       print("🚨 Revenue Sync Error: $e");
       return [];

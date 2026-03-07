@@ -92,7 +92,6 @@ class AppRoutes {
       page: () => BottomNavigation(),
       binding: BottomNavigationBinding(),
       bindings: [
-        GobalBinding(),
         HomeBinding(),
         SettingBinding(),
         CreditBinding(),

@@ -7,8 +7,8 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
+import 'package:inventory/supabase_db/storage_service.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
 import '../../setting/model/user_model.dart';
 
 class UserProfileController extends GetxController with CacheManager {
@@ -27,6 +27,40 @@ class UserProfileController extends GetxController with CacheManager {
 
   final ImagePicker picker = ImagePicker();
   Rx<File?> profileImage = Rx<File?>(null);
+  RxString profileImageUrl = ''.obs;
+
+  String _fileExtension(String path) {
+    final dotIndex = path.lastIndexOf('.');
+    if (dotIndex == -1 || dotIndex == path.length - 1) return 'jpg';
+    return path.substring(dotIndex + 1).toLowerCase();
+  }
+
+  File? _safeProfileFile(String path) {
+    final file = File(path);
+    return file.existsSync() ? file : null;
+  }
+
+  bool _hasRenderableImage(String? imageValue) {
+    final value = (imageValue ?? '').trim();
+    if (value.isEmpty) return false;
+    if (StorageService.isNetworkImage(value)) return true;
+    return File(value).existsSync();
+  }
+
+  void _setProfileSource(String? imageValue) {
+    final value = (imageValue ?? '').trim();
+    if (StorageService.isNetworkImage(value)) {
+      profileImageUrl.value = value;
+      profileImage.value = null;
+      return;
+    }
+    profileImageUrl.value = '';
+    if (value.isEmpty) {
+      profileImage.value = null;
+      return;
+    }
+    profileImage.value = _safeProfileFile(value);
+  }
 
   @override
   void onInit() {
@@ -48,21 +82,18 @@ class UserProfileController extends GetxController with CacheManager {
 
         // 2. Ek unique file name banao (timestamp ke saath)
         String fileName =
-            "profile_${DateTime.now().millisecondsSinceEpoch}${p.extension(image.path)}";
-        String permanentPath = p.join(appDocDir.path, fileName);
+            "profile_${DateTime.now().millisecondsSinceEpoch}.${_fileExtension(image.path)}";
+        String permanentPath = '${appDocDir.path}/$fileName';
 
         // 3. Image ko Cache se Permanent folder mein copy karo
         final File savedImage = await File(image.path).copy(permanentPath);
 
         // 4. Update state
         profileImage.value = savedImage;
-
-        print("✅ Image Saved Permanently at: ${profileImage.value?.path}");
-
-        // 🎯 Ab database mein ye profileImage.value!.path save karna
+        profileImageUrl.value = '';
       }
     } catch (e) {
-      print("🚨 Error picking/saving image: $e");
+      debugPrint("Error picking/saving image: $e");
     }
   }
 
@@ -79,6 +110,15 @@ class UserProfileController extends GetxController with CacheManager {
     final String updatedDateTimeAt = formatDateForDB(formatCreatedAt);
 
     try {
+      String profileImageValue = profileImageUrl.value.trim();
+      final selectedFile = profileImage.value;
+      if (selectedFile != null && selectedFile.existsSync()) {
+        profileImageValue = await StorageService.uploadProfileImage(
+          file: selectedFile,
+          userId: userId!,
+        );
+      }
+
       final updatedData = {
         "name": shopNameController.text.trim(),
         "email": emailController.text.trim(),
@@ -89,7 +129,7 @@ class UserProfileController extends GetxController with CacheManager {
         "mobile_no": mobileController.text.trim(),
         "alternate_mobile_no": alternativeMobileController.text.trim(),
         "updated_at": updatedDateTimeAt,
-        "profile_image": profileImage.value?.path ?? '',
+        "profile_image": profileImageValue,
       };
 
       // 🔥 SUPABASE UPDATE
@@ -107,7 +147,7 @@ class UserProfileController extends GetxController with CacheManager {
         state: stateController.text,
         mobileNo: mobileController.text,
         alternateMobileNo: alternativeMobileController.text,
-        image: profileImage.value?.path ?? '',
+        image: profileImageValue,
       );
 
       saveUserData(updatedUser);
@@ -125,39 +165,40 @@ class UserProfileController extends GetxController with CacheManager {
   // ---------------- LOAD USER FROM CACHE ----------------
   void setUserDetails() async {
     isDataLoading.value = true;
-    final user = retrieveUserDetail();
-    if (user.isSaved == false) {
-      isDataLoading.value = false;
+    final cachedUser = retrieveUserDetail();
+
+    // First paint from cache for fast UI.
+    shopNameController.text = cachedUser.name ?? '';
+    mobileController.text = cachedUser.mobileNo ?? '';
+    alternativeMobileController.text = cachedUser.alternateMobileNo ?? '';
+    pincodeController.text = cachedUser.pincode ?? '';
+    stateController.text = cachedUser.state ?? '';
+    addressController.text = cachedUser.address ?? '';
+    cityController.text = cachedUser.city ?? '';
+    emailController.text = cachedUser.email ?? '';
+    _setProfileSource(cachedUser.image);
+
+    // Force remote refresh when cache has no renderable image.
+    if (userId != null &&
+        (cachedUser.isSaved == false || !_hasRenderableImage(cachedUser.image))) {
       final response =
           await SupabaseConfig.from(
             'users',
           ).select().eq('id', userId ?? '').maybeSingle();
-      var userRes = UserModel.fromJson(response as Map<String, dynamic>);
-      shopNameController.text = userRes.name ?? '';
-      mobileController.text = userRes.mobileNo ?? '';
-      alternativeMobileController.text = userRes.alternateMobileNo ?? '';
-      pincodeController.text = userRes.pincode ?? '';
-      stateController.text = userRes.state ?? '';
-      addressController.text = userRes.address ?? '';
-      cityController.text = userRes.city ?? '';
-      emailController.text = userRes.email ?? '';
-      profileImage.value =
-          userRes.image != null && userRes.image!.isNotEmpty
-              ? File(userRes.image!)
-              : null;
-    } else {
-      shopNameController.text = user.name ?? '';
-      mobileController.text = user.mobileNo ?? '';
-      alternativeMobileController.text = user.alternateMobileNo ?? '';
-      pincodeController.text = user.pincode ?? '';
-      stateController.text = user.state ?? '';
-      addressController.text = user.address ?? '';
-      cityController.text = user.city ?? '';
-      emailController.text = user.email ?? '';
-      profileImage.value =
-          user.image != null && user.image!.isNotEmpty
-              ? File(user.image!)
-              : null;
+      if (response != null) {
+        final userRes = UserModel.fromJson(response);
+        shopNameController.text = userRes.name ?? '';
+        mobileController.text = userRes.mobileNo ?? '';
+        alternativeMobileController.text = userRes.alternateMobileNo ?? '';
+        pincodeController.text = userRes.pincode ?? '';
+        stateController.text = userRes.state ?? '';
+        addressController.text = userRes.address ?? '';
+        cityController.text = userRes.city ?? '';
+        emailController.text = userRes.email ?? '';
+        _setProfileSource(userRes.image);
+        saveUserData(userRes);
+      }
     }
+    isDataLoading.value = false;
   }
 }

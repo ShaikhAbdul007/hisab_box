@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -44,15 +42,21 @@ class SettingView extends GetView<SettingController> {
                   label: controller.storeName.value,
                   subtitle: controller.email.value,
                   leading:
-                      controller.profileImage.value != null
-                          ? ClipOval(
+                      (() {
+                        final profile = controller.profileImage.value;
+                        final profileUrl =
+                            controller.profileImageUrl.value.trim();
+                        final canShowImage =
+                            profile != null && profile.existsSync();
+                        if (canShowImage) {
+                          return ClipOval(
                             child: Image.file(
-                              controller.profileImage.value!,
+                              profile,
                               width: 50,
                               height: 50,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                return Text(
+                                return const Text(
                                   "HB",
                                   style: TextStyle(
                                     fontSize: 40,
@@ -61,13 +65,36 @@ class SettingView extends GetView<SettingController> {
                                 );
                               },
                             ),
-                          )
-                          : CircleAvatar(
-                            radius: 50,
-                            backgroundColor: AppColors.blackColor,
-                            // Ab crash nahi hoga
-                            child: const Text('HB'),
+                          );
+                        }
+                        if (profileUrl.isNotEmpty) {
+                          return ClipOval(
+                            child: Image.network(
+                              profileUrl,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Text(
+                                  "HB",
+                                  style: TextStyle(
+                                    fontSize: 40,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        }
+                        return CircleAvatar(
+                          radius: 30,
+                          backgroundColor: AppColors.blackColor,
+                          child: const Text(
+                            "HB",
+                            style: TextStyle(fontSize: 20, color: Colors.white),
                           ),
+                        );
+                      })(),
                 ),
               ),
             ),

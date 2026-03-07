@@ -23,45 +23,41 @@ class BarcodeView extends GetView<BardcodeController> {
         Obx(
           () => CommonButton(
             isLoading: controller.isPrintingLoading.value,
-            label: "Print Simple",
+            label: "Print Barcode",
             onTap: () async {
-              // controller.isPrintingLoading.value = true;
-              // AppLogger.info('Starting simple print operation', 'BarcodeView');
-              // String bluetoothAddress =
-              //     controller.retrievePrinterAddress() ?? '';
-              // bool checkBluetooth =
-              //     await controller.checkBluetoothConnectivity();
-
-              // if (checkBluetooth == true && bluetoothAddress.isNotEmpty) {
-              //   // await controller.printBarcodeLabelsFromSavedPrinter(
-              //   //   barcode: controller.data['product'].barcode,
-              //   //   quantity: controller.data['product'].quantity,
-              //   // );
-              //   print('barcode: ${controller.data['product'].barcode}');
-              //   print('quantity: ${controller.data['product'].quantity}');
-              //   controller.isPrintingLoading.value = false;
-              // } else {
-              //   controller.isPrintingLoading.value = false;
-              //   commonBottomSheet(
-              //     label: 'Bluetooth Info',
-              //     onPressed: () {
-              //       Get.back();
-              //     },
-              //     child: BluetoothInfoWidget(),
-              //   );
-              // }
+              controller.isPrintingLoading.value = true;
+              String bluetoothAddress =
+                  controller.retrievePrinterAddress() ?? '';
+              bool checkBluetooth =
+                  await controller.checkBluetoothConnectivity();
+              if (checkBluetooth == true && bluetoothAddress.isNotEmpty) {
+                final dynamic rawQty = controller.data['qyt'];
+                final int qyt =
+                    rawQty is num
+                        ? rawQty.toInt()
+                        : double.tryParse('$rawQty')?.toInt() ??
+                            int.tryParse('$rawQty') ??
+                            1;
+                print(qyt);
+                await controller.printBarcodeLabelsFromSavedPrinter(
+                  barcode: controller.data['productData']['product'].barcode,
+                  quantity: qyt,
+                );
+                controller.isPrintingLoading.value = false;
+              } else {
+                controller.isPrintingLoading.value = false;
+                commonBottomSheet(
+                  label: 'Bluetooth Info',
+                  onPressed: () {
+                    Get.back();
+                  },
+                  child: BluetoothInfoWidget(),
+                );
+              }
             },
           ),
         ),
-        setHeight(height: 50),
-        CommonButton(
-          label: '',
-          onTap: () {
-            print('onTap Print Simple');
-            // print('barcode: ${controller.data['product'].barcode}');
-            // print('quantity: ${controller.data['product'].quantity}');
-          },
-        ),
+        Container(width: 50),
       ],
       body: BarcodePrinterView(
         data: controller.data,

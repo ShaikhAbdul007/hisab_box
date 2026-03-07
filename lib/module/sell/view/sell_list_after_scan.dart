@@ -256,7 +256,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
     commonBottomSheet(
       label: 'Payment',
       onPressed: () {
-        controller.clear();
+        controller.clearPaymentInputs();
         Get.back();
       },
       child: PaymentMethodWidget(controller: controller),

@@ -41,12 +41,12 @@ class SaleModel {
       time: data['time'] ?? '',
       amount: (data['amount'] ?? 0).toDouble(),
       billNo: data['billNo']?.toString() ?? '0',
-      flavor: data['flavor'] ?? '',
+      flavor: data['flavour'] ?? '',
       weight: data['weight'] ?? '',
       discountPercentage: (data['discountValue'] ?? 0).toDouble(),
       amountAfterDiscount: (data['finalAmount'] ?? 0).toDouble(),
       sellingPrice: (data['finalAmount'] ?? 0).toDouble(),
-      animalType: data['animalType'] ?? '',
+      animalType: data['animal_type'] ?? '',
     );
   }
   Map<String, dynamic> toJson() {
@@ -60,7 +60,7 @@ class SaleModel {
       'billNo': billNo,
       'amount': amount,
       'weight': weight,
-      'flavor': flavor,
+      'flavour': flavor,
       'discountValue': discountPercentage,
       'sellingPrice': sellingPrice,
       'finalAmount': amountAfterDiscount,

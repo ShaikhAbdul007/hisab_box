@@ -5,9 +5,9 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/module/invoice/controller/invoice_controller.dart';
-import 'package:inventory/helper/logger.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
+import '../../../helper/helper.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../widget/bluetooth_info_widget.dart';
@@ -51,6 +51,8 @@ class InvoicePrint extends GetView<InvoiceController> {
                         rController: controller.receiptController.value!,
                         paymentMethod: 'paymentMethod',
                       );
+                    } else {
+                      showMessage(message: 'Printer is not initialized yet');
                     }
                   } else {
                     commonBottomSheet(
@@ -81,23 +83,30 @@ class InvoicePrint extends GetView<InvoiceController> {
     required String paymentMethod,
   }) async {
     controller.isPrintingLoading.value = true;
-    String? device = controller.retrievePrinterAddress();
-
-    if (device != null) {
-      var res = await rController.print(address: device, delayTime: 0);
-      if (res == true) {
-        controller.isPrintingLoading.value = false;
-        AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
+    try {
+      final String? device = controller.retrievePrinterAddress();
+      if (device == null || device.isEmpty) {
+        commonBottomSheet(
+          label: 'Bluetooth Info',
+          onPressed: () {
+            Get.back();
+          },
+          child: BluetoothInfoWidget(),
+        );
+        return;
       }
-    } else {
+
+      final res = await rController.print(address: device, delayTime: 0);
+      if (res == true) {
+        AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
+      } else {
+        showMessage(message: 'Print failed, please reconnect printer');
+      }
+    } catch (e) {
+      customMessageOrErrorPrint(message: 'PRINT ERROR: $e');
+      showMessage(message: 'Print error: $e');
+    } finally {
       controller.isPrintingLoading.value = false;
-      commonBottomSheet(
-        label: 'Bluetooth Info',
-        onPressed: () {
-          Get.back();
-        },
-        child: BluetoothInfoWidget(),
-      );
     }
   }
 }

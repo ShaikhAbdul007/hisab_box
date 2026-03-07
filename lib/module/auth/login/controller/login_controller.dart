@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/gobal_controller.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -60,6 +61,7 @@ class LoginController extends GetxController with CacheManager {
 
       // 3️⃣ SAVE LOCAL SESSION
       saveUserLoggedIn(true);
+      await Get.find<GlobalStore>().loadInitialData();
 
       showMessage(message: loginSuccessFul);
 

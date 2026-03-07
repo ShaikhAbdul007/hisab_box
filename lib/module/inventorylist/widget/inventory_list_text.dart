@@ -205,7 +205,7 @@ class InventroyListText extends StatelessWidget {
   Color getColor() {
     Color? colors;
     if (inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10) {
-      colors = AppColors.amberColorShade100;
+      colors = AppColors.orangeColor;
     } else if (inventoryModel.quantity! == 0) {
       colors = AppColors.redColor;
     } else {

@@ -101,7 +101,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
             // 2. onSelected: Handles the action when an item is selected
             onSelected: (MenuOption result) {
               if (result.name == 'barcode') {
-                showBarcode();
+                showBarcode(controller.barcodeQytController);
               } else if (result.name == 'moveToShop') {
                 print(result.name);
               } else {
@@ -318,31 +318,48 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                       ),
                     ),
                     Obx(
-                      () => InventoryBottomsheetComponentText(
-                        readOnly1: controller.readOnly.value,
-                        readOnly2: controller.readOnly.value,
-                        inputLength1: 2,
-                        keyboardType1: TextInputType.number,
-                        hintText2: 'Location',
-                        label2: 'Location',
-                        controller2: controller.location,
-                        validator2: (location) {
-                          if (location!.isEmpty) {
-                            return emptyLocation;
-                          } else {
-                            return null;
-                          }
-                        },
-                        hintText1: 'Discount',
-                        label1: 'Discount (%)',
-                        controller1: controller.discount,
-                        validator1: (discount) {
-                          if (discount!.isEmpty) {
-                            return emptyDiscount;
-                          } else {
-                            return null;
-                          }
-                        },
+                      () => Row(
+                        children: [
+                          Flexible(
+                            child: CommonTextField(
+                              readOnly: controller.readOnly.value,
+                              validator: (discount) {
+                                if (discount!.isEmpty) {
+                                  return emptyDiscount;
+                                } else {
+                                  return null;
+                                }
+                              },
+                              contentPadding:
+                                  SymmetricPadding(
+                                    vertical: 5,
+                                    horizontal: 5,
+                                  ).getPadding(),
+                              inputLength: 5,
+                              keyboardType: TextInputType.number,
+                              hintText: 'Enter Discount',
+                              label: 'Discount (%)',
+                              controller: controller.discount,
+                            ),
+                          ),
+                          Flexible(
+                            child: CommonDropDown(
+                              enabled: controller.dropDownReadOnly.value,
+                              selectedDropDownItem: controller.location.text,
+                              isModelValueEnabled: false,
+                              errorText: 'Select Location',
+                              listItems: ['Shop', 'Godown'],
+                              hintText: 'Location',
+                              notifyParent: (val) {
+                                controller.location.text = val;
+                                customMessageOrErrorPrint(
+                                  message:
+                                      ' controller.isLoose ${controller.isLoose}',
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     Row(
@@ -508,11 +525,12 @@ class ProductDetailView extends GetView<ProductDetailsController> {
     );
   }
 
-  void showBarcode() {
+  void showBarcode(TextEditingController qtyController) {
     commonBottomSheet(
       label: 'BarCode',
       onPressed: () {
         Get.back();
+        controller.setData();
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -527,13 +545,25 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               drawText: true,
             ),
           ),
-          setHeight(height: 20),
+          SizedBox(
+            width: 220,
+            child: CommonTextField(
+              label: 'Quantity',
+              astraIsRequred: false,
+              hintText: 'hintText',
+              controller: qtyController,
+            ),
+          ),
+          setHeight(height: 15),
           CommonButton(
             label: 'Generate Barcode',
             onTap: () {
               AppRoutes.navigateRoutes(
                 routeName: AppRouteName.barcodePrintView,
-                data: controller.data,
+                data: {
+                  'productData': controller.data,
+                  "qyt": double.tryParse(qtyController.text)?.toInt() ?? 1,
+                },
               );
             },
           ),

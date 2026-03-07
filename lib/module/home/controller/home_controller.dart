@@ -132,7 +132,7 @@ class HomeController extends GetxController with CacheManager {
 
   // ================= LEGACY SUPABASE (MAPPED TO GLOBAL) =================
 
-  Future<void> _loadFromSupabase() async {
+  Future<void> loadFromSupabase() async {
     syncFromGlobalStore();
     syncStockFromGlobalStore();
   }

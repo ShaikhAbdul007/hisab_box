@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/reports/widget/report_common_continer.dart';
 import 'package:inventory/routes/routes.dart';
@@ -64,9 +63,6 @@ class RevenueView extends GetView<RevenueController> {
               selectedDate: DateTime.now(),
               controller: controller.dayDate,
               onDatePicked: () {
-                controller.dayDate.value = formatDateForDB(
-                  controller.dayDate.value,
-                );
                 controller.setSellList();
               },
             );

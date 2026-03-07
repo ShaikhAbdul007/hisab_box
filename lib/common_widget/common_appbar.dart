@@ -46,7 +46,6 @@ class CommonAppbar extends StatelessWidget {
         persistentFooterDecoration: BoxDecoration(),
         appBar: AppBar(
           actionsPadding: OnlyPadding(right: 20).getPadding(),
-
           actions: [
             firstActionChild ?? Container(),
             setWidth(width: 15),

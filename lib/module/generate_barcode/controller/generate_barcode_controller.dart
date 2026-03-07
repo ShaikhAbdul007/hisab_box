@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/gobal_controller.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
@@ -11,10 +14,14 @@ import 'package:inventory/module/inventory/model/product_model.dart';
 class GenerateBarcodeController extends GetxController
     with CacheManager, LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
-
+  final globalStore = Get.find<GlobalStore>();
+  RxBool categoryListLoading = false.obs;
+  final inventoryScanKey = GlobalKey<FormState>();
+  RxBool animalCategoryListLoading = false.obs;
   RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
   RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
-
+  TextEditingController level = TextEditingController();
+  TextEditingController rack = TextEditingController();
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
   TextEditingController looseSellingPrice = TextEditingController();
@@ -39,9 +46,14 @@ class GenerateBarcodeController extends GetxController
 
   @override
   void onInit() {
+    setBarcode();
     dayDate.value = setFormateDate();
     getCategoryDataAndAnimalData();
     super.onInit();
+  }
+
+  void setBarcode() {
+    barcode.text = generateBarcodeNo();
   }
 
   @override
@@ -72,110 +84,107 @@ class GenerateBarcodeController extends GetxController
     }
   }
 
-  // --- 1. Categories (Hive Fallback + Supabase Sync) ---
   Future<void> fetchCategories() async {
-    // Pehle Hive se show karo
-    var localData = LocalService.getCachedCategories();
-    if (localData.isNotEmpty) {
-      categoryList.value = localData;
+    categoryListLoading.value = true;
+    final cached = LocalService.getCachedCategories();
+    if (cached.isNotEmpty) {
+      categoryList.value = cached;
+      categoryListLoading.value = false;
     }
-
     if (userId == null) return;
-
     try {
       final response = await SupabaseConfig.from(
         'categories',
-      ).select('*').eq('user_id', userId!);
-
-      List<CategoryModel> freshData =
-          (response as List)
-              .map((data) => CategoryModel.fromJson(data))
-              .toList();
-
+      ).select().eq('user_id', userId!);
+      final freshData =
+          (response as List).map((e) => CategoryModel.fromJson(e)).toList();
       categoryList.value = freshData;
       await LocalService.saveCategories(freshData);
     } catch (e) {
-      print("🚨 Category Fetch Error: $e");
+      print("🚨 Category Error: $e");
+    } finally {
+      categoryListLoading.value = false;
     }
   }
 
-  // --- 2. Animal Categories (Hive Fallback + Supabase Sync) ---
+  // 🔥 FETCH ANIMAL CATEGORIES
   Future<void> fetchAnimalCategories() async {
-    var localAnimalData = LocalService.getCachedAnimalCategories();
-    if (localAnimalData.isNotEmpty) {
-      animalTypeList.value = localAnimalData;
+    animalCategoryListLoading.value = true;
+    final cached = LocalService.getCachedAnimalCategories();
+    if (cached.isNotEmpty) {
+      animalTypeList.value = cached;
+      animalCategoryListLoading.value = false;
     }
-
     if (userId == null) return;
-
     try {
       final response = await SupabaseConfig.from(
         'animal_categories',
-      ).select('*').eq('user_id', userId!);
-
-      List<CategoryModel> freshAnimalData =
-          (response as List)
-              .map((data) => CategoryModel.fromJson(data))
-              .toList();
-
-      animalTypeList.value = freshAnimalData;
-      await LocalService.saveAnimalCategories(freshAnimalData);
+      ).select().eq('user_id', userId!);
+      final freshData =
+          (response as List).map((e) => CategoryModel.fromJson(e)).toList();
+      animalTypeList.value = freshData;
+      await LocalService.saveAnimalCategories(freshData);
     } catch (e) {
-      print("🚨 Animal Category Fetch Error: $e");
+      print("🚨 Animal Error: $e");
+    } finally {
+      animalCategoryListLoading.value = false;
     }
   }
 
+  String generateBarcodeNo() {
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    String timeStr = timestamp.toString();
+    String uniqueSuffix = timeStr.substring(timeStr.length - 8);
+
+    int randomExtra = Random().nextInt(90) + 10; // 10 se 99 tak random
+
+    return "HB$uniqueSuffix$randomExtra";
+  }
+
   // --- 3. Save Product (Supabase Insert + Hive Update) ---
-  Future<void> saveProduct() async {
-    if (userId == null) return;
+  Future<void> saveNewProduct({required String barcode}) async {
     isSaveLoading.value = true;
-
     try {
-      // Map data as per ProductModel
-      final Map<String, dynamic> productMap = {
-        'user_id': userId,
-        'name': productName.text,
-        'barcode': barcode.text,
-        'selling_price': double.tryParse(sellingPrice.text) ?? 0.0,
-        'purchase_price': double.tryParse(purchasePrice.text) ?? 0.0,
-        'category': category.text,
-        'animal_type': animalType.text,
-        'quantity': double.tryParse(quantity.text) ?? 0.0,
-        'flavor': flavor.text,
-        'weight': weight.text,
-        'location': location.text,
-        'discount': int.tryParse(discount.text) ?? 0,
-        'purchase_date': purchaseDate.text,
-        'expire_date': exprieDate.text,
-        'is_flavor_weight_not_required': isFlavorAndWeightNotRequired.value,
-        'is_loosed': isLoose,
-        'shop_type': 'general', // Default or from user profile
-        'created_at': DateTime.now().toIso8601String(),
-      };
+      if (userId == null) return;
+      if (category.text.isEmpty || animalType.text.isEmpty) {
+        showMessage(message: "❌ Category aur Animal Type select karein!");
+        return;
+      }
 
-      // 1. Supabase mein data insert karein
-      final response =
-          await SupabaseConfig.from(
-            'products',
-          ).insert(productMap).select().single();
-
-      // 2. Local Hive Cache Update
-      // Pehle purani list nikaalo
-      List<ProductModel> currentCachedProducts =
-          LocalService.getCachedProducts();
-
-      // Naya product model banao response se (taaki ID mil jaye)
-      ProductModel newProduct = ProductModel.fromJson(response);
-
-      // List mein add karo aur save kardo
-      currentCachedProducts.add(newProduct);
-      await LocalService.saveProducts(currentCachedProducts);
-
-      showMessage(message: "Product saved successfully!");
-      Get.back(); // Form close kardo
+      await SupabaseConfig.client.rpc(
+        'add_new_product_v2',
+        params: {
+          'p_user_id': userId,
+          'p_name': productName.text.trim(),
+          'p_category': category.text.trim(),
+          'p_animal_type': animalType.text.trim(),
+          'p_flavor': flavor.text,
+          'p_level': level.text,
+          'p_rack': rack.text,
+          'p_weight': weight.text,
+          'p_is_loose': isLoose,
+          'p_barcode': barcode,
+          'p_qty': num.tryParse(quantity.text) ?? 0,
+          'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
+          'p_p_price': double.tryParse(purchasePrice.text) ?? 0.0,
+          'p_disc_amt': double.tryParse(discount.text) ?? 0.0,
+          'p_purchase_date': formatDateForRpc(purchaseDate.text),
+          'p_expiry_date': formatDateForRpc(exprieDate.text),
+          'p_location':
+              location.text.toLowerCase().contains('godown')
+                  ? 'godown'
+                  : 'shop',
+        },
+      );
+      await globalStore.loadInitialData();
+      showMessage(message: "✅ Product Saved!");
+      clear();
+      // GlobalStore ka realtime sync is naye product ko khud utha lega.
+      Get.back(result: true);
     } catch (e) {
-      print("🚨 Save Product Error: $e");
-      showMessage(message: "Failed to save product: $e");
+      print("Database Error: $e");
+      showMessage(message: "❌ Database Error: $e");
     } finally {
       isSaveLoading.value = false;
     }
@@ -198,5 +207,18 @@ class GenerateBarcodeController extends GetxController
       print("🚨 Delete Error: $e");
       showMessage(message: "Could not delete product");
     }
+  }
+
+  void clear() {
+    barcode.clear();
+    productName.clear();
+    looseQuantity.clear();
+    looseSellingPrice.clear();
+    category.clear();
+    sellingPrice.clear();
+    purchasePrice.clear();
+    flavor.clear();
+    weight.clear();
+    quantity.clear();
   }
 }

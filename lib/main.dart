@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:inventory/gobal_controller.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -21,7 +22,7 @@ void main() async {
   await ScreenUtil.ensureScreenSize();
   await LocalService.initHive();
   await GetStorage.init();
-
+  Get.put(GlobalStore(), permanent: true);
   checkResponse();
 
   // Set preferred orientations

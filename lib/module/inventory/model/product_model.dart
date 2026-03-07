@@ -74,6 +74,27 @@ class ProductModel {
   });
 
   ProductModel.fromJson(Map<String, dynamic> json) {
+    bool parseBool(dynamic value, {bool fallback = false}) {
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      if (value is String) {
+        final normalized = value.trim().toLowerCase();
+        if (normalized == 'true' ||
+            normalized == 't' ||
+            normalized == '1' ||
+            normalized == 'yes') {
+          return true;
+        }
+        if (normalized == 'false' ||
+            normalized == 'f' ||
+            normalized == '0' ||
+            normalized == 'no') {
+          return false;
+        }
+      }
+      return fallback;
+    }
+
     id = json['id'];
     barcode = json['barcode'];
     name = json['name']?.toString();
@@ -107,8 +128,14 @@ class ProductModel {
             ? json['quantity']
             : num.tryParse(json['quantity']?.toString() ?? '0') ?? 0;
 
-    isActive = json['is_active'] ?? true;
-    isLooseCategory = json['is_loose_category'] ?? false;
+    isActive = parseBool(json['is_active'], fallback: true);
+    isLooseCategory = parseBool(
+      json['is_loose_category'] ??
+          json['isLooseCategory'] ??
+          json['is_loose_cat'] ??
+          json['isLoosed'],
+      fallback: false,
+    );
 
     purchasePrice = (json['purchase_price'] as num?)?.toDouble();
     sellingPrice = (json['selling_price'] as num?)?.toDouble();
@@ -119,7 +146,10 @@ class ProductModel {
     color = json['color']?.toString();
 
     // Mapping DB 'stock_type == loose' to isLoosed
-    isLoosed = json['is_loose'] ?? (json['stock_type'] == 'loose');
+    isLoosed = parseBool(
+      json['is_loose'] ?? json['isLoosed'] ?? (json['stock_type'] == 'loose'),
+      fallback: false,
+    );
 
     isFlavorAndWeightNotRequired =
         json['is_flavor_and_weight_not_required'] ?? false;

@@ -173,7 +173,7 @@ class PartailPaymentWidget extends StatelessWidget {
                 onTap: () async {
                   controller.allEditable.value = !controller.allEditable.value;
                   controller.openPaymentDialog(controller.finalTotal.value);
-                  controller.clear();
+                  controller.clearPaymentInputs();
                 },
               ),
               Obx(
@@ -192,7 +192,7 @@ class PartailPaymentWidget extends StatelessWidget {
                       await controller.saleConfirmed(
                         isLoading: controller.isPartailLoading,
                       );
-                      controller.clear();
+                      controller.clearPaymentInputs();
                       Get.back();
                     }
                   },
