@@ -1,8 +1,11 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 import '../../sell/model/print_model.dart';
 
@@ -74,7 +77,8 @@ class OrderController extends GetxController with CacheManager {
       saveCustomerList(list);
       return list;
     } catch (e) {
-      print("Error loading customers: $e");
+      AppLogger.info(("Error loading customers: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
       return [];
     }
   }
@@ -146,15 +150,16 @@ class OrderController extends GetxController with CacheManager {
               .select();
 
       if (updateRes.isEmpty) {
-        print("⚠️ Warning: Sales table mein Bill No $numericBillNo nahi mila!");
+        AppLogger.info(("⚠️ Warning: Sales table mein Bill No $numericBillNo nahi mila!").toString());
       } else {
-        print("✅ Success: Customer linked to Bill No $numericBillNo");
+        AppLogger.info(("✅ Success: Customer linked to Bill No $numericBillNo").toString());
       }
 
       await loadAllCustomers();
       return true;
     } catch (e) {
-      print("🚨 Save Customer Error Details: $e");
+      AppLogger.info(("🚨 Save Customer Error Details: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
       return false;
     } finally {
       saveCustomerWithInvoiceLoading.value = false;

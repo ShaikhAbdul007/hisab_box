@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
+import 'package:inventory/common_widget/common_dialogue.dart';
+import 'package:inventory/common_widget/common_popup_appbar.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/helper/logger.dart';
+import 'package:inventory/keys/keys.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_button.dart';
@@ -30,7 +33,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
   @override
   Widget build(BuildContext context) {
     bool isProductLoosed = controller.data['isProductLoosed'];
-    bool godown = controller.data['product'].location == 'Godown';
+    bool godown = controller.data['product'].location == 'godown';
     return CommonAppbar(
       isleadingButtonRequired: true,
       backgroundColor: AppColors.whiteColor,
@@ -103,9 +106,68 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               if (result.name == 'barcode') {
                 showBarcode(controller.barcodeQytController);
               } else if (result.name == 'moveToShop') {
-                print(result.name);
+                commonDialogBox(
+                  context: context,
+                  child: Form(
+                    key: inventoryScanKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CommonPopupAppbar(
+                          label: 'Transfer Request',
+                          onPressed: () {
+                            controller.transferQuantityToShop.clear();
+                            Get.back();
+                          },
+                        ),
+                        Divider(),
+                        CommonTextField(
+                          hintText: 'Enter Quantity',
+                          label: 'Qunatity',
+                          controller: controller.transferQuantityToShop,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value?.isEmpty ?? false) {
+                              return 'Enter Quantity';
+                            }
+                            return null;
+                          },
+                          inputLength: 5,
+                        ),
+                        setHeight(height: 10),
+                        Obx(
+                          () => CommonButton(
+                            isLoading: controller.isTransferLoading.value,
+                            label: 'Transfer',
+                            onTap: () {
+                              if (inventoryScanKey.currentState!.validate()) {
+                                double tranferQuantity = double.parse(
+                                  controller.transferQuantityToShop.text,
+                                );
+                                if (tranferQuantity >
+                                    controller.data['product'].quantity) {
+                                  unfocus();
+                                  showSnackBar(
+                                    error:
+                                        'Quantity must be lower than avaible stock in godown',
+                                  );
+                                } else {
+                                  controller.requestStockTransfer(
+                                    product: controller.data['product'],
+                                    requestedQty: tranferQuantity,
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                        setHeight(height: 20),
+                      ],
+                    ),
+                  ),
+                );
               } else {
-                print('result.name');
+                AppLogger.info(('result.name').toString());
               }
             },
             // Optional: You can customize the default icon (three vertical dots)

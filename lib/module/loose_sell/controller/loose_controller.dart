@@ -1,9 +1,11 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Reference
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
 
@@ -57,7 +59,7 @@ class LooseController extends GetxController with LocalService {
     final cachedData = LocalService.getCachedLooseProducts();
     if (cachedData.isNotEmpty) {
       productList.assignAll(cachedData);
-      print("📦 Hive se data mil gaya: ${cachedData.length}");
+      AppLogger.info(("📦 Hive se data mil gaya: ${cachedData.length}").toString());
     }
 
     // 2. Loading handle karo (Sirf agar cache khali ho)
@@ -89,11 +91,12 @@ class LooseController extends GetxController with LocalService {
       await LocalService.saveLooseProducts(freshList);
       globalStore.allLooseProducts.assignAll(freshList); // 🔥 Sync to RAM
 
-      print("✅ Supabase sync complete (Hive & GlobalStore updated)");
+      AppLogger.info(("✅ Supabase sync complete (Hive & GlobalStore updated)").toString());
     } catch (e) {
-      print("🚨 Fetch Error: $e");
-      if (productList.isEmpty)
-        showMessage(message: "Check internet connection");
+      AppLogger.info(("🚨 Fetch Error: $e").toString());
+      if (productList.isEmpty) {
+        showMessage(message: SupabaseErrorHandler.getMessage(e));
+      }
     } finally {
       isDataLoading.value = false;
     }

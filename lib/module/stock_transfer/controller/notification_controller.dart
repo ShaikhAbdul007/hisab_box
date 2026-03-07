@@ -1,20 +1,13 @@
-import 'package:get/get.dart';
+import 'package:inventory/helper/logger.dart';
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
-import '../../../helper/set_format_date.dart';
-import 'dart:async';
-import 'package:get/get.dart';
-import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/supabase_db/supabase_client.dart';
-import '../../../helper/app_message.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../helper/set_format_date.dart';
-import '../../inventory/model/product_model.dart'; // Ensure path is correct
-// Apne model ka sahi path check kar lena
 
 class NotificationController extends GetxController
     with CacheManager, LocalService {
@@ -65,7 +58,8 @@ class NotificationController extends GetxController
       // 3️⃣ Save to Hive
       await LocalService.savePendingTransfers(freshList);
     } catch (e) {
-      print("🚨 Notification Fetch Error: $e");
+      AppLogger.info(("🚨 Notification Fetch Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     }
   }
 
@@ -98,10 +92,10 @@ class NotificationController extends GetxController
       // Local Stock Update (Hive)
       // Shop stock badhao
       double currentShopStock =
-          LocalService.getLocalStock(transfer.barcode ?? '', false) ?? 0;
+          LocalService.getLocalStock(transfer.barcode, false) ?? 0;
       await LocalService.updateLocalStock(
-        transfer.barcode ?? '',
-        currentShopStock + (transfer.requestedQty ?? 0),
+        transfer.barcode,
+        currentShopStock + transfer.requestedQty,
         false,
       );
 
@@ -112,7 +106,7 @@ class NotificationController extends GetxController
 
       showMessage(message: "✅ Stock received in shop");
     } catch (e) {
-      showMessage(message: "❌ ${e.toString()}");
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isTransferLoading.value = false;
     }
@@ -135,7 +129,7 @@ class NotificationController extends GetxController
 
       showMessage(message: "❌ Transfer rejected");
     } catch (e) {
-      showMessage(message: "🚨 Reject Error: $e");
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     }
   }
 

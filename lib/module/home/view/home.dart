@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,12 +12,10 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/home/controller/home_controller.dart';
 import 'package:inventory/module/home/widget/home_grid_container.dart';
 import 'package:inventory/module/home/widget/quick_action_component.dart';
-import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/module/revenue/widget/revenue_list_text.dart';
 import 'package:inventory/responsive_layout/responsive_tempate.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
-import '../../../common_widget/common_container.dart';
 import '../../../common_widget/common_divider.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
@@ -202,7 +201,7 @@ class DeskTopScreen extends StatelessWidget {
                                             controller.lis[index].routeName!,
                                       );
                                   if (res == true) {
-                                    print('res is $res');
+                                    AppLogger.info(('res is $res').toString());
                                     await controller.loadDashboard();
                                   }
                                 }

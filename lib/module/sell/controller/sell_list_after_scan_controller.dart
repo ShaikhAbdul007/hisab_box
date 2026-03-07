@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
@@ -8,6 +9,7 @@ import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../routes/route_name.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
@@ -173,7 +175,11 @@ class SellListAfterScanController extends GetxController
     required RxBool isLoading,
   }) async {
     isLoading.value = true;
-    if (userId == null) return false;
+    if (userId == null) {
+      isLoading.value = false;
+      showMessage(message: 'Please login again.');
+      return false;
+    }
 
     try {
       List<Map<String, dynamic>> stockUpdates = [];
@@ -321,7 +327,8 @@ class SellListAfterScanController extends GetxController
       clearSellSessionData();
       return true;
     } catch (e) {
-      print("🚨 Sale Failed: $e");
+      AppLogger.info(("🚨 Sale Failed: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
       return false;
     } finally {
       isLoading.value = false;
@@ -501,7 +508,9 @@ class SellListAfterScanController extends GetxController
 
   void calculateTotalWithDiscount() {
     finalTotal.value = 0;
-    for (var price in sellingPriceList) finalTotal.value += price;
+    for (var price in sellingPriceList) {
+      finalTotal.value += price;
+    }
   }
 
   void calculateDiscount() {

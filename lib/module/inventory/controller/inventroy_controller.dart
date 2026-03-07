@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
@@ -8,6 +9,7 @@ import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../helper/helper.dart';
 
@@ -107,8 +109,13 @@ class InventroyController extends GetxController
       product.isLooseCategory = _parseLooseFlag(
         productMap['is_loose_category'],
       );
-    } catch (_) {
+    } catch (e) {
       // Keep existing value on any DB/read error.
+      AppLogger.error(
+        'Failed to sync loose-category flag from DB',
+        e,
+        'InventroyController',
+      );
     }
   }
 
@@ -157,7 +164,8 @@ class InventroyController extends GetxController
 
       return (false, ProductModel());
     } catch (e) {
-      print("🚨 Info Error: $e");
+      AppLogger.info(("🚨 Info Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
       return (false, ProductModel());
     } finally {
       isExistingProductInfo.value = false;
@@ -299,8 +307,8 @@ class InventroyController extends GetxController
       player?.play(AssetSource('sounds/beep.mp3'));
       afterProductAdding();
     } catch (e) {
-      print("🚨 Scan Error: $e");
-      showMessage(message: "Error processing scan");
+      AppLogger.info(("🚨 Scan Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     }
   }
 

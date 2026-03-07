@@ -35,7 +35,6 @@ class AnimalTypeController extends GetxController
   // 🔥 ADD ANIMAL CATEGORY (SUPABASE + HIVE)
   // ==========================================
   Future<void> addAnimalCategory(String categoryName) async {
-    final animalCategoryModel = CategoryModel(id: userId, name: categoryName);
     isSaveLoading.value = true;
 
     if (userId == null) {

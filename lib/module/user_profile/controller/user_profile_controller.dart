@@ -165,40 +165,46 @@ class UserProfileController extends GetxController with CacheManager {
   // ---------------- LOAD USER FROM CACHE ----------------
   void setUserDetails() async {
     isDataLoading.value = true;
-    final cachedUser = retrieveUserDetail();
+    try {
+      final cachedUser = retrieveUserDetail();
 
-    // First paint from cache for fast UI.
-    shopNameController.text = cachedUser.name ?? '';
-    mobileController.text = cachedUser.mobileNo ?? '';
-    alternativeMobileController.text = cachedUser.alternateMobileNo ?? '';
-    pincodeController.text = cachedUser.pincode ?? '';
-    stateController.text = cachedUser.state ?? '';
-    addressController.text = cachedUser.address ?? '';
-    cityController.text = cachedUser.city ?? '';
-    emailController.text = cachedUser.email ?? '';
-    _setProfileSource(cachedUser.image);
+      // First paint from cache for fast UI.
+      shopNameController.text = cachedUser.name ?? '';
+      mobileController.text = cachedUser.mobileNo ?? '';
+      alternativeMobileController.text = cachedUser.alternateMobileNo ?? '';
+      pincodeController.text = cachedUser.pincode ?? '';
+      stateController.text = cachedUser.state ?? '';
+      addressController.text = cachedUser.address ?? '';
+      cityController.text = cachedUser.city ?? '';
+      emailController.text = cachedUser.email ?? '';
+      _setProfileSource(cachedUser.image);
 
-    // Force remote refresh when cache has no renderable image.
-    if (userId != null &&
-        (cachedUser.isSaved == false || !_hasRenderableImage(cachedUser.image))) {
-      final response =
-          await SupabaseConfig.from(
-            'users',
-          ).select().eq('id', userId ?? '').maybeSingle();
-      if (response != null) {
-        final userRes = UserModel.fromJson(response);
-        shopNameController.text = userRes.name ?? '';
-        mobileController.text = userRes.mobileNo ?? '';
-        alternativeMobileController.text = userRes.alternateMobileNo ?? '';
-        pincodeController.text = userRes.pincode ?? '';
-        stateController.text = userRes.state ?? '';
-        addressController.text = userRes.address ?? '';
-        cityController.text = userRes.city ?? '';
-        emailController.text = userRes.email ?? '';
-        _setProfileSource(userRes.image);
-        saveUserData(userRes);
+      // Force remote refresh when cache has no renderable image.
+      if (userId != null &&
+          (cachedUser.isSaved == false ||
+              !_hasRenderableImage(cachedUser.image))) {
+        final response =
+            await SupabaseConfig.from(
+              'users',
+            ).select().eq('id', userId ?? '').maybeSingle();
+        if (response != null) {
+          final userRes = UserModel.fromJson(response);
+          shopNameController.text = userRes.name ?? '';
+          mobileController.text = userRes.mobileNo ?? '';
+          alternativeMobileController.text = userRes.alternateMobileNo ?? '';
+          pincodeController.text = userRes.pincode ?? '';
+          stateController.text = userRes.state ?? '';
+          addressController.text = userRes.address ?? '';
+          cityController.text = userRes.city ?? '';
+          emailController.text = userRes.email ?? '';
+          _setProfileSource(userRes.image);
+          saveUserData(userRes);
+        }
       }
+    } catch (e) {
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    } finally {
+      isDataLoading.value = false;
     }
-    isDataLoading.value = false;
   }
 }

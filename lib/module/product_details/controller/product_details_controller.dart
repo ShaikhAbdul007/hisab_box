@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,6 +6,7 @@ import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
@@ -22,7 +24,7 @@ class ProductDetailsController extends GetxController with LocalService {
   RxList<ProductModel> productList = <ProductModel>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
-
+  TextEditingController transferQuantityToShop = TextEditingController();
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
   TextEditingController looseSellingPrice = TextEditingController();
@@ -67,30 +69,77 @@ class ProductDetailsController extends GetxController with LocalService {
   // ==========================================
   Future<void> requestStockTransfer({
     required ProductModel product,
-    required int qty,
+    required double requestedQty,
   }) async {
     if (userId == null) return;
-    if (qty <= 0) {
+
+    // 1. Validation: Quantity check
+    if (requestedQty <= 0) {
       showMessage(message: "Invalid quantity");
+      return;
+    }
+
+    // 2. Physical Stock Check (Godown Check)
+    if ((product.quantity ?? 0) < requestedQty) {
+      showMessage(
+        message: "Insufficient stock in Godown! Available: ${product.quantity}",
+      );
       return;
     }
 
     isTransferLoading.value = true;
     try {
+      String refId = "TRF-${DateTime.now().millisecondsSinceEpoch}";
+
+      // 🔥 STEP 1: Stock Movement Insert (Tracking ke liye)
       await SupabaseConfig.from('stock_movements').insert({
-        'product_id': product.id,
         'user_id': userId,
-        'quantity': qty,
+        'product_id': product.id,
+        'quantity': requestedQty,
         'form_location': 'godown',
         'to_location': 'shop',
         'movement_type': 'transfer',
         'status': 'pending',
+        'reference_id': refId,
+        'stock_type': product.stockType ?? 'packet',
+        'price': product.sellingPrice ?? 0.0,
+        'reason': 'Stock transfer from Godown',
         'created_at': DateTime.now().toIso8601String(),
       });
 
-      showMessage(message: "📤 Stock transfer request sent to Shop");
+      // 🔥 STEP 2: Godown Stock Minus (Hold Logic)
+      // Isse 10 vs 15 wali problem solve ho gayi
+      await SupabaseConfig.from('product_stock')
+          .update({
+            'quantity': (product.quantity ?? 0) - requestedQty,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('product_id', product.id!)
+          .eq('location', 'godown');
+
+      // 🔥 STEP 3: Notification Table mein Entry
+      await SupabaseConfig.from('notifications').insert({
+        'user_id':
+            userId, // Shop manager ki ID (agar multi-user hai toh manager ki ID pass karein)
+        'title': "📦 New Stock Incoming!",
+        'body':
+            "${product.name} ke $requestedQty units Godown se bheje gaye hain. (ID: $refId)",
+        'is_read': false,
+        'payload': {
+          'type': 'transfer',
+          'ref_id': refId,
+          'product_id': product.id,
+        },
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      showMessage(
+        message: "📤 Transfer Request Sent & Notification Delivered!",
+      );
+      Get.back();
     } catch (e) {
-      showMessage(message: "❌ ${e.toString()}");
+      print("🚨 Transfer Error: $e");
+      showMessage(message: "Failed to process transfer request");
     } finally {
       isTransferLoading.value = false;
     }
@@ -272,8 +321,8 @@ class ProductDetailsController extends GetxController with LocalService {
       Get.back(result: true);
       showMessage(message: '✅ Product & Stock Updated Safely.');
     } catch (e) {
-      print("🚨 Update Error: $e");
-      showMessage(message: "❌ Error: Update failed. Check Internet.");
+      AppLogger.info(("🚨 Update Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;
     }
@@ -294,7 +343,8 @@ class ProductDetailsController extends GetxController with LocalService {
             (response as List).map((e) => ProductModel.fromJson(e)).toList();
         await LocalService.saveProducts(freshList);
       } catch (e) {
-        print("🚨 Background Sync failed: $e");
+        AppLogger.info(("🚨 Background Sync failed: $e").toString());
+        showMessage(message: SupabaseErrorHandler.getMessage(e));
       }
     } else {
       try {
@@ -321,7 +371,8 @@ class ProductDetailsController extends GetxController with LocalService {
         looseInventoryLis.value = loosedfreshList;
         await LocalService.saveLooseProducts(loosedfreshList);
       } catch (e) {
-        print("🚨 Loose Sync failed: $e");
+        AppLogger.info(("🚨 Loose Sync failed: $e").toString());
+        showMessage(message: SupabaseErrorHandler.getMessage(e));
       }
     }
   }
@@ -340,7 +391,8 @@ class ProductDetailsController extends GetxController with LocalService {
       categoryList.value = freshData;
       await LocalService.saveCategories(freshData);
     } catch (e) {
-      print("🚨 Category fetch error: $e");
+      AppLogger.info(("🚨 Category fetch error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     }
   }
 
@@ -358,7 +410,8 @@ class ProductDetailsController extends GetxController with LocalService {
       animalTypeList.value = freshData;
       await LocalService.saveAnimalCategories(freshData);
     } catch (e) {
-      print("🚨 Animal category error: $e");
+      AppLogger.info(("🚨 Animal category error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     }
   }
 }

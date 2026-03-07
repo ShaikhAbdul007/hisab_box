@@ -1,9 +1,11 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class LooseCategoryController extends GetxController with LocalService {
   TextEditingController name = TextEditingController();
@@ -39,7 +41,7 @@ class LooseCategoryController extends GetxController with LocalService {
 
     if (localData.isNotEmpty) {
       looseCategoryModelList.value = localData;
-      print("📦 Loose Data from Hive: ${localData.length}");
+      AppLogger.info(("📦 Loose Data from Hive: ${localData.length}").toString());
     }
 
     try {
@@ -80,7 +82,8 @@ class LooseCategoryController extends GetxController with LocalService {
       // Hive ko refresh karo fresh data se
       LocalService.saveProducts(freshList);
     } catch (e) {
-      print("🚨 Fetch Fallback: $e");
+      AppLogger.info(("🚨 Fetch Fallback: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isFetchDiscount.value = false;
     }
@@ -138,8 +141,8 @@ class LooseCategoryController extends GetxController with LocalService {
       clear();
       fetchLooseCategory(); // Refresh list to update Hive & UI
     } catch (e) {
-      print("🚨 Add Product Error: $e");
-      showMessage(message: "Failed to save: Check Internet");
+      AppLogger.info(("🚨 Add Product Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;
     }
@@ -162,8 +165,8 @@ class LooseCategoryController extends GetxController with LocalService {
       showMessage(message: "Category deleted successfully");
       fetchLooseCategory();
     } catch (e) {
-      print("🚨 Delete Error: $e");
-      showMessage(message: "Delete failed: Check Internet");
+      AppLogger.info(("🚨 Delete Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isDeleteDiscount.value = false;
     }

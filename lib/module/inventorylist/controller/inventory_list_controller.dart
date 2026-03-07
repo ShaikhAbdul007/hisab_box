@@ -219,6 +219,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Sync
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
@@ -272,7 +273,7 @@ class InventoryListController extends GetxController
   }
 
   // 🔥 FETCH INVENTORY (Global Store Priority)
-  void fetchAllInventory() async {
+  Future<void> fetchAllInventory() async {
     isDataLoading.value = true;
     final globalStore = Get.find<GlobalStore>();
 
@@ -309,29 +310,6 @@ class InventoryListController extends GetxController
         data.where((p) => p.location == 'godown').toList();
   }
 
-  // --- Existing Mapping Logic (As requested, keeping it) ---
-  List<ProductModel> _mapToProductModel(List dataList) {
-    return dataList.map((e) {
-      final productMap = Map<String, dynamic>.from(e['products']);
-      productMap['category'] = productMap['categories']?['name'];
-      productMap['animal_type'] = productMap['animal_categories']?['name'];
-      productMap['quantity'] = e['quantity'];
-      productMap['selling_price'] = e['selling_price'];
-      productMap['location'] = e['location'];
-      productMap['discount'] = e['discount'];
-      productMap['is_active'] = e['is_active'];
-      productMap['is_loose'] = e['stock_type'] == 'loose';
-
-      final List? barcodeList = productMap['product_barcodes'] as List?;
-      if (barcodeList != null && barcodeList.isNotEmpty) {
-        productMap['barcode'] = barcodeList[0]['barcode']?.toString();
-        productMap['all_barcodes'] =
-            barcodeList.map((b) => b['barcode'].toString()).toList();
-      }
-      return ProductModel.fromJson(productMap);
-    }).toList();
-  }
-
   // --- Existing Helper Functions ---
   void updateMainProductList() {
     productList.value = [...shopProductList, ...goDownProductList];
@@ -350,9 +328,18 @@ class InventoryListController extends GetxController
 
   void controllerClear() => addSubtractQty.clear();
 
-  void isInventoryScanSelectedValue() async {
-    bool isInventoryScanSelecteds = await retrieveInventoryScan();
-    isInventoryScanSelected.value = isInventoryScanSelecteds;
+  Future<void> isInventoryScanSelectedValue() async {
+    try {
+      bool isInventoryScanSelecteds = await retrieveInventoryScan();
+      isInventoryScanSelected.value = isInventoryScanSelecteds;
+    } catch (e) {
+      AppLogger.error(
+        'Failed to load inventory scan setting',
+        e,
+        'InventoryListController',
+      );
+      isInventoryScanSelected.value = false;
+    }
   }
 
   void searchProduct(String value) {

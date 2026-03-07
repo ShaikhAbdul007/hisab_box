@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:inventory/gobal_binding.dart';
 import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
 import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
 import 'package:inventory/module/credits_amount/binding/credit_binding.dart';

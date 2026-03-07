@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'dart:async';
 
 import 'package:get/get.dart';
@@ -5,8 +6,10 @@ import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/revenue/model/revenue_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:inventory/helper/helper.dart';
 
 class GlobalStore extends GetxController {
   final _supabase = SupabaseConfig.client;
@@ -21,6 +24,7 @@ class GlobalStore extends GetxController {
   final RxList<SellsModel> allSalesList =
       <SellsModel>[].obs; // 🔥 Realtime Sales List
   var barcodeToProductMap = <String, ProductModel>{}.obs;
+  bool _hasShownSyncError = false;
 
   RxBool isInitialDataLoaded = false.obs;
 
@@ -65,7 +69,7 @@ class GlobalStore extends GetxController {
     try {
       final uId = SupabaseConfig.auth.currentUser?.id;
       if (uId == null) {
-        print("🚨 UID is NULL");
+        AppLogger.info(("🚨 UID is NULL").toString());
         return;
       }
 
@@ -86,10 +90,11 @@ class GlobalStore extends GetxController {
       await LocalService.saveLooseProducts(allLooseProducts);
 
       isInitialDataLoaded.value = true;
+      _hasShownSyncError = false;
       allProducts.refresh();
-      print("🚀 GlobalStore: Sync Complete. Products: ${allProducts.length}");
+      AppLogger.info(("🚀 GlobalStore: Sync Complete. Products: ${allProducts.length}").toString());
     } catch (e) {
-      print("🚨 Global Load Error: $e");
+      _notifySyncError(e);
     }
   }
 
@@ -97,7 +102,7 @@ class GlobalStore extends GetxController {
     try {
       return await _fetchStock(uId);
     } catch (e) {
-      print("🚨 Stock fetch failed: $e");
+      _notifySyncError(e);
       return null;
     }
   }
@@ -106,7 +111,7 @@ class GlobalStore extends GetxController {
     try {
       return await _fetchLoose(uId);
     } catch (e) {
-      print("🚨 Loose fetch failed: $e");
+      _notifySyncError(e);
       return null;
     }
   }
@@ -115,7 +120,7 @@ class GlobalStore extends GetxController {
     try {
       return await _fetchTodaySales(uId);
     } catch (e) {
-      print("🚨 Sales fetch failed: $e");
+      _notifySyncError(e);
       return null;
     }
   }
@@ -126,7 +131,7 @@ class GlobalStore extends GetxController {
       allLooseProducts.assignAll(LocalService.getCachedLooseProducts());
       updateBarcodeMapFromList(allProducts);
     } catch (e) {
-      print("🚨 Hive preload failed: $e");
+      _notifySyncError(e);
     }
   }
 
@@ -255,7 +260,8 @@ class GlobalStore extends GetxController {
               .eq('user_id', userId)
               .maybeSingle();
       return res != null;
-    } catch (_) {
+    } catch (e) {
+      AppLogger.error('Failed to validate sale owner', e, 'GlobalStore');
       return false;
     }
   }
@@ -370,8 +376,7 @@ class GlobalStore extends GetxController {
                 local.day == targetOnlyDate.day;
           }).toList();
 
-      print("Fetched Today's Sales: ${data.length}");
-
+      AppLogger.info(("Fetched Today's Sales: ${data.length}").toString());
       return data.map((sale) {
         final List dbItems = sale['sale_items'] ?? [];
         final List dbPayments = sale['sale_payments'] ?? [];
@@ -440,7 +445,7 @@ class GlobalStore extends GetxController {
         );
       }).toList();
     } catch (e) {
-      print("🚨 Fetch Error: $e");
+      _notifySyncError(e);
       return [];
     }
   }
@@ -534,9 +539,17 @@ class GlobalStore extends GetxController {
 
       return SellsModel.fromJson(map);
     } catch (e) {
-      print("🚨 Single Sale Fetch Error: $e");
+      _notifySyncError(e);
       return null;
     }
+  }
+
+  void _notifySyncError(dynamic error) {
+    final String message = SupabaseErrorHandler.getMessage(error);
+    AppLogger.error('Global sync error', error, 'GlobalStore');
+    if (_hasShownSyncError) return;
+    _hasShownSyncError = true;
+    showMessage(message: message);
   }
 
   // --- Logic Helpers ---

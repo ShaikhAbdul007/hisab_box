@@ -1,8 +1,10 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 import '../../../helper/helper.dart';
 
@@ -68,8 +70,8 @@ class BankdetailsController extends GetxController with CacheManager {
         saveBankModelData(details);
       }
     } catch (e) {
-      print(e);
-      showMessage(message: e.toString());
+      AppLogger.info((e).toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       setBankDetailsUpi.value = false;
     }
@@ -95,13 +97,8 @@ class BankdetailsController extends GetxController with CacheManager {
       showMessage(message: 'Bank Details Saved Successfully');
       readOnly.value = false;
     } catch (e) {
-      print("🚨 Bank Save Error: $e");
-      // User-friendly message
-      if (e.toString().contains("violates unique constraint")) {
-        showMessage(message: "Details already exist, updating...");
-      } else {
-        showMessage(message: "Error: ${e.toString()}");
-      }
+      AppLogger.info(("🚨 Bank Save Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       bankDetailsUpi.value = false;
     }

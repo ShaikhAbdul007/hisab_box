@@ -1,8 +1,11 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
+import '../../../helper/helper.dart';
 import '../model/sell_model.dart';
 
 class SellController extends GetxController with CacheManager, LocalService {
@@ -29,7 +32,7 @@ class SellController extends GetxController with CacheManager, LocalService {
     final cacheData = LocalService.getTodaySales(today);
     if (cacheData.isNotEmpty) {
       sellsList.value = cacheData;
-      print("📦 Sales loaded from Hive");
+      AppLogger.info(("📦 Sales loaded from Hive").toString());
     }
 
     // 2️⃣ Supabase Fallback (Background fetch for sync)
@@ -87,7 +90,8 @@ class SellController extends GetxController with CacheManager, LocalService {
 
       return salesByBarcode.values.toList();
     } catch (e) {
-      print("🚨 Fetch Sales Error: $e");
+      AppLogger.info(("🚨 Fetch Sales Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
       return [];
     } finally {
       isSellListLoading.value = false;

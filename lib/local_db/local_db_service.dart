@@ -1,4 +1,4 @@
-import 'package:hive/hive.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/discount/model/discount_model.dart';
@@ -11,7 +11,7 @@ import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 mixin class LocalService {
-  static const String _boxName = 'inventoryBox';
+  static const String _boxName = 'inventory_Box';
   static const String _productKey = 'cached_products';
   static const String _cachedTopProductKey = 'cached_top_products';
   static const String _productlooseKey = 'cached_loose_products';
@@ -20,8 +20,10 @@ mixin class LocalService {
   static const String _categoriesKey = 'cached_categories';
   static const String _animalCategoriesKey = 'cached_animal_types';
   static const String _salesKey = 'daily_sales_';
+  static const String _revenueKey = 'revenue_';
   static const String _notifKey = 'pending_stock_transfers';
   static const String _dailyReportStatsKey = 'daily_report_stats';
+  static const String _cachedOutOfStockKey = 'cached_out_of_stock';
   static late Box _box;
 
   static Future<void> initHive() async {
@@ -30,7 +32,7 @@ mixin class LocalService {
 
     // 2. Box open karke variable mein set karein
     _box = await Hive.openBox(_boxName);
-    print("✅ Hive Box Opened Successfully");
+    AppLogger.info(("✅ Hive Box Opened Successfully").toString());
   }
 
   // Sales ke liye key
@@ -155,7 +157,7 @@ mixin class LocalService {
 
       return null; // Agar nahi mila toh null return karo, error nahi aayega
     } catch (e) {
-      print("🚨 Local Search Error: $e");
+      AppLogger.info(("🚨 Local Search Error: $e").toString());
       return null;
     }
   }
@@ -235,7 +237,7 @@ mixin class LocalService {
     List<ProductModel> products,
   ) async {
     await _box.put(
-      'cached_out_of_stock',
+      _cachedOutOfStockKey,
       products.map((p) => p.toJson()).toList(),
     );
   }
@@ -308,11 +310,11 @@ mixin class LocalService {
     String date,
     List<SellsModel> sells,
   ) async {
-    await _box.put('revenue_$date', sells.map((e) => e.toJson()).toList());
+    await _box.put('$_revenueKey$date', sells.map((e) => e.toJson()).toList());
   }
 
   static List<SellsModel> getRevenueFromLocal(String date) {
-    List? cachedData = _box.get('revenue_$date');
+    List? cachedData = _box.get('$_revenueKey$date');
     return cachedData != null
         ? cachedData
             .map((e) => SellsModel.fromJson(Map<String, dynamic>.from(e)))

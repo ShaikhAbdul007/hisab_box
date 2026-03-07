@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
@@ -6,6 +5,7 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/order_complete/controller/order_controller.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../order_complete/model/customer_details_model.dart';
 
 class CustomerController extends GetxController with CacheManager {
@@ -74,13 +74,14 @@ class CustomerController extends GetxController with CacheManager {
       customerDetailList.value = customers;
       saveCustomerList(customers);
 
-      print(
-        "✅ Successfully fetched ${customers.length} customers from Supabase",
+      AppLogger.info(
+        ("✅ Successfully fetched ${customers.length} customers from Supabase")
+            .toString(),
       );
     } catch (e) {
       // Variable names kept exactly same as requested
       AppLogger.error("Fetch customers error", e, "CustomerController");
-      showMessage(message: e.toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       customDataLoading.value = false;
     }

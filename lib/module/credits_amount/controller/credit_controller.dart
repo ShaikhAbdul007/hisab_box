@@ -1,9 +1,11 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
 
 class CredtiController extends GetxController with CacheManager {
@@ -81,7 +83,8 @@ class CredtiController extends GetxController with CacheManager {
       // 2️⃣ STEP 2: UI update karo
       customerDetailList.assignAll(creditList);
     } catch (e) {
-      print("🚨 RAM Credit Filter Error: $e");
+      AppLogger.error('Credit report build failed', e, 'CredtiController');
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       customDataLoading.value = false;
     }

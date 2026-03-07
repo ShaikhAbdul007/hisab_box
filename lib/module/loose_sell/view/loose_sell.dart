@@ -15,7 +15,6 @@ import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../controller/loose_controller.dart';
-import '../widget/loose_inventroy_update_popup_component.dart';
 
 class LooseSell extends GetView<LooseController> {
   const LooseSell({super.key});
@@ -129,20 +128,6 @@ class LooseSell extends GetView<LooseController> {
                 )
                 : CommonNodatafound(message: 'No product found'),
       ),
-    );
-  }
-
-  void updateDataDialog(int index) {
-    Get.defaultDialog(
-      title: '',
-      titleStyle: CustomTextStyle.customNato(fontSize: 0),
-      titlePadding: EdgeInsets.zero,
-      barrierDismissible: false,
-      content: Container(),
-      // LooseInventoryUpdatePopupComponent(
-      //   controller: controller,
-      //   index: index,
-      // ),
     );
   }
 }

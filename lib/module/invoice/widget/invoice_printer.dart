@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'dart:io';
 
 import 'package:barcode_widget/barcode_widget.dart';
@@ -36,10 +37,10 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
     String userName =
         user.name?.isNotEmpty ?? false ? user.name!.substring(0, 1) : "HB";
 
-    print(user.address);
-    print(user.alternateMobileNo);
-    print(user.mobileNo);
-    print(user.city);
+    AppLogger.info((user.address).toString());
+    AppLogger.info((user.alternateMobileNo).toString());
+    AppLogger.info((user.mobileNo).toString());
+    AppLogger.info((user.city).toString());
     bool isFileAvailable =
         user.image != null &&
         user.image!.isNotEmpty &&

@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -88,7 +89,7 @@ class RevenueController extends GetxController with LocalService {
 
       return LocalService.getRevenueFromLocal(selectedDate);
     } catch (e) {
-      print("🚨 Revenue Sync Error: $e");
+      AppLogger.info(("🚨 Revenue Sync Error: $e").toString());
       return [];
     } finally {
       isRevenueListLoading.value = false;

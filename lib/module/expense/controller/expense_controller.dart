@@ -26,6 +26,8 @@ class ExpenseController extends GetxController {
     isExpenseSaveLoading.value = true;
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
+      isExpenseSaveLoading.value = false;
+      showMessage(message: 'Please login again.');
       return;
     }
     try {
@@ -50,6 +52,8 @@ class ExpenseController extends GetxController {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     final todayDate = setFormateDate();
     if (uid == null) {
+      isExpenseLoading.value = false;
+      showMessage(message: 'Please login again.');
       return;
     }
     try {
@@ -67,6 +71,8 @@ class ExpenseController extends GetxController {
           }).toList();
     } on FirebaseAuthException catch (e) {
       showMessage(message: e.toString());
+    } catch (e) {
+      showMessage(message: 'Failed to load expenses. Please try again.');
     } finally {
       isExpenseLoading.value = false;
     }

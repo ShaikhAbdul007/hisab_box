@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:get/get.dart';
@@ -5,8 +6,8 @@ import 'package:inventory/module/invoice/widget/invoice_printer.dart';
 import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_button.dart';
-import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
+import '../../../supabase_db/supabase_error_handler.dart';
 import '../controller/bardcode_controller.dart';
 import '../widget/bluetooth_info_widget.dart';
 
@@ -26,33 +27,42 @@ class BarcodeView extends GetView<BardcodeController> {
             label: "Print Barcode",
             onTap: () async {
               controller.isPrintingLoading.value = true;
-              String bluetoothAddress =
-                  controller.retrievePrinterAddress() ?? '';
-              bool checkBluetooth =
-                  await controller.checkBluetoothConnectivity();
-              if (checkBluetooth == true && bluetoothAddress.isNotEmpty) {
-                final dynamic rawQty = controller.data['qyt'];
-                final int qyt =
-                    rawQty is num
-                        ? rawQty.toInt()
-                        : double.tryParse('$rawQty')?.toInt() ??
-                            int.tryParse('$rawQty') ??
-                            1;
-                print(qyt);
-                await controller.printBarcodeLabelsFromSavedPrinter(
-                  barcode: controller.data['productData']['product'].barcode,
-                  quantity: qyt,
-                );
+              try {
+                String bluetoothAddress =
+                    controller.retrievePrinterAddress() ?? '';
+                bool checkBluetooth =
+                    await controller.checkBluetoothConnectivity();
+                if (checkBluetooth == true && bluetoothAddress.isNotEmpty) {
+                  final dynamic rawQty = controller.data['qyt'];
+                  final int qyt =
+                      rawQty is num
+                          ? rawQty.toInt()
+                          : double.tryParse('$rawQty')?.toInt() ??
+                              int.tryParse('$rawQty') ??
+                              1;
+                  AppLogger.info((qyt).toString());
+                  await controller.printBarcodeLabelsFromSavedPrinter(
+                    barcode: controller.data['productData']['product'].barcode,
+                    quantity: qyt,
+                  );
+                  showMessage(
+                    message:
+                        'Barcode printed successfully. Labels: ${qyt < 1 ? 1 : qyt}.',
+                  );
+                } else {
+                  commonBottomSheet(
+                    label: 'Bluetooth Info',
+                    onPressed: () {
+                      Get.back();
+                    },
+                    child: BluetoothInfoWidget(),
+                  );
+                }
+              } catch (e) {
+                AppLogger.error('Barcode print failed', e, 'BarcodeView');
+                showMessage(message: SupabaseErrorHandler.getMessage(e));
+              } finally {
                 controller.isPrintingLoading.value = false;
-              } else {
-                controller.isPrintingLoading.value = false;
-                commonBottomSheet(
-                  label: 'Bluetooth Info',
-                  onPressed: () {
-                    Get.back();
-                  },
-                  child: BluetoothInfoWidget(),
-                );
               }
             },
           ),
@@ -74,24 +84,36 @@ class BarcodeView extends GetView<BardcodeController> {
     required String paymentMethod,
   }) async {
     controller.isPrintingLoading.value = true;
-    String? device = controller.retrievePrinterAddress();
+    try {
+      String? device = controller.retrievePrinterAddress();
 
-    if (device != null) {
-      var res = await rController.print(address: device, delayTime: 0);
-      if (res == true) {
-        controller.isPrintingLoading.value = false;
-        Get.back();
-        // AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
-      }
-    } else {
-      controller.isPrintingLoading.value = false;
-      commonBottomSheet(
-        label: 'Bluetooth Info',
-        onPressed: () {
+      if (device != null && device.isNotEmpty) {
+        var res = await rController.print(address: device, delayTime: 0);
+        if (res == true) {
+          showMessage(message: 'Barcode printed successfully.');
           Get.back();
-        },
-        child: BluetoothInfoWidget(),
-      );
+        } else {
+          showMessage(
+            message: 'Print failed. Please reconnect printer and try again.',
+          );
+        }
+      } else {
+        showMessage(
+          message: 'No saved printer found. Please select a printer first.',
+        );
+        commonBottomSheet(
+          label: 'Bluetooth Info',
+          onPressed: () {
+            Get.back();
+          },
+          child: BluetoothInfoWidget(),
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Barcode printReceipt failed', e, 'BarcodeView');
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    } finally {
+      controller.isPrintingLoading.value = false;
     }
   }
 }

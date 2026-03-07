@@ -11,6 +11,7 @@ import 'package:inventory/module/setting/view/setting.dart';
 import 'package:inventory/responsive_layout/responsive_layout.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
+import 'package:upgrader/upgrader.dart';
 import '../../../routes/route_name.dart';
 import '../../home/view/home.dart';
 import '../controller/bottom_navigation_controller.dart';
@@ -20,11 +21,73 @@ class BottomNavigation extends GetView<BottomNavigationController> {
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveLayout(
-      desktop: DeskTopScreen(controller: controller),
-      tablet: DeskTopScreen(controller: controller),
-      mobile: MobileScreen(controller: controller),
+    return Theme(
+      data: Theme.of(context).copyWith(
+        dialogTheme: DialogThemeData(
+          backgroundColor: AppColors.whiteColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          titleTextStyle: CustomTextStyle.customPoppin(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.blackColor,
+          ),
+          contentTextStyle: CustomTextStyle.customPoppin(
+            fontSize: 14,
+            color: AppColors.blackColor,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.deepPurple,
+            textStyle: CustomTextStyle.customPoppin(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+      child: UpgradeAlert(
+        dialogStyle: UpgradeDialogStyle.material,
+        barrierDismissible: false,
+        showIgnore: false,
+        showLater: true,
+        showReleaseNotes: true,
+        upgrader: Upgrader(
+          debugLogging: false,
+          durationUntilAlertAgain: const Duration(hours: 12),
+          messages: CustomUpgraderMessages(),
+        ),
+        child: ResponsiveLayout(
+          desktop: DeskTopScreen(controller: controller),
+          tablet: DeskTopScreen(controller: controller),
+          mobile: MobileScreen(controller: controller),
+        ),
+      ),
     );
+  }
+}
+
+class CustomUpgraderMessages extends UpgraderMessages {
+  @override
+  String message(UpgraderMessage messageKey) {
+    switch (messageKey) {
+      case UpgraderMessage.title:
+        return 'New Update Available';
+      case UpgraderMessage.body:
+        return 'A better and more stable version is available. '
+            'Please update now for latest fixes and improvements.';
+      case UpgraderMessage.buttonTitleUpdate:
+        return 'Update Now';
+      case UpgraderMessage.buttonTitleLater:
+        return 'Later';
+      case UpgraderMessage.prompt:
+        return 'Please update the app to continue with the best experience.';
+      default:
+        return super.message(messageKey) ?? 'Update available';
+    }
   }
 }
 

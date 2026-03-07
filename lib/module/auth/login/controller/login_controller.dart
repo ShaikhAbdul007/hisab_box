@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
@@ -55,10 +56,9 @@ class LoginController extends GetxController with CacheManager {
       }
 
       final user = Supabase.instance.client.auth.currentUser;
-      print('USER -> $user');
+      AppLogger.info(('USER -> $user').toString());
       final session = Supabase.instance.client.auth.currentSession;
-      print('SESSION -> $session');
-
+      AppLogger.info(('SESSION -> $session').toString());
       // 3️⃣ SAVE LOCAL SESSION
       saveUserLoggedIn(true);
       await Get.find<GlobalStore>().loadInitialData();

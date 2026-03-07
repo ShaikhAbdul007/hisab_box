@@ -7,6 +7,7 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/device_info.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/gobal_controller.dart';
 import 'package:open_file/open_file.dart';
 import '../../../helper/helper.dart';
@@ -107,11 +108,11 @@ class ReportController extends GetxController
     }
   }
 
-  void fetchData() async {
+  Future<void> fetchData() async {
     // Initial loading ke waqt RAM data populate karo
-    fetchTodaySalesAndProfit();
-    fetchTopSellingProducts();
-    setSellList();
+    await fetchTodaySalesAndProfit();
+    await fetchTopSellingProducts();
+    await setSellList();
   }
 
   Future<void> setSellList() async {
@@ -138,12 +139,7 @@ class ReportController extends GetxController
     double tempProfit = 0.0;
     for (var sale in globalStore.allSalesList) {
       for (var item in (sale.items ?? [])) {
-        // GlobalStore ki product list se purchase price uthao
-        var product = globalStore.allProducts.firstWhereOrNull(
-          (p) => p.id == item.id,
-        );
-        // Note: Agar purchase_price product_stock joins mein nahi hai, toh stock_batches wali call lagani padegi
-        // Filhal hum man rahe hain ki purchase_price product model mein hai
+        // Note: purchase_price integration pending.
         double pPrice = 0.0; // Idher product?.purchasePrice ka logic ayega
         double sPrice = (item.finalPrice ?? 0.0).toDouble();
         int qty = (item.quantity ?? 0).toInt();
@@ -221,7 +217,7 @@ class ReportController extends GetxController
         onPressed: () => OpenFile.open(file),
       );
     } catch (e) {
-      showMessage(message: '$e');
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isExporting.value = false;
     }
@@ -414,6 +410,7 @@ class ReportController extends GetxController
             .lte('created_at', "${end}T23:59:59.999Z");
       }
     } catch (e) {
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
       return [];
     }
   }

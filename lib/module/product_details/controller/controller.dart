@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/gobal_controller.dart';
@@ -5,6 +6,7 @@ import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../helper/helper.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
@@ -96,7 +98,10 @@ class ProductController extends GetxController with LocalService {
       categoryList.value = cached;
       categoryListLoading.value = false;
     }
-    if (uid == null) return;
+    if (uid == null) {
+      categoryListLoading.value = false;
+      return;
+    }
     try {
       final response = await SupabaseConfig.from(
         'categories',
@@ -106,7 +111,8 @@ class ProductController extends GetxController with LocalService {
       categoryList.value = freshData;
       await LocalService.saveCategories(freshData);
     } catch (e) {
-      print("🚨 Category Error: $e");
+      AppLogger.info(("🚨 Category Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       categoryListLoading.value = false;
     }
@@ -120,7 +126,10 @@ class ProductController extends GetxController with LocalService {
       animalTypeList.value = cached;
       animalCategoryListLoading.value = false;
     }
-    if (uid == null) return;
+    if (uid == null) {
+      animalCategoryListLoading.value = false;
+      return;
+    }
     try {
       final response = await SupabaseConfig.from(
         'animal_categories',
@@ -130,7 +139,8 @@ class ProductController extends GetxController with LocalService {
       animalTypeList.value = freshData;
       await LocalService.saveAnimalCategories(freshData);
     } catch (e) {
-      print("🚨 Animal Error: $e");
+      AppLogger.info(("🚨 Animal Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       animalCategoryListLoading.value = false;
     }
@@ -177,8 +187,8 @@ class ProductController extends GetxController with LocalService {
       // GlobalStore ka realtime sync is naye product ko khud utha lega.
       Get.back(result: true);
     } catch (e) {
-      print("Database Error: $e");
-      showMessage(message: "❌ Database Error: $e");
+      AppLogger.info(("Database Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;
     }
@@ -206,7 +216,7 @@ class ProductController extends GetxController with LocalService {
       clear();
       Get.back(result: true);
     } catch (e) {
-      showMessage(message: "❌ Error: $e");
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isLooseProductSave.value = false;
     }

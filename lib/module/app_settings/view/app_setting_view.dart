@@ -11,9 +11,11 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/app_settings/controller/app_setting_controller.dart';
 import 'package:inventory/module/app_settings/widget/app_setting_text.dart';
 import 'package:inventory/module/invoice/widget/bluetooth_validate_widget.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 import '../../../common_widget/common_switch.dart';
 import '../../../helper/helper.dart';
+import '../../../helper/logger.dart';
 import '../../../helper/textstyle.dart';
 
 class AppSettingView extends GetView<AppSettingController> {
@@ -80,21 +82,24 @@ class AppSettingView extends GetView<AppSettingController> {
   }
 
   Future<void> selectPrinter(BuildContext context) async {
-    final device = await FlutterBluetoothPrinter.selectDevice(context);
+    try {
+      final device = await FlutterBluetoothPrinter.selectDevice(context);
 
-    if (device != null) {
-      controller.savePrinterAddress(device.address);
-      showMessage(message: "✅ Printer saved: ${device.name}");
-    } else if (device == null) {
-      commonBottomSheet(
-        label: 'label',
-        onPressed: () {
-          Get.back();
-        },
-        child: BluetoothValidateWidget(),
-      );
-    } else {
-      showMessage(message: "Printer not found");
+      if (device != null) {
+        controller.savePrinterAddress(device.address);
+        showMessage(message: "✅ Printer saved: ${device.name}");
+      } else {
+        commonBottomSheet(
+          label: 'Bluetooth Info',
+          onPressed: () {
+            Get.back();
+          },
+          child: BluetoothValidateWidget(),
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Printer selection failed', e, 'AppSettingView');
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'dart:io';
 import 'package:http/io_client.dart';
 import 'package:flutter/material.dart';
@@ -51,9 +52,9 @@ Future<void> checkResponse() async {
   // );
 
   final user = Supabase.instance.client.auth.currentUser;
-  print('USER -> $user');
+  AppLogger.info(('USER -> $user').toString());
   final session = Supabase.instance.client.auth.currentSession;
-  print('SESSION -> $session');
+  AppLogger.info(('SESSION -> $session').toString());
 }
 
 IOClient createCustomClient() {

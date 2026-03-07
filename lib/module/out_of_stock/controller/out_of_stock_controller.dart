@@ -1,8 +1,10 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../inventory/model/product_model.dart';
 
 class OutOfStockController extends GetxController with LocalService {
@@ -38,7 +40,7 @@ class OutOfStockController extends GetxController with LocalService {
     final cachedOutOfStock = LocalService.getCachedOutOfStockProducts();
     if (cachedOutOfStock.isNotEmpty) {
       productList.value = cachedOutOfStock;
-      print("📦 Out of Stock loaded from Hive: ${cachedOutOfStock.length}");
+      AppLogger.info(("📦 Out of Stock loaded from Hive: ${cachedOutOfStock.length}").toString());
     }
 
     // 2️⃣ STEP 2: Supabase se fresh data laao (Fallback)
@@ -117,10 +119,12 @@ class OutOfStockController extends GetxController with LocalService {
       // 4️⃣ STEP 4: UI Refresh aur Hive update
       productList.value = outOfStockList;
       await LocalService.saveOutOfStockProducts(outOfStockList);
-      print("✅ Out of Stock Synced with Supabase & Hive Updated");
+      AppLogger.info(("✅ Out of Stock Synced with Supabase & Hive Updated").toString());
     } catch (e) {
-      print("🚨 OutOfStock Fetch Error: $e");
-      if (productList.isEmpty) showMessage(message: "Error loading products");
+      AppLogger.info(("🚨 OutOfStock Fetch Error: $e").toString());
+      if (productList.isEmpty) {
+        showMessage(message: SupabaseErrorHandler.getMessage(e));
+      }
     } finally {
       isDataLoading.value = false;
     }
@@ -145,14 +149,14 @@ class OutOfStockController extends GetxController with LocalService {
         productList.removeWhere((item) => item.id == productId);
         await LocalService.saveOutOfStockProducts(productList);
 
-        print("✅ Inactive Success & Hive Updated locally");
+        AppLogger.info(("✅ Inactive Success & Hive Updated locally").toString());
       }
 
       // 3. Final Sync from server
       await loadOutOfStockProducts();
     } catch (e) {
-      print("🚨 Deactivate Error: $e");
-      showMessage(message: "Failed to deactivate: Check Internet");
+      AppLogger.info(("🚨 Deactivate Error: $e").toString());
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isDeleteLoading.value = false;
     }

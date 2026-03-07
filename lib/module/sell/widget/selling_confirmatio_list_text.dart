@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -31,7 +32,7 @@ class SellingConfirmationListText extends StatelessWidget {
   Widget build(BuildContext context) {
     // bool isloosed = inventoryModel.isLoosed ?? false;
     bool sellType = inventoryModel.sellType == 'Loose';
-    print('inventoryModel.sellType is ${inventoryModel.sellType}');
+    AppLogger.info(('inventoryModel.sellType is ${inventoryModel.sellType}').toString());
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,

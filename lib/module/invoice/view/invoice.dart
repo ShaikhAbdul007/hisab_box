@@ -5,9 +5,11 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/module/invoice/controller/invoice_controller.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
+import '../../../helper/logger.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../widget/bluetooth_info_widget.dart';
@@ -43,25 +45,30 @@ class InvoicePrint extends GetView<InvoiceController> {
                 isLoading: controller.isPrintingLoading.value,
                 label: "Print",
                 onTap: () async {
-                  bool checkBluetooth =
-                      await controller.checkBluetoothConnectivitys();
-                  if (checkBluetooth == true) {
-                    if (controller.receiptController.value != null) {
-                      await printReceipt(
-                        rController: controller.receiptController.value!,
-                        paymentMethod: 'paymentMethod',
-                      );
+                  try {
+                    bool checkBluetooth =
+                        await controller.checkBluetoothConnectivitys();
+                    if (checkBluetooth == true) {
+                      if (controller.receiptController.value != null) {
+                        await printReceipt(
+                          rController: controller.receiptController.value!,
+                          paymentMethod: 'paymentMethod',
+                        );
+                      } else {
+                        showMessage(message: 'Printer is not initialized yet');
+                      }
                     } else {
-                      showMessage(message: 'Printer is not initialized yet');
+                      commonBottomSheet(
+                        label: 'Bluetooth Info',
+                        onPressed: () {
+                          Get.back();
+                        },
+                        child: BluetoothValidateWidget(),
+                      );
                     }
-                  } else {
-                    commonBottomSheet(
-                      label: 'Bluetooth Info',
-                      onPressed: () {
-                        Get.back();
-                      },
-                      child: BluetoothValidateWidget(),
-                    );
+                  } catch (e) {
+                    AppLogger.error('Print button flow failed', e, 'Invoice');
+                    showMessage(message: SupabaseErrorHandler.getMessage(e));
                   }
                 },
               ),
@@ -86,6 +93,9 @@ class InvoicePrint extends GetView<InvoiceController> {
     try {
       final String? device = controller.retrievePrinterAddress();
       if (device == null || device.isEmpty) {
+        showMessage(
+          message: 'No saved printer found. Please select a printer first.',
+        );
         commonBottomSheet(
           label: 'Bluetooth Info',
           onPressed: () {
@@ -98,13 +108,16 @@ class InvoicePrint extends GetView<InvoiceController> {
 
       final res = await rController.print(address: device, delayTime: 0);
       if (res == true) {
+        showMessage(message: 'Invoice printed successfully.');
         AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
       } else {
-        showMessage(message: 'Print failed, please reconnect printer');
+        showMessage(
+          message: 'Print failed. Please reconnect printer and try again.',
+        );
       }
     } catch (e) {
-      customMessageOrErrorPrint(message: 'PRINT ERROR: $e');
-      showMessage(message: 'Print error: $e');
+      AppLogger.error('Receipt print failed', e, 'Invoice');
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       controller.isPrintingLoading.value = false;
     }

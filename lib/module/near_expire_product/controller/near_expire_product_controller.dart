@@ -1,6 +1,9 @@
+import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
 import '../../inventory/model/product_model.dart';
 
@@ -44,8 +47,9 @@ class NearExpireProductController extends GetxController with LocalService {
       // Global list se wo products nikalo jinki date 90 din ke andar hai
       List<ProductModel> expiryProducts =
           globalStore.allProducts.where((product) {
-            if (product.expireDate == null || product.expireDate!.isEmpty)
+            if (product.expireDate == null || product.expireDate!.isEmpty) {
               return false;
+            }
 
             DateTime? expiryDate = DateTime.tryParse(product.expireDate!);
             if (expiryDate == null) return false;
@@ -70,11 +74,13 @@ class NearExpireProductController extends GetxController with LocalService {
       nearExpProductList.assignAll(expiryProducts);
       await LocalService.saveExpiryProducts(expiryProducts);
 
-      print(
-        "✅ Expiry List Sync from GlobalStore: ${expiryProducts.length} items",
+      AppLogger.info(
+        ("✅ Expiry List Sync from GlobalStore: ${expiryProducts.length} items")
+            .toString(),
       );
     } catch (e) {
-      print("🚨 Expiry Calculation Error: $e");
+      AppLogger.error('Expiry calculation failed', e, 'NearExpireController');
+      showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isDataloading.value = false;
     }

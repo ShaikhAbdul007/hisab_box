@@ -1,3 +1,4 @@
+import 'package:inventory/helper/logger.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -126,7 +127,7 @@ class HomeController extends GetxController with CacheManager {
 
       getDashBoardList();
     } catch (e) {
-      print("🚨 Hive Load Error: $e");
+      AppLogger.info(("🚨 Hive Load Error: $e").toString());
     }
   }
 
