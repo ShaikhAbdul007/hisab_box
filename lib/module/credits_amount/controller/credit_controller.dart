@@ -6,7 +6,7 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
-import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
+import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Connection
 
 class CredtiController extends GetxController with CacheManager {
   final uid = SupabaseConfig.auth.currentUser?.id ?? '';

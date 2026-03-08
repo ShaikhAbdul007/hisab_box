@@ -62,6 +62,8 @@ class CategoryController extends GetxController
       await fetchCategories();
       showMessage(message: categorySaveSuccessfull);
     } catch (e) {
+      clear();
+      Get.back();
       showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;

@@ -33,10 +33,13 @@ class SettingView extends GetView<SettingController> {
               () => CommonContainer(
                 height: 80,
                 child: SettingItem(
-                  onTap: () {
-                    AppRoutes.navigateRoutes(
+                  onTap: () async {
+                    var res = await AppRoutes.futureNavigationToRoute(
                       routeName: AppRouteName.userProfile,
                     );
+                    if (res == true) {
+                      controller.getUserName();
+                    }
                   },
                   subtitleReq: true,
                   label: controller.storeName.value,
@@ -51,7 +54,7 @@ class SettingView extends GetView<SettingController> {
                         if (canShowImage) {
                           return ClipOval(
                             child: Image.file(
-                              profile,
+                              controller.profileImage.value!,
                               width: 50,
                               height: 50,
                               fit: BoxFit.cover,
@@ -70,7 +73,7 @@ class SettingView extends GetView<SettingController> {
                         if (profileUrl.isNotEmpty) {
                           return ClipOval(
                             child: Image.network(
-                              profileUrl,
+                              controller.profileImageUrl.value.trim(),
                               width: 50,
                               height: 50,
                               fit: BoxFit.cover,

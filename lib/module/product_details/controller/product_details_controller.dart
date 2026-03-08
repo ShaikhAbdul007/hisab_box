@@ -11,7 +11,7 @@ import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
-import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Connection
+import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Connection
 
 class ProductDetailsController extends GetxController with LocalService {
   final userId = SupabaseConfig.auth.currentUser?.id;
@@ -104,7 +104,7 @@ class ProductDetailsController extends GetxController with LocalService {
         'stock_type': product.stockType ?? 'packet',
         'price': product.sellingPrice ?? 0.0,
         'reason': 'Stock transfer from Godown',
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': DateTime.now().toUtc().toIso8601String(),
       });
 
       // 🔥 STEP 2: Godown Stock Minus (Hold Logic)
@@ -130,7 +130,7 @@ class ProductDetailsController extends GetxController with LocalService {
           'ref_id': refId,
           'product_id': product.id,
         },
-        'created_at': DateTime.now().toIso8601String(),
+        'created_at': DateTime.now().toUtc().toIso8601String(),
       });
 
       showMessage(

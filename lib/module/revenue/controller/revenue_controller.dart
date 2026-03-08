@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/gobal_controller.dart';
+import 'package:inventory/module/gobal_module/gobal_controller.dart';
 import '../model/revenue_model.dart';
 
 class RevenueController extends GetxController with LocalService {

@@ -1,6 +1,5 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/helper/logger.dart';
-import 'dart:io';
-
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
@@ -38,13 +37,12 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         user.name?.isNotEmpty ?? false ? user.name!.substring(0, 1) : "HB";
 
     AppLogger.info((user.address).toString());
+
+    AppLogger.info((user.image).toString());
     AppLogger.info((user.alternateMobileNo).toString());
     AppLogger.info((user.mobileNo).toString());
     AppLogger.info((user.city).toString());
-    bool isFileAvailable =
-        user.image != null &&
-        user.image!.isNotEmpty &&
-        File(user.image!).existsSync();
+    bool isFileAvailable = user.image != null && user.image!.isNotEmpty;
     double total = 0;
     double savedAmount = 0;
     int discountPercentage = 0;
@@ -70,13 +68,15 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             ),
                           ),
                         )
-                        : CircleAvatar(
-                          radius: 50,
-                          backgroundColor: AppColors.blackColor,
-                          backgroundImage: FileImage(
-                            File(user.image!),
+                        : ClipOval(
+                          child: SizedBox(
+                            width: 100.w,
+                            height: 100.h,
+                            child: Image.network(
+                              fit: BoxFit.cover,
+                              user.image ?? '',
+                            ),
                           ), // Ab crash nahi hoga
-                          child: const Text(''),
                         ),
                     setWidth(width: 15),
                     Column(
@@ -423,6 +423,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
             ),
           ),
       onInitialized: (controller) {
+        AppLogger.info("Printer Controller Initialized!");
         onInitialized(controller);
       },
     );

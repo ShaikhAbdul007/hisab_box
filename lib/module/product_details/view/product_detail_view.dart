@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
+import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_dialogue.dart';
 import 'package:inventory/common_widget/common_popup_appbar.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -37,145 +38,151 @@ class ProductDetailView extends GetView<ProductDetailsController> {
     return CommonAppbar(
       isleadingButtonRequired: true,
       backgroundColor: AppColors.whiteColor,
-      firstActionChild: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          InkWell(
-            onTap: () {
-              controller.readOnly.value = !controller.readOnly.value;
-              controller.dropDownReadOnly.value =
-                  !controller.dropDownReadOnly.value;
-            },
-            child: Icon(
-              CupertinoIcons.square_pencil_fill,
-              color: AppColors.blackColor,
-            ),
-          ),
-          PopupMenuButton<MenuOption>(
-            enabled: true,
-            color: AppColors.whiteColor,
-            constraints: BoxConstraints(
-              maxHeight: 200.h,
-              maxWidth: 200.w,
-              minHeight: 40.h,
-              minWidth: 60.w,
-            ),
-            position: PopupMenuPosition.under,
-            borderRadius: BorderRadius.circular(200.r),
-            itemBuilder:
-                (BuildContext context) => <PopupMenuEntry<MenuOption>>[
-                  PopupMenuItem<MenuOption>(
-                    value: MenuOption.barcode,
+      firstActionChild: PopupMenuButton<MenuOption>(
+        enabled: true,
+        color: AppColors.whiteColor,
+        position: PopupMenuPosition.under,
+        borderRadius: BorderRadius.circular(200.r),
+        itemBuilder:
+            (BuildContext context) => <PopupMenuEntry<MenuOption>>[
+              PopupMenuItem<MenuOption>(
+                value: MenuOption.editProductDetails,
+                child: Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.square_pencil_fill,
+                      color: AppColors.blackColor,
+                    ),
+                    setWidth(width: 8),
+                    Text('Edit', style: CustomTextStyle.customOpenSans()),
+                  ],
+                ),
+              ),
+              PopupMenuItem<MenuOption>(
+                value: MenuOption.barcode,
+                child: Row(
+                  // Example of using a custom child widget
+                  children: [
+                    Icon(CupertinoIcons.barcode, color: AppColors.blackColor),
+                    setWidth(width: 8),
+                    Text(
+                      'Generate Barcode',
+                      style: CustomTextStyle.customOpenSans(),
+                    ),
+                  ],
+                ),
+              ),
+
+              godown
+                  ? PopupMenuItem<MenuOption>(
+                    value: MenuOption.moveToShop,
                     child: Row(
-                      // Example of using a custom child widget
                       children: [
                         Icon(
-                          CupertinoIcons.barcode,
+                          CupertinoIcons.arrow_right_arrow_left,
+                          size: 20.sp,
                           color: AppColors.blackColor,
                         ),
                         setWidth(width: 8),
                         Text(
-                          'Generate Barcode',
+                          'Move to SHOP',
                           style: CustomTextStyle.customOpenSans(),
                         ),
                       ],
                     ),
-                  ),
-                  godown
-                      ? PopupMenuItem<MenuOption>(
-                        value: MenuOption.moveToShop,
-                        child: Row(
-                          children: [
-                            Icon(
-                              CupertinoIcons.arrow_right_arrow_left,
-                              size: 20.sp,
-                              color: AppColors.blackColor,
-                            ),
-                            setWidth(width: 8),
-                            Text(
-                              'Move to SHOP',
-                              style: CustomTextStyle.customOpenSans(),
-                            ),
-                          ],
-                        ),
-                      )
-                      : PopupMenuItem<MenuOption>(child: SizedBox.shrink()),
-                ],
-            // 2. onSelected: Handles the action when an item is selected
-            onSelected: (MenuOption result) {
-              if (result.name == 'barcode') {
-                showBarcode(controller.barcodeQytController);
-              } else if (result.name == 'moveToShop') {
-                commonDialogBox(
-                  context: context,
-                  child: Form(
-                    key: inventoryScanKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CommonPopupAppbar(
-                          label: 'Transfer Request',
-                          onPressed: () {
-                            controller.transferQuantityToShop.clear();
-                            Get.back();
-                          },
-                        ),
-                        Divider(),
-                        CommonTextField(
-                          hintText: 'Enter Quantity',
-                          label: 'Qunatity',
-                          controller: controller.transferQuantityToShop,
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value?.isEmpty ?? false) {
-                              return 'Enter Quantity';
-                            }
-                            return null;
-                          },
-                          inputLength: 5,
-                        ),
-                        setHeight(height: 10),
-                        Obx(
-                          () => CommonButton(
-                            isLoading: controller.isTransferLoading.value,
-                            label: 'Transfer',
-                            onTap: () {
-                              if (inventoryScanKey.currentState!.validate()) {
-                                double tranferQuantity = double.parse(
-                                  controller.transferQuantityToShop.text,
-                                );
-                                if (tranferQuantity >
-                                    controller.data['product'].quantity) {
-                                  unfocus();
-                                  showSnackBar(
-                                    error:
-                                        'Quantity must be lower than avaible stock in godown',
-                                  );
-                                } else {
-                                  controller.requestStockTransfer(
-                                    product: controller.data['product'],
-                                    requestedQty: tranferQuantity,
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                        ),
-                        setHeight(height: 20),
-                      ],
+                  )
+                  : PopupMenuItem<MenuOption>(child: SizedBox.shrink()),
+            ],
+        // 2. onSelected: Handles the action when an item is selected
+        onSelected: (MenuOption result) {
+          if (result.name == 'barcode') {
+            showBarcode(controller.barcodeQytController);
+          } else if (result.name == 'moveToShop') {
+            commonDialogBox(
+              context: context,
+              child: Form(
+                key: inventoryScanKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CommonPopupAppbar(
+                      label: 'Transfer Request',
+                      onPressed: () {
+                        controller.transferQuantityToShop.clear();
+                        Get.back();
+                      },
                     ),
-                  ),
-                );
-              } else {
-                AppLogger.info(('result.name').toString());
-              }
-            },
-            // Optional: You can customize the default icon (three vertical dots)
-            // icon: const Icon(Icons.more_horiz),
+                    Divider(),
+                    CommonTextField(
+                      hintText: 'Enter Quantity',
+                      label: 'Qunatity',
+                      controller: controller.transferQuantityToShop,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value?.isEmpty ?? false) {
+                          return 'Enter Quantity';
+                        }
+                        return null;
+                      },
+                      inputLength: 5,
+                    ),
+                    setHeight(height: 10),
+                    Obx(
+                      () => CommonButton(
+                        isLoading: controller.isTransferLoading.value,
+                        label: 'Transfer',
+                        onTap: () {
+                          if (inventoryScanKey.currentState!.validate()) {
+                            double tranferQuantity = double.parse(
+                              controller.transferQuantityToShop.text,
+                            );
+                            if (tranferQuantity >
+                                controller.data['product'].quantity) {
+                              unfocus();
+                              showSnackBar(
+                                error:
+                                    'Quantity must be lower than avaible stock in godown',
+                              );
+                            } else {
+                              controller.requestStockTransfer(
+                                product: controller.data['product'],
+                                requestedQty: tranferQuantity,
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                    setHeight(height: 20),
+                  ],
+                ),
+              ),
+            );
+          } else if (result.name == 'editProductDetails') {
+            controller.readOnly.value = !controller.readOnly.value;
+            controller.dropDownReadOnly.value =
+                !controller.dropDownReadOnly.value;
+          } else {
+            AppLogger.info(('result.name').toString());
+          }
+        },
+        child: CommonContainer(
+          height: 30,
+          width: 30,
+          radius: 10,
+          color: AppColors.whiteColor,
+          child: Icon(
+            CupertinoIcons.ellipsis_vertical,
+            color: AppColors.blackColor,
           ),
-        ],
+        ),
       ),
-      appBarLabel: isProductLoosed ? 'Loose Product Detail' : 'Product Detail',
+      appBarLabel:
+          isProductLoosed
+              ? 'Loose Product Detail'
+              : godown
+              ? 'Godown Product Detail'
+              : 'Shop Product Detail',
       body: Form(
         key: controller.inventoryScanKey,
         child: SingleChildScrollView(
@@ -197,7 +204,16 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                     Hero(
                       transitionOnUserGestures: true,
                       tag: 'herotag_${UniqueKey()}',
-                      child: Icon(CupertinoIcons.cube_box_fill, size: 70),
+                      child: Obx(
+                        () => Icon(
+                          CupertinoIcons.cube_box_fill,
+                          size: 70.sp,
+                          color:
+                              controller.readOnly.value
+                                  ? AppColors.blackColor
+                                  : AppColors.redColor,
+                        ),
+                      ),
                     ),
                     setHeight(height: 8),
                     Text(

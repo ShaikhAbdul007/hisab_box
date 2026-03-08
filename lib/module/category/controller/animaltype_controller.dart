@@ -61,6 +61,8 @@ class AnimalTypeController extends GetxController
       // Background refresh for safety
       await fetchCategories();
     } catch (e) {
+      clear();
+      Get.back();
       showMessage(message: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;
@@ -89,7 +91,7 @@ class AnimalTypeController extends GetxController
       // --- 2. SUPABASE: Fresh data fetch karo ---
       final response = await SupabaseConfig.from(
         'animal_categories',
-      ).select().eq('user_id', userId ?? '').order('created_at');
+      ).select().eq('user_id', userId ?? '');
 
       List<CategoryModel> freshList =
           (response as List).map((e) => CategoryModel.fromJson(e)).toList();

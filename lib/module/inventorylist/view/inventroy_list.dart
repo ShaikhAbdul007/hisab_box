@@ -56,17 +56,9 @@ class InventroyList extends GetView<InventoryListController> {
         () =>
             controller.isInventoryScanSelected.value
                 ? PopupMenuButton<_InventoryModeMenu>(
-                  enabled: true,
                   color: AppColors.whiteColor,
-                  constraints: BoxConstraints(
-                    maxHeight: 200.h,
-                    maxWidth: 200.w,
-                    minHeight: 40.h,
-                    minWidth: 60.w,
-                  ),
                   position: PopupMenuPosition.under,
                   borderRadius: BorderRadius.circular(200.r),
-                  tooltip: 'Mode',
                   onSelected: (_InventoryModeMenu value) async {
                     if (value.name == 'scan') {
                       var res = await AppRoutes.futureNavigationToRoute(
@@ -89,14 +81,7 @@ class InventroyList extends GetView<InventoryListController> {
                           value: _InventoryModeMenu.scan,
                           child: Row(
                             children: [
-                              Icon(
-                                CupertinoIcons.barcode_viewfinder,
-                                size: 18,
-                                color:
-                                    controller.isInventoryScanSelected.value
-                                        ? AppColors.blackColor
-                                        : AppColors.greyColor,
-                              ),
+                              Icon(CupertinoIcons.barcode_viewfinder),
                               setWidth(width: 8),
                               Text(
                                 'Scan',
@@ -110,12 +95,8 @@ class InventroyList extends GetView<InventoryListController> {
                           child: Row(
                             children: [
                               Icon(
-                                CupertinoIcons.pencil,
-                                size: 18,
-                                color:
-                                    !controller.isInventoryScanSelected.value
-                                        ? AppColors.blackColor
-                                        : AppColors.greyColor,
+                                CupertinoIcons.square_pencil_fill,
+                                color: AppColors.blackColor,
                               ),
                               setWidth(width: 8),
                               Text(
@@ -127,8 +108,8 @@ class InventroyList extends GetView<InventoryListController> {
                         ),
                       ],
                   child: CommonContainer(
-                    height: 40,
-                    width: 40,
+                    height: 30,
+                    width: 30,
                     radius: 10,
                     color: AppColors.whiteColor,
                     child: Icon(

@@ -11,7 +11,6 @@ import '../../../common_widget/common_progressbar.dart';
 import '../../../common_widget/search.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
-import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../controller/loose_controller.dart';

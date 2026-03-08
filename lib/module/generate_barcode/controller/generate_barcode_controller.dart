@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/gobal_controller.dart';
+import 'package:inventory/module/gobal_module/gobal_controller.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';

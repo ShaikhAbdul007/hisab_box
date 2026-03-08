@@ -11,7 +11,7 @@ class GenerateBarcode extends GetView<GenerateBarcodeController> {
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
-      appBarLabel: 'Generate Barcode',
+      appBarLabel: 'Add Product',
       body: GenerateBarcodeComponent(controller: controller),
     );
   }

@@ -86,7 +86,6 @@ class BankdetailsView extends GetView<BankdetailsController> {
                             return null;
                           },
                         ),
-
                         setHeight(height: 30),
                         Obx(
                           () =>

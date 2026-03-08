@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore
+import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -342,7 +342,7 @@ class SellListAfterScanController extends GetxController
     final bool isLoose = _isLooseProductModel(product);
     final String expectedTable = isLoose ? 'loose_stocks' : 'product_stock';
     final String oppositeTable =
-        expectedTable == 'loose_stocks' ? 'product_stock' : 'loose_stocks';
+        expectedTable != 'loose_stocks' ? 'product_stock' : 'loose_stocks';
     final String productId = product.id ?? '';
 
     if (productId.isEmpty) {

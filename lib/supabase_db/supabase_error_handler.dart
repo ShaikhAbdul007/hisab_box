@@ -77,6 +77,9 @@ class SupabaseErrorHandler {
 
     if (msg.contains('duplicate key') ||
         msg.contains('already exists') ||
+        msg.contains(
+          'duplicate key value violates unique constraint "unique_category_per_user"',
+        ) ||
         msg.contains('23505')) {
       return 'This data already exists.';
     }
@@ -141,7 +144,9 @@ class SupabaseErrorHandler {
     if (msg.contains('timeout')) {
       return 'Request timed out. Please try again.';
     }
-    if (msg.contains('socket') || msg.contains('network') || msg.contains('connection')) {
+    if (msg.contains('socket') ||
+        msg.contains('network') ||
+        msg.contains('connection')) {
       return 'No internet connection. Please check your network.';
     }
     if (msg.contains('permission denied') || msg.contains('not authorized')) {

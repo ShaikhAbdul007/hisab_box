@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:inventory/gobal_controller.dart';
+import 'package:inventory/module/gobal_module/gobal_controller.dart';
 
 class GobalBinding extends Bindings {
   @override

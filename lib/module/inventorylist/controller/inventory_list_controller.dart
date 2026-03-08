@@ -218,7 +218,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/gobal_controller.dart'; // 🔥 GlobalStore Sync
+import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Sync
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';

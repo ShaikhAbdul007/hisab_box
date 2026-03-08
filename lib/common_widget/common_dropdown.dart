@@ -51,7 +51,7 @@ class CommonDropDown extends StatelessWidget {
         Container(
           margin: SymmetricPadding(horizontal: 10).getPadding(),
           decoration: BoxDecoration(
-            color: dropDownBgColor ?? AppColors.whiteColor,
+            color: dropDownBgColor ?? AppColors.greyColorShade100,
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: AppColors.greyColor, width: 0.5.w),
           ),
@@ -59,12 +59,17 @@ class CommonDropDown extends StatelessWidget {
             enabled: enabled,
             initialItem: selectedDropDownItem,
             decoration: CustomDropdownDecoration(
+              listItemStyle: CustomTextStyle.customNato(
+                color: AppColors.blackColor,
+              ),
+              //expandedFillColor: AppColors.greyColorShade100,
               noResultFoundStyle: CustomTextStyle.customNato(fontSize: 11),
               searchFieldDecoration: SearchFieldDecoration(
                 hintStyle: CustomTextStyle.customNato(fontSize: 11),
               ),
               closedErrorBorder: Border.all(color: AppColors.transparent),
               closedFillColor: AppColors.transparent,
+
               errorStyle: CustomTextStyle.customNato(
                 fontSize: 10,
                 color: AppColors.redColor,
@@ -76,7 +81,7 @@ class CommonDropDown extends StatelessWidget {
                 hintText,
                 style: CustomTextStyle.customNato(
                   fontSize: 11,
-                  color: AppColors.greyColor,
+                  color: AppColors.blackColor,
                 ),
               );
             },
@@ -92,12 +97,14 @@ class CommonDropDown extends StatelessWidget {
                     selectedItem.name,
                     style: CustomTextStyle.customOpenSans(
                       fontSize: 12,
+                      color: AppColors.blackColor,
                       fontWeight: FontWeight.w400,
                     ),
                   )
                   : Text(
                     selectedItem.toString(),
                     style: CustomTextStyle.customOpenSans(
+                      color: AppColors.blackColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),

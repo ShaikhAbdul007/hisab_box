@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
@@ -9,8 +8,9 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
+import 'package:inventory/keys/keys.dart';
 import 'package:inventory/module/user_profile/controller/user_profile_controller.dart';
-import '../../../keys/keys.dart';
+import 'package:inventory/module/user_profile/widget/user_profile_widget.dart';
 
 class UserProfileView extends GetView<UserProfileController> {
   const UserProfileView({super.key});
@@ -19,218 +19,180 @@ class UserProfileView extends GetView<UserProfileController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: 'User Profile',
-      firstActionChild: InkWell(
-        onTap: () {
-          controller.readOnly.value = !controller.readOnly.value;
-        },
-        child: Icon(
-          CupertinoIcons.square_pencil_fill,
-          color: AppColors.blackColor,
+      firstActionChild: IconButton(
+        onPressed: () => controller.readOnly.toggle(), // Toggle edit mode
+        icon: Obx(
+          () => Icon(
+            CupertinoIcons.square_pencil_fill,
+            color:
+                controller.readOnly.value
+                    ? AppColors.blackColor
+                    : AppColors.redColor,
+          ),
         ),
       ),
       backgroundColor: AppColors.whiteColor,
-      body: Obx(
-        () => CustomPadding(
-          paddingOption: SymmetricPadding(horizontal: 8.0),
-          child:
-              controller.isDataLoading.value
-                  ? CommonProgressbar(color: AppColors.blackColor)
-                  : Form(
-                    key: userProfile,
-                    child: ListView(
-                      children: [
-                        setHeight(height: 20),
-                        Obx(
-                          () => Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 55,
-                                backgroundColor: Colors.black,
-                                child: (() {
-                                  final profile = controller.profileImage.value;
-                                  final profileUrl =
-                                      controller.profileImageUrl.value.trim();
-                                  final canShowImage =
-                                      profile != null && profile.existsSync();
-                                  if (canShowImage) {
-                                    return ClipOval(
-                                      child: Image.file(
-                                        profile,
-                                        width: 110,
-                                        height: 110,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return const Text(
-                                            "HB",
-                                            style: TextStyle(
-                                              fontSize: 40,
-                                              color: Colors.white,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  }
-                                  if (profileUrl.isNotEmpty) {
-                                    return ClipOval(
-                                      child: Image.network(
-                                        profileUrl,
-                                        width: 110,
-                                        height: 110,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return const Text(
-                                            "HB",
-                                            style: TextStyle(
-                                              fontSize: 40,
-                                              color: Colors.white,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    );
-                                  }
-                                  return const Text(
-                                    "HB",
-                                    style: TextStyle(
-                                      fontSize: 40,
-                                      color: Colors.white,
-                                    ),
-                                  );
-                                })(),
-                              ),
-                              controller.readOnly.value
-                                  ? Container()
-                                  : Positioned(
-                                    top: 70.h,
-                                    left: 200.w,
-                                    child: Container(
-                                      height: 35,
-                                      width: 35,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade200,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: IconButton(
-                                        onPressed: () => controller.pickImage(),
-                                        icon: Icon(
-                                          Icons.edit,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                            ],
+      body: Obx(() {
+        if (controller.isDataLoading.value) {
+          return Center(child: CommonProgressbar(color: AppColors.blackColor));
+        }
+        return CustomPadding(
+          paddingOption: SymmetricPadding(horizontal: 12.0),
+          child: Form(
+            key: userProfile,
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              children: [
+                setHeight(height: 20),
+
+                // 📸 PROFILE IMAGE SECTION
+                Center(
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.blackColor,
+                            width: 2,
                           ),
                         ),
-                        setHeight(height: 30),
-                        UserProfileWidget(
-                          readOnly: controller.readOnly.value,
-                          controller2: controller.emailController,
-                          controller: controller.shopNameController,
-                          label2: 'Email',
-                          label: 'Shop Name',
+                        child: ClipOval(
+                          child: _buildProfileImage(), // Clean helper function
                         ),
-                        setHeight(height: 5),
-                        UserProfileWidget(
-                          readOnly: controller.readOnly.value,
-                          controller2: controller.alternativeMobileController,
-                          controller: controller.mobileController,
-                          label2: 'Alternative No',
-                          label: 'Mobile No',
-                        ),
-                        setHeight(height: 5),
-                        CommonTextField(
-                          readOnly: controller.readOnly.value,
-                          label: 'Address',
-                          hintText: 'Address',
-                          controller: controller.addressController,
-                        ),
-                        setHeight(height: 5),
-                        CommonTextField(
-                          readOnly: controller.readOnly.value,
-                          label: 'State',
-                          hintText: 'State',
-                          controller: controller.stateController,
-                        ),
-                        setHeight(height: 5),
-                        UserProfileWidget(
-                          readOnly: controller.readOnly.value,
-                          controller2: controller.pincodeController,
-                          controller: controller.cityController,
-                          label2: 'Pincode',
-                          label: 'City',
-                        ),
-                        setHeight(height: 25),
-                        CustomPadding(
-                          paddingOption: SymmetricPadding(horizontal: 28.0),
-                          child: Obx(
-                            () =>
-                                controller.readOnly.value
-                                    ? Container()
-                                    : CommonButton(
-                                      isLoading: controller.isLoading.value,
-                                      label: 'Save',
-                                      onTap: () {
-                                        controller.updateUserDetails();
-                                      },
-                                    ),
+                      ),
+                      // Edit Button - Only show when not in ReadOnly mode
+                      if (!controller.readOnly.value)
+                        GestureDetector(
+                          onTap: () => controller.pickImage(),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.blackColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
-                      ],
+                    ],
+                  ),
+                ),
+
+                setHeight(height: 30),
+
+                // 📝 FORM FIELDS
+                UserProfileWidget(
+                  readOnly: controller.readOnly.value,
+                  controller: controller.shopNameController,
+                  controller2: controller.emailController,
+                  label: 'Shop Name',
+                  label2: 'Email',
+                ),
+                setHeight(height: 10),
+                UserProfileWidget(
+                  readOnly: controller.readOnly.value,
+                  controller: controller.mobileController,
+                  controller2: controller.alternativeMobileController,
+                  label: 'Mobile No',
+                  label2: 'Alternative No',
+                ),
+                setHeight(height: 10),
+                CommonTextField(
+                  readOnly: controller.readOnly.value,
+                  label: 'Address',
+                  hintText: 'Full Address',
+                  controller: controller.addressController,
+                ),
+                setHeight(height: 10),
+                CommonTextField(
+                  readOnly: controller.readOnly.value,
+                  label: 'State',
+                  hintText: 'State',
+                  controller: controller.stateController,
+                ),
+                setHeight(height: 10),
+                UserProfileWidget(
+                  readOnly: controller.readOnly.value,
+                  controller: controller.cityController,
+                  controller2: controller.pincodeController,
+                  label: 'City',
+                  label2: 'Pincode',
+                ),
+
+                setHeight(height: 40),
+
+                // 💾 SAVE BUTTON
+                if (!controller.readOnly.value)
+                  CustomPadding(
+                    paddingOption: SymmetricPadding(horizontal: 20.0),
+                    child: CommonButton(
+                      isLoading: controller.isLoading.value,
+                      label: 'Save Profile Changes',
+                      onTap: () => controller.updateUserDetails(),
                     ),
                   ),
-        ),
-      ),
+                setHeight(height: 20),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
-}
 
-class UserProfileWidget extends StatelessWidget {
-  final String label;
-  final String label2;
-  final bool readOnly;
-  final TextEditingController controller;
-  final TextEditingController controller2;
-  const UserProfileWidget({
-    super.key,
-    required this.label,
-    this.readOnly = true,
-    required this.label2,
-    required this.controller,
-    required this.controller2,
-  });
+  // Helper to handle Image Logic
+  Widget _buildProfileImage() {
+    return Obx(() {
+      final file = controller.profileImage.value;
+      final url = controller.profileImageUrl.value;
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: CommonTextField(
-            readOnly: readOnly,
-            label: label,
-            hintText: label,
-            controller: controller,
-          ),
-        ),
-        Expanded(
-          child: CommonTextField(
-            readOnly: readOnly,
-            label: label2,
-            hintText: label2,
-            controller: controller2,
-          ),
-        ),
-      ],
+      // 1. Agar user ne abhi gallery se photo pick ki hai (Local File)
+      if (file != null && file.existsSync()) {
+        return Image.file(
+          file,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+          // Key add karne se Flutter ko pata chalta hai ki image change hui hai
+          key: ValueKey(file.path),
+        );
+      }
+
+      // 2. Agar koi local file nahi hai, toh check karo Supabase ka URL hai?
+      if (url.isNotEmpty && url.startsWith('http') ||
+          url.isNotEmpty && url.startsWith('https')) {
+        return Image.network(
+          url,
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const Center(child: CupertinoActivityIndicator());
+          },
+          errorBuilder: (context, error, stack) => _buildPlaceholder(),
+        );
+      }
+
+      // 3. Agar kuch bhi nahi hai, toh default placeholder
+      return _buildPlaceholder();
+    });
+  }
+
+  Widget _buildPlaceholder() {
+    return Center(
+      child: Text(
+        controller.shopNameController.text.isNotEmpty
+            ? controller.shopNameController.text[0].toUpperCase()
+            : "👤",
+        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }

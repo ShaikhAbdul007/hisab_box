@@ -105,7 +105,7 @@ class InvoicePrint extends GetView<InvoiceController> {
         );
         return;
       }
-
+      await Future.delayed(const Duration(milliseconds: 500));
       final res = await rController.print(address: device, delayTime: 0);
       if (res == true) {
         showMessage(message: 'Invoice printed successfully.');

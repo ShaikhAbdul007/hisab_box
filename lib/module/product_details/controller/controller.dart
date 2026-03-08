@@ -1,7 +1,7 @@
 import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/gobal_controller.dart';
+import 'package:inventory/module/gobal_module/gobal_controller.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
@@ -204,7 +204,7 @@ class ProductController extends GetxController with LocalService {
         params: {
           'p_user_id': uid,
           'p_barcode': barcode,
-          'p_qty': double.tryParse(looseQuantity.text) ?? 0,
+          //'p_qty': double.tryParse(looseQuantity.text) ?? 0,
           'p_loose_qty': double.tryParse(looseQuantity.text) ?? 0,
           'p_selling_price': double.tryParse(sellingPrice.text) ?? 0,
           'p_reason': 'convert',

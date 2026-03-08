@@ -84,7 +84,7 @@ class SignupView extends GetView<SignupController> {
                           alternateMobileNo: controller.alternateMobileNo,
                           obscureText: controller.obscureTextValue.value,
                           onTap: () {
-                            controller.setobscureTextValue();
+                            controller.togglePasswordVisibility();
                           },
                         ),
               ),

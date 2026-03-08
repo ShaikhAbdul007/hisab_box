@@ -8,7 +8,7 @@ import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/device_info.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
-import 'package:inventory/gobal_controller.dart';
+import 'package:inventory/module/gobal_module/gobal_controller.dart';
 import 'package:open_file/open_file.dart';
 import '../../../helper/helper.dart';
 import '../../revenue/model/revenue_model.dart';
