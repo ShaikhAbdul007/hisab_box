@@ -10,9 +10,7 @@ import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class AnimalTypeController extends GetxController
     with CacheManager, LocalService {
-  final userId = SupabaseConfig.auth.currentUser?.id;
   TextEditingController animalCategory = TextEditingController();
-
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteAnimalCategory = false.obs;
   RxBool isFetchAnimalCategory = false.obs;
@@ -36,9 +34,9 @@ class AnimalTypeController extends GetxController
   // ==========================================
   Future<void> addAnimalCategory(String categoryName) async {
     isSaveLoading.value = true;
+    final userId = resolveUserId(isSaveLoading.value);
 
     if (userId == null) {
-      isSaveLoading.value = false;
       return;
     }
 
@@ -78,12 +76,12 @@ class AnimalTypeController extends GetxController
     // --- 1. FALLBACK: Pehle Hive se data uthao aur dikhao ---
     var localData = LocalService.getCachedAnimalCategories();
     if (localData.isNotEmpty) {
-      animalTypeList.value = localData;
+      animalTypeList.assignAll(localData);
       isFetchAnimalCategory.value = false; // UI ko data mil gaya
     }
 
+    final userId = resolveUserId(isFetchAnimalCategory.value);
     if (userId == null) {
-      isFetchAnimalCategory.value = false;
       return;
     }
 
@@ -91,7 +89,7 @@ class AnimalTypeController extends GetxController
       // --- 2. SUPABASE: Fresh data fetch karo ---
       final response = await SupabaseConfig.from(
         'animal_categories',
-      ).select().eq('user_id', userId ?? '');
+      ).select().eq('user_id', userId);
 
       List<CategoryModel> freshList =
           (response as List).map((e) => CategoryModel.fromJson(e)).toList();
@@ -116,16 +114,16 @@ class AnimalTypeController extends GetxController
   // =============================================
   Future<void> deleteAnimalCategory(String aminalCategoryId) async {
     isDeleteAnimalCategory.value = true;
+    final userId = resolveUserId(isDeleteAnimalCategory.value);
 
     if (userId == null) {
-      isDeleteAnimalCategory.value = false;
       return;
     }
     try {
       // 1. Supabase se Delete
       await SupabaseConfig.from(
         'animal_categories',
-      ).delete().eq('id', aminalCategoryId).eq('user_id', userId ?? '');
+      ).delete().eq('id', aminalCategoryId).eq('user_id', userId);
 
       // 2. Local Hive Update (Sync)
       animalTypeList.removeWhere((element) => element.id == aminalCategoryId);

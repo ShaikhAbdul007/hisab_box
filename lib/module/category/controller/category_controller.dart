@@ -35,10 +35,7 @@ class CategoryController extends GetxController
   Future<void> addCategory(String categoryName) async {
     isSaveLoading.value = true;
 
-    if (userId == null) {
-      isSaveLoading.value = false;
-      return;
-    }
+    final userId = resolveUserId(isSaveLoading.value);
 
     try {
       final categoryModel = CategoryModel(id: userId, name: categoryName);
@@ -83,10 +80,7 @@ class CategoryController extends GetxController
       // Loading false nahi karenge taaki background fetch chalta rahe agar user ko dikhana ho
     }
 
-    if (userId == null) {
-      isFetchCategory.value = false;
-      return;
-    }
+    final userId = resolveUserId(isSaveLoading.value);
 
     try {
       // --- 2. SUPABASE: Fresh data fetch karo ---
@@ -118,10 +112,7 @@ class CategoryController extends GetxController
   Future<void> deleteCategory(String aminalCategoryId) async {
     isDeleteCategory.value = true;
 
-    if (userId == null) {
-      isDeleteCategory.value = false;
-      return;
-    }
+    final userId = resolveUserId(isSaveLoading.value);
 
     try {
       // 1. Supabase se Delete
