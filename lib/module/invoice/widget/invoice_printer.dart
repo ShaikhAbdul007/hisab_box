@@ -38,7 +38,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
 
     AppLogger.info((user.address).toString());
 
-    AppLogger.info((user.image).toString());
+    // AppLogger.info((user.image).toString());
     AppLogger.info((user.alternateMobileNo).toString());
     AppLogger.info((user.mobileNo).toString());
     AppLogger.info((user.city).toString());
@@ -73,6 +73,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             width: 100.w,
                             height: 100.h,
                             child: Image.network(
+                              filterQuality: FilterQuality.high,
                               fit: BoxFit.cover,
                               user.image ?? '',
                             ),
@@ -418,6 +419,57 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                       ),
                     )
                     : Container(),
+                RichText(
+                  text: TextSpan(
+                    style: CustomTextStyle.customMontserrat(),
+                    children: [
+                      TextSpan(
+                        text: '#Add.\n',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.blackColor,
+                          fontSize: 18,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Raah Constra\n',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.blackColor,
+                          fontSize: 20,
+                        ),
+                      ),
+                      TextSpan(
+                        text:
+                            'Water Proofing | Interior Design | False Ceiling|',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.blackColor,
+                          fontSize: 20,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Painting | All Renovation Work.\n',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.blackColor,
+                          fontSize: 20,
+                        ),
+                      ),
+
+                      TextSpan(
+                        text: 'www.raahconstra.com\n',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.blackColor,
+                          fontSize: 20,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Contact on - 9930024594',
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.blackColor,
+                          fontSize: 25,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 setHeight(height: 150),
               ],
             ),

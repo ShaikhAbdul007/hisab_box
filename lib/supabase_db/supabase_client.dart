@@ -1,8 +1,9 @@
 import 'package:http/http.dart' as http; // Alias use karein
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-class SupabaseConfig {
+class SupabaseConfig with CacheManager {
   SupabaseConfig._();
 
   static late final SupabaseClient client;
@@ -26,6 +27,15 @@ class SupabaseConfig {
 
   static SupabaseQueryBuilder from(String table) {
     return client.from(table);
+  }
+
+  String? resolveUserId(bool loadingState) {
+    final userId = effectiveShopId();
+    if (userId.isEmpty) {
+      loadingState = false;
+      return null;
+    }
+    return userId;
   }
 
   static SupabaseStorageClient get storage => client.storage;

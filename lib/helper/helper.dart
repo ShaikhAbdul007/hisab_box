@@ -69,7 +69,7 @@ Color _snackTextColorByTone(_MessageTone tone) {
 
 void showMessage({
   required String message,
-  int seconds = 1,
+  int seconds = 2,
   bool isActionRequired = false,
   void Function()? onPressed,
 }) {

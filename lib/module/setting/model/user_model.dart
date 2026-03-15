@@ -1,5 +1,6 @@
 class UserModel {
   final String? id;
+  final String? parentId;
   final String? name;
   final String? email;
   final String? password;
@@ -13,9 +14,12 @@ class UserModel {
   final String? shoptype;
   final String? image;
   final bool? isSaved;
+  final String? role;
 
   UserModel({
     this.id,
+    this.parentId,
+    this.role,
     this.name,
     this.email,
     this.password,
@@ -33,7 +37,8 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json, {String? id}) {
     return UserModel(
-      id: id,
+      id: id ?? json['id'],
+      parentId: json['parent_id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       password: json['password'] ?? '',
@@ -47,6 +52,7 @@ class UserModel {
       shoptype: json['shop_type'] ?? '',
       image: json['profile_image'] ?? '',
       isSaved: json['isSaved'] ?? false,
+      role: json['role'] ?? 'admin',
     );
   }
 
@@ -62,7 +68,8 @@ class UserModel {
       "pincode": pincode,
       "shop_type": shoptype,
       "profile_image": image,
-      // "discountPerProduct": discountPerProduct, // Check if column exists in DB
+      "role": role,
+      "parent_id": parentId,
     };
   }
 }
