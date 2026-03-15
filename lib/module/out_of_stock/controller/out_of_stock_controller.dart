@@ -1,14 +1,15 @@
 import 'package:inventory/helper/logger.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../inventory/model/product_model.dart';
 
-class OutOfStockController extends GetxController with LocalService {
-  final uid = SupabaseConfig.auth.currentUser?.id;
+class OutOfStockController extends GetxController
+    with CacheManager, LocalService {
 
   RxBool isDataLoading = false.obs;
   RxBool isDeleteLoading = false.obs;
@@ -34,7 +35,8 @@ class OutOfStockController extends GetxController with LocalService {
 
   // 🔥 FLOW: Hive Load -> Supabase Sync -> Hive Update
   Future<void> loadOutOfStockProducts() async {
-    if (uid == null) return;
+    final userId = resolveUserId(isDataLoading.value);
+    if (userId == null) return;
 
     // 1️⃣ STEP 1: Pehle Hive (Local DB) se data uthao
     final cachedOutOfStock = LocalService.getCachedOutOfStockProducts();
@@ -75,7 +77,7 @@ class OutOfStockController extends GetxController with LocalService {
             )
           )
         ''')
-          .eq('user_id', uid!)
+          .eq('user_id', userId)
           .eq('quantity', 0)
           .eq('is_active', true)
           .order('updated_at', ascending: false);
@@ -133,13 +135,18 @@ class OutOfStockController extends GetxController with LocalService {
   // 🔥 UPDATE/DELETE: Supabase Update -> Local UI & Hive Update
   Future<void> deactivateSpecificProduct({required String productId}) async {
     isDeleteLoading.value = true;
+    final userId = resolveUserId(isDeleteLoading.value);
+    if (userId == null) {
+      isDeleteLoading.value = false;
+      return;
+    }
     try {
       // 1. Supabase Update
       final response =
           await SupabaseConfig.from('product_stock')
               .update({'is_active': false})
               .eq('id', productId)
-              .eq('user_id', uid ?? '')
+              .eq('user_id', userId)
               .select();
 
       if (response.isNotEmpty) {

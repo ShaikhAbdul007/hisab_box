@@ -10,7 +10,6 @@ import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../sell/model/print_model.dart';
 
 class OrderController extends GetxController with CacheManager {
-  final String? uid = SupabaseConfig.auth.currentUser?.id;
   TextEditingController mobileNumber = TextEditingController();
   TextEditingController name = TextEditingController();
   TextEditingController address = TextEditingController();
@@ -47,12 +46,13 @@ class OrderController extends GetxController with CacheManager {
     // 1️⃣ LOAD FROM CACHE
 
     // 2️⃣ FALLBACK TO SUPABASE
-    if (uid == null) return [];
+    final userId = resolveUserId(saveCustomerWithInvoiceLoading.value);
+    if (userId == null) return [];
 
     try {
       final List<dynamic> response = await SupabaseConfig.from(
         'customers',
-      ).select().eq('user_id', uid ?? '');
+      ).select().eq('user_id', userId);
 
       final list =
           response.map((e) {
@@ -89,7 +89,7 @@ class OrderController extends GetxController with CacheManager {
   Future<bool> saveCustomerWithInvoice({
     required PrintInvoiceModel invoice,
   }) async {
-    final String? currentUid = uid;
+    final String? currentUid = resolveUserId(saveCustomerWithInvoiceLoading.value);
     if (currentUid == null) return false;
 
     saveCustomerWithInvoiceLoading.value = true;

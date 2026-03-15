@@ -40,6 +40,7 @@ class ShopDetails extends StatelessWidget {
           hintText: 'Email',
           label: 'Email',
           controller: email,
+          textCapitalization: TextCapitalization.none,
           marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
           suffixIcon: commonSuffixIcon(
             child: const Icon(CupertinoIcons.mail, size: 18),

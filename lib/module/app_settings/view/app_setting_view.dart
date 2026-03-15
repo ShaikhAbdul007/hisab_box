@@ -92,6 +92,7 @@ class AppSettingView extends GetView<AppSettingController> {
         commonBottomSheet(
           label: 'Bluetooth Info',
           onPressed: () {
+            controller.savePrinterAddress('');
             Get.back();
           },
           child: BluetoothValidateWidget(),

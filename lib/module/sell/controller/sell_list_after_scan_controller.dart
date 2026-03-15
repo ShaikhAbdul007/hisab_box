@@ -20,7 +20,6 @@ import '../../loose_category/model/loose_category_model.dart';
 
 class SellListAfterScanController extends GetxController
     with CacheManager, LocalService {
-  final userId = SupabaseConfig.auth.currentUser?.id;
   final globalStore = Get.find<GlobalStore>();
 
   // --- Saare Existing Variables (No Name Changes) ---
@@ -175,6 +174,7 @@ class SellListAfterScanController extends GetxController
     required RxBool isLoading,
   }) async {
     isLoading.value = true;
+    final userId = resolveUserId(isLoading.value);
     if (userId == null) {
       isLoading.value = false;
       showMessage(message: 'Please login again.');
@@ -187,7 +187,7 @@ class SellListAfterScanController extends GetxController
 
       for (final product in scannedProductDetails) {
         final update = await prepareStockUpdate(
-          userId: userId!,
+          userId: userId,
           product: product,
         );
         stockUpdates.add(update);

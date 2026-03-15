@@ -15,7 +15,6 @@ class NotificationController extends GetxController
       <GoDownStockTransferToShopModel>[].obs;
 
   // Variable name same rakha hai, but Supabase ID use hogi
-  final userId = SupabaseConfig.auth.currentUser?.id;
   RxBool isTransferLoading = false.obs;
   StreamSubscription? _transferSub;
 
@@ -29,6 +28,7 @@ class NotificationController extends GetxController
   // 🔥 FETCH/LISTEN (HIVE + SUPABASE FALLBACK)
   // ==========================================
   void listenPendingTransfers() async {
+    final userId = resolveUserId(isTransferLoading.value);
     if (userId == null) return;
 
     // 1️⃣ Hive Cache Check
@@ -41,7 +41,7 @@ class NotificationController extends GetxController
     try {
       final response = await SupabaseConfig.from(
         'stock_transfers',
-      ).select().eq('user_id', userId!).eq('status', 'pending');
+      ).select().eq('user_id', userId).eq('status', 'pending');
 
       List<GoDownStockTransferToShopModel> freshList =
           (response as List)
@@ -67,6 +67,7 @@ class NotificationController extends GetxController
   // 🔥 ACCEPT TRANSFER (RPC TRANSACTION + HIVE SYNC)
   // ==========================================
   Future<void> acceptTransfer(GoDownStockTransferToShopModel transfer) async {
+    final userId = resolveUserId(isTransferLoading.value);
     if (userId == null) return;
     isTransferLoading.value = true;
 
@@ -116,6 +117,7 @@ class NotificationController extends GetxController
   // 🔥 REJECT TRANSFER (SUPABASE + HIVE SYNC)
   // ==========================================
   Future<void> rejectTransfer(GoDownStockTransferToShopModel transfer) async {
+    final userId = resolveUserId(isTransferLoading.value);
     if (userId == null) return;
 
     try {

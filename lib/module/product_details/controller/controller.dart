@@ -1,6 +1,7 @@
 import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -11,8 +12,7 @@ import '../../../helper/helper.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 
-class ProductController extends GetxController with LocalService {
-  final uid = SupabaseConfig.auth.currentUser?.id;
+class ProductController extends GetxController with CacheManager, LocalService {
   final globalStore = Get.find<GlobalStore>();
   final inventoryScanKey = GlobalKey<FormState>();
 
@@ -98,14 +98,15 @@ class ProductController extends GetxController with LocalService {
       categoryList.value = cached;
       categoryListLoading.value = false;
     }
-    if (uid == null) {
+    final userId = resolveUserId(categoryListLoading.value);
+    if (userId == null) {
       categoryListLoading.value = false;
       return;
     }
     try {
       final response = await SupabaseConfig.from(
         'categories',
-      ).select().eq('user_id', uid!);
+      ).select().eq('user_id', userId);
       final freshData =
           (response as List).map((e) => CategoryModel.fromJson(e)).toList();
       categoryList.value = freshData;
@@ -126,14 +127,15 @@ class ProductController extends GetxController with LocalService {
       animalTypeList.value = cached;
       animalCategoryListLoading.value = false;
     }
-    if (uid == null) {
+    final userId = resolveUserId(animalCategoryListLoading.value);
+    if (userId == null) {
       animalCategoryListLoading.value = false;
       return;
     }
     try {
       final response = await SupabaseConfig.from(
         'animal_categories',
-      ).select().eq('user_id', uid!);
+      ).select().eq('user_id', userId);
       final freshData =
           (response as List).map((e) => CategoryModel.fromJson(e)).toList();
       animalTypeList.value = freshData;
@@ -150,7 +152,8 @@ class ProductController extends GetxController with LocalService {
   Future<void> saveNewProduct({required String barcode}) async {
     isSaveLoading.value = true;
     try {
-      if (uid == null) return;
+      final userId = resolveUserId(isSaveLoading.value);
+      if (userId == null) return;
       if (category.text.isEmpty || animalType.text.isEmpty) {
         showMessage(message: "❌ Category aur Animal Type select karein!");
         return;
@@ -159,7 +162,7 @@ class ProductController extends GetxController with LocalService {
       await SupabaseConfig.client.rpc(
         'add_new_product_v2',
         params: {
-          'p_user_id': uid,
+          'p_user_id': userId,
           'p_name': productName.text.trim(),
           'p_category': category.text.trim(),
           'p_animal_type': animalType.text.trim(),
@@ -198,11 +201,12 @@ class ProductController extends GetxController with LocalService {
   Future<void> saveNewLooseProduct({required String barcode}) async {
     isLooseProductSave.value = true;
     try {
-      if (uid == null) return;
+      final userId = resolveUserId(isLooseProductSave.value);
+      if (userId == null) return;
       await SupabaseConfig.client.rpc(
         'convert_packet_to_loose',
         params: {
-          'p_user_id': uid,
+          'p_user_id': userId,
           'p_barcode': barcode,
           //'p_qty': double.tryParse(looseQuantity.text) ?? 0,
           'p_loose_qty': double.tryParse(looseQuantity.text) ?? 0,

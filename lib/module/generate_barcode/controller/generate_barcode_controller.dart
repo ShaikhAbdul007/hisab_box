@@ -15,7 +15,6 @@ import 'package:inventory/module/inventory/model/product_model.dart';
 
 class GenerateBarcodeController extends GetxController
     with CacheManager, LocalService {
-  final userId = SupabaseConfig.auth.currentUser?.id;
   final globalStore = Get.find<GlobalStore>();
   RxBool categoryListLoading = false.obs;
   final inventoryScanKey = GlobalKey<FormState>();
@@ -93,6 +92,7 @@ class GenerateBarcodeController extends GetxController
       categoryList.value = cached;
       categoryListLoading.value = false;
     }
+    final userId = resolveUserId(categoryListLoading.value);
     if (userId == null) {
       categoryListLoading.value = false;
       return;
@@ -100,7 +100,7 @@ class GenerateBarcodeController extends GetxController
     try {
       final response = await SupabaseConfig.from(
         'categories',
-      ).select().eq('user_id', userId!);
+      ).select().eq('user_id', userId);
       final freshData =
           (response as List).map((e) => CategoryModel.fromJson(e)).toList();
       categoryList.value = freshData;
@@ -121,6 +121,7 @@ class GenerateBarcodeController extends GetxController
       animalTypeList.value = cached;
       animalCategoryListLoading.value = false;
     }
+    final userId = resolveUserId(animalCategoryListLoading.value);
     if (userId == null) {
       animalCategoryListLoading.value = false;
       return;
@@ -128,7 +129,7 @@ class GenerateBarcodeController extends GetxController
     try {
       final response = await SupabaseConfig.from(
         'animal_categories',
-      ).select().eq('user_id', userId!);
+      ).select().eq('user_id', userId);
       final freshData =
           (response as List).map((e) => CategoryModel.fromJson(e)).toList();
       animalTypeList.value = freshData;
@@ -155,6 +156,7 @@ class GenerateBarcodeController extends GetxController
   // --- 3. Save Product (Supabase Insert + Hive Update) ---
   Future<void> saveNewProduct({required String barcode}) async {
     isSaveLoading.value = true;
+    final userId = resolveUserId(isSaveLoading.value);
     try {
       if (userId == null) return;
       if (category.text.isEmpty || animalType.text.isEmpty) {

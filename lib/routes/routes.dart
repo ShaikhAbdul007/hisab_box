@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
+import 'package:inventory/module/add_user/binding/add_user_binding.dart';
+import 'package:inventory/module/add_user/view/add_user_view.dart';
 import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
 import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
 import 'package:inventory/module/credits_amount/binding/credit_binding.dart';
 import 'package:inventory/module/invoice/binding/invoice_binding.dart';
-
 import 'package:inventory/module/invoice/view/barcode.dart';
 import 'package:inventory/module/invoice/view/invoice.dart';
 import 'package:inventory/module/near_expire_product/binding/near_expire_product_binding.dart';
@@ -249,6 +250,11 @@ class AppRoutes {
       page: () => ProductDetailView(),
       binding: ProductDetailsBinding(),
     ),
+    GetPage(
+      name: AppRouteName.addUser,
+      page: () => AddUserView(),
+      binding: AddUserBinding(),
+    ),
   ];
 
   static Future<dynamic> futureNavigationToRoute({
@@ -333,6 +339,9 @@ class AppRoutes {
         break;
       case AppRouteName.appsetting:
         Get.toNamed(AppRouteName.appsetting, arguments: data);
+        break;
+      case AppRouteName.addUser:
+        Get.toNamed(AppRouteName.addUser, arguments: data);
         break;
       case AppRouteName.outOfStock:
         Get.toNamed(AppRouteName.outOfStock, arguments: data);

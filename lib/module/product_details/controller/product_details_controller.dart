@@ -2,6 +2,7 @@ import 'package:inventory/helper/logger.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
@@ -13,8 +14,8 @@ import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Connection
 
-class ProductDetailsController extends GetxController with LocalService {
-  final userId = SupabaseConfig.auth.currentUser?.id;
+class ProductDetailsController extends GetxController
+    with CacheManager, LocalService {
   final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
 
   final inventoryScanKey = GlobalKey<FormState>();
@@ -71,75 +72,50 @@ class ProductDetailsController extends GetxController with LocalService {
     required ProductModel product,
     required double requestedQty,
   }) async {
+    final userId = resolveUserId(isTransferLoading.value);
     if (userId == null) return;
 
-    // 1. Validation: Quantity check
+    // 1. Basic Validation
     if (requestedQty <= 0) {
-      showMessage(message: "Invalid quantity");
-      return;
-    }
-
-    // 2. Physical Stock Check (Godown Check)
-    if ((product.quantity ?? 0) < requestedQty) {
-      showMessage(
-        message: "Insufficient stock in Godown! Available: ${product.quantity}",
-      );
+      showMessage(message: "Bhai, quantity toh sahi dalo!");
       return;
     }
 
     isTransferLoading.value = true;
     try {
+      // Unique Reference ID for tracking
       String refId = "TRF-${DateTime.now().millisecondsSinceEpoch}";
 
-      // 🔥 STEP 1: Stock Movement Insert (Tracking ke liye)
-      await SupabaseConfig.from('stock_movements').insert({
-        'user_id': userId,
-        'product_id': product.id,
-        'quantity': requestedQty,
-        'form_location': 'godown',
-        'to_location': 'shop',
-        'movement_type': 'transfer',
-        'status': 'pending',
-        'reference_id': refId,
-        'stock_type': product.stockType ?? 'packet',
-        'price': product.sellingPrice ?? 0.0,
-        'reason': 'Stock transfer from Godown',
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-      });
-
-      // 🔥 STEP 2: Godown Stock Minus (Hold Logic)
-      // Isse 10 vs 15 wali problem solve ho gayi
-      await SupabaseConfig.from('product_stock')
-          .update({
-            'quantity': (product.quantity ?? 0) - requestedQty,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('product_id', product.id!)
-          .eq('location', 'godown');
-
-      // 🔥 STEP 3: Notification Table mein Entry
-      await SupabaseConfig.from('notifications').insert({
-        'user_id':
-            userId, // Shop manager ki ID (agar multi-user hai toh manager ki ID pass karein)
-        'title': "📦 New Stock Incoming!",
-        'body':
-            "${product.name} ke $requestedQty units Godown se bheje gaye hain. (ID: $refId)",
-        'is_read': false,
-        'payload': {
-          'type': 'transfer',
-          'ref_id': refId,
-          'product_id': product.id,
+      // 🔥 Sirf ek call aur SQL function saara logic handle karega
+      await SupabaseConfig.client.rpc(
+        'process_stock_transfer',
+        params: {
+          'p_user_id': userId,
+          'p_product_id': product.id,
+          'p_qty': requestedQty,
+          'p_ref_id': refId,
+          'p_stock_type': product.stockType ?? 'packet',
+          'p_price': product.sellingPrice ?? 0.0,
+          'p_title': "📦 New Stock Incoming!",
+          'p_body':
+              "${product.name} ke $requestedQty units Godown se bheje gaye hain.",
         },
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-      });
-
-      showMessage(
-        message: "📤 Transfer Request Sent & Notification Delivered!",
       );
+
+      showMessage(message: "📤 Transfer Successful & Notification Sent!");
+
+      // UI Update/Refresh logic yahan dal sakte ho (e.g., Get.back())
       Get.back();
     } catch (e) {
-      print("🚨 Transfer Error: $e");
-      showMessage(message: "Failed to process transfer request");
+      // Agar SQL mein 'RAISE EXCEPTION' hoga toh wo yahan catch hoga
+      AppLogger.error("Transfer Error", e, "StockTransfer");
+
+      String errorMsg = "Transfer failed!";
+      if (e.toString().contains('Godown mein stock kam hai')) {
+        errorMsg = "Godown mein stock kam hai!";
+      }
+
+      showMessage(message: errorMsg);
     } finally {
       isTransferLoading.value = false;
     }
@@ -252,6 +228,7 @@ class ProductDetailsController extends GetxController with LocalService {
     required bool isLoosed,
     required String locationType,
   }) async {
+    final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
     isSaveLoading.value = true;
 
@@ -330,13 +307,14 @@ class ProductDetailsController extends GetxController with LocalService {
 
   // 🔥 Helper function for full Hive refresh
   Future<void> refreshAllLocalData({required bool isLoosed}) async {
+    final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
     if (isLoosed == false) {
       // Based on your logic if NOT loose
       try {
         final response = await SupabaseConfig.from('products')
             .select('*, product_stock!inner(*)')
-            .eq('user_id', userId!)
+            .eq('user_id', userId)
             .eq('product_stock.is_active', true);
 
         final freshList =
@@ -361,7 +339,7 @@ class ProductDetailsController extends GetxController with LocalService {
             stock_batches (purchase_date, expiry_date, purchase_price, location, stock_type)
           )
         ''')
-            .eq('user_id', userId!)
+            .eq('user_id', userId)
             .order('created_at', ascending: false);
 
         final List dataResponse = response as List;
@@ -382,11 +360,12 @@ class ProductDetailsController extends GetxController with LocalService {
     if (cached.isNotEmpty) {
       categoryList.value = cached;
     }
+    final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
     try {
       final List response = await SupabaseConfig.from(
         'categories',
-      ).select().eq('user_id', userId!);
+      ).select().eq('user_id', userId);
       final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
       categoryList.value = freshData;
       await LocalService.saveCategories(freshData);
@@ -401,11 +380,12 @@ class ProductDetailsController extends GetxController with LocalService {
     if (cached.isNotEmpty) {
       animalTypeList.value = cached;
     }
+    final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
     try {
       final List response = await SupabaseConfig.from(
         'animal_categories',
-      ).select().eq('user_id', userId!);
+      ).select().eq('user_id', userId);
       final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
       animalTypeList.value = freshData;
       await LocalService.saveAnimalCategories(freshData);

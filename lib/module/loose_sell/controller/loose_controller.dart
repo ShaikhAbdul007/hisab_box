@@ -1,6 +1,7 @@
 import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Reference
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
@@ -9,7 +10,7 @@ import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/helper/helper.dart';
 import '../../loose_category/model/loose_category_model.dart';
 
-class LooseController extends GetxController with LocalService {
+class LooseController extends GetxController with CacheManager, LocalService {
   // --- Text Controllers ---
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController amount = TextEditingController();
@@ -31,7 +32,6 @@ class LooseController extends GetxController with LocalService {
   RxString searchText = ''.obs;
 
   // --- Dependencies ---
-  final userId = SupabaseConfig.auth.currentUser?.id;
   final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Instance
 
   @override
@@ -53,6 +53,7 @@ class LooseController extends GetxController with LocalService {
 
   // 🔥 FLOW: Hive (Instant) -> Supabase (Network Update) -> GlobalStore & Hive Sync
   Future<void> fetchLooseProduct() async {
+    final userId = resolveUserId(isDataLoading.value);
     if (userId == null) return;
 
     // 1. Pehle Hive se data lo (Instant UI)
@@ -81,7 +82,7 @@ class LooseController extends GetxController with LocalService {
             stock_batches (purchase_date, expiry_date, purchase_price, location, stock_type)
           )
         ''')
-          .eq('user_id', userId!)
+          .eq('user_id', userId)
           .order('created_at', ascending: false);
 
       final List data = response as List;

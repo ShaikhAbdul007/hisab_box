@@ -52,6 +52,22 @@ mixin class CacheManager {
     return box.read(Key.categoryValue.toString());
   }
 
+  String effectiveShopId() {
+    final user = retrieveUserDetail();
+    if (user.role == 'staff' &&
+        user.parentId != null &&
+        user.parentId!.isNotEmpty) {
+      return user.parentId!;
+    }
+    return user.id ?? "";
+  }
+
+  // Tracking ke liye: Kaun kaam kar raha hai (Staff ki apni ID)
+  String get currentUserId {
+    final user = retrieveUserDetail();
+    return user.id ?? "";
+  }
+
   String? retrieveEmployeeId() {
     return box.read(Key.employeeIdKey.toString());
   }
@@ -97,6 +113,15 @@ mixin class CacheManager {
       return productList.map((e) => ProductModel.fromJson(e)).toList();
     }
     return [];
+  }
+
+  String? resolveUserId(bool loadingState) {
+    final userId = effectiveShopId();
+    if (userId.isEmpty) {
+      loadingState = false;
+      return null;
+    }
+    return userId;
   }
 
   //----------------- Remove all the value------------------------------------------------------------------------------

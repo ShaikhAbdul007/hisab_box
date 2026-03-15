@@ -15,7 +15,6 @@ import '../../../helper/helper.dart';
 
 class InventroyController extends GetxController
     with CacheManager, LocalService {
-  final userId = SupabaseConfig.auth.currentUser?.id;
 
   // Existing Variables (Nahi badle gaye - As per your instruction)
   RxList<ProductModel> scannedProductDetails = <ProductModel>[].obs;
@@ -121,6 +120,7 @@ class InventroyController extends GetxController
 
   Future<(bool existProductOrNot, ProductModel productModels)>
   existingProductInfo(String barcode) async {
+    final userId = resolveUserId(isExistingProductInfo.value);
     if (userId == null) return (false, ProductModel());
     isExistingProductInfo.value = true;
 
@@ -181,6 +181,7 @@ class InventroyController extends GetxController
     required VoidCallback afterProductAdding,
     required VoidCallback qtyIsNotEnough,
   }) async {
+    final userId = resolveUserId(isProductSaving.value);
     if (userId == null) return;
 
     try {
@@ -243,7 +244,7 @@ class InventroyController extends GetxController
         final looseRes =
             await SupabaseConfig.from('loose_stocks')
                 .select('quantity, selling_price')
-                .eq('user_id', userId!)
+                .eq('user_id', userId)
                 .eq('product_id', product.id ?? '')
                 .maybeSingle();
 

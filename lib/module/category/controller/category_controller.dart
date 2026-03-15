@@ -11,7 +11,6 @@ import '../model/category_model.dart';
 
 class CategoryController extends GetxController
     with CacheManager, LocalService {
-  final userId = SupabaseConfig.auth.currentUser?.id;
   TextEditingController category = TextEditingController();
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteCategory = false.obs;

@@ -18,7 +18,6 @@ class UserProfileController extends GetxController with CacheManager {
   Rx<File?> profileImage = Rx<File?>(null);
   RxString profileImageUrl = ''.obs;
 
-  final userId = SupabaseConfig.auth.currentUser?.id;
   final ImagePicker _picker = ImagePicker();
 
   // 🟢 Text Controllers
@@ -56,6 +55,7 @@ class UserProfileController extends GetxController with CacheManager {
 
   // ---------------- UPDATE PROFILE (SUPABASE) ----------------
   Future<void> updateUserDetails() async {
+    final userId = resolveUserId(isLoading.value);
     if (userId == null) return;
 
     isLoading.value = true;
@@ -69,7 +69,7 @@ class UserProfileController extends GetxController with CacheManager {
           profileImage.value!.path.isNotEmpty) {
         finalImageUrl = await StorageService.uploadProfileImage(
           file: profileImage.value!,
-          userId: userId!,
+          userId: userId,
         );
       }
 
@@ -90,7 +90,8 @@ class UserProfileController extends GetxController with CacheManager {
       };
 
       // 2️⃣ Supabase Update
-      await SupabaseConfig.from('users').update(updatedData).eq('id', userId!);
+      await SupabaseConfig.from('users').update(updatedData).eq('id', userId);
+      
 
       // 3️⃣ Update Local Cache
       final updatedUser = UserModel(
@@ -121,6 +122,7 @@ class UserProfileController extends GetxController with CacheManager {
   // ---------------- LOAD USER DATA ----------------
   void setUserDetails() async {
     isDataLoading.value = true;
+    final userId = resolveUserId(isDataLoading.value);
     try {
       final cachedUser = retrieveUserDetail();
 
@@ -134,7 +136,7 @@ class UserProfileController extends GetxController with CacheManager {
         final response =
             await SupabaseConfig.from(
               'users',
-            ).select().eq('id', userId!).maybeSingle();
+            ).select().eq('id', userId).maybeSingle();
 
         if (response != null) {
           final userRes = UserModel.fromJson(response);

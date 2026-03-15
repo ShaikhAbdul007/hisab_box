@@ -1,14 +1,14 @@
 import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
-import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Connection
 import '../../inventory/model/product_model.dart';
 
-class NearExpireProductController extends GetxController with LocalService {
-  final String? uid = SupabaseConfig.auth.currentUser?.id;
+class NearExpireProductController extends GetxController
+    with CacheManager, LocalService {
   final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
 
   RxList<ProductModel> nearExpProductList = <ProductModel>[].obs;
@@ -27,7 +27,8 @@ class NearExpireProductController extends GetxController with LocalService {
 
   // 🔥 FLOW: RAM (GlobalStore) -> Filter -> Update UI -> Sync Hive
   Future<void> getNearExpiryProducts() async {
-    if (uid == null) return;
+    final userId = resolveUserId(isDataloading.value);
+    if (userId == null) return;
 
     try {
       // 1️⃣ Pehle Hive (Local DB) se data load karo instant view ke liye

@@ -59,6 +59,7 @@ class LoginView extends GetView<LoginController> {
               child: Column(
                 children: [
                   CommonTextField(
+                    textCapitalization: TextCapitalization.none,
                     hintText: 'Email',
                     label: 'Email',
                     controller: controller.email,

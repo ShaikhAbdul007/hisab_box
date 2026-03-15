@@ -97,6 +97,7 @@ class SignupController extends GetxController with CacheManager {
       // 3️⃣ INSERT USER PROFILE (DATABASE)
       await SupabaseConfig.from('users').insert({
         'id': userId,
+        'parent_id': userId,
         'name': name.text.trim(),
         'email': email.text.trim(),
         'mobile_no': mobileNo.text.trim(),
@@ -123,6 +124,9 @@ class SignupController extends GetxController with CacheManager {
         alternateMobileNo: alternateMobileNo.text.trim(),
         image: profileImageUrl,
         isSaved: true,
+        fcmToken: fcmToken,
+        id: userId,
+        parentId: userId,
       );
 
       saveUserData(newUserModel);

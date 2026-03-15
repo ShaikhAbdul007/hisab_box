@@ -9,7 +9,6 @@ import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../helper/helper.dart';
 
 class BankdetailsController extends GetxController with CacheManager {
-  final uid = SupabaseConfig.auth.currentUser?.id;
   TextEditingController upiIdController = TextEditingController();
   TextEditingController bankNameController = TextEditingController();
   TextEditingController accountHolderNameController = TextEditingController();
@@ -49,13 +48,14 @@ class BankdetailsController extends GetxController with CacheManager {
   // ================================
   Future<void> getBankDetails() async {
     setBankDetailsUpi.value = true;
+    final userId = resolveUserId(setBankDetailsUpi.value);
 
     try {
-      if (uid == null) return;
+      if (userId == null) return;
       final response =
           await SupabaseConfig.from(
             'bank_details',
-          ).select().eq('user_id', uid!).maybeSingle();
+          ).select().eq('user_id', userId).maybeSingle();
 
       if (response != null) {
         final details = BankModel.formJson({
@@ -82,11 +82,12 @@ class BankdetailsController extends GetxController with CacheManager {
   // ================================
   Future<void> saveBankDetails() async {
     bankDetailsUpi.value = true;
+    final userId = resolveUserId(bankDetailsUpi.value);
     try {
-      if (uid == null) throw "User not logged in";
+      if (userId == null) throw "User not logged in";
       final String timestamp = DateTime.now().toIso8601String();
       await SupabaseConfig.from('bank_details').upsert({
-        'user_id': uid,
+        'user_id': userId,
         'upi_id': upiIdController.text.trim(),
         'account_holder': accountHolderNameController.text.trim(),
         'bank_name': bankNameController.text.trim(),

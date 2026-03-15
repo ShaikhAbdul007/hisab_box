@@ -1,20 +1,21 @@
 import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
-class LooseCategoryController extends GetxController with LocalService {
+class LooseCategoryController extends GetxController
+    with CacheManager, LocalService {
   TextEditingController name = TextEditingController();
   TextEditingController weight = TextEditingController();
   TextEditingController price = TextEditingController();
   TextEditingController flavor = TextEditingController();
   TextEditingController quantity = TextEditingController();
 
-  final userId = SupabaseConfig.auth.currentUser?.id;
   final isSaveLoading = false.obs;
   final isFetchDiscount = false.obs;
   final isDeleteDiscount = false.obs;
@@ -30,6 +31,7 @@ class LooseCategoryController extends GetxController with LocalService {
   // 🔥 FETCH LOGIC (HIVE + SUPABASE FALLBACK)
   // ==========================================
   Future<void> fetchLooseCategory() async {
+    final userId = resolveUserId(isFetchDiscount.value);
     if (userId == null) return;
     isFetchDiscount.value = true;
 
@@ -54,7 +56,7 @@ class LooseCategoryController extends GetxController with LocalService {
               product_barcodes(barcode)
             )
           ''')
-          .eq('user_id', userId!)
+          .eq('user_id', userId)
           .eq('stock_type', 'loose')
           .eq('is_active', true);
 
@@ -93,6 +95,7 @@ class LooseCategoryController extends GetxController with LocalService {
   // 🔥 ADD LOOSE PRODUCT (SUPABASE INSERT LOGIC)
   // ==========================================
   Future<void> addLooseProduct() async {
+    final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
     if (name.text.isEmpty || price.text.isEmpty) {
       showMessage(message: "Name and Price are required");
@@ -152,6 +155,7 @@ class LooseCategoryController extends GetxController with LocalService {
   // 🔥 DELETE LOGIC (SUPABASE)
   // ==========================================
   Future<void> deleteLooseCategory(String looseCategoryId) async {
+    final userId = resolveUserId(isDeleteDiscount.value);
     if (userId == null) return;
     isDeleteDiscount.value = true;
 
@@ -160,7 +164,7 @@ class LooseCategoryController extends GetxController with LocalService {
       await SupabaseConfig.from('product_stock')
           .update({'is_active': false})
           .eq('product_id', looseCategoryId)
-          .eq('user_id', userId!);
+          .eq('user_id', userId);
 
       showMessage(message: "Category deleted successfully");
       fetchLooseCategory();

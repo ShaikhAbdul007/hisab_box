@@ -62,7 +62,7 @@ class SettingController extends GetxController with CacheManager {
   // 🔥 GET USER PROFILE (SUPABASE)
   // ================================
   Future<void> getUserName() async {
-    final userId = SupabaseConfig.auth.currentUser?.id;
+    final userId = resolveUserId(isUserlogout.value);
     if (userId == null) return;
 
     try {

@@ -10,7 +10,6 @@ import '../model/sell_model.dart';
 
 class SellController extends GetxController with CacheManager, LocalService {
   // Purane variable names same rakhe hain
-  final userId = SupabaseConfig.auth.currentUser?.id;
   RxBool isSellListLoading = false.obs;
   var sellsList = <SaleModel>[].obs;
   RxString dayDate = ''.obs;
@@ -50,13 +49,14 @@ class SellController extends GetxController with CacheManager, LocalService {
   // ==========================================
   Future<List<SaleModel>> fetchSales() async {
     isSellListLoading.value = true;
+    final userId = resolveUserId(isSellListLoading.value);
     try {
       if (userId == null) return [];
 
       // Supabase se aaj ki sales uthao
       final response = await SupabaseConfig.from(
         'sales',
-      ).select().eq('user_id', userId!).eq('soldAt', dayDate.value);
+      ).select().eq('user_id', userId).eq('soldAt', dayDate.value);
 
       final List rawData = response as List;
       final Map<String, SaleModel> salesByBarcode = {};

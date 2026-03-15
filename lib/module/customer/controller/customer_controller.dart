@@ -9,10 +9,6 @@ import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../order_complete/model/customer_details_model.dart';
 
 class CustomerController extends GetxController with CacheManager {
-  // Controller ke upar ya function ke start mein ye line daalo
-  final String? uid = SupabaseConfig.auth.currentUser?.id;
-
-  // Agar auth bhi migrate ho gaya hai toh yahan userId logic badal sakte hain
   var orderController = Get.put(OrderController());
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
@@ -52,7 +48,8 @@ class CustomerController extends GetxController with CacheManager {
     // 🔥 2️⃣ FETCH FROM SUPABASE (SYNC)
     // Note: Assuming you have a way to get the current user's ID
 
-    if (uid == null) {
+    final userId = resolveUserId(customDataLoading.value);
+    if (userId == null) {
       customDataLoading.value = false;
       return;
     }
@@ -61,7 +58,7 @@ class CustomerController extends GetxController with CacheManager {
       // Firebase collection ki jagah Supabase table use kar rahe hain
       final List<dynamic> response = await SupabaseConfig.from('customers')
           .select()
-          .eq('user_id', uid ?? '')
+          .eq('user_id', userId)
           .order(
             'name',
             ascending: true,

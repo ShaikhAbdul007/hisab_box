@@ -12,6 +12,7 @@ class AppRouteName {
   static const String reports = '/reports';
   static const String sell = '/sell';
   static const String login = '/login';
+  static const String addUser = '/addUser';
   static const String userProfile = '/userProfile';
   static const String productView = '/productView';
   static const String signup = '/signup';

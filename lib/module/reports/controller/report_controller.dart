@@ -21,7 +21,6 @@ class ReportController extends GetxController
         DeviceInfoo,
         LocalService,
         CacheManager {
-  final userId = SupabaseConfig.auth.currentUser?.id;
   final globalStore = Get.find<GlobalStore>();
 
   // --- Observables ---
@@ -385,6 +384,7 @@ class ReportController extends GetxController
     required String label,
     required String reportType,
   }) async {
+    final userId = resolveUserId(isExporting.value);
     if (userId == null) return [];
     var range = getDateRange(
       label: label,
@@ -397,7 +397,7 @@ class ReportController extends GetxController
       if (reportType == 'Product Stock In') {
         return await SupabaseConfig.from('stock_batches')
             .select('*, products(name, category, animal_type, weight)')
-            .eq('user_id', userId!)
+            .eq('user_id', userId)
             .gte('purchase_date', start)
             .lte('purchase_date', end);
       } else {
@@ -405,7 +405,7 @@ class ReportController extends GetxController
             .select(
               '*, sale_items(*, products(name)), sale_payments(*), customers(name)',
             )
-            .eq('user_id', userId!)
+            .eq('user_id', userId)
             .gte('created_at', "${start}T00:00:00.000Z")
             .lte('created_at', "${end}T23:59:59.999Z");
       }
