@@ -85,7 +85,7 @@ class LooseCategoryController extends GetxController
       LocalService.saveProducts(freshList);
     } catch (e) {
       AppLogger.info(("🚨 Fetch Fallback: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isFetchDiscount.value = false;
     }
@@ -98,7 +98,7 @@ class LooseCategoryController extends GetxController
     final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
     if (name.text.isEmpty || price.text.isEmpty) {
-      showMessage(message: "Name and Price are required");
+    showSnackBar(error: "Name and Price are required");
       return;
     }
 
@@ -140,12 +140,12 @@ class LooseCategoryController extends GetxController
       });
 
       Get.back();
-      showMessage(message: "Loose product saved successfully ✅");
+    showSnackBar(error: "Loose product saved successfully ✅");
       clear();
       fetchLooseCategory(); // Refresh list to update Hive & UI
     } catch (e) {
       AppLogger.info(("🚨 Add Product Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;
     }
@@ -166,11 +166,11 @@ class LooseCategoryController extends GetxController
           .eq('product_id', looseCategoryId)
           .eq('user_id', userId);
 
-      showMessage(message: "Category deleted successfully");
+    showSnackBar(error: "Category deleted successfully");
       fetchLooseCategory();
     } catch (e) {
       AppLogger.info(("🚨 Delete Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isDeleteDiscount.value = false;
     }

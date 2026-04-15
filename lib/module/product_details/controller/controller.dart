@@ -113,7 +113,7 @@ class ProductController extends GetxController with CacheManager, LocalService {
       await LocalService.saveCategories(freshData);
     } catch (e) {
       AppLogger.info(("🚨 Category Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       categoryListLoading.value = false;
     }
@@ -142,7 +142,7 @@ class ProductController extends GetxController with CacheManager, LocalService {
       await LocalService.saveAnimalCategories(freshData);
     } catch (e) {
       AppLogger.info(("🚨 Animal Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       animalCategoryListLoading.value = false;
     }
@@ -155,7 +155,7 @@ class ProductController extends GetxController with CacheManager, LocalService {
       final userId = resolveUserId(isSaveLoading.value);
       if (userId == null) return;
       if (category.text.isEmpty || animalType.text.isEmpty) {
-        showMessage(message: "❌ Category aur Animal Type select karein!");
+      showSnackBar(error: "❌ Category aur Animal Type select karein!");
         return;
       }
 
@@ -185,13 +185,13 @@ class ProductController extends GetxController with CacheManager, LocalService {
         },
       );
       await globalStore.loadInitialData();
-      showMessage(message: "✅ Product Saved!");
+    showSnackBar(error: "✅ Product Saved!");
       clear();
       // GlobalStore ka realtime sync is naye product ko khud utha lega.
       Get.back(result: true);
     } catch (e) {
       AppLogger.info(("Database Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;
     }
@@ -216,11 +216,11 @@ class ProductController extends GetxController with CacheManager, LocalService {
       );
       await globalStore.loadInitialData();
 
-      showMessage(message: "✅ Converted & Synced!");
+    showSnackBar(error: "✅ Converted & Synced!");
       clear();
       Get.back(result: true);
     } catch (e) {
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isLooseProductSave.value = false;
     }

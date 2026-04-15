@@ -87,7 +87,7 @@ class AppSettingView extends GetView<AppSettingController> {
 
       if (device != null) {
         controller.savePrinterAddress(device.address);
-        showMessage(message: "✅ Printer saved: ${device.name}");
+      showSnackBar(error: "✅ Printer saved: ${device.name}");
       } else {
         commonBottomSheet(
           label: 'Bluetooth Info',
@@ -100,7 +100,7 @@ class AppSettingView extends GetView<AppSettingController> {
       }
     } catch (e) {
       AppLogger.error('Printer selection failed', e, 'AppSettingView');
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     }
   }
 }

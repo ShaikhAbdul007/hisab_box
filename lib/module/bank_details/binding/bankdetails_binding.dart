@@ -4,6 +4,6 @@ import 'package:inventory/module/bank_details/controller/bankdetails_controller.
 class BankdetailsBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => BankdetailsController());
+    Get.lazyPut(() => BankDetailsController());
   }
 }

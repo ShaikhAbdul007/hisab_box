@@ -549,7 +549,7 @@ class GlobalStore extends GetxController {
     AppLogger.error('Global sync error', error, 'GlobalStore');
     if (_hasShownSyncError) return;
     _hasShownSyncError = true;
-    showMessage(message: message);
+  showSnackBar(error: message);
   }
 
   // --- Logic Helpers ---

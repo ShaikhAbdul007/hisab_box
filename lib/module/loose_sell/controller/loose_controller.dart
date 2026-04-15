@@ -100,7 +100,7 @@ class LooseController extends GetxController with CacheManager, LocalService {
     } catch (e) {
       AppLogger.info(("🚨 Fetch Error: $e").toString());
       if (productList.isEmpty) {
-        showMessage(message: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       }
     } finally {
       isDataLoading.value = false;
@@ -162,14 +162,14 @@ class LooseController extends GetxController with CacheManager, LocalService {
 
   //       Get.back();
   //       qtyClear();
-  //       showMessage(message: '✅ Quantity updated successfully.');
+  //     showSnackBar(error: '✅ Quantity updated successfully.');
 
   //       // Refresh flow (Auto syncs Hive and GlobalStore)
   //       await fetchLooseProduct();
   //     }
   //   } catch (e) {
   //     print("🚨 Update Error: $e");
-  //     showMessage(message: "Update failed: No Internet");
+  //   showSnackBar(error: "Update failed: No Internet");
   //   } finally {
   //     isSaveLoading.value = false;
   //   }

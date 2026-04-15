@@ -81,7 +81,7 @@ class NearExpireProductController extends GetxController
       );
     } catch (e) {
       AppLogger.error('Expiry calculation failed', e, 'NearExpireController');
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isDataloading.value = false;
     }

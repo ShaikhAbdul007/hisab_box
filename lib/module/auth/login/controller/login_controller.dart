@@ -1,9 +1,8 @@
-import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/helper/logger.dart';
+import 'package:inventory/module/auth/login/repo/login_repo.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../helper/app_message.dart';
@@ -12,67 +11,79 @@ import '../../../../routes/route_name.dart';
 import '../../../../routes/routes.dart';
 
 class LoginController extends GetxController with CacheManager {
-  TextEditingController email = TextEditingController();
-  TextEditingController password = TextEditingController();
+  LoginRepo loginRepo = LoginRepo();
+  final email = TextEditingController();
+  final password = TextEditingController();
 
   RxBool loginLoading = false.obs;
+  RxBool verifyLoading = false.obs;
   RxBool obscureTextValue = true.obs;
 
   void togglePasswordVisibility() {
     obscureTextValue.value = !obscureTextValue.value;
   }
 
-  void setobscureTextValue() {
+  void setObscureTextValue() {
     obscureTextValue.value = !obscureTextValue.value;
   }
 
-  Future<void> loginUser() async {
+  Future<bool> sendOtp() async {
     unfocus();
     loginLoading.value = true;
 
     try {
-      // 1️⃣ LOGIN USING SUPABASE AUTH
-      final res = await SupabaseConfig.auth.signInWithPassword(
-        email: email.text.trim(),
-        password: password.text.trim(),
-      );
-
-      if (res.user == null) {
-        throw Exception('Invalid login credentials');
+      var body = {'email': email.text.trim()};
+      var response = await loginRepo.sendOpt(body: body);
+      if (response.success == success) {
+        showSnackBar(
+          error: response.msg ?? otpSentSuccessfully,
+          isError: false,
+        );
+        return true;
+      } else if (response.success == failed) {
+      showSnackBar(error: response.msg ?? somethingWentMessage);
+        return false;
+      } else {
+      showSnackBar(error: somethingWentMessage);
+        return false;
       }
-
-      final userId = res.user!.id;
-
-      // 2️⃣ CHECK USER PROFILE EXISTS
-      final profile =
-          await SupabaseConfig.from(
-            'users',
-          ).select().eq('id', userId).maybeSingle();
-
-      if (profile == null) {
-        // Orphan auth user → safety logout
-        await SupabaseConfig.auth.signOut();
-        throw Exception('User profile not found');
-      }
-
-      final user = Supabase.instance.client.auth.currentUser;
-      AppLogger.info(('USER -> $user').toString());
-      final session = Supabase.instance.client.auth.currentSession;
-      AppLogger.info(('SESSION -> $session').toString());
-      // 3️⃣ SAVE LOCAL SESSION
-      saveUserLoggedIn(true);
-      await Get.find<GlobalStore>().loadInitialData();
-
-      showMessage(message: loginSuccessFul);
-
-      Future.delayed(const Duration(seconds: 1), () {
-        AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
-      });
     } catch (e) {
-      // ✅ CENTRALIZED ERROR HANDLING
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      return false;
     } finally {
       loginLoading.value = false;
+    }
+  }
+
+  Future<bool> verifyOtp({required String otp}) async {
+    unfocus();
+    verifyLoading.value = true;
+    try {
+      var body = {'email': email.text.trim(), 'otp': otp};
+      var response = await loginRepo.verifyOtp(body: body);
+      if (response.success == success) {
+        AppLogger.info('Login successful, token: ${response.data?.token}');
+        saveToken(response.data?.token ?? '');
+        saveUserLoggedIn(true);
+        showSnackBar(error: response.msg ?? loginSuccessFul, isError: false);
+        Future.delayed(const Duration(seconds: 1), () {
+          AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
+        });
+        showSnackBar(error: response.msg!, isError: false);
+        return true;
+      } else if (response.success == failed) {
+      showSnackBar(error: response.msg ?? somethingWentMessage);
+        return false;
+      } else {
+      showSnackBar(error: somethingWentMessage);
+        return false;
+      }
+    } catch (e) {
+      // ✅ CENTRALIZED ERROR HANDLING
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      return false;
+    } finally {
+      verifyLoading.value = false;
     }
   }
 }

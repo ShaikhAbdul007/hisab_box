@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/commom_aminatedtext.dart';
+import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/routes/route_name.dart';
 import 'package:inventory/routes/routes.dart';
+import 'package:pinput/pinput.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../keys/keys.dart';
 import '../controller/login_controller.dart';
@@ -79,35 +82,6 @@ class LoginView extends GetView<LoginController> {
                     },
                   ),
                   setHeight(height: 10),
-                  Obx(
-                    () => CommonTextField(
-                      obscureText: controller.obscureTextValue.value,
-                      hintText: 'Password',
-                      label: 'Password',
-                      controller: controller.password,
-                      suffixIcon: InkWell(
-                        onTap: () => controller.setobscureTextValue(),
-                        child: CustomPadding(
-                          paddingOption: OnlyPadding(right: 10),
-                          child: Icon(
-                            controller.obscureTextValue.value
-                                ? CupertinoIcons.padlock
-                                : CupertinoIcons.lock_open,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                      validator: (passwordValue) {
-                        if (passwordValue!.isEmpty) {
-                          return emptyPassword;
-                        } else if (passwordValue.length < 6) {
-                          return shortPassword;
-                        } else {
-                          return null;
-                        }
-                      },
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -115,10 +89,35 @@ class LoginView extends GetView<LoginController> {
             Obx(
               () => CommonButton(
                 isLoading: controller.loginLoading.value,
-                label: login,
+                label: sendOTP,
                 onTap: () async {
                   if (loginkey.currentState!.validate()) {
-                    await controller.loginUser();
+                    bool otpRes = await controller.sendOtp();
+                    if (otpRes) {
+                      commonBottomSheet(
+                        label: 'OTP Verification',
+                        onPressed: () {
+                          Get.back();
+                        },
+                        child: Column(
+                          children: [
+                            setHeight(height: 20),
+                            otpVerificationBottomSheet(),
+                            setHeight(height: 20),
+                            Obx(
+                              () => CommonButton(
+                                isLoading: controller.verifyLoading.value,
+                                label: 'Verify Otp',
+                                onTap: () {
+                                  controller.verifyOtp(otp: '123456');
+                                },
+                              ),
+                            ),
+                            setHeight(height: 20),
+                          ],
+                        ),
+                      );
+                    }
                   }
                 },
               ),
@@ -159,4 +158,72 @@ class LoginView extends GetView<LoginController> {
       ),
     );
   }
+
+  Widget otpVerificationBottomSheet() {
+    final defaultPinTheme = PinTheme(
+      width: 56,
+      height: 56,
+      textStyle: TextStyle(
+        fontSize: 20,
+        color: AppColors.blackColor,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.blackColor),
+        borderRadius: BorderRadius.circular(20),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyDecorationWith(
+      border: Border.all(color: AppColors.greyColor),
+      borderRadius: BorderRadius.circular(8),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        color: AppColors.greyColor.withOpacity(0.5),
+      ),
+    );
+
+    return Pinput(
+      defaultPinTheme: defaultPinTheme,
+      focusedPinTheme: focusedPinTheme,
+      submittedPinTheme: submittedPinTheme,
+      length: 6,
+      keyboardType: TextInputType.number,
+      pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+      showCursor: true,
+      onCompleted: (pin) => controller.verifyOtp(otp: pin),
+    );
+  }
+
+  // Obx(
+  //   () => CommonTextField(
+  //     obscureText: controller.obscureTextValue.value,
+  //     hintText: 'Password',
+  //     label: 'Password',
+  //     controller: controller.password,
+  //     suffixIcon: InkWell(
+  //       onTap: () => controller.setobscureTextValue(),
+  //       child: CustomPadding(
+  //         paddingOption: OnlyPadding(right: 10),
+  //         child: Icon(
+  //           controller.obscureTextValue.value
+  //               ? CupertinoIcons.padlock
+  //               : CupertinoIcons.lock_open,
+  //           size: 18,
+  //         ),
+  //       ),
+  //     ),
+  //     validator: (passwordValue) {
+  //       if (passwordValue!.isEmpty) {
+  //         return emptyPassword;
+  //       } else if (passwordValue.length < 6) {
+  //         return shortPassword;
+  //       } else {
+  //         return null;
+  //       }
+  //     },
+  //   ),
+  // ),
 }

@@ -60,7 +60,7 @@ class BarcodeView extends GetView<BardcodeController> {
                 }
               } catch (e) {
                 AppLogger.error('Barcode print failed', e, 'BarcodeView');
-                showMessage(message: SupabaseErrorHandler.getMessage(e));
+              showSnackBar(error: SupabaseErrorHandler.getMessage(e));
               } finally {
                 controller.isPrintingLoading.value = false;
               }
@@ -90,7 +90,7 @@ class BarcodeView extends GetView<BardcodeController> {
       if (device != null && device.isNotEmpty) {
         var res = await rController.print(address: device, delayTime: 0);
         if (res == true) {
-          showMessage(message: 'Barcode printed successfully.');
+        showSnackBar(error: 'Barcode printed successfully.');
           Get.back();
         } else {
           showMessage(
@@ -111,7 +111,7 @@ class BarcodeView extends GetView<BardcodeController> {
       }
     } catch (e) {
       AppLogger.error('Barcode printReceipt failed', e, 'BarcodeView');
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       controller.isPrintingLoading.value = false;
     }

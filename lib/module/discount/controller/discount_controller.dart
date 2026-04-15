@@ -26,7 +26,7 @@ class DiscountController extends GetxController {
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
       isFetchDiscount.value = false;
-      showMessage(message: 'Please login again.');
+    showSnackBar(error: 'Please login again.');
       return;
     }
 
@@ -45,7 +45,7 @@ class DiscountController extends GetxController {
             return DiscountModel.fromJson(data);
           }).toList();
     } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+    showSnackBar(error: e.toString());
     } finally {
       isFetchDiscount.value = false;
     }
@@ -56,7 +56,7 @@ class DiscountController extends GetxController {
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
       isSaveLoading.value = false;
-      showMessage(message: 'Please login again.');
+    showSnackBar(error: 'Please login again.');
       return;
     }
 
@@ -66,7 +66,7 @@ class DiscountController extends GetxController {
       final time = DateFormat('hh:mm a').format(now);
       final label = int.tryParse(discountPercentage.text);
       if (label == null) {
-        showMessage(message: 'Please enter a valid discount value.');
+      showSnackBar(error: 'Please enter a valid discount value.');
         return;
       }
 
@@ -76,13 +76,13 @@ class DiscountController extends GetxController {
           .collection('discounts')
           .add({'label': label, 'createdAt': date, 'time': time});
       Get.back();
-      showMessage(message: discountSaveSuccessMessage);
+    showSnackBar(error: discountSaveSuccessMessage);
       clear();
       fetchDiscounts();
     } on FirebaseException catch (e) {
-      showMessage(message: e.toString());
+    showSnackBar(error: e.toString());
     } catch (e) {
-      showMessage(message: 'Failed to add discount. Please try again.');
+    showSnackBar(error: 'Failed to add discount. Please try again.');
     } finally {
       isSaveLoading.value = false;
     }
@@ -93,7 +93,7 @@ class DiscountController extends GetxController {
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
       isDeleteDiscount.value = false;
-      showMessage(message: 'Please login again.');
+    showSnackBar(error: 'Please login again.');
       return;
     }
 
@@ -104,10 +104,10 @@ class DiscountController extends GetxController {
           .collection('discounts')
           .doc(discountId)
           .delete();
-      showMessage(message: discountdeleteSuccessMessage);
+    showSnackBar(error: discountdeleteSuccessMessage);
       fetchDiscounts();
     } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+    showSnackBar(error: e.toString());
     } finally {
       isDeleteDiscount.value = false;
     }

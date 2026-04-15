@@ -43,13 +43,13 @@ class AddUserController extends GetxController with CacheManager {
 
   Future<void> createStaffAccount() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      showMessage(message: "Email and Password are required");
+    showSnackBar(error: "Email and Password are required");
       return;
     }
 
     // final shopId = effectiveShopId(); // Getter use kar rahe hain
     // if (shopId.isEmpty) {
-    //   showMessage(message: "Shop ID not found");
+    // showSnackBar(error: "Shop ID not found");
     //   return;
     // }
 
@@ -82,11 +82,11 @@ class AddUserController extends GetxController with CacheManager {
     //       'users',
     //     ).update(updateData).eq('id', newStaffId);
 
-    //     showMessage(message: "Staff member added with permissions!");
+    //   showSnackBar(error: "Staff member added with permissions!");
     //     Get.back();
     //   }
     // } catch (e) {
-    //   showMessage(message: SupabaseErrorHandler.getMessage(e));
+    // showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     // } finally {
     //   isLoading.value = false;
     // }

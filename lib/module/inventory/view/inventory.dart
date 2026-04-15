@@ -124,7 +124,7 @@ class InventoryView extends GetView<InventroyController> {
 
     final productLocation = (product.location ?? '').trim().toLowerCase();
     if (productLocation != 'shop') {
-      showMessage(message: 'Product should be in shop to sell.');
+    showSnackBar(error: 'Product should be in shop to sell.');
       controller.mobileScannerController.start();
       return;
     }
@@ -283,7 +283,7 @@ class InventoryView extends GetView<InventroyController> {
         } else {
           Get.back();
           controller.mobileScannerController.start();
-          showMessage(message: 'Please scan the product first');
+        showSnackBar(error: 'Please scan the product first');
         }
       },
     );
@@ -306,7 +306,7 @@ class InventoryView extends GetView<InventroyController> {
         } else {
           Get.back();
           controller.mobileScannerController.start();
-          showMessage(message: 'Please scan the product first');
+        showSnackBar(error: 'Please scan the product first');
         }
       },
       onTap: () {
@@ -330,7 +330,7 @@ class InventoryView extends GetView<InventroyController> {
         } else {
           Get.back();
           controller.mobileScannerController.start();
-          showMessage(message: 'Please scan the product first');
+        showSnackBar(error: 'Please scan the product first');
         }
       },
       onTap: () {

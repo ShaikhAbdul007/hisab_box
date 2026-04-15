@@ -59,7 +59,7 @@ class NotificationController extends GetxController
       await LocalService.savePendingTransfers(freshList);
     } catch (e) {
       AppLogger.info(("🚨 Notification Fetch Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     }
   }
 
@@ -105,9 +105,9 @@ class NotificationController extends GetxController
       removeGodownProductList();
       // recalculateInventoryDashboardOnly(); // Iska logic dashboard controller mein handle hoga
 
-      showMessage(message: "✅ Stock received in shop");
+    showSnackBar(error: "✅ Stock received in shop");
     } catch (e) {
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isTransferLoading.value = false;
     }
@@ -129,9 +129,9 @@ class NotificationController extends GetxController
       pendingTransfers.removeWhere((element) => element.id == transfer.id);
       await LocalService.savePendingTransfers(pendingTransfers);
 
-      showMessage(message: "❌ Transfer rejected");
+    showSnackBar(error: "❌ Transfer rejected");
     } catch (e) {
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     }
   }
 

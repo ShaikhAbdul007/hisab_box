@@ -13,6 +13,10 @@ mixin class CacheManager {
     box.write(Key.userLoginIn.toString(), value);
   }
 
+  void saveToken(String token) {
+    box.write(Key.tokenKey.toString(), token);
+  }
+
   void savebillNo(int billNo) {
     box.write(Key.billNo.toString(), billNo);
   }
@@ -21,7 +25,7 @@ mixin class CacheManager {
     box.write(Key.userModels.toString(), userModels.toJson());
   }
 
-  void saveBankModelData(BankModel bankModel) {
+  void saveBankModelData(BankDetailsModel bankModel) {
     box.write(Key.bankModels.toString(), bankModel.toJson());
   }
 
@@ -53,19 +57,19 @@ mixin class CacheManager {
   }
 
   String effectiveShopId() {
-    final user = retrieveUserDetail();
-    if (user.role == 'staff' &&
-        user.parentId != null &&
-        user.parentId!.isNotEmpty) {
-      return user.parentId!;
-    }
-    return user.id ?? "";
+    // final user = retrieveUserDetail();
+    // if (user.role == 'staff' &&
+    //     user.parentId != null &&
+    //     user.parentId!.isNotEmpty) {
+    //   return user.parentId!;
+    // }
+    return  "";
   }
 
   // Tracking ke liye: Kaun kaam kar raha hai (Staff ki apni ID)
   String get currentUserId {
     final user = retrieveUserDetail();
-    return user.id ?? "";
+    return  "";
   }
 
   String? retrieveEmployeeId() {
@@ -96,15 +100,20 @@ mixin class CacheManager {
     if (user != null) {
       return UserModel.fromJson(user);
     }
-    return UserModel(isSaved: false);
+    return UserModel();
   }
 
-  BankModel retrieveBankModelDetail() {
+  String retriveToken() {
+    // box.writeIfNull(Key.tokenKey.toString(), '');
+    return box.read(Key.tokenKey.toString()) ?? '';
+  }
+
+  BankDetailsModel retrieveBankModelDetail() {
     final bank = box.read(Key.bankModels.toString());
     if (bank != null) {
-      return BankModel.formJson(bank);
+      return BankDetailsModel.fromJson(bank);
     }
-    return BankModel();
+    return BankDetailsModel();
   }
 
   Future<List<ProductModel>> retrieveCartProductList() async {
@@ -199,4 +208,5 @@ enum Key {
   discountCache,
   customerListKey,
   tranferRequestKey,
+  tokenKey,
 }

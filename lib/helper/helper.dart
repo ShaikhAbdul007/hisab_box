@@ -102,12 +102,13 @@ void showMessage({
   });
 }
 
-void showSnackBar({required String error}) {
+void showSnackBar({required String error, bool isError = true}) {
   Get.snackbar(
-    'Error',
+    isError ? 'Error' : 'Success',
     error,
     snackPosition: SnackPosition.TOP,
-    backgroundColor: AppColors.buttonRedColor,
+    backgroundColor:
+        isError ? AppColors.buttonRedColor : AppColors.buttonGreenColor,
     colorText: AppColors.whiteColor,
   );
 }

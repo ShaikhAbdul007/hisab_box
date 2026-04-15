@@ -21,6 +21,7 @@ const shortMobileNo = "Mobile no should be 10 digit";
 const alreadyHaveAccount = "Already have an account";
 const passwordMismatch = "Confirm password must be the same as your password.";
 const login = " Login";
+const sendOTP='Send OTP';
 const signup = "Sign Up";
 const dontHaveAccount = "Don't have an account";
 const createAccount = "  Create Account";
@@ -71,3 +72,12 @@ const addCustomer = 'Add Customer';
 const productNotFound = 'Add Customer';
 const productNotAllowedForLooseSelling =
     'This product is not allowed for loose selling';
+const String somethingWentWrong = 'Request Failed,something went wrong';
+const String internetError = 'No Internate, please check';
+const String httpError = "Can't connect to server";
+const bool failed = false;
+const bool success = true;
+const String otpSentSuccessfully = 'OTP sent successfully';
+const String otpVerificationFailed = 'OTP verification failed, please try again with correct OTP';
+const String updateProfileSuccessfull = 'Profile updated successfully';
+

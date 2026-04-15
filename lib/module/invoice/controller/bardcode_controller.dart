@@ -77,7 +77,7 @@ class BardcodeController extends GetxController
         (product.sellingPrice is num)
             ? (product.sellingPrice as num).toStringAsFixed(0)
             : '${product.sellingPrice}';
-    final String shopName = _toEscPosSafe(user.name ?? 'Hisab Box');
+    final String shopName = _toEscPosSafe(user.data?.name ?? 'Hisab Box');
     final String productName = _toEscPosSafe('${product.name}');
     final String detailLine = _toEscPosSafe(
       '${product.flavor} | ${product.weight} | Rs.$priceText',

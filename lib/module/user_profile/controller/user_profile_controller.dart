@@ -3,14 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/module/user_profile/repo/user_repo.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/supabase_db/storage_service.dart';
 import '../../setting/model/user_model.dart';
 
 class UserProfileController extends GetxController with CacheManager {
+  UserProfileRepo userProfileRepo = UserProfileRepo();
   // 🟢 Observables
   RxBool isLoading = false.obs;
   RxBool readOnly = true.obs;
@@ -55,27 +59,10 @@ class UserProfileController extends GetxController with CacheManager {
 
   // ---------------- UPDATE PROFILE (SUPABASE) ----------------
   Future<void> updateUserDetails() async {
-    final userId = resolveUserId(isLoading.value);
-    if (userId == null) return;
-
     isLoading.value = true;
     unfocus();
 
     try {
-      String finalImageUrl = profileImageUrl.value;
-
-      // 1️⃣ Check if a new local image was picked to upload
-      if (profileImage.value?.path != null &&
-          profileImage.value!.path.isNotEmpty) {
-        finalImageUrl = await StorageService.uploadProfileImage(
-          file: profileImage.value!,
-          userId: userId,
-        );
-      }
-
-      final String formatCreatedAt = setFormateDate();
-      final String updatedDateTimeAt = formatDateForDB(formatCreatedAt);
-
       final updatedData = {
         "name": shopNameController.text.trim(),
         "email": emailController.text.trim(),
@@ -85,35 +72,24 @@ class UserProfileController extends GetxController with CacheManager {
         "state": stateController.text.trim(),
         "mobile_no": mobileController.text.trim(),
         "alternate_mobile_no": alternativeMobileController.text.trim(),
-        "updated_at": updatedDateTimeAt,
-        "profile_image": finalImageUrl,
       };
-
-      // 2️⃣ Supabase Update
-      await SupabaseConfig.from('users').update(updatedData).eq('id', userId);
-      
-
-      // 3️⃣ Update Local Cache
-      final updatedUser = UserModel(
-        name: shopNameController.text.trim(),
-        email: emailController.text.trim(),
-        address: addressController.text.trim(),
-        city: cityController.text.trim(),
-        pincode: pincodeController.text.trim(),
-        state: stateController.text.trim(),
-        mobileNo: mobileController.text.trim(),
-        alternateMobileNo: alternativeMobileController.text.trim(),
-        image: finalImageUrl,
-        isSaved: true,
-      );
-
-      saveUserData(updatedUser);
-      _setProfileSource(finalImageUrl); // Refresh UI state
-
+      var response = await userProfileRepo.updateUserDetails(body: updatedData);
+      if (response.success == success) {
+        showSnackBar(
+          error: response.msg ?? updateProfileSuccessfull,
+          isError: false,
+        );
+        saveUserData(response);
+        setUserDetails();
+      } else if (response.success == failed) {
+      showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+      showSnackBar(error: somethingWentMessage);
+      }
       readOnly.value = true;
-      showMessage(message: "Profile Updated Successfully ✅");
+    showSnackBar(error: "Profile Updated Successfully ✅");
     } catch (e) {
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isLoading.value = false;
     }
@@ -122,27 +98,18 @@ class UserProfileController extends GetxController with CacheManager {
   // ---------------- LOAD USER DATA ----------------
   void setUserDetails() async {
     isDataLoading.value = true;
-    final userId = resolveUserId(isDataLoading.value);
     try {
-      final cachedUser = retrieveUserDetail();
-
-      // UI fill from Cache
-      _fillControllers(cachedUser);
-      _setProfileSource(cachedUser.image);
-
-      // Agar Cache empty hai ya image link missing hai, toh DB se fetch karo
-      if (userId != null &&
-          (cachedUser.isSaved != true || (cachedUser.image ?? '').isEmpty)) {
-        final response =
-            await SupabaseConfig.from(
-              'users',
-            ).select().eq('id', userId).maybeSingle();
-
-        if (response != null) {
-          final userRes = UserModel.fromJson(response);
-          _fillControllers(userRes);
-          _setProfileSource(userRes.image);
-          saveUserData(userRes);
+      final user = retrieveUserDetail();
+      if (user.data?.name != null && user.data!.name!.isNotEmpty) {
+        _fillControllers(user);
+      } else {
+        var response = await userProfileRepo.getUserDetails();
+        if (response.success == success) {
+          _fillControllers(response);
+        } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+        } else {
+        showSnackBar(error: somethingWentMessage);
         }
       }
     } catch (e) {
@@ -152,39 +119,15 @@ class UserProfileController extends GetxController with CacheManager {
     }
   }
 
-  // Helper to set image source state
-  void _setProfileSource(String? imageValue) {
-    final value = (imageValue ?? '').trim();
-    debugPrint("Setting Image Source: $value"); // Debugging ke liye
-
-    if (StorageService.isNetworkImage(value)) {
-      profileImageUrl.value = value;
-      profileImage.value = null;
-    } else if (value.isNotEmpty && File(value).existsSync()) {
-      profileImage.value = File(value);
-      profileImageUrl.value = '';
-    } else {
-      profileImage.value = null;
-      profileImageUrl.value = '';
-    }
-  }
-
-  // void setprofileParamet() {
-  //   final profile = profileImage.value;
-  //   final profileUrl = profileImageUrl.value.trim();
-  //   final canShowImage = profile != null && profile.existsSync();
-  // }
-
-  // Helper to fill controllers
   void _fillControllers(UserModel user) {
-    shopNameController.text = user.name ?? '';
-    mobileController.text = user.mobileNo ?? '';
-    alternativeMobileController.text = user.alternateMobileNo ?? '';
-    pincodeController.text = user.pincode ?? '';
-    stateController.text = user.state ?? '';
-    addressController.text = user.address ?? '';
-    cityController.text = user.city ?? '';
-    emailController.text = user.email ?? '';
+    shopNameController.text = user.data?.name ?? '';
+    mobileController.text = user.data?.mobileNo ?? '';
+    alternativeMobileController.text = user.data?.alternateMobileNo ?? '';
+    pincodeController.text = user.data?.pincode ?? '';
+    stateController.text = user.data?.state ?? '';
+    addressController.text = user.data?.address ?? '';
+    cityController.text = user.data?.city ?? '';
+    emailController.text = user.data?.email ?? '';
   }
 
   @override

@@ -125,7 +125,7 @@ class OutOfStockController extends GetxController
     } catch (e) {
       AppLogger.info(("🚨 OutOfStock Fetch Error: $e").toString());
       if (productList.isEmpty) {
-        showMessage(message: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       }
     } finally {
       isDataLoading.value = false;
@@ -150,7 +150,7 @@ class OutOfStockController extends GetxController
               .select();
 
       if (response.isNotEmpty) {
-        showMessage(message: 'Product marked as Inactive');
+      showSnackBar(error: 'Product marked as Inactive');
 
         // 2. Local Update (Turant UI se hatane ke liye aur Hive sync ke liye)
         productList.removeWhere((item) => item.id == productId);
@@ -163,7 +163,7 @@ class OutOfStockController extends GetxController
       await loadOutOfStockProducts();
     } catch (e) {
       AppLogger.info(("🚨 Deactivate Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isDeleteLoading.value = false;
     }

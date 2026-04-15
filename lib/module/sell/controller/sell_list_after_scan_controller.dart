@@ -89,8 +89,8 @@ class SellListAfterScanController extends GetxController
 
   void setUserData() {
     var user = retrieveUserDetail();
-    discountPerProduct.value = user.discountPerProduct ?? false;
-    shopType.value = user.shoptype ?? '';
+    // discountPerProduct.value = user.discountPerProduct ?? false;
+    //shopType.value = user.shoptype ?? '';
   }
 
   void setProductData() async {
@@ -165,7 +165,7 @@ class SellListAfterScanController extends GetxController
     } else {
       Get.back();
       removeCartProductList();
-      showMessage(message: somethingWentMessage);
+    showSnackBar(error: somethingWentMessage);
     }
   }
 
@@ -177,7 +177,7 @@ class SellListAfterScanController extends GetxController
     final userId = resolveUserId(isLoading.value);
     if (userId == null) {
       isLoading.value = false;
-      showMessage(message: 'Please login again.');
+    showSnackBar(error: 'Please login again.');
       return false;
     }
 
@@ -328,7 +328,7 @@ class SellListAfterScanController extends GetxController
       return true;
     } catch (e) {
       AppLogger.info(("🚨 Sale Failed: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       return false;
     } finally {
       isLoading.value = false;

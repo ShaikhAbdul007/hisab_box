@@ -78,7 +78,7 @@ class CustomerController extends GetxController with CacheManager {
     } catch (e) {
       // Variable names kept exactly same as requested
       AppLogger.error("Fetch customers error", e, "CustomerController");
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       customDataLoading.value = false;
     }

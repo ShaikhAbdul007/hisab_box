@@ -216,7 +216,7 @@ class ReportController extends GetxController
         onPressed: () => OpenFile.open(file),
       );
     } catch (e) {
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isExporting.value = false;
     }
@@ -234,7 +234,7 @@ class ReportController extends GetxController
     var excel = Excel.createExcel();
     Sheet sheet = excel[excel.getDefaultSheet()!];
     sheet.appendRow([
-      TextCellValue('Shop: ${user.name}'),
+      TextCellValue('Shop:'),
       TextCellValue('Report: $fileName'),
       TextCellValue('Date: $date to $date2'),
     ]);
@@ -410,7 +410,7 @@ class ReportController extends GetxController
             .lte('created_at', "${end}T23:59:59.999Z");
       }
     } catch (e) {
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       return [];
     }
   }

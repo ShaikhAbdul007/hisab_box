@@ -55,7 +55,7 @@ class InvoicePrint extends GetView<InvoiceController> {
                           paymentMethod: 'paymentMethod',
                         );
                       } else {
-                        showMessage(message: 'Printer is not initialized yet');
+                      showSnackBar(error: 'Printer is not initialized yet');
                       }
                     } else {
                       commonBottomSheet(
@@ -68,7 +68,7 @@ class InvoicePrint extends GetView<InvoiceController> {
                     }
                   } catch (e) {
                     AppLogger.error('Print button flow failed', e, 'Invoice');
-                    showMessage(message: SupabaseErrorHandler.getMessage(e));
+                  showSnackBar(error: SupabaseErrorHandler.getMessage(e));
                   }
                 },
               ),
@@ -108,7 +108,7 @@ class InvoicePrint extends GetView<InvoiceController> {
       await Future.delayed(const Duration(milliseconds: 500));
       final res = await rController.print(address: device, delayTime: 0);
       if (res == true) {
-        showMessage(message: 'Invoice printed successfully.');
+      showSnackBar(error: 'Invoice printed successfully.');
         AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
       } else {
         showMessage(
@@ -117,7 +117,7 @@ class InvoicePrint extends GetView<InvoiceController> {
       }
     } catch (e) {
       AppLogger.error('Receipt print failed', e, 'Invoice');
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       controller.isPrintingLoading.value = false;
     }

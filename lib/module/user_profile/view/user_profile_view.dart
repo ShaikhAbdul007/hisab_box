@@ -133,7 +133,7 @@ class UserProfileView extends GetView<UserProfileController> {
                     paddingOption: SymmetricPadding(horizontal: 20.0),
                     child: CommonButton(
                       isLoading: controller.isLoading.value,
-                      label: 'Save Profile Changes',
+                      label: 'Save',
                       onTap: () => controller.updateUserDetails(),
                     ),
                   ),

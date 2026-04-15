@@ -3,12 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
+import 'package:inventory/module/bank_details/repo/bank_repo.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
+import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
 
-class BankdetailsController extends GetxController with CacheManager {
+class BankDetailsController extends GetxController with CacheManager {
+  BankRepo bankDetailsRepo = BankRepo();
   TextEditingController upiIdController = TextEditingController();
   TextEditingController bankNameController = TextEditingController();
   TextEditingController accountHolderNameController = TextEditingController();
@@ -19,7 +21,7 @@ class BankdetailsController extends GetxController with CacheManager {
 
   @override
   void onInit() {
-    getSaveBankDetails();
+    getCacheHasData();
     super.onInit();
   }
 
@@ -28,50 +30,37 @@ class BankdetailsController extends GetxController with CacheManager {
     return reg.hasMatch(upi.trim());
   }
 
-  // ================================
-  // LOAD FROM CACHE → ELSE DB
-  // ================================
-  void getSaveBankDetails() async {
-    BankModel bankdata = retrieveBankModelDetail();
-
-    if (bankdata.upiId == null || bankdata.upiId!.isEmpty) {
-      await getBankDetails();
+  void getCacheHasData() {
+    final bankData = retrieveBankModelDetail();
+    if (bankData.data != null) {
+      bankNameController.text = bankData.data?.bankName ?? "";
+      accountHolderNameController.text = bankData.data?.accountHolder ?? '';
+      upiIdController.text = bankData.data?.upiId ?? '';
+      readOnly.value = true;
     } else {
-      bankNameController.text = bankdata.bankName ?? "";
-      accountHolderNameController.text = bankdata.accountName ?? '';
-      upiIdController.text = bankdata.upiId ?? '';
+      getBankDetails();
     }
   }
 
-  // ================================
-  // FETCH FROM SUPABASE
-  // ================================
   Future<void> getBankDetails() async {
     setBankDetailsUpi.value = true;
-    final userId = resolveUserId(setBankDetailsUpi.value);
-
     try {
-      if (userId == null) return;
-      final response =
-          await SupabaseConfig.from(
-            'bank_details',
-          ).select().eq('user_id', userId).maybeSingle();
-
-      if (response != null) {
-        final details = BankModel.formJson({
-          'upiId': response['upi_id'],
-          'bankName': response['bank_name'],
-          'accountHolder': response['account_holder'],
-        });
+      final response = await bankDetailsRepo.getBankDetails();
+      if (response.success == success) {
+        bankNameController.text = response.data?.bankName ?? "";
+        accountHolderNameController.text = response.data?.accountHolder ?? '';
+        upiIdController.text = response.data?.upiId ?? '';
+        saveBankModelData(response);
+        showSnackBar(error: response.msg!, isError: false);
         readOnly.value = true;
-        bankNameController.text = details.bankName ?? "";
-        accountHolderNameController.text = details.accountName ?? '';
-        upiIdController.text = details.upiId ?? '';
-        saveBankModelData(details);
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       AppLogger.info((e).toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       setBankDetailsUpi.value = false;
     }
@@ -82,26 +71,34 @@ class BankdetailsController extends GetxController with CacheManager {
   // ================================
   Future<void> saveBankDetails() async {
     bankDetailsUpi.value = true;
-    final userId = resolveUserId(bankDetailsUpi.value);
+    var body = {
+      "upi_id": "shop5@upi",
+      "bank_name": "State Bank of India",
+      "account_holder": "Shop Owner",
+    };
     try {
-      if (userId == null) throw "User not logged in";
-      final String timestamp = DateTime.now().toIso8601String();
-      await SupabaseConfig.from('bank_details').upsert({
-        'user_id': userId,
-        'upi_id': upiIdController.text.trim(),
-        'account_holder': accountHolderNameController.text.trim(),
-        'bank_name': bankNameController.text.trim(),
-        'updated_at': timestamp,
-      }, onConflict: 'user_id');
-
-      await getBankDetails();
-      showMessage(message: 'Bank Details Saved Successfully');
-      readOnly.value = false;
+      final response = await bankDetailsRepo.createBankDetails(body: body);
+      if (response.success == success) {
+        setBankData(response);
+        saveBankModelData(response);
+        getCacheHasData();
+        showSnackBar(error: response.msg!, isError: false);
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
+      }
     } catch (e) {
       AppLogger.info(("🚨 Bank Save Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       bankDetailsUpi.value = false;
     }
+  }
+
+  void setBankData(BankDetailsModel response) {
+    bankNameController.text = response.data?.bankName ?? "";
+    accountHolderNameController.text = response.data?.accountHolder ?? '';
+    upiIdController.text = response.data?.upiId ?? '';
   }
 }

@@ -12,7 +12,7 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/keys/keys.dart';
 import 'package:inventory/module/bank_details/controller/bankdetails_controller.dart';
 
-class BankdetailsView extends GetView<BankdetailsController> {
+class BankdetailsView extends GetView<BankDetailsController> {
   const BankdetailsView({super.key});
 
   @override
@@ -39,6 +39,7 @@ class BankdetailsView extends GetView<BankdetailsController> {
                     : ListView(
                       children: [
                         CommonTextField(
+                          readOnly: controller.readOnly.value,
                           hintText: 'Bank Name',
                           label: 'Bank name',
                           controller: controller.bankNameController,
@@ -56,6 +57,7 @@ class BankdetailsView extends GetView<BankdetailsController> {
                         setHeight(height: 5),
 
                         CommonTextField(
+                          readOnly: controller.readOnly.value,
                           hintText: 'Account Holder Name',
                           label: 'Account Holder Name',
                           controller: controller.accountHolderNameController,
@@ -73,6 +75,7 @@ class BankdetailsView extends GetView<BankdetailsController> {
                         ),
                         setHeight(height: 5),
                         CommonTextField(
+                          readOnly: controller.readOnly.value,
                           hintText: 'UPI ID',
                           label: 'UPI ID',
                           controller: controller.upiIdController,
@@ -90,7 +93,8 @@ class BankdetailsView extends GetView<BankdetailsController> {
                         Obx(
                           () =>
                               controller.readOnly.value
-                                  ? CustomPadding(
+                                  ? Container()
+                                  : CustomPadding(
                                     paddingOption: SymmetricPadding(
                                       horizontal: 30,
                                     ),
@@ -105,8 +109,7 @@ class BankdetailsView extends GetView<BankdetailsController> {
                                         }
                                       },
                                     ),
-                                  )
-                                  : Container(),
+                                  ),
                         ),
                       ],
                     ),

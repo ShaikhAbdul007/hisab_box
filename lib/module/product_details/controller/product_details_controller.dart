@@ -19,8 +19,8 @@ class ProductDetailsController extends GetxController
   final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
 
   final inventoryScanKey = GlobalKey<FormState>();
-  RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
-  RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
+  RxList<CategoryModelData> categoryList = <CategoryModelData>[].obs;
+  RxList<CategoryModelData> animalTypeList = <CategoryModelData>[].obs;
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
   RxList<ProductModel> productList = <ProductModel>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
@@ -77,7 +77,7 @@ class ProductDetailsController extends GetxController
 
     // 1. Basic Validation
     if (requestedQty <= 0) {
-      showMessage(message: "Bhai, quantity toh sahi dalo!");
+      showSnackBar(error: "Bhai, quantity toh sahi dalo!");
       return;
     }
 
@@ -102,7 +102,7 @@ class ProductDetailsController extends GetxController
         },
       );
 
-      showMessage(message: "📤 Transfer Successful & Notification Sent!");
+      showSnackBar(error: "📤 Transfer Successful & Notification Sent!");
 
       // UI Update/Refresh logic yahan dal sakte ho (e.g., Get.back())
       Get.back();
@@ -115,7 +115,7 @@ class ProductDetailsController extends GetxController
         errorMsg = "Godown mein stock kam hai!";
       }
 
-      showMessage(message: errorMsg);
+      showSnackBar(error: errorMsg);
     } finally {
       isTransferLoading.value = false;
     }
@@ -131,17 +131,17 @@ class ProductDetailsController extends GetxController
     String categoryType = '',
   }) {
     try {
-      if (categoryType == 'animal') {
-        return animalTypeList.firstWhere(
-          (e) => e.name == categorysId || e.id == categorysId,
-          orElse: () => CategoryModel(),
-        );
-      } else {
-        return categoryList.firstWhere(
-          (e) => e.name == categorysId || e.id == categorysId,
-          orElse: () => CategoryModel(),
-        );
-      }
+      // if (categoryType == 'animal') {
+      //   return animalTypeList.firstWhere(
+      //     (e) => e.categorymodeldata. == categorysId || e.id == categorysId,
+      //     orElse: () => CategoryModel(),
+      //   );
+      // } else {
+      //   return categoryList.firstWhere(
+      //     (e) => e.name == categorysId || e.id == categorysId,
+      //     orElse: () => CategoryModel(),
+      //   );
+      // }
     } catch (e) {
       return null;
     }
@@ -236,21 +236,21 @@ class ProductDetailsController extends GetxController
       final selectedCategory = category.text.trim();
       final selectedAnimal = animalType.text.trim();
 
-      final catId =
-          categoryList
-              .firstWhereOrNull(
-                (e) => e.id == selectedCategory || e.name == selectedCategory,
-              )
-              ?.id ??
-          (selectedCategory.isEmpty ? null : selectedCategory);
+      final catId = '';
+      // categoryList
+      //     .firstWhereOrNull(
+      //       (e) => e.id == selectedCategory || e.name == selectedCategory,
+      //     )
+      //     ?.id ??
+      // (selectedCategory.isEmpty ? null : selectedCategory);
 
-      final aniId =
-          animalTypeList
-              .firstWhereOrNull(
-                (e) => e.id == selectedAnimal || e.name == selectedAnimal,
-              )
-              ?.id ??
-          (selectedAnimal.isEmpty ? null : selectedAnimal);
+      final aniId = '';
+      // animalTypeList
+      //     .firstWhereOrNull(
+      //       (e) => e.id == selectedAnimal || e.name == selectedAnimal,
+      //     )
+      //     ?.id ??
+      // (selectedAnimal.isEmpty ? null : selectedAnimal);
 
       String? pid;
       var productData = data['product'];
@@ -296,10 +296,10 @@ class ProductDetailsController extends GetxController
       // 3. Local Sync: Hive mein data update karna
       await refreshAllLocalData(isLoosed: isLoosed);
       Get.back(result: true);
-      showMessage(message: '✅ Product & Stock Updated Safely.');
+      showSnackBar(error: '✅ Product & Stock Updated Safely.');
     } catch (e) {
       AppLogger.info(("🚨 Update Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       isSaveLoading.value = false;
     }
@@ -322,7 +322,7 @@ class ProductDetailsController extends GetxController
         await LocalService.saveProducts(freshList);
       } catch (e) {
         AppLogger.info(("🚨 Background Sync failed: $e").toString());
-        showMessage(message: SupabaseErrorHandler.getMessage(e));
+        showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       }
     } else {
       try {
@@ -350,7 +350,7 @@ class ProductDetailsController extends GetxController
         await LocalService.saveLooseProducts(loosedfreshList);
       } catch (e) {
         AppLogger.info(("🚨 Loose Sync failed: $e").toString());
-        showMessage(message: SupabaseErrorHandler.getMessage(e));
+        showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       }
     }
   }
@@ -358,7 +358,7 @@ class ProductDetailsController extends GetxController
   Future<void> fetchCategories() async {
     final cached = LocalService.getCachedCategories();
     if (cached.isNotEmpty) {
-      categoryList.value = cached;
+      //categoryList.value = cached;
     }
     final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
@@ -367,18 +367,18 @@ class ProductDetailsController extends GetxController
         'categories',
       ).select().eq('user_id', userId);
       final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-      categoryList.value = freshData;
+      // categoryList.value = freshData;
       await LocalService.saveCategories(freshData);
     } catch (e) {
       AppLogger.info(("🚨 Category fetch error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     }
   }
 
   Future<void> fetchAnimalCategories() async {
     final cached = LocalService.getCachedAnimalCategories();
     if (cached.isNotEmpty) {
-      animalTypeList.value = cached;
+      // animalTypeList.value = cached;
     }
     final userId = resolveUserId(isSaveLoading.value);
     if (userId == null) return;
@@ -387,11 +387,11 @@ class ProductDetailsController extends GetxController
         'animal_categories',
       ).select().eq('user_id', userId);
       final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-      animalTypeList.value = freshData;
+      // animalTypeList.value = freshData;
       await LocalService.saveAnimalCategories(freshData);
     } catch (e) {
       AppLogger.info(("🚨 Animal category error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     }
   }
 }

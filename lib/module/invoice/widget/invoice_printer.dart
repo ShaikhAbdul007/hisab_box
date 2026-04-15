@@ -34,15 +34,19 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
     var bankDetails = retrieveBankModelDetail();
 
     String userName =
-        user.name?.isNotEmpty ?? false ? user.name!.substring(0, 1) : "HB";
+        user.data?.name?.isNotEmpty ?? false
+            ? user.data!.name!.substring(0, 1)
+            : "HB";
 
-    AppLogger.info((user.address).toString());
+    AppLogger.info((user.data?.address).toString());
 
-    // AppLogger.info((user.image).toString());
-    AppLogger.info((user.alternateMobileNo).toString());
-    AppLogger.info((user.mobileNo).toString());
-    AppLogger.info((user.city).toString());
-    bool isFileAvailable = user.image != null && user.image!.isNotEmpty;
+    // AppLogger.info((user.data?.image).toString());
+    AppLogger.info((user.data?.alternateMobileNo).toString());
+    AppLogger.info((user.data?.mobileNo).toString());
+    AppLogger.info((user.data?.city).toString());
+    //  bool isFileAvailable = user.data?.image != null && user.data!.image!.isNotEmpty;
+
+    bool isFileAvailable = true;
     double total = 0;
     double savedAmount = 0;
     int discountPercentage = 0;
@@ -56,7 +60,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               children: [
                 Row(
                   children: [
-                    user.image == null || !isFileAvailable
+                    user.data?.image == null || !isFileAvailable
                         ? CircleAvatar(
                           radius: 50,
                           backgroundColor: AppColors.blackColor,
@@ -75,7 +79,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             child: Image.network(
                               filterQuality: FilterQuality.high,
                               fit: BoxFit.cover,
-                              user.image ?? '',
+                              user.data?.image ?? '',
                             ),
                           ), // Ab crash nahi hoga
                         ),
@@ -85,16 +89,17 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${user.name}',
+                          '${user.data?.name}',
                           style: CustomTextStyle.customMontserrat(
                             fontSize: 25,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         setHeight(height: 8),
-                        if (user.alternateMobileNo?.isNotEmpty ?? false) ...{
+                        if (user.data?.alternateMobileNo?.isNotEmpty ??
+                            false) ...{
                           Text(
-                            '${user.mobileNo}/${user.alternateMobileNo}',
+                            '${user.data?.mobileNo}/${user.data?.alternateMobileNo}',
                             style: CustomTextStyle.customMontserrat(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -102,7 +107,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                           ),
                         } else ...{
                           Text(
-                            '${user.mobileNo}',
+                            '${user.data?.mobileNo}',
                             style: CustomTextStyle.customMontserrat(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -118,7 +123,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 setHeight(height: 10),
                 Flexible(
                   child: Text(
-                    "${user.address?.toCapitalized() ?? ''},${user.city?.toCapitalized() ?? ''},${user.pincode?.toCapitalized() ?? ''}",
+                    "${user.data?.address?.toCapitalized() ?? ''},${user.data?.city?.toCapitalized() ?? ''},${user.data?.pincode?.toCapitalized() ?? ''}",
                     style: CustomTextStyle.customMontserrat(
                       fontSize: 18,
                       letterSpacing: 1.5,
@@ -389,7 +394,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                   ],
                 ),
                 setHeight(height: 30),
-                bankDetails.upiId != null &&
+                bankDetails.data?.upiId != null &&
                         paymentMethod.toLowerCase() != 'cash'
                     ? CustomPadding(
                       paddingOption: SymmetricPadding(horizontal: 80),
@@ -397,8 +402,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                         children: [
                           UPIPaymentQRCode(
                             upiDetails: UPIDetails(
-                              upiID: bankDetails.upiId ?? '',
-                              payeeName: bankDetails.accountName ?? '',
+                              upiID: bankDetails.data?.upiId ?? '',
+                              payeeName: bankDetails.data?.accountHolder ?? '',
                               amount: total,
                             ),
                             size: 200,
@@ -513,7 +518,7 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
               children: [
                 BarcodeWidget(
                   barcode: Barcode.code128(),
-                  data: user.name ?? '',
+                  data: user.data?.name ?? '',
                   height: 90,
                   width: 175,
                 ),

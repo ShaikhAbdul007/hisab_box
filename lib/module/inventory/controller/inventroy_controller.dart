@@ -165,7 +165,7 @@ class InventroyController extends GetxController
       return (false, ProductModel());
     } catch (e) {
       AppLogger.info(("🚨 Info Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       return (false, ProductModel());
     } finally {
       isExistingProductInfo.value = false;
@@ -218,14 +218,14 @@ class InventroyController extends GetxController
           }
           product.barcode = barcode;
         } else {
-          showMessage(message: "❌ Product Not Found");
+        showSnackBar(error: "❌ Product Not Found");
           return;
         }
       }
 
       final productLocation = (product.location ?? '').trim().toLowerCase();
       if (productLocation != 'shop') {
-        showMessage(message: 'Product should be in shop to sell.');
+      showSnackBar(error: 'Product should be in shop to sell.');
         return;
       }
 
@@ -309,7 +309,7 @@ class InventroyController extends GetxController
       afterProductAdding();
     } catch (e) {
       AppLogger.info(("🚨 Scan Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     }
   }
 

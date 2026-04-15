@@ -49,6 +49,7 @@ class Category extends GetView<CategoryController> {
                       itemCount: controller.categoryList.length,
                       itemBuilder: (context, index) {
                         var list = controller.categoryList[index];
+                       
                         return CustomPadding(
                           paddingOption: SymmetricPadding(
                             horizontal: 10,

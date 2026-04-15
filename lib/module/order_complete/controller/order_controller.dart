@@ -78,7 +78,7 @@ class OrderController extends GetxController with CacheManager {
       return list;
     } catch (e) {
       AppLogger.info(("Error loading customers: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       return [];
     }
   }
@@ -159,7 +159,7 @@ class OrderController extends GetxController with CacheManager {
       return true;
     } catch (e) {
       AppLogger.info(("🚨 Save Customer Error Details: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       return false;
     } finally {
       saveCustomerWithInvoiceLoading.value = false;

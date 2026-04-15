@@ -9,9 +9,7 @@ class SplashController extends GetxController with CacheManager {
   void movetoNextScreen() {
     Future.delayed(Duration(seconds: 2), () async {
       bool isLoggedIn = await retrieveIsLoggedIn();
-      final hasSession = SupabaseConfig.auth.currentSession != null;
-
-      if (isLoggedIn == true && hasSession) {
+      if (isLoggedIn == true) {
         AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
       } else {
         saveUserLoggedIn(false);

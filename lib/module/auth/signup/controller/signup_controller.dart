@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/module/auth/signup/repo/signup_repo.dart';
 import 'package:inventory/module/push_notification/local_notification_service.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
@@ -15,6 +16,7 @@ import '../../../setting/model/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignupController extends GetxController with CacheManager {
+  SignupRepo signupRepo = SignupRepo();
   // Text Controllers (Finalized for memory efficiency)
   final email = TextEditingController();
   final password = TextEditingController();
@@ -63,7 +65,7 @@ class SignupController extends GetxController with CacheManager {
   Future<void> signUpUser() async {
     // Basic validation check
     if (password.text != confirmpassword.text) {
-      showMessage(message: "Passwords do not match");
+    showSnackBar(error: "Passwords do not match");
       return;
     }
 
@@ -71,16 +73,10 @@ class SignupController extends GetxController with CacheManager {
     signUpLoading.value = true;
 
     try {
+      String customerMobileNo =
+          '${mobileNo.text.trim()}/${alternateMobileNo.text.trim()}';
       // 1️⃣ AUTH SIGNUP
-      final AuthResponse authRes = await SupabaseConfig.auth.signUp(
-        email: email.text.trim(),
-        password: password.text.trim(),
-      );
 
-      final user = authRes.user;
-      if (user == null) throw Exception('Auth Signup failed');
-
-      final String userId = user.id;
       String profileImageUrl = '';
 
       // Get Device FCM Token from your service
@@ -90,53 +86,60 @@ class SignupController extends GetxController with CacheManager {
         // StorageService hamesha Public URL return karega
         profileImageUrl = await StorageService.uploadProfileImage(
           file: profileImage.value!,
-          userId: userId,
+          userId: '',
         );
       }
 
-      // 3️⃣ INSERT USER PROFILE (DATABASE)
-      await SupabaseConfig.from('users').insert({
-        'id': userId,
-        'parent_id': userId,
+      var body = {
         'name': name.text.trim(),
         'email': email.text.trim(),
-        'mobile_no': mobileNo.text.trim(),
-        'alternate_mobile_no': alternateMobileNo.text.trim(),
+        'mobile_no': customerMobileNo,
         'address': address.text.trim(),
         'city': city.text.trim(),
         'state': state.text.trim(),
         'pincode': pincode.text.trim(),
         'shop_type': shopType.text.trim(),
-        'profile_image': profileImageUrl, // S3 Link saved here
-        'fcm_token': fcmToken,
-      });
+        "password": "",
+        "role": "admin",
+        "permissions": {
+          "p_customer_list": true,
+          "p_credit_list": true,
+          "p_reconcile_credit": true,
+          "p_see_today_sale": true,
+          "p_see_today_sale_detail": true,
+          "p_see_revenue": true,
+          "p_see_received_cash": true,
+          "p_see_received_credit": true,
+          "p_see_received_card": true,
+          "p_see_received_upi": true,
+          "p_see_report": true,
+          "p_add_product": true,
+          "p_add_manual_product": true,
+          "p_delete_product": true,
+          "p_edit_product_details": true,
+          "p_add_loose_product": true,
+          "p_edit_loose_product_details": true,
+          "p_transfer_godown_to_shop": true,
+          "p_edit_godown_product_details": true,
+          "p_add_user": true,
+          "p_add_bank_details": true,
+          "p_edit_profile": true,
+        },
+      };
 
-      // 4️⃣ CACHE USER DATA (LOCAL)
-      final newUserModel = UserModel(
-        name: name.text.trim(),
-        email: email.text.trim(),
-        address: address.text.trim(),
-        city: city.text.trim(),
-        pincode: pincode.text.trim(),
-        state: state.text.trim(),
-        mobileNo: mobileNo.text.trim(),
-        shoptype: shopType.text.trim(),
-        alternateMobileNo: alternateMobileNo.text.trim(),
-        image: profileImageUrl,
-        isSaved: true,
-        fcmToken: fcmToken,
-        id: userId,
-        parentId: userId,
-      );
-
-      saveUserData(newUserModel);
-
-      // Success Navigation
-      showMessage(message: singUpSuccessFul);
-      AppRoutes.navigateRoutes(routeName: AppRouteName.login);
+      final response = await signupRepo.signUp(body: body);
+      if (response.success == success) {
+        saveUserData(response);
+      showSnackBar(error: singUpSuccessFul);
+        AppRoutes.navigateRoutes(routeName: AppRouteName.login);
+      } else if (response.success == failed) {
+      showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+      showSnackBar(error: somethingWentMessage);
+      }
     } catch (e) {
       debugPrint("🚨 Signup Error: $e");
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
     } finally {
       signUpLoading.value = false;
     }

@@ -91,7 +91,7 @@ class SellController extends GetxController with CacheManager, LocalService {
       return salesByBarcode.values.toList();
     } catch (e) {
       AppLogger.info(("🚨 Fetch Sales Error: $e").toString());
-      showMessage(message: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
       return [];
     } finally {
       isSellListLoading.value = false;

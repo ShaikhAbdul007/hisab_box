@@ -108,9 +108,9 @@ class CustomerView extends GetView<CustomerController> {
                                     controller.fetchAllCustomers();
                                     Get.back();
                                     controller.orderController.clear();
-                                    showMessage(message: "Customer added");
+                                  showSnackBar(error: "Customer added");
                                   } else {
-                                    showMessage(message: somethingWentMessage);
+                                  showSnackBar(error: somethingWentMessage);
                                   }
                                 }
                               },
