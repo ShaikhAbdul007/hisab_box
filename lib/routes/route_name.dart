@@ -4,6 +4,7 @@ class AppRouteName {
   static const String productDetailView = '/productDetailView';
   static const String inventoryViewFormSell = '/inventoryViewFormSell';
   static const String home = '/home';
+  static const String allUser = '/allUser';
   static const String barcodePrintView = '/barcodePrintView';
   static const String reliableBarcodeView = '/reliableBarcodeView';
   static const String setting = '/setting';
@@ -17,6 +18,7 @@ class AppRouteName {
   static const String productView = '/productView';
   static const String signup = '/signup';
   static const String splash = '/splash';
+  static const String allUserDetail = '/allUserDetail';
   static const String unknwonroute = '/unknwonroute';
   static const String privacypolicy = '/privacypolicy';
   static const String orderView = '/orderView';

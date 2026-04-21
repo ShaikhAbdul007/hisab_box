@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class AddUserController extends GetxController with CacheManager {
   final nameController = TextEditingController();
@@ -43,65 +41,8 @@ class AddUserController extends GetxController with CacheManager {
 
   Future<void> createStaffAccount() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-    showSnackBar(error: "Email and Password are required");
+      showSnackBar(error: "Email and Password are required");
       return;
     }
-
-    // final shopId = effectiveShopId(); // Getter use kar rahe hain
-    // if (shopId.isEmpty) {
-    // showSnackBar(error: "Shop ID not found");
-    //   return;
-    // }
-
-    isLoading.value = true;
-    // try {
-    //   // 1. Auth SignUp
-    //   final res = await SupabaseConfig.auth.signUp(
-    //     email: emailController.text.trim(),
-    //     password: passwordController.text.trim(),
-    //   );
-
-    //   final newStaffId = res.user?.id;
-
-    //   if (newStaffId != null) {
-    //     // 2. Prepare Data for DB
-    //     Map<String, dynamic> updateData = {
-    //       'name': nameController.text.trim(),
-    //       'mobile_no': mobileController.text.trim(),
-    //       'role': selectedRole.value,
-    //       'parent_id': shopId,
-    //     };
-
-    //     // Saari permissions add karo data mein
-    //     permissions.forEach((key, value) {
-    //       updateData[key] = value.value;
-    //     });
-
-    //     // 3. Update User Table
-    //     await SupabaseConfig.from(
-    //       'users',
-    //     ).update(updateData).eq('id', newStaffId);
-
-    //   showSnackBar(error: "Staff member added with permissions!");
-    //     Get.back();
-    //   }
-    // } catch (e) {
-    // showSnackBar(error: SupabaseErrorHandler.getMessage(e));
-    // } finally {
-    //   isLoading.value = false;
-    // }
-
-    Map<String, dynamic> updateData = {
-      'name': nameController.text.trim(),
-      'mobile_no': mobileController.text.trim(),
-      'role': selectedRole.value,
-      // 'parent_id': shopId,
-    };
-    print('updateData is $updateData');
-
-    // Saari permissions add karo data mein
-    permissions.forEach((key, value) {
-      updateData[key] = value.value;
-    });
   }
 }

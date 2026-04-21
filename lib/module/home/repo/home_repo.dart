@@ -1,20 +1,19 @@
-
+import 'package:inventory/module/home/model/dashboard_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';
 
 class HomeRepo {
   Networking networking = Networking();
 
-  // Future<BankDetailsModel> getDashBoardData({required dynamic body}) async {
-  //   try {
-  //     final response = await networking.getData(
-  //       url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.dashboard}',
-  //       body:body
-  //     );
-  //     return BankDetailsModel.fromJson(response);
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
-
+  Future<DashboardModel> getDashBoardData() async {
+    try {
+      final response = await networking.getData(
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.dashboard}',
+    
+      );
+      return DashboardModel.fromJson(response);
+    } catch (e) {
+      return DashboardModel(success: false, message: e.toString());
+    }
+  }
 }

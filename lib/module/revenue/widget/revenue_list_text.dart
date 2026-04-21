@@ -5,11 +5,12 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/home/model/dashboard_model.dart';
 import '../../../common_widget/common_divider.dart';
 import '../model/revenue_model.dart';
 
 class RevenueListText extends StatelessWidget {
-  final SellsModel billModel;
+  final RecentActivitiesData billModel;
   const RevenueListText({super.key, required this.billModel});
 
   // String _displayTime(String? value, String? soldAt) {
@@ -37,10 +38,10 @@ class RevenueListText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double totalQty = 0;
-    for (var item in billModel.items ?? []) {
-      totalQty += (item.quantity ?? 0);
-    }
+    // double totalQty = 0;
+    // for (var item in billModel.items ?? []) {
+    //   totalQty += (item.quantity ?? 0);
+    // }
     return CustomPadding(
       paddingOption: OnlyPadding(left: 10, right: 10, bottom: 5.0),
       child: Column(
@@ -54,17 +55,25 @@ class RevenueListText extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Text(
+                    //   totalQty > 0 && totalQty > 1
+                    //       ? '${totalQty.toStringAsFixed(0)} items'
+                    //       : '${totalQty.toStringAsFixed(0)} item',
+                    //   style: CustomTextStyle.customMontserrat(fontSize: 17),
+                    // ),
                     Text(
-                      totalQty > 0 && totalQty > 1
-                          ? '${totalQty.toStringAsFixed(0)} items'
-                          : '${totalQty.toStringAsFixed(0)} item',
-                      style: CustomTextStyle.customMontserrat(fontSize: 17),
+                      billModel.module ?? '',
+                      style: CustomTextStyle.customPoppin(fontSize: 17),
                     ),
                     setHeight(height: 5),
                     Row(
                       children: [
                         Text(
-                          formatDate(billModel.soldAt),
+                          formatDateTime(
+                            showDate: true,
+                            showTime: false,
+                            billModel.createdAt ?? '',
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: CustomTextStyle.customPoppin(
@@ -74,9 +83,9 @@ class RevenueListText extends StatelessWidget {
                         setWidth(width: 5),
                         Text(
                           formatDateTime(
-                            showTime: true,
                             showDate: false,
-                            billModel.time ?? '',
+                            showTime: true,
+                            billModel.createdAt ?? '',
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -92,16 +101,14 @@ class RevenueListText extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    Text(
-                      '\u{20B9} ${billModel.finalAmount}',
-                      style: CustomTextStyle.customPoppin(
-                        color: AppColors.greenColor,
-                        fontSize: 18,
-                      ),
+                      Icon(
+                      CupertinoIcons.cube_box_fill,
+                      size: 27,
+                      color:AppColors.greyColor,
                     ),
                     RichText(
                       text: TextSpan(
-                        text: billModel.payment?.type ?? '',
+                        text: billModel.type ?? '',
                         style: CustomTextStyle.customMontserrat(
                           color: AppColors.greyColor,
                           fontWeight: FontWeight.w600,

@@ -1,24 +1,25 @@
+import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/module/home/model/dashboard_model.dart';
+import 'package:inventory/module/home/repo/home_repo.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
-import 'package:inventory/module/revenue/model/revenue_model.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/local_db/local_db_service.dart';
+import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../routes/route_name.dart';
 import '../model/grid_model.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart';
 
 class HomeController extends GetxController with CacheManager {
-  final globalStore = Get.find<GlobalStore>();
+  HomeRepo homeRepo = HomeRepo();
 
   // ================= DASHBOARD STATE =================
-  RxDouble totalBusRevenue = 0.0.obs;
+  RxNum totalBusRevenue = RxNum(0);
   RxNum stock = RxNum(0);
   RxNum goDownStock = RxNum(0);
   RxNum sellStock = RxNum(0);
@@ -28,7 +29,7 @@ class HomeController extends GetxController with CacheManager {
   RxNum nearExpiryCount = RxNum(0); // 🔥 NEW: Near Expiry Variable
 
   var productList = <ProductModel>[].obs;
-  var sellsList = <SellsModel>[].obs;
+  RxList<RecentActivitiesData>  sellsList = <RecentActivitiesData>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
 
   List<Map<String, dynamic>> chartData = [];
@@ -40,128 +41,38 @@ class HomeController extends GetxController with CacheManager {
   RxList<GoDownStockTransferToShopModel> pendingTransfers =
       <GoDownStockTransferToShopModel>[].obs;
 
-  final userId = SupabaseConfig.auth.currentUser?.id;
-
   // ================= INIT =================
   @override
   void onInit() {
-    // 1. Initial Load (Hive + RAM)
     loadDashboard();
-
-    // 2. 🔥 Realtime Workers
-    ever(globalStore.cashTotal, (_) => syncFromGlobalStore());
-    ever(globalStore.upiTotal, (_) => syncFromGlobalStore());
-    ever(globalStore.cardTotal, (_) => syncFromGlobalStore());
-    ever(globalStore.creditTotal, (_) => syncFromGlobalStore());
-
-    ever(globalStore.allProducts, (_) => syncStockFromGlobalStore());
-    ever(globalStore.allLooseProducts, (_) => syncStockFromGlobalStore());
-    ever(globalStore.allSalesList, (_) => syncFromGlobalStore());
-
     super.onInit();
   }
 
   // ================= SYNC LOGIC (ZERO SUPABASE CALLS) =================
-
-  void syncFromGlobalStore() {
-    totalBusRevenue.value =
-        globalStore.cashTotal.value +
-        globalStore.upiTotal.value +
-        globalStore.cardTotal.value +
-        globalStore.creditTotal.value;
-
-    sellsList.assignAll(globalStore.allSalesList);
-
-    getDashBoardList();
-    _syncSupabaseToHive();
-  }
-
-  void syncStockFromGlobalStore() {
-    stock.value = globalStore.allProducts.length;
-
-    outOfStock.value =
-        globalStore.allProducts.where((p) => (p.quantity ?? 0) <= 0).length;
-
-    // 🔥 NEAR EXPIRY LOGIC (90 Days)
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final ninetyDaysLater = now.add(const Duration(days: 90));
-
-    nearExpiryCount.value =
-        globalStore.allProducts.where((p) {
-          if (p.expireDate == null || p.expireDate!.isEmpty) return false;
-          DateTime? exp = DateTime.tryParse(p.expireDate!);
-          if (exp == null) return false;
-          return exp.isAfter(today.subtract(const Duration(days: 1))) &&
-              exp.isBefore(ninetyDaysLater);
-        }).length;
-
-    looseStock.value = globalStore.allLooseProducts.length;
-
-    getDashBoardList();
-  }
-
-  // ================= DASHBOARD MAIN =================
-  Future<void> loadDashboard() async {
+  void loadDashboard() async {
     isListLoading.value = true;
-    _loadFromHive();
-    syncFromGlobalStore();
-    syncStockFromGlobalStore();
-    await getDashBoardList();
-    isListLoading.value = false;
-  }
-
-  // ================= HIVE DATA LOADING =================
-  void _loadFromHive() {
     try {
-      Map<String, dynamic> stats = LocalService.getDailyReportStats();
-      totalBusRevenue.value =
-          (double.tryParse(stats['total_sales']?.toString() ?? '0.0') ?? 0.0);
-
-      outOfStock.value = LocalService.getCachedOutOfStockProducts().length;
-      stock.value = LocalService.getCachedProducts().length;
-      looseStock.value = LocalService.getCachedLooseProducts().length;
-
-      // Hive fallback for expiry
-      nearExpiryCount.value = LocalService.getCachedExpiryProducts().length;
-
-      getDashBoardList();
+      final response = await homeRepo.getDashBoardData();
+      if (response.success == success) {
+        sellsList.value =
+            response.data?.recentActivities?.recentActivitiesData ?? [];
+        stock.value = response.data?.stats?.totalProducts ?? 0.0;
+        totalBusRevenue.value = response.data?.stats?.todaySales ?? 0.0;
+        outOfStock.value = response.data?.stats?.outOfStock ?? 0.0;
+        looseStock.value = response.data?.stats?.looseStock ?? 0.0;
+       
+      } else if (response.success == failed) {
+        showSnackBar(error: SupabaseErrorHandler.getMessage(response.message));
+      } else {
+        showSnackBar(error: SupabaseErrorHandler.getMessage(response.message));
+      }
     } catch (e) {
-      AppLogger.info(("🚨 Hive Load Error: $e").toString());
+      AppLogger.info((e).toString());
+      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    } finally {
+       getDashBoardList();
+      isListLoading.value = false;
     }
-  }
-
-  // ================= LEGACY SUPABASE (MAPPED TO GLOBAL) =================
-
-  Future<void> loadFromSupabase() async {
-    syncFromGlobalStore();
-    syncStockFromGlobalStore();
-  }
-
-  void _syncSupabaseToHive() async {
-    Map<String, dynamic> stats = LocalService.getDailyReportStats();
-    stats['total_sales'] = totalBusRevenue.value;
-    await LocalService.saveDailyReportStats(stats);
-  }
-
-  Future<void> getTotalRevenue() async {
-    syncFromGlobalStore();
-  }
-
-  Future<void> getTotalStock() async {
-    syncStockFromGlobalStore();
-  }
-
-  Future<void> getOutOfStock() async {
-    syncStockFromGlobalStore();
-  }
-
-  Future<void> getTotalLooseStock() async {
-    syncStockFromGlobalStore();
-  }
-
-  Future<List<SellsModel>> fetchRevenueList() async {
-    return globalStore.allSalesList;
   }
 
   // ================= DASHBOARD GRID =================
@@ -183,7 +94,7 @@ class HomeController extends GetxController with CacheManager {
         routeName: AppRouteName.revenueView,
         label: 'Today Sales',
         icon: Icons.paid,
-        numbers: totalBusRevenue.value,
+        numbers: totalBusRevenue.value.toDouble(),
       ),
       CustomGridModel(
         routeName: AppRouteName.looseSell,

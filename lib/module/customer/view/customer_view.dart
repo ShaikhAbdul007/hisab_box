@@ -108,9 +108,9 @@ class CustomerView extends GetView<CustomerController> {
                                     controller.fetchAllCustomers();
                                     Get.back();
                                     controller.orderController.clear();
-                                  showSnackBar(error: "Customer added");
+                                    showSnackBar(error: "Customer added");
                                   } else {
-                                  showSnackBar(error: somethingWentMessage);
+                                    showSnackBar(error: somethingWentMessage);
                                   }
                                 }
                               },
@@ -177,16 +177,15 @@ class CustomerView extends GetView<CustomerController> {
                           : controller.customerDetailList.isEmpty
                           ? CommonNodatafound(message: 'No customer found')
                           : ListView.builder(
-                            itemCount: controller.customerDetailList.length,
+                            itemCount: controller.customerList.length,
                             itemBuilder: (context, index) {
-                              var customerData =
-                                  controller.customerDetailList[index];
+                              var customerData = controller.customerList[index];
                               return Obx(
                                 () =>
                                     customerData.name!.toLowerCase().contains(
                                               controller.searchText.value,
                                             ) ||
-                                            customerData.mobile!
+                                            customerData.mobileNo!
                                                 .toLowerCase()
                                                 .contains(
                                                   controller.searchText.value,
@@ -203,7 +202,7 @@ class CustomerView extends GetView<CustomerController> {
                                                 CustomTextStyle.customMontserrat(),
                                           ),
                                           trailing: Text(
-                                            customerData.mobile ?? '',
+                                            customerData.mobileNo ?? '',
                                             style:
                                                 CustomTextStyle.customOpenSans(),
                                           ),

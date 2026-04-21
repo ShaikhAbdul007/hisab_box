@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
@@ -10,9 +9,9 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/keys/keys.dart';
 import 'package:inventory/module/add_user/controller/add_user_controller.dart';
+import 'package:inventory/module/add_user/widgets/permission_widgets.dart';
 
 class AddUserView extends GetView<AddUserController> {
   const AddUserView({super.key});
@@ -42,16 +41,6 @@ class AddUserView extends GetView<AddUserController> {
               },
             ),
             CommonTextField(
-              label: 'Password',
-              hintText: 'Password',
-              controller: controller.passwordController,
-              validator: (value) {
-                if (value!.isEmpty) return emptyPassword;
-                if (value.length < 6) return shortPassword;
-                return null;
-              },
-            ),
-            CommonTextField(
               label: 'Mobile No',
               hintText: 'Mobile No',
               controller: controller.mobileController,
@@ -74,41 +63,52 @@ class AddUserView extends GetView<AddUserController> {
               errorText: 'Select staff type',
             ),
             setHeight(height: 10),
-            buildPermissionSection("Sales & Customers", [
-              'p_customer_list',
-              'p_credit_list',
-              'p_reconcile_credit',
-              'p_see_today_sale',
-              'p_see_today_sale_detail',
-            ]), // Index 0
-            setHeight(height: 10),
-            buildPermissionSection("Revenue & Reports", [
-              'p_see_revenue',
-              'p_see_received_cash',
-              'p_see_received_credit',
-              'p_see_received_card',
-              'p_see_received_upi',
-              'p_see_report',
-            ]), // Index 1
-            setHeight(height: 10),
-            buildPermissionSection("Inventory Management", [
-              'p_add_product',
-              'p_add_manual_product',
-              'p_delete_product',
-              'p_edit_product_details',
-              'p_add_loose_product',
-              'p_transfer_godown_to_shop',
-            ]), // Index 2
-            setHeight(height: 10),
-            buildPermissionSection("Admin Settings", [
-              'p_add_user',
-              'p_add_bank_details',
-              'p_edit_profile',
-            ]),
+            PermissionWidgets(
+              title: "Sales & Customers",
+              keys: [
+                'p_customer_list',
+                'p_credit_list',
+                'p_reconcile_credit',
+                'p_see_today_sale',
+                'p_see_today_sale_detail',
+              ],
+              permissions: controller.permissions,
+            ),
+
+            PermissionWidgets(
+              title: "Revenue & Reports",
+              keys: [
+                'p_see_revenue',
+                'p_see_received_cash',
+                'p_see_received_credit',
+                'p_see_received_card',
+                'p_see_received_upi',
+                'p_see_report',
+              ],
+              permissions: controller.permissions,
+            ),
+
+            PermissionWidgets(
+              title: "Inventory Management",
+              keys: [
+                'p_add_product',
+                'p_add_manual_product',
+                'p_delete_product',
+                'p_edit_product_details',
+                'p_add_loose_product',
+                'p_transfer_godown_to_shop',
+              ],
+              permissions: controller.permissions,
+            ),
+            PermissionWidgets(
+              title: "Admin Settings",
+              keys: ['p_add_user', 'p_add_bank_details', 'p_edit_profile'],
+              permissions: controller.permissions,
+            ),
             setHeight(height: 10),
             Obx(
               () => CustomPadding(
-                paddingOption: SymmetricPadding(horizontal: 10),
+                paddingOption: SymmetricPadding(horizontal: 30),
                 child: CommonButton(
                   isLoading: controller.isLoading.value,
                   label: 'Save',
@@ -136,50 +136,6 @@ class AddUserView extends GetView<AddUserController> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget buildPermissionSection(String title, List<String> keys) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: ExpansionTile(
-        collapsedShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColors.greyColor),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColors.greyColor),
-        ),
-        title: Text(
-          title,
-          style: CustomTextStyle.customOpenSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-
-        children:
-            keys.map((key) {
-              return Obx(
-                () => SwitchListTile(
-                  activeThumbColor: AppColors.blackColor,
-                  activeTrackColor: AppColors.greyColor,
-                  inactiveThumbColor: AppColors.greyColor,
-                  inactiveTrackColor: AppColors.blackColor,
-                  title: Text(
-                    key
-                        .replaceAll('p_', '')
-                        .replaceAll('_', ' ')
-                        .capitalizeFirst!,
-                    style: CustomTextStyle.customMontserrat(),
-                  ),
-                  value: controller.permissions[key]!.value,
-                  onChanged: (val) => controller.permissions[key]!.value = val,
-                ),
-              );
-            }).toList(),
       ),
     );
   }

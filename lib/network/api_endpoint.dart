@@ -31,9 +31,10 @@ class ApiEndPoint {
   static const String deleteAnimalCategory = "shop/animal-categories"; // + id
 
   // ---------------- PRODUCTS ----------------
-  static const String getProducts = "shop/products"; 
+  static const String getProducts = "shop/products";
   static const String addProduct = "shop/products/add";
-  static const String getProductByBarcode = "shop/products/barcode"; // + barcode
+  static const String getProductByBarcode =
+      "shop/products/barcode"; // + barcode
 
   // ---------------- STOCK ACTION ----------------
   static const String convertPacketToLoose =
@@ -47,22 +48,23 @@ class ApiEndPoint {
   static const String createBankDetails = "shop/bank-details";
 
   // ---------------- INVENTORY ----------------
-  static const String transferGodownToShop =
-      "shop/transfer-godown-to-shop";
+  static const String transferGodownToShop = "shop/transfer-godown-to-shop";
 
   // ---------------- STOCK REPORT ----------------
   static const String nearExpiry =
       "shop/stock/near-expiry"; // ?days=&page=&limit=
 
-  static const String outOfStock =
-      "shop/stock/out-of-stock"; // ?page=&limit=
+  static const String outOfStock = "shop/stock/out-of-stock"; // ?page=&limit=
+
+  static const String addEmployees = "employees/add"; //
+  static const String getEmployees = "employees"; //
+  static const String updateEmployeesPermissions = "permissions"; //
 
   // ---------------- REPORTS ----------------
   static const String salesReport =
       "shop/reports/sales"; // ?start_date=&end_date=&page=&limit=
-
-  static final String createBmr = 'bmr';
-  static final String updateBmr = 'bmr';
-  static final String deleteBmr = 'bmr';
-  static final String getBmr = 'bmr';
+  static const String dailyOverview = "reports/daily-overview";
+  static const String addCustomer = "customer/customers";
+  static const String getAllCustomer = "customer/customers";
+  static const String getCustomerMobileNumber = "customer/customers/mobile/";//add mobile number
 }

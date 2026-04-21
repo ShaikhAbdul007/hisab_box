@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/home/model/dashboard_model.dart';
 import 'package:inventory/module/reports/widget/report_common_continer.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
@@ -101,7 +102,8 @@ class RevenueView extends GetView<RevenueController> {
                           );
                         },
                         child: RevenueListText(
-                          billModel: data,
+                         // billModel: data,
+                         billModel: RecentActivitiesData(),
                           // index: index
                         ),
                       );

@@ -202,7 +202,7 @@ class DeskTopScreen extends StatelessWidget {
                                       );
                                   if (res == true) {
                                     AppLogger.info(('res is $res').toString());
-                                    await controller.loadDashboard();
+                                    controller.loadDashboard();
                                   }
                                 }
                               },
@@ -361,118 +361,107 @@ class MobileScreen extends StatelessWidget {
                 : CustomPadding(
                   paddingOption: SymmetricPadding(horizontal: 10.0),
                   child: SingleChildScrollView(
-                    child: RefreshIndicator.adaptive(
-                      color: AppColors.blackColor,
-                      onRefresh: () {
-                        return controller.loadDashboard();
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          setHeight(height: 5),
-                          SizedBox(
-                            height: 150.h,
-                            width: 500.w,
-                            child: GridView.builder(
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    childAspectRatio: 2.5,
-                                    crossAxisSpacing: 0,
-                                    mainAxisSpacing: 5,
-                                  ),
-                              itemCount: controller.lis.length,
-                              itemBuilder: (context, index) {
-                                return InkWell(
-                                  onTap: () async {
-                                    if (controller.lis[index].routeName !=
-                                        null) {
-                                      var ress =
-                                          await AppRoutes.futureNavigationToRoute(
-                                            routeName:
-                                                controller
-                                                    .lis[index]
-                                                    .routeName!,
-                                          );
-                                      if (ress == true) {
-                                        controller.loadDashboard();
-                                      }
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        setHeight(height: 5),
+                        SizedBox(
+                          height: 150.h,
+                          width: 500.w,
+                          child: GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 2.5,
+                                  crossAxisSpacing: 0,
+                                  mainAxisSpacing: 5,
+                                ),
+                            itemCount: controller.lis.length,
+                            itemBuilder: (context, index) {
+                              return InkWell(
+                                onTap: () async {
+                                  if (controller.lis[index].routeName != null) {
+                                    var ress =
+                                        await AppRoutes.futureNavigationToRoute(
+                                          routeName:
+                                              controller.lis[index].routeName!,
+                                        );
+                                    if (ress == true) {
+                                      controller.loadDashboard();
                                     }
-                                  },
-                                  child: HomeGridContainer(
-                                    customGridModel: controller.lis[index],
-                                  ),
+                                  }
+                                },
+                                child: HomeGridContainer(
+                                  customGridModel: controller.lis[index],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        CustomPadding(
+                          paddingOption: OnlyPadding(left: 10.0, bottom: 5),
+                          child: Text(
+                            'Quick Actions',
+                            style: CustomTextStyle.customMontserrat(
+                              fontSize: 17,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            QuickActionComponent(
+                              onTap: () {
+                                AppRoutes.navigateRoutes(
+                                  routeName: AppRouteName.inventroyList,
                                 );
                               },
+                              contentColor: AppColors.blackColor,
+                              bagGroundColor: AppColors.whiteColor,
+                              label: 'Add Product',
+                              icon: Icons.add,
+                            ),
+                            QuickActionComponent(
+                              onTap: () async {
+                                AppRoutes.futureNavigationToRoute(
+                                  routeName: AppRouteName.inventoryView,
+                                  data: {'flag': false},
+                                );
+                              },
+                              label: 'Scan Product',
+                              icon: CupertinoIcons.barcode_viewfinder,
+                            ),
+                          ],
+                        ),
+                        setHeight(height: 5),
+                        CustomPadding(
+                          paddingOption: OnlyPadding(left: 10.0),
+                          child: Text(
+                            'Recent Activites',
+                            style: CustomTextStyle.customMontserrat(
+                              fontSize: 17,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          CustomPadding(
-                            paddingOption: OnlyPadding(left: 10.0, bottom: 5),
-                            child: Text(
-                              'Quick Actions',
-                              style: CustomTextStyle.customMontserrat(
-                                fontSize: 17,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              QuickActionComponent(
-                                onTap: () {
-                                  AppRoutes.navigateRoutes(
-                                    routeName: AppRouteName.inventroyList,
+                        ),
+                        controller.sellsList.isNotEmpty
+                            ? ReportCommonContiner(
+                              height: 450,
+                              width: 550,
+                              child: ListView.builder(
+                                itemCount: controller.sellsList.length,
+                                itemBuilder: (context, index) {
+                                  var product = controller.sellsList[index];
+                                  return InkWell(
+                                    child: RevenueListText(
+                                      billModel: product,
+                                    ),
                                   );
                                 },
-                                contentColor: AppColors.blackColor,
-                                bagGroundColor: AppColors.whiteColor,
-                                label: 'Add Product',
-                                icon: Icons.add,
                               ),
-                              QuickActionComponent(
-                                onTap: () async {
-                                  AppRoutes.futureNavigationToRoute(
-                                    routeName: AppRouteName.inventoryView,
-                                    data: {'flag': false},
-                                  );
-                                },
-                                label: 'Scan Product',
-                                icon: CupertinoIcons.barcode_viewfinder,
-                              ),
-                            ],
-                          ),
-                          setHeight(height: 5),
-                          CustomPadding(
-                            paddingOption: OnlyPadding(left: 10.0),
-                            child: Text(
-                              'Recent Activites',
-                              style: CustomTextStyle.customMontserrat(
-                                fontSize: 17,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          controller.sellsList.isNotEmpty
-                              ? ReportCommonContiner(
-                                height: 450,
-                                width: 550,
-                                child: ListView.builder(
-                                  itemCount: controller.sellsList.length,
-                                  itemBuilder: (context, index) {
-                                    var product = controller.sellsList[index];
-                                    return InkWell(
-                                      child: RevenueListText(
-                                        //
-                                        // index: index,
-                                        billModel: product,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              )
-                              : CommonNodatafound(message: 'No sell found'),
-                        ],
-                      ),
+                            )
+                            : CommonNodatafound(message: 'No sell found'),
+                      ],
                     ),
                   ),
                 ),

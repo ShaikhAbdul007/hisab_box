@@ -1,6 +1,10 @@
 import 'package:get/get.dart';
 import 'package:inventory/module/add_user/binding/add_user_binding.dart';
+import 'package:inventory/module/add_user/binding/all_user_bindings.dart';
+import 'package:inventory/module/add_user/binding/all_user_details_binding.dart';
 import 'package:inventory/module/add_user/view/add_user_view.dart';
+import 'package:inventory/module/add_user/view/all_user_detail_view.dart';
+import 'package:inventory/module/add_user/view/all_user_view.dart';
 import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
 import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
 import 'package:inventory/module/credits_amount/binding/credit_binding.dart';
@@ -109,6 +113,21 @@ class AppRoutes {
       name: AppRouteName.inventoryViewFormSell,
       page: () => InventoryView(),
       binding: InventoryBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.allUser,
+      page: () => AllUserView(),
+      binding: AllUserBindings(),
+    ),
+    GetPage(
+      name: AppRouteName.addUser,
+      page: () => AddUserView(),
+      binding: AddUserBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.allUserDetail,
+      page: () => AllUserDetailView(),
+      binding: AllUserDetailsBinding(),
     ),
     GetPage(
       name: AppRouteName.inventroyList,
@@ -250,11 +269,6 @@ class AppRoutes {
       page: () => ProductDetailView(),
       binding: ProductDetailsBinding(),
     ),
-    GetPage(
-      name: AppRouteName.addUser,
-      page: () => AddUserView(),
-      binding: AddUserBinding(),
-    ),
   ];
 
   static Future<dynamic> futureNavigationToRoute({
@@ -287,6 +301,9 @@ class AppRoutes {
       case AppRouteName.reliableBarcodeView:
         Get.toNamed(AppRouteName.reliableBarcodeView, arguments: data);
         break;
+      case AppRouteName.allUserDetail:
+        Get.toNamed(AppRouteName.allUserDetail, arguments: data);
+        break;
       case AppRouteName.splash:
         Get.toNamed(AppRouteName.splash, arguments: data);
         break;
@@ -310,6 +327,9 @@ class AppRoutes {
         break;
       case AppRouteName.nointernateConnection:
         Get.toNamed(AppRouteName.nointernateConnection, arguments: data);
+        break;
+      case AppRouteName.allUser:
+        Get.toNamed(AppRouteName.allUser, arguments: data);
         break;
       case AppRouteName.expense:
         Get.toNamed(AppRouteName.expense, arguments: data);

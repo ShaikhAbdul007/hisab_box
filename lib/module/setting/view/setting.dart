@@ -125,7 +125,7 @@ class SettingView extends GetView<SettingController> {
                       icon: CupertinoIcons.person_solid,
                     ),
                     onTap: () {
-                      AppRoutes.navigateRoutes(routeName: AppRouteName.addUser);
+                      AppRoutes.navigateRoutes(routeName: AppRouteName.allUser);
                     },
                   ),
                 ],

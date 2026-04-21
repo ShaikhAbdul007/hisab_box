@@ -12,7 +12,7 @@ class AnimalCategoryRepo {
       );
       return CategoryModel.fromJson(response);
     } catch (e) {
-      rethrow;
+      return CategoryModel(msg: e.toString(), success: false);
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/home/model/dashboard_model.dart';
 import '../../../common_widget/common_padding.dart';
 import '../../revenue/model/revenue_model.dart';
 import '../model/sell_model.dart';
@@ -257,7 +258,7 @@ class SellingListText extends StatelessWidget {
 }
 
 class RecentActivitySellingListText extends StatelessWidget {
-  final SellsModel billModel;
+  final RecentActivitiesData billModel;
   const RecentActivitySellingListText({super.key, required this.billModel});
 
   @override
@@ -290,62 +291,36 @@ class RecentActivitySellingListText extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  billModel.billNo.toString(),
+                  billModel.module ?? '',
                   style: CustomTextStyle.customPoppin(fontSize: 17),
                 ),
                 setHeight(height: 2),
                 Text(
-                  billModel.payment?.type ?? '',
+                  billModel.type ?? '',
                   style: CustomTextStyle.customOpenSans(
                     color: AppColors.greyColor,
                   ),
                 ),
-                // Row(
-                //   children: [
-                //     RichText(
-                //       text: TextSpan(
-                //         text: '${revenueModel.animalCategory} ',
-                //         style: CustomTextStyle.customUbuntu(
-                //           color: AppColors.greyColor,
-                //         ),
-                //         children: [
-                //           TextSpan(
-                //             text: '${revenueModel.weight} ',
-                //             style: CustomTextStyle.customUbuntu(
-                //               color: AppColors.greyColor,
-                //               fontWeight: FontWeight.w500,
-                //             ),
-                //           ),
-                //           TextSpan(
-                //             text: '${revenueModel.category}  ',
-                //             style: CustomTextStyle.customUbuntu(
-                //               color: AppColors.greyColor,
-                //             ),
-                //           ),
-                //           TextSpan(
-                //             text: '\u{20B9} ${revenueModel.amount}',
-                //             style: CustomTextStyle.customPoppin(
-                //               color: AppColors.blackColor,
-                //               fontSize: 16,
-                //             ),
-                //           ),
-                //         ],
-                //       ),
-                //     ),
-                //   ],
-                // ),
                 setHeight(height: 5),
                 Row(
                   children: [
                     Text(
-                      billModel.soldAt ?? '',
+                      formatDateTime(
+                        showDate: true,
+                        showTime: false,
+                        billModel.createdAt ?? '',
+                      ),
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),
                     ),
                     setWidth(width: 10),
                     Text(
-                      billModel.time ?? '',
+                      formatDateTime(
+                        showDate: false,
+                        showTime: true,
+                        billModel.createdAt ?? '',
+                      ),
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.greyColor,
                       ),
@@ -355,37 +330,37 @@ class RecentActivitySellingListText extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  '\u{20B9}${billModel.finalAmount}',
-                  style: CustomTextStyle.customPoppin(
-                    color: AppColors.greenColor,
-                    fontSize: 18,
-                  ),
-                ),
-                RichText(
-                  text: TextSpan(
-                    text: billModel.payment?.type,
-                    style: CustomTextStyle.customOpenSans(
-                      color: AppColors.blackColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                    children: [
-                      // TextSpan(
-                      //   text: ' at ${revenueModel.discountPercentage}%',
-                      //   style: CustomTextStyle.customUbuntu(
-                      //     color: AppColors.deepPurple,
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Expanded(
+          //   child: Column(
+          //     children: [
+          //       Text(
+          //         '\u{20B9}${billModel.finalAmount}',
+          //         style: CustomTextStyle.customPoppin(
+          //           color: AppColors.greenColor,
+          //           fontSize: 18,
+          //         ),
+          //       ),
+          //       RichText(
+          //         text: TextSpan(
+          //           text: billModel.payment?.type,
+          //           style: CustomTextStyle.customOpenSans(
+          //             color: AppColors.blackColor,
+          //             fontWeight: FontWeight.w600,
+          //             fontSize: 14,
+          //           ),
+          //           children: [
+          //             // TextSpan(
+          //             //   text: ' at ${revenueModel.discountPercentage}%',
+          //             //   style: CustomTextStyle.customUbuntu(
+          //             //     color: AppColors.deepPurple,
+          //             //   ),
+          //             // ),
+          //           ],
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
