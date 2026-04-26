@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; // For MediaType
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/network/api_endpoint.dart';
@@ -136,16 +137,18 @@ class Networking extends BaseClient with CacheManager {
     File? file,
     Uint8List? fileBytes,
     String? fileName,
+    bool requiresAuth = true, // Add this parameter
   }) async {
     try {
-      String? token = checkingTokenExpireOrNot();
+      String? token = requiresAuth ? checkingTokenExpireOrNot() : null;
 
       final request = http.MultipartRequest('POST', Uri.parse(url));
 
-      /// headers
-      request.headers['Accept'] = 'application/json';
+      /// Let MultipartRequest generate Content-Type with boundary automatically.
+      request.headers['Accept'] = '*/*';
+      request.headers['Cache-Control'] = 'no-cache';
 
-      if (token != null && token.trim().isNotEmpty) {
+      if (requiresAuth && token != null && token.trim().isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
@@ -153,14 +156,29 @@ class Networking extends BaseClient with CacheManager {
       request.fields.addAll(body);
 
       /// file upload (optional)
-      if (fileField != null) {
+      if (fileField != null && file != null && file.existsSync()) {
         /// Mobile / iOS / Android / Simulator
-        if (!kIsWeb && file != null && file.existsSync()) {
+        if (!kIsWeb) {
+          // Get file extension to determine content type
+          final extension = file.path.split('.').last.toLowerCase();
+          String contentType = 'image/jpeg'; // default
+          
+          if (extension == 'png') {
+            contentType = 'image/png';
+          } else if (extension == 'jpg' || extension == 'jpeg') {
+            contentType = 'image/jpeg';
+          } else if (extension == 'gif') {
+            contentType = 'image/gif';
+          } else if (extension == 'webp') {
+            contentType = 'image/webp';
+          }
+          
           request.files.add(
             await http.MultipartFile.fromPath(
               fileField,
               file.path,
               filename: fileName ?? file.path.split('/').last,
+              contentType: MediaType.parse(contentType),
             ),
           );
         }
@@ -171,6 +189,7 @@ class Networking extends BaseClient with CacheManager {
               fileField,
               fileBytes,
               filename: fileName ?? 'upload_file.png',
+              contentType: MediaType.parse('image/png'),
             ),
           );
         }
@@ -182,6 +201,7 @@ body: $body
 fileField: $fileField
 fileName: $fileName
 token: $token
+requiresAuth: $requiresAuth
 ''');
 
       /// send request
@@ -193,6 +213,7 @@ token: $token
 statusCode: ${response.statusCode}
 responseBody: ${response.body}
 headers: ${response.headers}
+requestHeaders: ${request.headers}
 ''');
 
       return await fetchResponse(response);
@@ -203,32 +224,34 @@ headers: ${response.headers}
   }
 
   Future<dynamic> fetchResponse(http.Response response) async {
-    dynamic data;
-    switch (response.statusCode) {
-      case 200:
-        data = jsonDecode(response.body);
-        break;
-      case 201:
-        data = jsonDecode(response.body);
-        break;
-      case 400:
-        data = jsonDecode(response.body);
-        break;
-      case 401:
-        data = jsonDecode(response.body);
-        break;
-      case 404:
-        data = jsonDecode(response.body);
-        break;
-      case 500:
-        data = jsonDecode(response.body);
-        break;
-      default:
-        {
-          data = jsonDecode(response.body);
-        }
+    final body = response.body.trim();
+
+    if (body.isEmpty) {
+      return {
+        'success': false,
+        'msg': 'Empty response from server (${response.statusCode})',
+      };
     }
-    return data;
+
+    try {
+      return jsonDecode(body);
+    } on FormatException {
+      final contentType = response.headers['content-type'] ?? '';
+      final lowerBody = body.toLowerCase();
+      final isHtmlResponse =
+          contentType.contains('text/html') ||
+          lowerBody.startsWith('<!doctype html') ||
+          lowerBody.startsWith('<html');
+
+      return {
+        'success': false,
+        'msg':
+            isHtmlResponse
+                ? 'Server error (${response.statusCode}). Received HTML instead of JSON.'
+                : 'Unexpected server response (${response.statusCode}).',
+        if (kDebugMode) 'raw_response': body,
+      };
+    }
   }
 
   String? checkingTokenExpireOrNot() {

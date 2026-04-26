@@ -17,6 +17,7 @@ class SignupRepo {
         fileField: "profilepic",
         file: profilePic,
         fileName: profilePic?.path.split('/').last,
+        requiresAuth: false, // Registration doesn't need auth token
       );
 
       return UserModel.fromJson(response);

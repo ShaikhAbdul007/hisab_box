@@ -15,5 +15,6 @@ abstract class BaseClient {
   Future<dynamic> postMultipartRequestData({
     required String url,
     required Map<String, String> body,
+    bool requiresAuth = true,
   });
 }

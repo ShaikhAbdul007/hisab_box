@@ -5,9 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/auth/signup/repo/signup_repo.dart';
-import 'package:inventory/module/push_notification/local_notification_service.dart';
 import 'package:inventory/routes/routes.dart';
-import 'package:inventory/supabase_db/storage_service.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/helper.dart';
 import '../../../../routes/route_name.dart';
@@ -101,7 +99,7 @@ class SignupController extends GetxController with CacheManager {
         "pincode": pinCode.text.trim(),
         "alternate_mobile_no": alternateMobileNo.text.trim(),
         "shop_type": shopType.text.trim(),
-        "password": password.text.trim(),
+        "password": 'admin@123',
         "role": "admin",
 
         /// backend expects json string
@@ -134,19 +132,20 @@ class SignupController extends GetxController with CacheManager {
       /// optional image
       File? selectedFile;
 
-      if (profileImage.value != null &&
-          profileImage.value!.path.isNotEmpty &&
-          profileImage.value!.existsSync()) {
-        selectedFile = profileImage.value;
-      }
+      // TEMPORARY: Disable image upload for testing
+      // if (profileImage.value != null &&
+      //     profileImage.value!.path.isNotEmpty &&
+      //     profileImage.value!.existsSync()) {
+      //   selectedFile = profileImage.value;
+      // }
 
       debugPrint("Signup Body => $body");
       debugPrint("Password => ${password.text.trim()}");
-      debugPrint("Image => ${selectedFile?.path}");
+      debugPrint("Image => ${selectedFile?.path ?? 'NO IMAGE - TESTING'}");
 
       final response = await signupRepo.signUp(
         body: body,
-        profilePic: selectedFile,
+        profilePic: selectedFile, // This will be null for testing
       );
 
       if (response.success == success) {
