@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/module/customer/model/all_customer_model.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
@@ -14,7 +15,7 @@ class OrderController extends GetxController with CacheManager {
   TextEditingController name = TextEditingController();
   TextEditingController address = TextEditingController();
   TextEditingController description = TextEditingController();
-  RxList<CustomerDetails> customerDetails = <CustomerDetails>[].obs;
+  RxList<CustomerItem> customerDetails = <CustomerItem>[].obs;
   RxBool saveCustomerWithInvoiceLoading = false.obs;
   RxBool homeButtonVisible = true.obs;
 
@@ -39,46 +40,15 @@ class OrderController extends GetxController with CacheManager {
     }
   }
 
-  // ===============================
-  // 🔥 CACHE-FIRST CUSTOMER LOAD (SUPABASE)
-  // ===============================
+ 
   Future<List<CustomerDetails>> loadAllCustomers() async {
-    // 1️⃣ LOAD FROM CACHE
-
-    // 2️⃣ FALLBACK TO SUPABASE
-    final userId = resolveUserId(saveCustomerWithInvoiceLoading.value);
-    if (userId == null) return [];
+   
 
     try {
-      final List<dynamic> response = await SupabaseConfig.from(
-        'customers',
-      ).select().eq('user_id', userId);
-
-      final list =
-          response.map((e) {
-            return CustomerDetails(
-              id: e["id"].toString(),
-              name: e["name"] ?? "",
-              mobile:
-                  e["mobile_number"] ??
-                  "", // As per your schema 'mobile_number'
-              address: e["address"] ?? "",
-              totalPaid:
-                  (e["total_paid"] ?? 0)
-                      .toDouble(), // Schema columns adjust kiye hain
-              totalCredit: (e["total_credit"] ?? 0).toDouble(),
-              createdAt: e["created_at"],
-            );
-          }).toList();
-
-      customerDetails.value = list;
-
-      // 3️⃣ SAVE TO CACHE
-      saveCustomerList(list);
-      return list;
+           return [];
     } catch (e) {
       AppLogger.info(("Error loading customers: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
       return [];
     }
   }
@@ -159,17 +129,17 @@ class OrderController extends GetxController with CacheManager {
       return true;
     } catch (e) {
       AppLogger.info(("🚨 Save Customer Error Details: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
       return false;
     } finally {
       saveCustomerWithInvoiceLoading.value = false;
     }
   }
 
-  void setDataAsPerOptionSelecte(CustomerDetails option) {
+  void setDataAsPerOptionSelected(CustomerItem option) {
     address.text = option.address ?? '';
     name.text = option.name ?? '';
-    mobileNumber.text = option.mobile ?? '';
+    mobileNumber.text = option.mobileNo ?? '';
   }
 
   void clear() {

@@ -38,17 +38,17 @@ mixin class LocalService {
   // Sales ke liye key
 
   // 1. Sales Save Karna
-  static Future<void> saveTodaySales(String date, List<SaleModel> sales) async {
+  static Future<void> saveTodaySales(String date, List<SellModel> sales) async {
     List<Map<String, dynamic>> rawData = sales.map((s) => s.toJson()).toList();
     await _box.put('$_salesKey$date', rawData);
   }
 
   // 2. Sales Get Karna
-  static List<SaleModel> getTodaySales(String date) {
+  static List<SellModel> getTodaySales(String date) {
     List? rawData = _box.get('$_salesKey$date');
     if (rawData != null) {
       return rawData
-          .map((e) => SaleModel.fromMap(Map<String, dynamic>.from(e)))
+          .map((e) => SellModel.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     }
     return [];
@@ -115,11 +115,11 @@ mixin class LocalService {
     }
   }
 
-  static Future<void> addSaleToLocal(SaleModel newSale) async {
+  static Future<void> addSaleToLocal(SellModel newSale) async {
     String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     // 1. Purani sales uthao
-    List<SaleModel> currentSales = getTodaySales(today);
+    List<SellModel> currentSales = getTodaySales(today);
 
     // 2. Nayi sale list mein add karo
     currentSales.add(newSale);
@@ -131,7 +131,7 @@ mixin class LocalService {
     var stats = getDailyReportStats();
     double currentTotal =
         double.tryParse(stats['total_sales'].toString()) ?? 0.0;
-    stats['total_sales'] = currentTotal + newSale.totalAmount;
+    stats['total_sales'] = currentTotal + 0;
     await saveDailyReportStats(stats);
   }
 

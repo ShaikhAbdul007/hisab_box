@@ -16,7 +16,6 @@ class ProductModel {
   String? level;
   String? rack;
   String? box; // For loose category products
-
   bool? isLoosed;
   bool? isLooseCategory; // For loose category products
   String? id;

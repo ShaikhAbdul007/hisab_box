@@ -6,42 +6,16 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/home/model/dashboard_model.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 import '../../../common_widget/common_divider.dart';
 import '../model/revenue_model.dart';
 
-class RevenueListText extends StatelessWidget {
+class RecentActivitiesListText extends StatelessWidget {
   final RecentActivitiesData billModel;
-  const RevenueListText({super.key, required this.billModel});
-
-  // String _displayTime(String? value, String? soldAt) {
-  //   final raw = value ?? '';
-  //   String hhmmss = '';
-  //   if (raw.isNotEmpty) {
-  //     hhmmss = raw.contains('.') ? raw.split('.').first : raw;
-  //   } else {
-  //     final fromSoldAt = soldAt ?? '';
-  //     if (fromSoldAt.contains('T')) {
-  //       hhmmss = fromSoldAt.split('T')[1].split('.').first;
-  //     }
-  //   }
-
-  //   if (hhmmss.isEmpty) return '';
-  //   final parts = hhmmss.split(':');
-  //   if (parts.length < 2) return hhmmss;
-  //   final int hour24 = int.tryParse(parts[0]) ?? 0;
-  //   final String minute = parts[1].padLeft(2, '0');
-  //   final String second = (parts.length > 2 ? parts[2] : '00').padLeft(2, '0');
-  //   final String amPm = hour24 >= 12 ? 'PM' : 'AM';
-  //   final int hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12;
-  //   return '${hour12.toString().padLeft(2, '0')}:$minute:$second $amPm';
-  // }
+  const RecentActivitiesListText({super.key, required this.billModel});
 
   @override
   Widget build(BuildContext context) {
-    // double totalQty = 0;
-    // for (var item in billModel.items ?? []) {
-    //   totalQty += (item.quantity ?? 0);
-    // }
     return CustomPadding(
       paddingOption: OnlyPadding(left: 10, right: 10, bottom: 5.0),
       child: Column(
@@ -55,12 +29,6 @@ class RevenueListText extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Text(
-                    //   totalQty > 0 && totalQty > 1
-                    //       ? '${totalQty.toStringAsFixed(0)} items'
-                    //       : '${totalQty.toStringAsFixed(0)} item',
-                    //   style: CustomTextStyle.customMontserrat(fontSize: 17),
-                    // ),
                     Text(
                       billModel.module ?? '',
                       style: CustomTextStyle.customPoppin(fontSize: 17),
@@ -101,10 +69,10 @@ class RevenueListText extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                      Icon(
+                    Icon(
                       CupertinoIcons.cube_box_fill,
                       size: 27,
-                      color:AppColors.greyColor,
+                      color: AppColors.greyColor,
                     ),
                     RichText(
                       text: TextSpan(
@@ -114,14 +82,7 @@ class RevenueListText extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
-                        children: [
-                          // TextSpan(
-                          //   text: ' at ${revenueModel.discountPercentage}%',
-                          //   style: CustomTextStyle.customUbuntu(
-                          //     color: AppColors.deepPurple,
-                          //   ),
-                          // ),
-                        ],
+                        children: [],
                       ),
                     ),
                   ],
@@ -136,3 +97,98 @@ class RevenueListText extends StatelessWidget {
     );
   }
 }
+
+
+
+class RevenueListText extends StatelessWidget {
+  final SellItemData sellItemData;
+  const RevenueListText({super.key, required this.sellItemData});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPadding(
+      paddingOption: OnlyPadding(left: 10, right: 10, bottom: 5.0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              setWidth(width: 5),
+              Flexible(
+                flex: 3,
+                fit: FlexFit.tight,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sellItemData.billNo ?? '',
+                      style: CustomTextStyle.customPoppin(fontSize: 17),
+                    ),
+                    setHeight(height: 5),
+                    Row(
+                      children: [
+                        Text(
+                          formatDateTime(
+                            showDate: true,
+                            showTime: false,
+                            sellItemData.date ?? '',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: CustomTextStyle.customPoppin(
+                            color: AppColors.greyColor,
+                          ),
+                        ),
+                        setWidth(width: 5),
+                        Text(
+                          formatDateTime(
+                            showDate: false,
+                            showTime: true,
+                            sellItemData.date ?? '',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: CustomTextStyle.customPoppin(
+                            color: AppColors.greyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Icon(
+                      CupertinoIcons.cube_box_fill,
+                      size: 27,
+                      color: AppColors.greyColor,
+                    ),
+                    RichText(
+                      text: TextSpan(
+                        text: sellItemData.amount ?? '',
+                        style: CustomTextStyle.customMontserrat(
+                          color: AppColors.greyColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                        children: [],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          setHeight(height: 5),
+          CommonDivider(),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
+

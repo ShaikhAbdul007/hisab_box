@@ -6,10 +6,11 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 
 class LooseInventroyListText extends StatelessWidget {
-  final LooseInvetoryModel inventoryModel;
+  final InventoryItem inventoryModel;
   final void Function()? onTap;
   final bool isInventoryScanSelected;
   const LooseInventroyListText({
@@ -46,12 +47,12 @@ class LooseInventroyListText extends StatelessWidget {
                         inventoryModel.name ?? '',
                         style: CustomTextStyle.customPoppin(fontSize: 17),
                       ),
-                      if (inventoryModel.flavor case ('' || null)) ...{
+                      if (inventoryModel.flavour case ('' || null)) ...{
                         Container(),
                       } else ...{
                         setHeight(height: 2),
                         Text(
-                          inventoryModel.flavor ?? '',
+                          inventoryModel.flavour ?? '',
                           style: CustomTextStyle.customOpenSans(
                             color: AppColors.greyColor,
                           ),
@@ -60,7 +61,7 @@ class LooseInventroyListText extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '${inventoryModel.animalType}',
+                            '${inventoryModel.animalTypeName}',
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
@@ -74,11 +75,15 @@ class LooseInventroyListText extends StatelessWidget {
                             ),
                           },
                           Text(
-                            '/${inventoryModel.category}',
+                            '/${inventoryModel.categoryName}',
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
                           ),
+                        ],
+                      ),
+                      Row(
+                        children: [
                           Icon(CupertinoIcons.map_pin, size: 15.sp),
                           Text(
                             level.isNotEmpty && rack.isNotEmpty
@@ -119,28 +124,28 @@ class LooseInventroyListText extends StatelessWidget {
                       //         : Container(),
                       //   ],
                       // ),
-                      Row(
-                        children: [
-                          Text(
-                            formatDate(inventoryModel.purchaseDate ?? ''),
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                          Text(
-                            ' - ',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                          Text(
-                            formatDate(inventoryModel.expireDate ?? ''),
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.redColor,
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     Text(
+                      //       inventoryModel.purchaseDate ?? '',
+                      //       style: CustomTextStyle.customOpenSans(
+                      //         color: AppColors.greyColor,
+                      //       ),
+                      //     ),
+                      //     Text(
+                      //       ' - ',
+                      //       style: CustomTextStyle.customOpenSans(
+                      //         color: AppColors.greyColor,
+                      //       ),
+                      //     ),
+                      //     Text(
+                      //       inventoryModel.expireDate ?? '',
+                      //       style: CustomTextStyle.customOpenSans(
+                      //         color: AppColors.redColor,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 ),
@@ -193,23 +198,24 @@ class LooseInventroyListText extends StatelessWidget {
 
   String getText() {
     String? text;
-    if (inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10) {
+    int qty = int.tryParse(inventoryModel.quantity ?? '0') ?? 0;
+    if (qty > 0 && qty < 10) {
       text = 'Low Stock';
-    } else if (inventoryModel.quantity! == 0) {
+    } else if (qty == 0) {
       text = 'Out of Stock';
     }
     return text ?? '';
   }
 
   Color getColor() {
-    Color? colors;
-    if (inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10) {
-      colors = AppColors.orangeColor;
-    } else if (inventoryModel.quantity! == 0) {
-      colors = AppColors.redColor;
+    double qty =
+        double.tryParse(inventoryModel.quantity?.toString() ?? '0') ?? 0;
+    if (qty > 0 && qty < 10) {
+      return AppColors.orangeColor;
+    } else if (qty == 0) {
+      return AppColors.redColor;
     } else {
-      colors = AppColors.blackColor;
+      return AppColors.blackColor;
     }
-    return colors;
   }
 }

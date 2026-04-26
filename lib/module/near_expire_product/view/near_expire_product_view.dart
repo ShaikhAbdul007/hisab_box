@@ -18,7 +18,7 @@ class NearExpireProductView extends GetView<NearExpireProductController> {
       body: Obx(
         () =>
             controller.isDataloading.value
-                ? CommonProgressbar(color: AppColors.blackColor)
+                ? CommonProgressBar(color: AppColors.blackColor)
                 : controller.nearExpProductList.isNotEmpty
                 ? ListView.builder(
                   itemCount: controller.nearExpProductList.length,
@@ -29,7 +29,7 @@ class NearExpireProductView extends GetView<NearExpireProductController> {
                     );
                   },
                 )
-                : CommonNodatafound(message: 'No product found'),
+                : CommonNoDataFound(message: 'No product found'),
       ),
     );
   }

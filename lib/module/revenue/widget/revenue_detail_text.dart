@@ -3,12 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 
 import '../../../common_widget/common_padding.dart';
-import '../model/revenue_model.dart';
 
 class RevenueDetailList extends StatelessWidget {
-  final SellItem revenueModel;
+  final SellItemData revenueModel;
   const RevenueDetailList({super.key, required this.revenueModel});
 
   @override
@@ -38,9 +38,9 @@ class RevenueDetailList extends StatelessWidget {
                     color: AppColors.greyColor,
                   ),
                 ),
-                if (revenueModel.flavours?.isNotEmpty ?? false) ...{
+                if (revenueModel.flavor?.isNotEmpty ?? false) ...{
                   Text(
-                    revenueModel.flavours ?? '',
+                    revenueModel.flavor ?? '',
                     style: CustomTextStyle.customOpenSans(
                       color: AppColors.greyColor,
                     ),

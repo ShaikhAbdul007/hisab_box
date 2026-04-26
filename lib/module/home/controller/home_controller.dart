@@ -11,6 +11,7 @@ import 'package:inventory/module/home/repo/home_repo.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../routes/route_name.dart';
 import '../model/grid_model.dart';
@@ -28,7 +29,7 @@ class HomeController extends GetxController with CacheManager {
   RxNum outOfStock = RxNum(0);
   RxNum nearExpiryCount = RxNum(0); // 🔥 NEW: Near Expiry Variable
 
-  var productList = <ProductModel>[].obs;
+  var productList = <SellItemData>[].obs;
   RxList<RecentActivitiesData>  sellsList = <RecentActivitiesData>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
 
@@ -68,7 +69,7 @@ class HomeController extends GetxController with CacheManager {
       }
     } catch (e) {
       AppLogger.info((e).toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
        getDashBoardList();
       isListLoading.value = false;

@@ -57,9 +57,9 @@ class CreditView extends GetView<CredtiController> {
                 child: Obx(
                   () =>
                       controller.customDataLoading.value
-                          ? CommonProgressbar(color: AppColors.blackColor)
+                          ? CommonProgressBar(color: AppColors.blackColor)
                           : controller.customerDetailList.isEmpty
-                          ? CommonNodatafound(message: 'No credit found')
+                          ? CommonNoDataFound(message: 'No credit found')
                           : ListView.builder(
                             itemCount: controller.customerDetailList.length,
                             itemBuilder: (context, index) {

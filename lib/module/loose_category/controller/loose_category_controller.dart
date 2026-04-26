@@ -85,7 +85,7 @@ class LooseCategoryController extends GetxController
       LocalService.saveProducts(freshList);
     } catch (e) {
       AppLogger.info(("🚨 Fetch Fallback: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isFetchDiscount.value = false;
     }
@@ -145,7 +145,7 @@ class LooseCategoryController extends GetxController
       fetchLooseCategory(); // Refresh list to update Hive & UI
     } catch (e) {
       AppLogger.info(("🚨 Add Product Error: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isSaveLoading.value = false;
     }
@@ -170,7 +170,7 @@ class LooseCategoryController extends GetxController
       fetchLooseCategory();
     } catch (e) {
       AppLogger.info(("🚨 Delete Error: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isDeleteDiscount.value = false;
     }

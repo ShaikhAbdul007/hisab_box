@@ -229,7 +229,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                       ),
                     ],
                   )
-                  : CommonNodatafound(message: 'No product found for sell'),
+                  : CommonNoDataFound(message: 'No product found for sell'),
         ),
       ),
     );

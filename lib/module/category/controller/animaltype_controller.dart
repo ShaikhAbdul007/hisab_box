@@ -55,7 +55,7 @@ class AnimalTypeController extends GetxController
     } catch (e) {
       clear();
       Get.back();
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isSaveLoading.value = false;
     }
@@ -70,21 +70,19 @@ class AnimalTypeController extends GetxController
       var response = await animalCategoryRepo.getAnimalCategory();
       if (response.success == success) {
         animalTypeList.value = response.categorymodeldata?.data ?? [];
+        saveAnimalList(animalTypeList);
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);
       } else {
         showMessage(message: somethingWentMessage);
       }
     } catch (e) {
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isFetchAnimalCategory.value = false;
     }
   }
 
-  // =============================================
-  // 🔥 DELETE ANIMAL CATEGORY (SUPABASE + HIVE)
-  // =============================================
   Future<void> deleteAnimalCategory(String animalCategoryId) async {
     isDeleteAnimalCategory.value = true;
 
@@ -101,7 +99,7 @@ class AnimalTypeController extends GetxController
         showMessage(message: somethingWentMessage);
       }
     } catch (e) {
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isDeleteAnimalCategory.value = false;
     }

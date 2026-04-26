@@ -1,5 +1,6 @@
 import 'package:get_storage/get_storage.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
+import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
@@ -42,6 +43,16 @@ mixin class CacheManager {
     box.write(Key.cartProduct.toString(), productList);
   }
 
+  void saveCategoryList(List<CategoryModelListData> categories) {
+    final categoryList = categories.map((e) => e.toJson()).toList();
+    box.write(Key.categoryValue.toString(), categoryList);
+  }
+
+  void saveAnimalList(List<CategoryModelListData> categories) {
+    final categoryList = categories.map((e) => e.toJson()).toList();
+    box.write(Key.animalCategoryValue.toString(), categoryList);
+  }
+
   //----------------- checking expire token------------------------------------------------------------------------------
 
   bool isTokenExpired(int expireInSeconds, DateTime loginTime) {
@@ -52,24 +63,14 @@ mixin class CacheManager {
 
   //----------------- Retrieve all the value------------------------------------------------------------------------------
 
-  String retrieveTenantValue() {
-    return box.read(Key.categoryValue.toString());
-  }
-
-  String effectiveShopId() {
-    // final user = retrieveUserDetail();
-    // if (user.role == 'staff' &&
-    //     user.parentId != null &&
-    //     user.parentId!.isNotEmpty) {
-    //   return user.parentId!;
-    // }
-    return  "";
-  }
+  // String retrieveTenantValue() {
+  //   return box.read(Key.categoryValue.toString());
+  // }
 
   // Tracking ke liye: Kaun kaam kar raha hai (Staff ki apni ID)
   String get currentUserId {
     final user = retrieveUserDetail();
-    return  "";
+    return "";
   }
 
   String? retrieveEmployeeId() {
@@ -103,6 +104,22 @@ mixin class CacheManager {
     return UserModel();
   }
 
+  Future<List<CategoryModelListData>> retrieveCategory() async {
+    final category = box.read(Key.categoryValue.toString());
+    if (category != null && category is List) {
+      return category.map((e) => CategoryModelListData.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  Future<List<CategoryModelListData>> retrieveAnimalCategory() async {
+    final category = box.read(Key.animalCategoryValue.toString());
+    if (category != null && category is List) {
+      return category.map((e) => CategoryModelListData.fromJson(e)).toList();
+    }
+    return [];
+  }
+
   String retriveToken() {
     // box.writeIfNull(Key.tokenKey.toString(), '');
     return box.read(Key.tokenKey.toString()) ?? '';
@@ -125,7 +142,7 @@ mixin class CacheManager {
   }
 
   String? resolveUserId(bool loadingState) {
-    final userId = effectiveShopId();
+    final userId = '';
     if (userId.isEmpty) {
       loadingState = false;
       return null;

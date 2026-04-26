@@ -47,7 +47,7 @@ class CategoryController extends GetxController
     } catch (e) {
       clear();
       Get.back();
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isSaveLoading.value = false;
     }
@@ -60,15 +60,14 @@ class CategoryController extends GetxController
       var response = await categoryRepo.getCategory();
       if (response.success == success) {
         categoryList.value = response.categorymodeldata?.data ?? [];
+        saveCategoryList(categoryList);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
         showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
-      if (categoryList.isEmpty) {
-        showSnackBar(error: SupabaseErrorHandler.getMessage(e));
-      }
+      showSnackBar(error: e.toString());
     } finally {
       isFetchCategory.value = false;
     }
@@ -89,7 +88,7 @@ class CategoryController extends GetxController
         showMessage(message: somethingWentMessage);
       }
     } catch (e) {
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isDeleteCategory.value = false;
     }

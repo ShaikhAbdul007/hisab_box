@@ -46,8 +46,8 @@ class LooseSell extends GetView<LooseController> {
       body: Obx(
         () =>
             controller.isDataLoading.value
-                ? CommonProgressbar(size: 50, color: AppColors.blackColor)
-                : controller.productList.isNotEmpty
+                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
+                : controller.looseCategoryModelList.isNotEmpty
                 ? Column(
                   children: [
                     setHeight(height: 10),
@@ -82,9 +82,10 @@ class LooseSell extends GetView<LooseController> {
                     Expanded(
                       flex: 19,
                       child: ListView.builder(
-                        itemCount: controller.productList.length,
+                        itemCount: controller.looseCategoryModelList.length,
                         itemBuilder: (context, index) {
-                          var inventoryList = controller.productList[index];
+                          var inventoryList =
+                              controller.looseCategoryModelList[index];
                           String name = inventoryList.name?.toLowerCase() ?? '';
                           String barcode =
                               inventoryList.barcode?.toLowerCase() ?? '';
@@ -112,7 +113,7 @@ class LooseSell extends GetView<LooseController> {
                                               },
                                             );
                                         if (res == true) {
-                                          controller.fetchLosseList();
+                                          controller.fetchLooseList();
                                         }
                                       },
                                       isInventoryScanSelected: true,
@@ -125,7 +126,7 @@ class LooseSell extends GetView<LooseController> {
                     ),
                   ],
                 )
-                : CommonNodatafound(message: 'No product found'),
+                : CommonNoDataFound(message: 'No product found'),
       ),
     );
   }

@@ -103,7 +103,7 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
-              height: 170,
+              height: 240,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -115,6 +115,17 @@ class SettingView extends GetView<SettingController> {
                       AppRoutes.navigateRoutes(
                         routeName: AppRouteName.bankDetails,
                       );
+                    },
+                  ),
+                  CommonDivider(indent: 20, endIndent: 20),
+                  SettingItem(
+                    label: 'Add User Role',
+                    subtitle: 'Manage your users roles',
+                    leading: SettingIconContainer(
+                      icon: CupertinoIcons.person_solid,
+                    ),
+                    onTap: () {
+                      AppRoutes.navigateRoutes(routeName: AppRouteName.userRoleView);
                     },
                   ),
                   CommonDivider(indent: 20, endIndent: 20),

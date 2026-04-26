@@ -90,49 +90,49 @@ class ShopDetails extends StatelessWidget {
         setHeight(height: 5),
 
         /// Password
-        CommonTextField(
-          hintText: 'Password',
-          label: 'Password',
-          controller: password,
-          obscureText: true,
-          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
-          suffixIcon: commonSuffixIcon(
-            child: const Icon(CupertinoIcons.padlock, size: 18),
-          ),
-          validator: (value) {
-            if (value!.isEmpty) return emptyPassword;
-            if (value.length < 6) return shortPassword;
-            return null;
-          },
-        ),
+        // CommonTextField(
+        //   hintText: 'Password',
+        //   label: 'Password',
+        //   controller: password,
+        //   obscureText: true,
+        //   marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
+        //   suffixIcon: commonSuffixIcon(
+        //     child: const Icon(CupertinoIcons.padlock, size: 18),
+        //   ),
+        //   validator: (value) {
+        //     if (value!.isEmpty) return emptyPassword;
+        //     if (value.length < 6) return shortPassword;
+        //     return null;
+        //   },
+        // ),
 
-        setHeight(height: 5),
+        // setHeight(height: 5),
 
-        /// Confirm Password (toggle)
-        CommonTextField(
-          hintText: 'Confirm Password',
-          label: 'Confirm Password',
-          controller: confirmpassword,
-          obscureText: obscureText,
-          marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
-          suffixIcon: commonSuffixIcon(
-            child: InkWell(
-              onTap: onTap,
-              child: Icon(
-                obscureText ? CupertinoIcons.padlock : CupertinoIcons.lock_open,
-                size: 18,
-              ),
-            ),
-          ),
-          validator: (value) {
-            if (value!.isEmpty) return emptyPassword;
-            if (value.length < 6) return shortPassword;
-            if (password.text != confirmpassword.text) {
-              return passwordMismatch;
-            }
-            return null;
-          },
-        ),
+        // /// Confirm Password (toggle)
+        // CommonTextField(
+        //   hintText: 'Confirm Password',
+        //   label: 'Confirm Password',
+        //   controller: confirmpassword,
+        //   obscureText: obscureText,
+        //   marginPadding: SymmetricPadding(horizontal: 5).getPadding(),
+        //   suffixIcon: commonSuffixIcon(
+        //     child: InkWell(
+        //       onTap: onTap,
+        //       child: Icon(
+        //         obscureText ? CupertinoIcons.padlock : CupertinoIcons.lock_open,
+        //         size: 18,
+        //       ),
+        //     ),
+        //   ),
+        //   validator: (value) {
+        //     if (value!.isEmpty) return emptyPassword;
+        //     if (value.length < 6) return shortPassword;
+        //     if (password.text != confirmpassword.text) {
+        //       return passwordMismatch;
+        //     }
+        //     return null;
+        //   },
+        // ),
       ],
     );
   }

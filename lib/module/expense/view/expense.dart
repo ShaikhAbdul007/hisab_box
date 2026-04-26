@@ -34,7 +34,7 @@ class Expense extends GetView<ExpenseController> {
       body: Obx(
         () =>
             controller.isExpenseLoading.value
-                ? CommonProgressbar(color: AppColors.blackColor)
+                ? CommonProgressBar(color: AppColors.blackColor)
                 : controller.expenseList.isNotEmpty
                 ? ListView.builder(
                   itemCount: controller.expenseList.length,
@@ -44,7 +44,7 @@ class Expense extends GetView<ExpenseController> {
                     );
                   },
                 )
-                : CommonNodatafound(message: 'No expense found'),
+                : CommonNoDataFound(message: 'No expense found'),
       ),
     );
   }

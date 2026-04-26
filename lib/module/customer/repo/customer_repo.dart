@@ -1,4 +1,3 @@
-
 import 'package:inventory/module/customer/model/add_customer_model.dart';
 import 'package:inventory/module/customer/model/all_customer_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
@@ -7,10 +6,11 @@ import 'package:inventory/network/networking.dart';
 class CustomerRepo {
   Networking networking = Networking();
 
-  Future<AddCustomerModel> addCustomer() async {
+  Future<AddCustomerModel> addCustomer({required dynamic body}) async {
     try {
-      final response = await networking.getData(
+      final response = await networking.postData(
         url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.addCustomer}',
+        body: body,
       );
       return AddCustomerModel.fromJson(response);
     } catch (e) {
@@ -34,7 +34,8 @@ class CustomerRepo {
   }) async {
     try {
       final response = await networking.getData(
-        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getAllCustomer}',
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getCustomerMobileNumber}$mobileNumber',
+        
       );
       return AddCustomerModel.fromJson(response);
     } catch (e) {

@@ -30,7 +30,7 @@ class SupabaseConfig with CacheManager {
   }
 
   String? resolveUserId(bool loadingState) {
-    final userId = effectiveShopId();
+    final userId = '';
     if (userId.isEmpty) {
       loadingState = false;
       return null;

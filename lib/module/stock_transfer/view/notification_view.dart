@@ -15,7 +15,7 @@ class NotificationView extends GetView<NotificationController> {
       body: Obx(() {
         if (controller.pendingTransfers.isEmpty) {
           return const Center(
-            child: CommonNodatafound(message: "No notification found"),
+            child: CommonNoDataFound(message: "No notification found"),
           );
         }
         return ListView.builder(

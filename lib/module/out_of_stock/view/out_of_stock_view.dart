@@ -22,7 +22,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
       body: Obx(
         () =>
             controller.isDataLoading.value
-                ? CommonProgressbar(size: 50, color: AppColors.blackColor)
+                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
                 : controller.productList.isNotEmpty
                 ? Column(
                   children: [
@@ -121,7 +121,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
                     ),
                   ],
                 )
-                : CommonNodatafound(message: 'No product found'),
+                : CommonNoDataFound(message: 'No product found'),
       ),
     );
   }

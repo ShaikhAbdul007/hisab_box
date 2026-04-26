@@ -41,7 +41,7 @@ class Category extends GetView<CategoryController> {
       body: Obx(
         () =>
             controller.isFetchCategory.value
-                ? CommonProgressbar(color: AppColors.blackColor, size: 30)
+                ? CommonProgressBar(color: AppColors.blackColor, size: 30)
                 : controller.categoryList.isNotEmpty
                 ? Stack(
                   children: [
@@ -116,7 +116,7 @@ class Category extends GetView<CategoryController> {
                           controller.isDeleteCategory.value
                               ? BackdropFilter(
                                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                                child: CommonProgressbar(
+                                child: CommonProgressBar(
                                   color: AppColors.blackColor,
                                   size: 50,
                                 ),
@@ -125,7 +125,7 @@ class Category extends GetView<CategoryController> {
                     ),
                   ],
                 )
-                : CommonNodatafound(message: 'No category found'),
+                : CommonNoDataFound(message: 'No category found'),
       ),
     );
   }

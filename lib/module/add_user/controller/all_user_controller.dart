@@ -8,7 +8,7 @@ import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class AllUserController extends GetxController {
   AllUserViewRepo allUserViewRepo = AllUserViewRepo();
-  Rx<EmpolyeeModel> empolyeeModel = EmpolyeeModel().obs;
+  Rx<EmployeeModel> empolyeeModel = EmployeeModel().obs;
   RxBool isLoading = RxBool(false);
 
   @override
@@ -30,7 +30,7 @@ class AllUserController extends GetxController {
       }
     } catch (e) {
       AppLogger.info((e).toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isLoading.value = false;
     }

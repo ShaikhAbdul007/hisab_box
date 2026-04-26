@@ -86,7 +86,7 @@ class Networking extends BaseClient with CacheManager {
           'Content-Type': ApiEndPoint.contentType,
           'Authorization': "Bearer $token",
         },
-       // body: jsonEncode(body),
+        // body: jsonEncode(body),
       );
 
       jsonDeleteResponse = await fetchResponse(response);
@@ -129,7 +129,7 @@ class Networking extends BaseClient with CacheManager {
   }
 
   @override
-  Future postMultipartRequestData({
+  Future<dynamic> postMultipartRequestData({
     required String url,
     required Map<String, String> body,
     String? fileField,
@@ -137,48 +137,69 @@ class Networking extends BaseClient with CacheManager {
     Uint8List? fileBytes,
     String? fileName,
   }) async {
-    String? token = checkingTokenExpireOrNot();
+    try {
+      String? token = checkingTokenExpireOrNot();
 
-    var request = http.MultipartRequest('POST', Uri.parse(url));
+      final request = http.MultipartRequest('POST', Uri.parse(url));
 
-    // headers
-    request.headers['Accept'] = 'application/json';
-    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+      /// headers
+      request.headers['Accept'] = 'application/json';
 
-    // add normal fields
-    request.fields.addAll(body);
-
-    // add file
-    if (fileField != null) {
-      if (!kIsWeb && file != null) {
-        // Mobile
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            fileField,
-            file.path,
-            filename: fileName ?? file.path.split('/').last,
-          ),
-        );
-      } else if (kIsWeb && fileBytes != null) {
-        // Web
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            fileField,
-            fileBytes,
-            filename: fileName ?? 'file.png',
-          ),
-        );
-      } else {
-        throw Exception('File data missing for multipart request');
+      if (token != null && token.trim().isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
       }
+
+      /// normal form fields
+      request.fields.addAll(body);
+
+      /// file upload (optional)
+      if (fileField != null) {
+        /// Mobile / iOS / Android / Simulator
+        if (!kIsWeb && file != null && file.existsSync()) {
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              fileField,
+              file.path,
+              filename: fileName ?? file.path.split('/').last,
+            ),
+          );
+        }
+        /// Flutter Web
+        else if (kIsWeb && fileBytes != null) {
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              fileField,
+              fileBytes,
+              filename: fileName ?? 'upload_file.png',
+            ),
+          );
+        }
+      }
+
+      AppLogger.info('''
+url: $url
+body: $body
+fileField: $fileField
+fileName: $fileName
+token: $token
+''');
+
+      /// send request
+      final streamedResponse = await request.send();
+
+      final response = await http.Response.fromStream(streamedResponse);
+
+      AppLogger.info('''
+statusCode: ${response.statusCode}
+responseBody: ${response.body}
+headers: ${response.headers}
+''');
+
+      return await fetchResponse(response);
+    } catch (e) {
+      AppLogger.info("🚨 Multipart Request Error: $e");
+      rethrow;
     }
-    AppLogger.info(
-      ''' url: $url ,body: $body, filename:$fileName, fileBytes:$fileBytes,fileField:$fileField, token: $token''',
-    );
-    // send request
-    var streamedResponse = await request.send();
-    var response = await http.Response.fromStream(streamedResponse);
-    return await fetchResponse(response);
   }
 
   Future<dynamic> fetchResponse(http.Response response) async {
@@ -204,7 +225,7 @@ class Networking extends BaseClient with CacheManager {
         break;
       default:
         {
-          data = somethingWentWrong;
+          data = jsonDecode(response.body);
         }
     }
     return data;

@@ -118,7 +118,7 @@ class AllUserDetailController extends GetxController {
       }
     } catch (e) {
       AppLogger.info((e).toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isUpdateEmployeeLoading.value = false;
     }

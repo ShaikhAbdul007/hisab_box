@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
-import 'package:inventory/module/sell/model/print_model.dart';
-
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_container.dart';
@@ -18,7 +16,6 @@ import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/textstyle.dart';
 import '../../../keys/keys.dart';
-import '../../order_complete/widget/customer_details_mobile.dart';
 import '../controller/customer_controller.dart';
 
 class CustomerView extends GetView<CustomerController> {
@@ -47,14 +44,54 @@ class CustomerView extends GetView<CustomerController> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           setHeight(height: 10),
-                          CustomerDetailsMobileAutoCompleteWidget(
-                            controller: controller.orderController,
+
+                          // CustomerViewMobileAutoCompleteWidget(
+                          //   controller: controller,
+                          // ),
+                          Obx(
+                            () => CommonTextField(
+                              hintText: 'Mobile No',
+                              label: 'Mobile No',
+                              controller: controller.mobileController,
+                              keyboardType: TextInputType.number,
+                              inputLength: 10,
+                              validator: (no) {
+                                if (no?.isEmpty ?? false) {
+                                  return 'Enter mobile no';
+                                } else if (no!.length > 10) {
+                                  return 'Mobile no should be 10 digit';
+                                }
+                                return null;
+                              },
+                              suffixIcon:
+                                  controller
+                                          .isCustomerFetchingByMobileNumberLoading
+                                          .value
+                                      ? Container(
+                                        height: 30,
+                                        width: 40,
+                                        color: AppColors.whiteColor,
+                                        child: CommonProgressBar(
+                                          size: 40,
+                                          color: AppColors.blackColor,
+                                        ),
+                                      )
+                                      : null,
+                              onChanged: (v) {
+                                //  int? no=int.tryParse(controller.mobileController.text);
+                                if (v.length >= 10) {
+                                  controller.fetchCustomersByMobileNumber(
+                                    body: v,
+                                  );
+                                }
+                              },
+                            ),
                           ),
                           setHeight(height: 10),
                           CommonTextField(
                             hintText: 'Name',
                             label: 'Name',
-                            controller: controller.orderController.name,
+                            controller: controller.nameController,
                             validator: (add) {
                               if (add?.isEmpty ?? false) {
                                 return 'Enter name';
@@ -67,7 +104,7 @@ class CustomerView extends GetView<CustomerController> {
                             astraIsRequred: false,
                             hintText: 'Address',
                             label: 'Address',
-                            controller: controller.orderController.address,
+                            controller: controller.addressController,
                             // validator: (add) {
                             //   if (add?.isEmpty ?? false) {
                             //     return 'Enter address';
@@ -78,10 +115,9 @@ class CustomerView extends GetView<CustomerController> {
                           setHeight(height: 10),
                           CommonTextField(
                             astraIsRequred: false,
-
                             hintText: 'Description',
                             label: 'Description',
-                            controller: controller.orderController.description,
+                            controller: controller.descriptionController,
                             // validator: (add) {
                             //   if (add?.isEmpty ?? false) {
                             //     return 'Enter address';
@@ -92,28 +128,41 @@ class CustomerView extends GetView<CustomerController> {
                           setHeight(height: 30),
                           Obx(
                             () => CommonButton(
-                              isLoading:
-                                  controller
-                                      .orderController
-                                      .saveCustomerWithInvoiceLoading
-                                      .value,
+                              isLoading: controller.isAddCustomerLoading.value,
                               label: 'Save',
-                              onTap: () async {
-                                if (inventoryScanKey.currentState!.validate()) {
-                                  var res = await controller.orderController
-                                      .saveCustomerWithInvoice(
-                                        invoice: PrintInvoiceModel(),
-                                      );
-                                  if (res == true) {
-                                    controller.fetchAllCustomers();
-                                    Get.back();
-                                    controller.orderController.clear();
-                                    showSnackBar(error: "Customer added");
-                                  } else {
-                                    showSnackBar(error: somethingWentMessage);
-                                  }
-                                }
-                              },
+                              bgColor:
+                                  controller
+                                          .isCustomerFetchingByMobileNumberLoading
+                                          .value
+                                      ? AppColors.greyColor
+                                      : AppColors.blackColor,
+                              onTap:
+                                  controller
+                                          .isCustomerFetchingByMobileNumberLoading
+                                          .value
+                                      ? () {}
+                                      : () async {
+                                        if (inventoryScanKey.currentState!
+                                            .validate()) {
+                                          var body = {
+                                            "mobile_no":
+                                                controller
+                                                    .mobileController
+                                                    .text,
+                                            "name":
+                                                controller.nameController.text,
+                                            "address":
+                                                controller
+                                                    .addressController
+                                                    .text,
+                                            "description":
+                                                controller
+                                                    .descriptionController
+                                                    .text,
+                                          };
+                                          controller.addCustomers(body: body);
+                                        }
+                                      },
                             ),
                           ),
                           setHeight(height: 80),
@@ -123,8 +172,8 @@ class CustomerView extends GetView<CustomerController> {
                   ),
                   label: addCustomer,
                   onPressed: () {
-                    controller.clear();
                     Get.back();
+                    controller.clear();
                   },
                 );
               },
@@ -173,9 +222,9 @@ class CustomerView extends GetView<CustomerController> {
                 child: Obx(
                   () =>
                       controller.customDataLoading.value
-                          ? CommonProgressbar(color: AppColors.blackColor)
-                          : controller.customerDetailList.isEmpty
-                          ? CommonNodatafound(message: 'No customer found')
+                          ? CommonProgressBar(color: AppColors.blackColor)
+                          : controller.customerList.isEmpty
+                          ? CommonNoDataFound(message: 'No customer found')
                           : ListView.builder(
                             itemCount: controller.customerList.length,
                             itemBuilder: (context, index) {

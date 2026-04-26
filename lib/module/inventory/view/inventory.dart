@@ -87,7 +87,7 @@ class InventoryView extends GetView<InventroyController> {
                 controller.isExistingProductInfo.value
                     ? BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: CommonProgressbar(
+                      child: CommonProgressBar(
                         color: AppColors.redColor,
                         size: 50,
                       ),

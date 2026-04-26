@@ -1,11 +1,11 @@
-class EmpolyeeModel {
+class EmployeeModel {
   bool? success;
   String? msg;
   List<EmpolyeeData>? data;
 
-  EmpolyeeModel({this.success, this.msg, this.data});
+  EmployeeModel({this.success, this.msg, this.data});
 
-  EmpolyeeModel.fromJson(Map<String, dynamic> json) {
+  EmployeeModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['msg'];
     if (json['data'] != null) {

@@ -8,7 +8,11 @@ class AddEmpolyeeModel {
   AddEmpolyeeModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['msg'];
-    data = json['data'] != null ? AddEmpolyeeData.fromJson(json['data']) : null;
+    if (json['data'] is Map<String, dynamic>) {
+    data = AddEmpolyeeData.fromJson(json['data']);
+  } else {
+    data = null;
+  }
   }
 
   Map<String, dynamic> toJson() {

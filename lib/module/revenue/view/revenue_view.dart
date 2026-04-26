@@ -82,13 +82,13 @@ class RevenueView extends GetView<RevenueController> {
           ),
         ),
       ),
-      body: ReportCommonContiner(
+      body: ReportCommonContainer(
         height: double.infinity,
         width: 500,
         child: Obx(
           () =>
               controller.isRevenueListLoading.value
-                  ? CommonProgressbar(size: 50, color: AppColors.blackColor)
+                  ? CommonProgressBar(size: 50, color: AppColors.blackColor)
                   : controller.sellsList.isNotEmpty
                   ? ListView.builder(
                     itemCount: controller.sellsList.length,
@@ -102,14 +102,12 @@ class RevenueView extends GetView<RevenueController> {
                           );
                         },
                         child: RevenueListText(
-                         // billModel: data,
-                         billModel: RecentActivitiesData(),
-                          // index: index
+                          sellItemData: data,
                         ),
                       );
                     },
                   )
-                  : CommonNodatafound(message: 'No sell data found'),
+                  : CommonNoDataFound(message: 'No sell data found'),
         ),
       ),
     );

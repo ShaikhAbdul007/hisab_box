@@ -66,7 +66,7 @@ class InventroyList extends GetView<InventoryListController> {
                         data: {'flag': true},
                       );
                       if (res == true) {
-                        controller.fetchAllInventory();
+                        controller.fetchInventoryByTab('shop');
                       }
                     } else {
                       await AppRoutes.futureNavigationToRoute(
@@ -123,8 +123,8 @@ class InventroyList extends GetView<InventoryListController> {
       body: Obx(
         () =>
             controller.isDataLoading.value
-                ? CommonProgressbar(size: 50, color: AppColors.blackColor)
-                : controller.productList.isNotEmpty
+                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
+                : controller.shopProductList.isNotEmpty
                 ? Column(
                   children: [
                     setHeight(height: 10),
@@ -194,9 +194,7 @@ class InventroyList extends GetView<InventoryListController> {
                                       controller.shopProductList[index];
                                   return Obx(
                                     () =>
-                                        // Purana ganda code:
-                                        // inventoryList.name!.toLowerCase().contains(...) ❌ (Crash point)
-                                        // Naya aur Safe code: ✅
+                      
                                         (inventoryList.name ?? '')
                                                     .toLowerCase()
                                                     .contains(
@@ -214,14 +212,6 @@ class InventroyList extends GetView<InventoryListController> {
                                                           .toLowerCase(),
                                                     ) ||
                                                 (inventoryList.weight ?? '')
-                                                    .toLowerCase()
-                                                    .contains(
-                                                      controller
-                                                          .searchController
-                                                          .text
-                                                          .toLowerCase(),
-                                                    ) ||
-                                                (inventoryList.category ?? '')
                                                     .toLowerCase()
                                                     .contains(
                                                       controller
@@ -260,11 +250,11 @@ class InventroyList extends GetView<InventoryListController> {
                                   );
                                 },
                               )
-                              : CommonNodatafound(
+                              : CommonNoDataFound(
                                 message: 'No product found in SHOP.',
                               ),
                           controller.goDownProductList.isEmpty
-                              ? CommonNodatafound(
+                              ? CommonNoDataFound(
                                 message: 'No product found in GODOWN.',
                               )
                               : ListView.builder(
@@ -290,22 +280,6 @@ class InventroyList extends GetView<InventoryListController> {
                                                           .text,
                                                     ) ||
                                                 goDownInventoryList.weight!
-                                                    .toLowerCase()
-                                                    .contains(
-                                                      controller
-                                                          .searchController
-                                                          .value
-                                                          .text,
-                                                    ) ||
-                                                goDownInventoryList.category!
-                                                    .toLowerCase()
-                                                    .contains(
-                                                      controller
-                                                          .searchController
-                                                          .value
-                                                          .text,
-                                                    ) ||
-                                                goDownInventoryList.flavor!
                                                     .toLowerCase()
                                                     .contains(
                                                       controller
@@ -354,7 +328,7 @@ class InventroyList extends GetView<InventoryListController> {
                     ),
                   ],
                 )
-                : CommonNodatafound(message: 'No product found'),
+                : CommonNoDataFound(message: 'No product found'),
       ),
     );
   }

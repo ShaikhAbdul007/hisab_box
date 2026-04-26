@@ -100,7 +100,7 @@ class AppSettingView extends GetView<AppSettingController> {
       }
     } catch (e) {
       AppLogger.error('Printer selection failed', e, 'AppSettingView');
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     }
   }
 }

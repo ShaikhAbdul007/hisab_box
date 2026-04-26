@@ -26,7 +26,7 @@ class SplashView extends GetView<SplashController> {
                     width: 200,
                   ),
                   SizedBox(height: 20),
-                  CommonProgressbar(size: 50.0, color: AppColors.blackColor),
+                  CommonProgressBar(size: 50.0, color: AppColors.blackColor),
                 ],
               ),
             ),

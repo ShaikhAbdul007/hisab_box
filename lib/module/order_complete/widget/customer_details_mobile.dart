@@ -4,11 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/module/customer/model/all_customer_model.dart';
 import 'package:inventory/module/order_complete/controller/order_controller.dart';
-
 import '../../../common_widget/colors.dart';
 import '../../../helper/textstyle.dart';
-import '../model/customer_details_model.dart';
 
 class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
   final OrderController controller;
@@ -19,15 +18,15 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Autocomplete<CustomerDetails>(
+    return Autocomplete<CustomerItem>(
       optionsBuilder: (TextEditingValue tController) {
         if (tController.text.isEmpty) {
           controller.clear();
-          return const Iterable<CustomerDetails>.empty();
+          return const Iterable<CustomerItem>.empty();
         }
         return controller.customerDetails.where((e) {
           final name = e.name!.toLowerCase();
-          final mobile = e.mobile!;
+          final mobile = e.mobileNo!;
           final address = e.address!.toLowerCase();
           final query = tController.text.toLowerCase();
 
@@ -36,9 +35,9 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
               address.contains(query);
         });
       },
-      displayStringForOption: (option) => option.mobile ?? "",
+      displayStringForOption: (option) => option.mobileNo ?? "",
       onSelected: (option) {
-        controller.setDataAsPerOptionSelecte(option);
+        controller.setDataAsPerOptionSelected(option);
       },
       fieldViewBuilder: (
         context,
@@ -153,7 +152,7 @@ class CustomerDetailsMobileAutoCompleteWidget extends StatelessWidget {
                   return InkWell(
                     onTap: () => onSelected(customer),
                     child: CustomerDetailsMobileAutoCompleteOptionContainer(
-                      mobile: customer.mobile ?? "",
+                      mobile: customer.mobileNo ?? "",
                     ),
                   );
                 },

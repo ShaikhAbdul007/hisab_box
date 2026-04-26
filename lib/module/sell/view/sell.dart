@@ -23,15 +23,15 @@ class SellView extends GetView<SellController> {
             customDatePicker(
               context: context,
               selectedDate: DateTime.now(),
-              controller: controller.dayDate,
+              controller: controller.dayDates,
               onDatePicked: () {
-                controller.setSellList();
+                controller.fetchSales(todaysDate: controller.dayDates.value);
               },
             );
           },
           child: Row(
             children: [
-              Text(controller.dayDate.value),
+              Text(controller.dayDates.value),
               setWidth(width: 5),
               Icon(CupertinoIcons.calendar),
             ],
@@ -41,7 +41,7 @@ class SellView extends GetView<SellController> {
       body: Obx(
         () =>
             controller.isSellListLoading.value
-                ? CommonProgressbar(size: 50, color: AppColors.blackColor)
+                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
                 : controller.sellsList.isNotEmpty
                 ? ListView.builder(
                   itemCount: controller.sellsList.length,
@@ -51,7 +51,7 @@ class SellView extends GetView<SellController> {
                     );
                   },
                 )
-                : CommonNodatafound(message: 'No sale found'),
+                : CommonNoDataFound(message: 'No sale found'),
       ),
     );
   }

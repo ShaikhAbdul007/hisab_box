@@ -1,98 +1,44 @@
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/helper/set_format_date.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
+import 'package:inventory/module/sell/repo/sell_repo.dart';
 import '../../../helper/helper.dart';
 import '../model/sell_model.dart';
 
 class SellController extends GetxController with CacheManager, LocalService {
-  // Purane variable names same rakhe hain
+  SellRepo sellRepo = SellRepo();
   RxBool isSellListLoading = false.obs;
-  var sellsList = <SaleModel>[].obs;
-  RxString dayDate = ''.obs;
+  RxList<SellItemData> sellsList = <SellItemData>[].obs;
+  RxString dayDates = ''.obs;
 
   @override
   void onInit() {
-    dayDate.value = setFormateDate();
-    setSellList();
+    dayDates.value = setFormateDate();
+    fetchSales();
     super.onInit();
   }
 
-  // ==========================================
-  // 🔥 SET SELL LIST (HIVE + FALLBACK)
-  // ==========================================
-  void setSellList() async {
-    final today = dayDate.value;
-
-    // 1️⃣ Hive Cache Check (Custom local function)
-    final cacheData = LocalService.getTodaySales(today);
-    if (cacheData.isNotEmpty) {
-      sellsList.value = cacheData;
-      AppLogger.info(("📦 Sales loaded from Hive").toString());
-    }
-
-    // 2️⃣ Supabase Fallback (Background fetch for sync)
-    final data = await fetchSales();
-
-    if (data.isNotEmpty) {
-      sellsList.value = data;
-      // 3️⃣ Cache save (Update Hive)
-      await LocalService.saveTodaySales(today, data);
-    }
-  }
-
-  // ==========================================
-  // 🔥 FETCH SALES (SUPABASE + GROUPING LOGIC)
-  // ==========================================
-  Future<List<SaleModel>> fetchSales() async {
+  Future<void> fetchSales({String? todaysDate}) async {
     isSellListLoading.value = true;
-    final userId = resolveUserId(isSellListLoading.value);
+
+    final selectedDate = todaysDate ?? dayDates.value;
+
     try {
-      if (userId == null) return [];
+      var response = await sellRepo.fetchSell(date: selectedDate);
 
-      // Supabase se aaj ki sales uthao
-      final response = await SupabaseConfig.from(
-        'sales',
-      ).select().eq('user_id', userId).eq('soldAt', dayDate.value);
-
-      final List rawData = response as List;
-      final Map<String, SaleModel> salesByBarcode = {};
-
-      for (var item in rawData) {
-        final sale = SaleModel.fromMap(item);
-        final barcode = sale.barcode;
-
-        if (salesByBarcode.containsKey(barcode)) {
-          final existing = salesByBarcode[barcode]!;
-          // Grouping logic (Quantity sum karna) jaisa aapne pucha tha
-          salesByBarcode[barcode] = SaleModel(
-            sellingPrice: existing.sellingPrice,
-            animalType: existing.animalType,
-            barcode: existing.barcode,
-            quantity: existing.quantity + sale.quantity,
-            soldAt: existing.soldAt,
-            name: existing.name,
-            category: existing.category,
-            time: existing.time,
-            weight: existing.weight,
-            amount: existing.amount,
-            flavor: existing.flavor,
-            discountPercentage: existing.discountPercentage,
-            amountAfterDiscount: existing.amountAfterDiscount,
-          );
-        } else {
-          salesByBarcode[barcode] = sale;
-        }
+      if (response.success == success) {
+        sellsList.value = response.data?.data ?? [];
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
       }
-
-      return salesByBarcode.values.toList();
     } catch (e) {
-      AppLogger.info(("🚨 Fetch Sales Error: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
-      return [];
+      AppLogger.info("🚨 Fetch Sales Error: $e");
+      showSnackBar(error: e.toString());
     } finally {
       isSellListLoading.value = false;
     }

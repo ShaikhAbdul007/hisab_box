@@ -4,11 +4,12 @@ import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/device_info.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart';
+import 'package:inventory/module/reports/model/report_over_view_model.dart';
+import 'package:inventory/module/reports/repo/report_dashboard_overview.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:open_file/open_file.dart';
 import '../../../helper/helper.dart';
 import '../../revenue/model/revenue_model.dart';
@@ -21,8 +22,7 @@ class ReportController extends GetxController
         DeviceInfoo,
         LocalService,
         CacheManager {
-  final globalStore = Get.find<GlobalStore>();
-
+  ReportDashboardOverview reportDashboardOverview = ReportDashboardOverview();
   // --- Observables ---
   var selectedTab = 0.obs;
   RxDouble totalRevenue = 0.0.obs;
@@ -35,12 +35,20 @@ class ReportController extends GetxController
   RxInt reportDownloadGroupValue = (-1).obs;
   RxBool reportDownloadButtonEnable = false.obs;
   RxBool isExporting = false.obs;
+  RxBool isDashBoardOverView = false.obs;
+  RxBool isTopSellingProductsChart = false.obs;
+  RxBool isTopSellingProducts = false.obs;
   RxString reportLabels = ''.obs;
   TabController? tabController;
-  RxList<ReportTopProductModel> reportTopModel = <ReportTopProductModel>[].obs;
-  RxList<ReportTopProductModel> reportTopChart = <ReportTopProductModel>[].obs;
+  RxList<ReportTopProductData> reportTopModel = <ReportTopProductData>[].obs;
+  RxList<ReportTopProductData> reportTopChart = <ReportTopProductData>[].obs;
   RxList<ProductReportModel> productStockInList = <ProductReportModel>[].obs;
-  var sellsList = <SellsModel>[].obs;
+  var sellsList = <SellItemData>[].obs;
+  Rx<ReportOverviewData> reportOverViewStats = ReportOverviewData().obs;
+  RxList<ReportTopProductData> reportTopProductGraph =
+      <ReportTopProductData>[].obs;
+  RxList<ReportTopProductData> reportTopProductList =
+      <ReportTopProductData>[].obs;
   List<String> daysOtionLabel = ['Today', 'Week', 'Month'];
   List<String> reportLabel = [
     'Product Stock In',
@@ -52,142 +60,62 @@ class ReportController extends GetxController
   @override
   void onInit() {
     tabController = TabController(length: 2, vsync: this);
-    loadInitialDataFromHive();
-
-    // 🔥 Pehle RAM se sync karo
-    syncWithGlobalStore();
-
-    // 🔥 Listeners: Jaise hi GlobalStore mein naya bill aaye (Realtime)
-    // Ye bina fetch kiye sab update kar dega
-    ever(globalStore.allSalesList, (_) {
-      syncWithGlobalStore();
-      fetchTopSellingProducts(); // RAM calculation
-      fetchTodaySalesAndProfit(); // RAM calculation
-    });
-
-    fetchData(); // Sirf initial load ke liye
+    fetchModeOfPaymentStats();
+    fetchTopSellingProductsChart();
+    fetchTopSellingProducts();
     super.onInit();
   }
 
-  // 🔥 OPTIMIZED: Ab ye Supabase call nahi karta
-  void syncWithGlobalStore() {
-    totalCash.value = globalStore.cashTotal.value;
-    totalUpi.value = globalStore.upiTotal.value;
-    totalCredit.value = globalStore.creditTotal.value;
-    totalCard.value = globalStore.cardTotal.value;
-    totalRevenue.value =
-        totalCash.value + totalUpi.value + totalCard.value + totalCredit.value;
-
-    // Revenue list ko bhi sync karo
-    sellsList.assignAll(globalStore.allSalesList);
-
-    _syncStatsToHive();
-  }
-
-  void loadInitialDataFromHive() {
-    final stats = LocalService.getDailyReportStats();
-    if (stats.isNotEmpty) {
-      totalRevenue.value =
-          (double.tryParse(stats['total_sales']?.toString() ?? '0.0') ?? 0.0);
-      totalProfit.value =
-          (double.tryParse(stats['profit']?.toString() ?? '0.0') ?? 0.0);
-      totalCash.value =
-          (double.tryParse(stats['cash_total']?.toString() ?? '0.0') ?? 0.0);
-      totalUpi.value =
-          (double.tryParse(stats['upi_total']?.toString() ?? '0.0') ?? 0.0);
-      totalCard.value =
-          (double.tryParse(stats['card_total']?.toString() ?? '0.0') ?? 0.0);
-      totalCredit.value =
-          (double.tryParse(stats['credit_total']?.toString() ?? '0.0') ?? 0.0);
-    }
-    final cachedTop = LocalService.getCachedTopSellingProducts();
-    if (cachedTop.isNotEmpty) {
-      reportTopChart.assignAll(cachedTop);
-      reportTopModel.assignAll(cachedTop);
-    }
-  }
-
-  Future<void> fetchData() async {
-    // Initial loading ke waqt RAM data populate karo
-    await fetchTodaySalesAndProfit();
-    await fetchTopSellingProducts();
-    await setSellList();
-  }
-
-  Future<void> setSellList() async {
-    sellsList.assignAll(globalStore.allSalesList);
-  }
-
-  void _syncStatsToHive() {
-    LocalService.saveDailyReportStats({
-      'total_sales': totalRevenue.value,
-      'profit': totalProfit.value,
-      'cash_total': totalCash.value,
-      'upi_total': totalUpi.value,
-      'card_total': totalCard.value,
-      'credit_total': totalCredit.value,
-    });
-  }
-
-  Future<void> fetchPaymentSummary() async {
-    syncWithGlobalStore();
-  }
-
-  // 🔥 OPTIMIZED: Ab ye Supabase query nahi karta, RAM se profit nikalta hai
-  Future<void> fetchTodaySalesAndProfit() async {
-    double tempProfit = 0.0;
-    for (var sale in globalStore.allSalesList) {
-      for (var item in (sale.items ?? [])) {
-        // Note: purchase_price integration pending.
-        double pPrice = 0.0; // Idher product?.purchasePrice ka logic ayega
-        double sPrice = (item.finalPrice ?? 0.0).toDouble();
-        int qty = (item.quantity ?? 0).toInt();
-        tempProfit += (sPrice - (pPrice * qty));
+  Future<void> fetchModeOfPaymentStats() async {
+    isDashBoardOverView.value = true;
+    try {
+      var response = await reportDashboardOverview.getDailyOverviewData();
+      if (response.success == success) {
+        reportOverViewStats.value = response.data ?? ReportOverviewData();
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
       }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isDashBoardOverView.value = true;
     }
-    totalProfit.value = tempProfit;
-    _syncStatsToHive();
   }
 
-  // 🔥 OPTIMIZED: Supabase se fetch karne ki jagah RAM se aggregate karta hai
   Future<void> fetchTopSellingProductsChart() async {
-    Map<String, (int, double)> agg = {};
-    for (var sale in globalStore.allSalesList) {
-      for (var item in (sale.items ?? [])) {
-        String name = item.name ?? 'Unknown';
-        int q = (item.quantity ?? 0).toInt();
-        double r = (item.finalPrice ?? 0.0).toDouble();
-        var curr = agg[name] ?? (0, 0.0);
-        agg[name] = (curr.$1 + q, curr.$2 + r);
+    try {
+      var response = await reportDashboardOverview.getTopProductsGraphData();
+      if (response.success == success) {
+        reportTopProductGraph.value = response.data ?? [];
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
       }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isDashBoardOverView.value = true;
     }
-
-    List<ReportTopProductModel> list =
-        agg.entries
-            .map(
-              (e) => ReportTopProductModel(
-                name: e.key,
-                totalQty: e.value.$1.toString(),
-                revenue: e.value.$2.toInt(),
-              ),
-            )
-            .toList();
-
-    list.sort(
-      (a, b) => int.parse(b.totalQty!).compareTo(int.parse(a.totalQty!)),
-    );
-    reportTopChart.assignAll(list);
   }
 
   Future<void> fetchTopSellingProducts() async {
-    await fetchTopSellingProductsChart();
-    reportTopModel.assignAll(reportTopChart);
-  }
-
-  // Future<List<SellsModel>> fetchRevenueList() -- Ye ab redundant hai kyunki GlobalStore list de raha hai
-  // Par agar kahin use ho raha hai toh:
-  Future<List<SellsModel>> fetchRevenueList() async {
-    return globalStore.allSalesList;
+    try {
+      var response = await reportDashboardOverview.getTopProductsListData();
+      if (response.success == success) {
+        reportTopProductList.value = response.data ?? [];
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      // isDashBoardOverView.value = true;
+    }
   }
 
   // --- EXPORT LOGIC (UNCHANGED) ---
@@ -200,7 +128,7 @@ class ReportController extends GetxController
     required List<String> Function(dynamic item) mapper,
   }) async {
     try {
-      isExporting.value = true;
+      //  isExporting.value = true;
       var file = await exportToExcel(
         date: date,
         date2: date2,
@@ -216,9 +144,9 @@ class ReportController extends GetxController
         onPressed: () => OpenFile.open(file),
       );
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
-      isExporting.value = false;
+      //   isExporting.value = false;
     }
   }
 
@@ -230,7 +158,7 @@ class ReportController extends GetxController
     required List<dynamic> dataList,
     required List<String> Function(dynamic item) mapper,
   }) async {
-    var user = retrieveUserDetail();
+    //var user = retrieveUserDetail();
     var excel = Excel.createExcel();
     Sheet sheet = excel[excel.getDefaultSheet()!];
     sheet.appendRow([
@@ -384,8 +312,8 @@ class ReportController extends GetxController
     required String label,
     required String reportType,
   }) async {
-    final userId = resolveUserId(isExporting.value);
-    if (userId == null) return [];
+    // final userId = resolveUserId(isExporting.value);
+    //if (userId == null) return [];
     var range = getDateRange(
       label: label,
       customEndDate: '',
@@ -394,23 +322,9 @@ class ReportController extends GetxController
     String start = _convertDateFormat(range.$1);
     String end = _convertDateFormat(range.$2);
     try {
-      if (reportType == 'Product Stock In') {
-        return await SupabaseConfig.from('stock_batches')
-            .select('*, products(name, category, animal_type, weight)')
-            .eq('user_id', userId)
-            .gte('purchase_date', start)
-            .lte('purchase_date', end);
-      } else {
-        return await SupabaseConfig.from('sales')
-            .select(
-              '*, sale_items(*, products(name)), sale_payments(*), customers(name)',
-            )
-            .eq('user_id', userId)
-            .gte('created_at', "${start}T00:00:00.000Z")
-            .lte('created_at', "${end}T23:59:59.999Z");
-      }
+      return [];
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
       return [];
     }
   }
@@ -423,6 +337,4 @@ class ReportController extends GetxController
       return ddMMyyyy;
     }
   }
-
-  void changeTab(int index) => selectedTab.value = index;
 }

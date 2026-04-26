@@ -49,11 +49,11 @@ class DashboardData {
 }
 
 class Stats {
-  double? totalProducts;
-  double? outOfStock;
-  double? looseStock;
-  double? todaySales;
-  double? totalCustomers;
+  num? totalProducts;
+  num? outOfStock;
+  num? looseStock;
+  num? todaySales;
+  num? totalCustomers;
 
   Stats({
     this.totalProducts,

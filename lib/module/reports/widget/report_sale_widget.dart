@@ -34,7 +34,7 @@ class ReportSaleWidget extends StatelessWidget {
           //     ),
           //   ],
           // ),
-          ReportCommonContiner(
+          ReportCommonContainer(
             height: 500,
             width: 500,
             child: Column(
@@ -56,12 +56,12 @@ class ReportSaleWidget extends StatelessWidget {
                             itemBuilder: (context, index) {
                               var product = controller.sellsList[index];
                               return RevenueListText(
-                                billModel: RecentActivitiesData(),
+                                sellItemData: product,
                                 // index: index,
                               );
                             },
                           )
-                          : CommonNodatafound(message: 'No sell found'),
+                          : CommonNoDataFound(message: 'No sell found'),
                 ),
               ],
             ),

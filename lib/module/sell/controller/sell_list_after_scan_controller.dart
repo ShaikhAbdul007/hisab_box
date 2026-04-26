@@ -328,7 +328,7 @@ class SellListAfterScanController extends GetxController
       return true;
     } catch (e) {
       AppLogger.info(("🚨 Sale Failed: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
       return false;
     } finally {
       isLoading.value = false;

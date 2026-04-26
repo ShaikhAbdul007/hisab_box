@@ -84,7 +84,7 @@ class CredtiController extends GetxController with CacheManager {
       customerDetailList.assignAll(creditList);
     } catch (e) {
       AppLogger.error('Credit report build failed', e, 'CredtiController');
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       customDataLoading.value = false;
     }

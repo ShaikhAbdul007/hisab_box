@@ -125,7 +125,7 @@ class OutOfStockController extends GetxController
     } catch (e) {
       AppLogger.info(("🚨 OutOfStock Fetch Error: $e").toString());
       if (productList.isEmpty) {
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
       }
     } finally {
       isDataLoading.value = false;
@@ -163,7 +163,7 @@ class OutOfStockController extends GetxController
       await loadOutOfStockProducts();
     } catch (e) {
       AppLogger.info(("🚨 Deactivate Error: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isDeleteLoading.value = false;
     }

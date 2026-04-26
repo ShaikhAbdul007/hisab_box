@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
+import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/module/add_user/controller/all_user_controller.dart';
@@ -22,8 +24,13 @@ class AllUserView extends GetView<AllUserController> {
         radius: 5,
         color: AppColors.whiteLigthColor,
         child: InkWell(
-          onTap: () {
-            AppRoutes.navigateRoutes(routeName: AppRouteName.addUser);
+          onTap: () async {
+            bool res = await AppRoutes.futureNavigationToRoute(
+              routeName: AppRouteName.addUser,
+            );
+            if (res == true) {
+              controller.getEmployees();
+            }
           },
           child: Icon(CupertinoIcons.add),
         ),
@@ -31,7 +38,7 @@ class AllUserView extends GetView<AllUserController> {
       body: Obx(
         () =>
             controller.isLoading.value
-                ? CommonProgressbar(color: AppColors.blackColor)
+                ? CommonProgressBar(color: AppColors.blackColor)
                 : ListView.builder(
                   itemCount: controller.empolyeeModel.value.data?.length,
                   itemBuilder: (context, index) {
@@ -45,7 +52,7 @@ class AllUserView extends GetView<AllUserController> {
                       },
                       title: Text(empList?.name ?? ''),
                       subtitle: Text(empList?.role?.name ?? ''),
-                      trailing: Icon(Icons.arrow_forward_ios),
+                      trailing: Icon(Icons.arrow_forward_ios, size: 12.sp),
                     );
                   },
                 ),

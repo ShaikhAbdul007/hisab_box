@@ -50,7 +50,7 @@ class CommonButton extends StatelessWidget {
                 : Center(
                   child:
                       isLoading
-                          ? CommonProgressbar()
+                          ? CommonProgressBar()
                           : Text(
                             label,
                             style: CustomTextStyle.customRaleway(

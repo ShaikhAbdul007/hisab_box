@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,25 +7,21 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/auth/signup/repo/signup_repo.dart';
 import 'package:inventory/module/push_notification/local_notification_service.dart';
 import 'package:inventory/routes/routes.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/supabase_db/storage_service.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/helper.dart';
 import '../../../../routes/route_name.dart';
-import '../../../setting/model/user_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignupController extends GetxController with CacheManager {
   SignupRepo signupRepo = SignupRepo();
-  // Text Controllers (Finalized for memory efficiency)
+
   final email = TextEditingController();
-  final password = TextEditingController();
+  final password = TextEditingController(text: '123');
   final confirmpassword = TextEditingController();
   final name = TextEditingController();
   final address = TextEditingController();
   final city = TextEditingController();
-  final pincode = TextEditingController();
+  final pinCode = TextEditingController();
   final state = TextEditingController();
   final mobileNo = TextEditingController();
   final alternateMobileNo = TextEditingController();
@@ -63,45 +60,52 @@ class SignupController extends GetxController with CacheManager {
   // SIGN UP LOGIC
   // ============================
   Future<void> signUpUser() async {
-    // Basic validation check
-    if (password.text != confirmpassword.text) {
-    showSnackBar(error: "Passwords do not match");
+    unfocus();
+
+    /// basic validation
+    if (name.text.trim().isEmpty) {
+      showSnackBar(error: "Enter name");
       return;
     }
 
-    unfocus();
+    if (email.text.trim().isEmpty) {
+      showSnackBar(error: "Enter email");
+      return;
+    }
+
+    if (mobileNo.text.trim().isEmpty) {
+      showSnackBar(error: "Enter mobile number");
+      return;
+    }
+
+    // if (password.text.trim().isEmpty) {
+    //   showSnackBar(error: "Enter password");
+    //   return;
+    // }
+
+    // if (password.text.trim() != confirmpassword.text.trim()) {
+    //   showSnackBar(error: "Password does not match");
+    //   return;
+    // }
+
     signUpLoading.value = true;
 
     try {
-      String customerMobileNo =
-          '${mobileNo.text.trim()}/${alternateMobileNo.text.trim()}';
-      // 1️⃣ AUTH SIGNUP
-
-      String profileImageUrl = '';
-
-      // Get Device FCM Token from your service
-      String fcmToken = await NotificationServices.getDeviceToken();
-      // 2️⃣ STORAGE UPLOAD (If image selected)
-      if (profileImage.value != null && profileImage.value!.existsSync()) {
-        // StorageService hamesha Public URL return karega
-        profileImageUrl = await StorageService.uploadProfileImage(
-          file: profileImage.value!,
-          userId: '',
-        );
-      }
-
-      var body = {
-        'name': name.text.trim(),
-        'email': email.text.trim(),
-        'mobile_no': customerMobileNo,
-        'address': address.text.trim(),
-        'city': city.text.trim(),
-        'state': state.text.trim(),
-        'pincode': pincode.text.trim(),
-        'shop_type': shopType.text.trim(),
-        "password": "",
+      final body = <String, String>{
+        "name": name.text.trim(),
+        "email": email.text.trim(),
+        "mobile_no": mobileNo.text.trim(),
+        "address": address.text.trim(),
+        "city": city.text.trim(),
+        "state": state.text.trim(),
+        "pincode": pinCode.text.trim(),
+        "alternate_mobile_no": alternateMobileNo.text.trim(),
+        "shop_type": shopType.text.trim(),
+        "password": password.text.trim(),
         "role": "admin",
-        "permissions": {
+
+        /// backend expects json string
+        "permissions": jsonEncode({
           "p_customer_list": true,
           "p_credit_list": true,
           "p_reconcile_credit": true,
@@ -124,22 +128,39 @@ class SignupController extends GetxController with CacheManager {
           "p_add_user": true,
           "p_add_bank_details": true,
           "p_edit_profile": true,
-        },
+        }),
       };
 
-      final response = await signupRepo.signUp(body: body);
+      /// optional image
+      File? selectedFile;
+
+      if (profileImage.value != null &&
+          profileImage.value!.path.isNotEmpty &&
+          profileImage.value!.existsSync()) {
+        selectedFile = profileImage.value;
+      }
+
+      debugPrint("Signup Body => $body");
+      debugPrint("Password => ${password.text.trim()}");
+      debugPrint("Image => ${selectedFile?.path}");
+
+      final response = await signupRepo.signUp(
+        body: body,
+        profilePic: selectedFile,
+      );
+
       if (response.success == success) {
         saveUserData(response);
-      showSnackBar(error: singUpSuccessFul);
+        showSnackBar(error: singUpSuccessFul);
         AppRoutes.navigateRoutes(routeName: AppRouteName.login);
       } else if (response.success == failed) {
-      showSnackBar(error: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-      showSnackBar(error: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       debugPrint("🚨 Signup Error: $e");
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       signUpLoading.value = false;
     }
@@ -154,7 +175,7 @@ class SignupController extends GetxController with CacheManager {
     name.dispose();
     address.dispose();
     city.dispose();
-    pincode.dispose();
+    pinCode.dispose();
     state.dispose();
     mobileNo.dispose();
     alternateMobileNo.dispose();

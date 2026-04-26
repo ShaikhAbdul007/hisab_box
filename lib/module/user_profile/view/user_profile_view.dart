@@ -34,7 +34,7 @@ class UserProfileView extends GetView<UserProfileController> {
       backgroundColor: AppColors.whiteColor,
       body: Obx(() {
         if (controller.isDataLoading.value) {
-          return Center(child: CommonProgressbar(color: AppColors.blackColor));
+          return Center(child: CommonProgressBar(color: AppColors.blackColor));
         }
         return CustomPadding(
           paddingOption: SymmetricPadding(horizontal: 12.0),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/module/reports/widget/report_common_continer.dart';
-
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_nodatafound.dart';
 import '../../../common_widget/size.dart';
@@ -51,7 +50,7 @@ class ReportOverviewWidget extends StatelessWidget {
               ),
             ],
           ),
-          ReportCommonContiner(
+          ReportCommonContainer(
             padding: SymmetricPadding(horizontal: 10, vertical: 5).getPadding(),
             height: 200,
             width: 500,
@@ -68,7 +67,7 @@ class ReportOverviewWidget extends StatelessWidget {
                     ),
                   ),
                   controller.reportTopChart.isEmpty
-                      ? CommonNodatafound(message: 'No trend found')
+                      ? CommonNoDataFound(message: 'No trend found')
                       : AspectRatio(
                         aspectRatio: 14 / 7,
                         child: CustomPadding(
@@ -93,7 +92,7 @@ class ReportOverviewWidget extends StatelessWidget {
                                     final data =
                                         controller.reportTopChart[groupIndex];
                                     return BarTooltipItem(
-                                      "${data.name}\n",
+                                      "${data.productName}\n",
                                       CustomTextStyle.customMontserrat(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -102,7 +101,7 @@ class ReportOverviewWidget extends StatelessWidget {
 
                                       children: [
                                         TextSpan(
-                                          text: "Qty: ${data.totalQty}",
+                                          text: "Qty: ${data.qty}",
                                           style:
                                               CustomTextStyle.customMontserrat(
                                                 color: Colors.white,
@@ -148,7 +147,8 @@ class ReportOverviewWidget extends StatelessWidget {
                                         return CustomPadding(
                                           paddingOption: OnlyPadding(top: 8),
                                           child: Text(
-                                            data[value.toInt()].name ?? '',
+                                            data[value.toInt()].productName ??
+                                                '',
                                             style: const TextStyle(
                                               fontSize: 11,
                                               color: Colors.black87,
@@ -168,10 +168,7 @@ class ReportOverviewWidget extends StatelessWidget {
                                 (index) {
                                   final item = controller.reportTopChart[index];
                                   final qty =
-                                      double.tryParse(
-                                        item.totalQty.toString(),
-                                      ) ??
-                                      0;
+                                      double.tryParse(item.qty.toString()) ?? 0;
 
                                   return BarChartGroupData(
                                     x: index,
@@ -212,7 +209,7 @@ class ReportOverviewWidget extends StatelessWidget {
               ),
             ),
           ),
-          ReportCommonContiner(
+          ReportCommonContainer(
             height: 200,
             width: 500,
 
@@ -231,7 +228,7 @@ class ReportOverviewWidget extends StatelessWidget {
                 Expanded(
                   child:
                       controller.reportTopModel.isEmpty
-                          ? CommonNodatafound(message: 'No product found')
+                          ? CommonNoDataFound(message: 'No product found')
                           : ListView.builder(
                             itemCount: controller.reportTopModel.length,
                             itemBuilder: (context, index) {
@@ -254,12 +251,12 @@ class ReportOverviewWidget extends StatelessWidget {
                                   ),
                                 ),
                                 title: Text(
-                                  product.name ?? '',
+                                  product.productName ?? '',
                                   style: CustomTextStyle.customPoppin(),
                                 ),
                                 subtitle: RichText(
                                   text: TextSpan(
-                                    text: product.totalQty ?? '23',
+                                    text: product.qty.toString(),
                                     style: CustomTextStyle.customPoppin(),
                                     children: [
                                       TextSpan(
@@ -271,14 +268,14 @@ class ReportOverviewWidget extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                trailing: Text(
-                                  '₹ ${product.revenue}',
-                                  style: CustomTextStyle.customPoppin(
-                                    fontSize: 18,
-                                    letterSpacing: 0.5,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                // trailing: Text(
+                                //   '₹ ${product.revenue}',
+                                //   style: CustomTextStyle.customPoppin(
+                                //     fontSize: 18,
+                                //     letterSpacing: 0.5,
+                                //     fontWeight: FontWeight.bold,
+                                //   ),
+                                // ),
                               );
                             },
                           ),
@@ -307,7 +304,7 @@ class ReportOverViewContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ReportCommonContiner(
+    return ReportCommonContainer(
       height: height,
       width: width,
       child: SingleChildScrollView(

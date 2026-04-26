@@ -60,7 +60,7 @@ class BarcodeView extends GetView<BardcodeController> {
                 }
               } catch (e) {
                 AppLogger.error('Barcode print failed', e, 'BarcodeView');
-              showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+              showSnackBar(error: e.toString());
               } finally {
                 controller.isPrintingLoading.value = false;
               }
@@ -111,7 +111,7 @@ class BarcodeView extends GetView<BardcodeController> {
       }
     } catch (e) {
       AppLogger.error('Barcode printReceipt failed', e, 'BarcodeView');
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       controller.isPrintingLoading.value = false;
     }

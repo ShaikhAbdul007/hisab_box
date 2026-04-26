@@ -25,7 +25,10 @@ class BankdetailsView extends GetView<BankDetailsController> {
         },
         child: Icon(
           CupertinoIcons.square_pencil_fill,
-          color: AppColors.blackColor,
+          color:
+              controller.readOnly.value
+                  ? AppColors.blackColor
+                  : AppColors.redColor,
         ),
       ),
       body: CustomPadding(
@@ -35,7 +38,7 @@ class BankdetailsView extends GetView<BankDetailsController> {
           child: Obx(
             () =>
                 controller.setBankDetailsUpi.value
-                    ? CommonProgressbar(color: AppColors.blackColor)
+                    ? CommonProgressBar(color: AppColors.blackColor)
                     : ListView(
                       children: [
                         CommonTextField(

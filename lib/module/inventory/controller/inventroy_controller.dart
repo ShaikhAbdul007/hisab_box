@@ -165,7 +165,7 @@ class InventroyController extends GetxController
       return (false, ProductModel());
     } catch (e) {
       AppLogger.info(("🚨 Info Error: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
       return (false, ProductModel());
     } finally {
       isExistingProductInfo.value = false;
@@ -309,7 +309,7 @@ class InventroyController extends GetxController
       afterProductAdding();
     } catch (e) {
       AppLogger.info(("🚨 Scan Error: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     }
   }
 

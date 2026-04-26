@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
@@ -19,8 +20,8 @@ class ProductDetailsController extends GetxController
   final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
 
   final inventoryScanKey = GlobalKey<FormState>();
-  RxList<CategoryModelData> categoryList = <CategoryModelData>[].obs;
-  RxList<CategoryModelData> animalTypeList = <CategoryModelData>[].obs;
+  RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
+  RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
   RxList<ProductModel> productList = <ProductModel>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
@@ -126,22 +127,22 @@ class ProductDetailsController extends GetxController
     await fetchAnimalCategories();
   }
 
-  CategoryModel? getSelectedCategory({
+  CategoryModelListData? getSelectedCategory({
     required String categorysId,
     String categoryType = '',
   }) {
     try {
-      // if (categoryType == 'animal') {
-      //   return animalTypeList.firstWhere(
-      //     (e) => e.categorymodeldata. == categorysId || e.id == categorysId,
-      //     orElse: () => CategoryModel(),
-      //   );
-      // } else {
-      //   return categoryList.firstWhere(
-      //     (e) => e.name == categorysId || e.id == categorysId,
-      //     orElse: () => CategoryModel(),
-      //   );
-      // }
+      if (categoryType == 'animal') {
+        return animalTypeList.firstWhere(
+          (e) => e.id == categorysId || e.id == categorysId,
+          orElse: () => CategoryModelListData(),
+        );
+      } else {
+        return categoryList.firstWhere(
+          (e) => e.name == categorysId || e.id == categorysId,
+          orElse: () => CategoryModelListData(),
+        );
+      }
     } catch (e) {
       return null;
     }
@@ -150,12 +151,11 @@ class ProductDetailsController extends GetxController
   void setData() {
     var productData = data['product'];
 
-    if (productData is ProductModel) {
-      ProductModel p = productData;
-      category.text = p.category ?? '';
-      animalType.text = p.animalType ?? '';
-      isFlavorAndWeightNotRequired.value =
-          p.isFlavorAndWeightNotRequired ?? false;
+    if (productData is InventoryItem) {
+      InventoryItem p = productData;
+      category.text = p.categoryName ?? '';
+      animalType.text = p.animalTypeName ?? '';
+      isFlavorAndWeightNotRequired.value = p.isflavorRequired ?? false;
       productName.text = p.name ?? '';
       barcode.text = p.barcode ?? '';
       quantity.text = p.quantity.toString();
@@ -163,13 +163,13 @@ class ProductDetailsController extends GetxController
 
       sellingPrice.text = p.sellingPrice.toString();
       purchasePrice.text = p.purchasePrice.toString();
-      flavor.text = p.flavor ?? '';
+      flavor.text = p.flavour ?? '';
       weight.text = p.weight.toString();
-      isLoose = p.isLooseCategory ?? false;
+      isLoose = p.isloosed ?? false;
       location.text = p.location?.toCapitalized() ?? '';
       discount.text = p.discount.toString();
-      purchaseDate.text = formatDateForUi(p.purchaseDate, emptyFallback: '');
-      exprieDate.text = formatDateForUi(p.expireDate, emptyFallback: '');
+      // purchaseDate.text = p.purchaseDate ?? '';
+      // exprieDate.text = p.expireDate ?? '';
     } else if (productData is LooseInvetoryModel) {
       LooseInvetoryModel l = productData;
       category.text = l.category ?? '';
@@ -187,8 +187,8 @@ class ProductDetailsController extends GetxController
       isLoose = true;
       location.text = l.location?.toCapitalized() ?? '';
       discount.text = l.discount.toString();
-      purchaseDate.text = formatDateForUi(l.purchaseDate, emptyFallback: '');
-      exprieDate.text = formatDateForUi(l.expireDate, emptyFallback: '');
+      purchaseDate.text = l.purchaseDate ?? '';
+      exprieDate.text = l.expireDate ?? '';
     } else {
       Map<String, dynamic> p = productData as Map<String, dynamic>;
       category.text = p['category']?.toString() ?? '';
@@ -209,14 +209,8 @@ class ProductDetailsController extends GetxController
       isLoose = p['isLoosed'] ?? p['isLooseCategory'] ?? false;
       location.text = p['location']?.toString() ?? '';
       discount.text = p['discount']?.toString() ?? '0';
-      purchaseDate.text = formatDateForUi(
-        p['purchaseDate']?.toString() ?? p['purchase_date']?.toString(),
-        emptyFallback: '',
-      );
-      exprieDate.text = formatDateForUi(
-        p['expireDate']?.toString() ?? p['expiry_date']?.toString(),
-        emptyFallback: '',
-      );
+      purchaseDate.text = p['purchaseDate']?.toString() ?? '';
+      exprieDate.text = p['expireDate']?.toString() ?? '';
     }
   }
 
@@ -265,8 +259,8 @@ class ProductDetailsController extends GetxController
       }
 
       if (pid == null) throw "Product ID not found";
-      final pDate = formatDateForRpc(purchaseDate.text);
-      final eDate = formatDateForRpc(exprieDate.text);
+      final pDate = (purchaseDate.text);
+      final eDate = (exprieDate.text);
       // 1. Transactional Update (Cloud)
       await SupabaseConfig.client.rpc(
         'update_product_and_stock_v2',
@@ -299,7 +293,7 @@ class ProductDetailsController extends GetxController
       showSnackBar(error: '✅ Product & Stock Updated Safely.');
     } catch (e) {
       AppLogger.info(("🚨 Update Error: $e").toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       isSaveLoading.value = false;
     }
@@ -322,7 +316,7 @@ class ProductDetailsController extends GetxController
         await LocalService.saveProducts(freshList);
       } catch (e) {
         AppLogger.info(("🚨 Background Sync failed: $e").toString());
-        showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+        showSnackBar(error: e.toString());
       }
     } else {
       try {
@@ -350,48 +344,77 @@ class ProductDetailsController extends GetxController
         await LocalService.saveLooseProducts(loosedfreshList);
       } catch (e) {
         AppLogger.info(("🚨 Loose Sync failed: $e").toString());
-        showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+        showSnackBar(error: e.toString());
       }
     }
   }
 
+  // Future<void> fetchCategories() async {
+  //   final cached = LocalService.getCachedCategories();
+  //   if (cached.isNotEmpty) {
+  //     //categoryList.value = cached;
+  //   }
+  //   final userId = resolveUserId(isSaveLoading.value);
+  //   if (userId == null) return;
+  //   try {
+  //     final List response = await SupabaseConfig.from(
+  //       'categories',
+  //     ).select().eq('user_id', userId);
+  //     final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
+  //     // categoryList.value = freshData;
+  //     await LocalService.saveCategories(freshData);
+  //   } catch (e) {
+  //     AppLogger.info(("🚨 Category fetch error: $e").toString());
+  //     showSnackBar(error: e.toString());
+  //   }
+  // }
+
+  // Future<void> fetchAnimalCategories() async {
+  //   final cached = LocalService.getCachedAnimalCategories();
+  //   if (cached.isNotEmpty) {
+  //     // animalTypeList.value = cached;
+  //   }
+  //   final userId = resolveUserId(isSaveLoading.value);
+  //   if (userId == null) return;
+  //   try {
+  //     final List response = await SupabaseConfig.from(
+  //       'animal_categories',
+  //     ).select().eq('user_id', userId);
+  //     final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
+  //     // animalTypeList.value = freshData;
+  //     await LocalService.saveAnimalCategories(freshData);
+  //   } catch (e) {
+  //     AppLogger.info(("🚨 Animal category error: $e").toString());
+  //     showSnackBar(error: e.toString());
+  //   }
+  // }
+
   Future<void> fetchCategories() async {
-    final cached = LocalService.getCachedCategories();
-    if (cached.isNotEmpty) {
-      //categoryList.value = cached;
-    }
-    final userId = resolveUserId(isSaveLoading.value);
-    if (userId == null) return;
     try {
-      final List response = await SupabaseConfig.from(
-        'categories',
-      ).select().eq('user_id', userId);
-      final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-      // categoryList.value = freshData;
-      await LocalService.saveCategories(freshData);
+      final cached = await retrieveCategory();
+      if (cached.isNotEmpty) {
+        categoryList.value = cached;
+      }
     } catch (e) {
-      AppLogger.info(("🚨 Category fetch error: $e").toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      AppLogger.info(("🚨 Category Error: $e").toString());
+      showSnackBar(error: e.toString());
+    } finally {
+      // categoryListLoading.value = false;
     }
   }
 
+  // 🔥 FETCH ANIMAL CATEGORIES
   Future<void> fetchAnimalCategories() async {
-    final cached = LocalService.getCachedAnimalCategories();
-    if (cached.isNotEmpty) {
-      // animalTypeList.value = cached;
-    }
-    final userId = resolveUserId(isSaveLoading.value);
-    if (userId == null) return;
     try {
-      final List response = await SupabaseConfig.from(
-        'animal_categories',
-      ).select().eq('user_id', userId);
-      final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-      // animalTypeList.value = freshData;
-      await LocalService.saveAnimalCategories(freshData);
+      var cached = await retrieveAnimalCategory();
+      if (cached.isNotEmpty) {
+        animalTypeList.value = cached;
+      }
     } catch (e) {
-      AppLogger.info(("🚨 Animal category error: $e").toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      AppLogger.info(("🚨 Animal Error: $e").toString());
+      showSnackBar(error: e.toString());
+    } finally {
+      // animalCategoryListLoading.value = false;
     }
   }
 }

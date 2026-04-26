@@ -20,6 +20,7 @@ class AppRouteName {
   static const String splash = '/splash';
   static const String allUserDetail = '/allUserDetail';
   static const String unknwonroute = '/unknwonroute';
+  static const String userRoleView = '/userRoleView';
   static const String privacypolicy = '/privacypolicy';
   static const String orderView = '/orderView';
   static const String termandcodition = '/termandcodition';

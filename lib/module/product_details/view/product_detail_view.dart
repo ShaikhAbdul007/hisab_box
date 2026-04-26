@@ -261,66 +261,68 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                         }
                       },
                     ),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Obx(
-                            () =>
-                                controller.categoryList.isEmpty
-                                    ? Center(
-                                      child: CommonProgressbar(
-                                        color: AppColors.blackColor,
-                                      ),
-                                    )
-                                    : CommonDropDown(
-                                      errorText: emptyCategory,
-                                      enabled:
-                                          controller.dropDownReadOnly.value,
-                                      selectedDropDownItem: controller
-                                          .getSelectedCategory(
-                                            categorysId:
-                                                controller.category.text,
-                                          ),
-                                      listItems: controller.categoryList,
-                                      hintText: 'Select Category',
-                                      notifyParent: (val) {
-                                        controller.category.text = val.id;
-                                      },
-                                    ),
-                          ),
-                        ),
-                        Flexible(
-                          child: Obx(
-                            () =>
-                                controller.animalTypeList.isEmpty
-                                    ? Center(
-                                      child: CommonProgressbar(
-                                        color: AppColors.blackColor,
-                                      ),
-                                    )
-                                    : CommonDropDown(
-                                      errorText: emptyAnimalCategory,
-                                      enabled:
-                                          controller.dropDownReadOnly.value,
-                                      hintText: 'Animal Type',
-                                      selectedDropDownItem: controller
-                                          .getSelectedCategory(
-                                            categorysId:
-                                                controller.animalType.text,
-                                            categoryType: 'animal',
-                                          ),
-                                      listItems: controller.animalTypeList,
-                                      notifyParent: (val) {
-                                        controller.animalType.text = val.id;
-                                        customMessageOrErrorPrint(
-                                          message: controller.animalType.text,
-                                        );
-                                      },
-                                    ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     Flexible(
+                    //       child: Obx(
+                    //         () =>
+                    //             controller.categoryList.isEmpty
+                    //                 ? Center(
+                    //                   child: CommonProgressbar(
+                    //                     color: AppColors.blackColor,
+                    //                   ),
+                    //                 )
+                    //                 : CommonDropDown(
+                    //                   isModelValueEnabled: false,
+                    //                   errorText: emptyCategory,
+                    //                   enabled:
+                    //                       controller.dropDownReadOnly.value,
+                    //                   selectedDropDownItem: controller
+                    //                       .getSelectedCategory(
+                    //                         categorysId:
+                    //                             controller.category.text,
+                    //                       ),
+                    //                   listItems: controller.categoryList,
+                    //                   hintText: 'Select Category',
+                    //                   notifyParent: (val) {
+                    //                     controller.category.text = val.id;
+                    //                   },
+                    //                 ),
+                    //       ),
+                    //     ),
+                    //     Flexible(
+                    //       child: Obx(
+                    //         () =>
+                    //             controller.animalTypeList.isEmpty
+                    //                 ? Center(
+                    //                   child: CommonProgressbar(
+                    //                     color: AppColors.blackColor,
+                    //                   ),
+                    //                 )
+                    //                 : CommonDropDown(
+                    //                   isModelValueEnabled: false,
+                    //                   errorText: emptyAnimalCategory,
+                    //                   enabled:
+                    //                       controller.dropDownReadOnly.value,
+                    //                   hintText: 'Animal Type',
+                    //                   selectedDropDownItem: controller
+                    //                       .getSelectedCategory(
+                    //                         categorysId:
+                    //                             controller.animalType.text,
+                    //                         categoryType: 'animal',
+                    //                       ),
+                    //                   listItems: controller.animalTypeList,
+                    //                   notifyParent: (val) {
+                    //                     controller.animalType.text = val.id;
+                    //                     customMessageOrErrorPrint(
+                    //                       message: controller.animalType.text,
+                    //                     );
+                    //                   },
+                    //                 ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                     Obx(
                       () => Row(
                         children: [

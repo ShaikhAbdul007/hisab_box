@@ -68,7 +68,7 @@ class InvoicePrint extends GetView<InvoiceController> {
                     }
                   } catch (e) {
                     AppLogger.error('Print button flow failed', e, 'Invoice');
-                  showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+                  showSnackBar(error: e.toString());
                   }
                 },
               ),
@@ -117,7 +117,7 @@ class InvoicePrint extends GetView<InvoiceController> {
       }
     } catch (e) {
       AppLogger.error('Receipt print failed', e, 'Invoice');
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       controller.isPrintingLoading.value = false;
     }

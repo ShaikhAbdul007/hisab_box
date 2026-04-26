@@ -6,10 +6,11 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import '../../inventory/model/product_model.dart';
 
 class InventroyListText extends StatelessWidget {
-  final ProductModel inventoryModel;
+  final InventoryItem inventoryModel;
   final void Function()? onTap;
   final bool isInventoryScanSelected;
   const InventroyListText({
@@ -46,12 +47,12 @@ class InventroyListText extends StatelessWidget {
                         inventoryModel.name ?? '',
                         style: CustomTextStyle.customPoppin(fontSize: 17),
                       ),
-                      if (inventoryModel.flavor case ('' || null)) ...{
+                      if (inventoryModel.flavour case ('' || null)) ...{
                         Container(),
                       } else ...{
                         setHeight(height: 2),
                         Text(
-                          inventoryModel.flavor ?? '',
+                          inventoryModel.flavour ?? '',
                           style: CustomTextStyle.customOpenSans(
                             color: AppColors.greyColor,
                           ),
@@ -60,7 +61,7 @@ class InventroyListText extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '${inventoryModel.animalType}',
+                            '${inventoryModel.animalTypeName}',
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
@@ -75,11 +76,15 @@ class InventroyListText extends StatelessWidget {
                           },
 
                           Text(
-                            '/${inventoryModel.category}',
+                            '/${inventoryModel.categoryName}',
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
                           ),
+                        ],
+                      ),
+                      Row(
+                        children: [
                           Icon(CupertinoIcons.map_pin, size: 15.sp),
                           Text(
                             level.isNotEmpty && rack.isNotEmpty
@@ -120,28 +125,28 @@ class InventroyListText extends StatelessWidget {
                       //         : Container(),
                       //   ],
                       // ),
-                      Row(
-                        children: [
-                          Text(
-                            formatDate(inventoryModel.purchaseDate ?? ''),
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                          Text(
-                            ' - ',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                          Text(
-                            formatDate(inventoryModel.expireDate ?? ''),
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.redColor,
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     Text(
+                      //       formatDate(inventoryModel.purchaseDate ?? ''),
+                      //       style: CustomTextStyle.customOpenSans(
+                      //         color: AppColors.greyColor,
+                      //       ),
+                      //     ),
+                      //     Text(
+                      //       ' - ',
+                      //       style: CustomTextStyle.customOpenSans(
+                      //         color: AppColors.greyColor,
+                      //       ),
+                      //     ),
+                      //     Text(
+                      //       formatDate(inventoryModel.expireDate ?? ''),
+                      //       style: CustomTextStyle.customOpenSans(
+                      //         color: AppColors.redColor,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 ),
@@ -194,77 +199,24 @@ class InventroyListText extends StatelessWidget {
 
   String getText() {
     String? text;
-    if (inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10) {
+    int qty = int.tryParse(inventoryModel.quantity ?? '0') ?? 0;
+    if (qty > 0 && qty < 10) {
       text = 'Low Stock';
-    } else if (inventoryModel.quantity! == 0) {
+    } else if (qty == 0) {
       text = 'Out of Stock';
     }
     return text ?? '';
   }
 
-  Color getColor() {
-    Color? colors;
-    if (inventoryModel.quantity! > 0 && inventoryModel.quantity! < 10) {
-      colors = AppColors.orangeColor;
-    } else if (inventoryModel.quantity! == 0) {
-      colors = AppColors.redColor;
-    } else {
-      colors = AppColors.blackColor;
-    }
-    return colors;
+ Color getColor() {
+  double qty =
+      double.tryParse(inventoryModel.quantity?.toString() ?? '0') ?? 0;
+  if (qty > 0 && qty < 10) {
+    return AppColors.orangeColor;
+  } else if (qty == 0) {
+    return AppColors.redColor;
+  } else {
+    return AppColors.blackColor;
   }
 }
-
-
-
- // Row(
-                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //   children: [
-                //     isInventoryScanSelected
-                //         ? InkWell(
-                //           onTap: onTap,
-                //           child: Padding(
-                //             padding: const EdgeInsets.only(right: 20.0),
-                //             child: Icon(CupertinoIcons.square_pencil),
-                //           ),
-                //         )
-                //         : Container(),
-                //   ],
-                // ),
- // Text(
-                //   inventoryModel.barcode ?? '',
-                //   style: CustomTextStyle.customPoppin(
-                //     color: AppColors.greyColor,
-                //   ),
-                // ),
- // Container(
-          //   height: 80,
-          //   width: 70,
-          //   decoration: BoxDecoration(
-          //     color: Color(color),
-          //     borderRadius: BorderRadius.only(
-          //       topLeft: Radius.circular(5),
-          //       bottomLeft: Radius.circular(5),
-          //     ),
-          //   ),
-          //   child: Column(
-          //     mainAxisSize: MainAxisSize.min,
-          //     mainAxisAlignment: MainAxisAlignment.center,
-          //     children: [
-          //       Text(
-          //         'Quantity',
-          //         style: CustomTextStyle.customPoppin(
-          //           fontSize: 12,
-          //           fontWeight: FontWeight.bold,
-          //           color: AppColors.whiteColor,
-          //         ),
-          //       ),
-          //       Text(
-          //         inventoryModel.quantity.toString(),
-          //         style: CustomTextStyle.customPoppin(
-          //           color: AppColors.whiteColor,
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
+}

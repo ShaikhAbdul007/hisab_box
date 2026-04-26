@@ -7,6 +7,7 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/common_switch.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_calender.dart';
 import '../../../common_widget/common_dropdown.dart';
@@ -67,7 +68,7 @@ class ProductView extends GetView<ProductController> {
                       () =>
                           controller.categoryListLoading.value
                               ? Center(
-                                child: CommonProgressbar(
+                                child: CommonProgressBar(
                                   color: AppColors.blackColor,
                                 ),
                               )
@@ -95,7 +96,7 @@ class ProductView extends GetView<ProductController> {
                       () =>
                           controller.animalCategoryListLoading.value
                               ? Center(
-                                child: CommonProgressbar(
+                                child: CommonProgressBar(
                                   color: AppColors.blackColor,
                                 ),
                               )
@@ -376,11 +377,32 @@ class ProductView extends GetView<ProductController> {
                   isLoading: controller.isSaveLoading.value,
                   label: saveButton,
                   onTap: () async {
+                    var body = {
+                      "name": controller.productName.text,
+                      "barcodes": controller.barcode.text,
+                      "quantity": controller.quantity.text,
+                      "selling_price": controller.sellingPrice.text,
+                      "purchase_price": controller.purchasePrice.text,
+                      "location": controller.location.text.toLowerCase(),
+                      "stock_type": "packet",
+                      "isloosed": controller.isLoose,
+                      "isflavorRequired":
+                          controller.isFlavorAndWeightNotRequired.value,
+                      "purchase_date": parseAppDate(
+                        controller.purchaseDate.text,
+                      ),
+                      "expiry_date": parseAppDate(controller.exprieDate.text),
+                      "category": controller.category.text,
+                      "animal_type": controller.animalType.text,
+                      "flavour": controller.flavor.text,
+                      "level": controller.level.text,
+                      "rack": controller.rack.text,
+                      "weight": controller.weight.text,
+                      "discount": controller.discount.text,
+                    };
                     if (controller.inventoryScanKey.currentState!.validate()) {
                       unfocus();
-                      controller.saveNewProduct(
-                        barcode: controller.barcodeValue.value,
-                      );
+                      controller.saveNewProduct(body: body);
                     }
                   },
                 ),
@@ -454,11 +476,15 @@ class ProductView extends GetView<ProductController> {
               isLoading: controller.isLooseProductSave.value,
               label: saveButton,
               onTap: () async {
+                var body = {
+                  "barcode": controller.barcode.value,
+                  "looseQtyToAdd": controller.looseQuantity.text,
+                  "sellingPrice": controller.looseSellingPrice.text,
+                  "reason": "Manual conversion",
+                };
                 if (formkeys.currentState!.validate()) {
                   unfocus();
-                  controller.saveNewLooseProduct(
-                    barcode: controller.barcodeValue.value,
-                  );
+                  controller.saveNewLooseProduct(body: body);
                 }
               },
             ),

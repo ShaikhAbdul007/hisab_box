@@ -73,7 +73,7 @@ class SignupView extends GetView<SignupController> {
                             address: controller.address,
                             city: controller.city,
                             state: controller.state,
-                            pincode: controller.pincode,
+                            pincode: controller.pinCode,
                           ),
                         )
                         : ShopDetails(

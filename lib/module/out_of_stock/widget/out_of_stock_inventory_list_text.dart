@@ -93,7 +93,7 @@ class OutOfStockInventoryListText extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        formatDate(inventoryModel.purchaseDate ?? ''),
+                        (inventoryModel.purchaseDate ?? ''),
                         style: CustomTextStyle.customOpenSans(
                           color: AppColors.greyColor,
                         ),
@@ -105,7 +105,7 @@ class OutOfStockInventoryListText extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        formatDate(inventoryModel.expireDate ?? ''),
+                        (inventoryModel.expireDate ?? ''),
                         style: CustomTextStyle.customOpenSans(
                           color: AppColors.redColor,
                         ),

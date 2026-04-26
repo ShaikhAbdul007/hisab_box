@@ -5,6 +5,7 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_dropdown.dart';
 import 'package:inventory/common_widget/common_padding.dart';
+import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
@@ -28,6 +29,10 @@ class AddUserView extends GetView<AddUserController> {
               label: 'Staff Name',
               hintText: 'Staff Name',
               controller: controller.nameController,
+              validator: (nameValue) {
+                if (nameValue!.isEmpty) return emptyName;
+                return null;
+              },
             ),
             CommonTextField(
               textCapitalization: TextCapitalization.none,
@@ -48,19 +53,35 @@ class AddUserView extends GetView<AddUserController> {
               inputLength: 10,
               validator: (value) {
                 if (value!.isEmpty) return emptyMobileNo;
-                if (value.length < 10) return shortPassword;
+                if (value.length < 10) return mobileLength;
                 return null;
               },
             ),
-            CommonDropDown(
-              isModelValueEnabled: false,
-              listItems: ['Staff', 'Manager'],
-              hintText: 'Select Role',
-              notifyParent: (v) {
-                controller.selectedRole.value = v;
-                unfocus();
-              },
-              errorText: 'Select staff type',
+            Obx(
+              () =>
+                  controller.isFetchUserRole.value
+                      ? CommonProgressBar()
+                      : controller.userRoleList.isEmpty
+                      ? CommonDropDown(
+                        listItems: controller.userRoleList,
+                        hintText: 'Select add user role first',
+                        notifyParent: (v) {
+                          controller.selectedRole.value = v.id!;
+                          print(v.id);
+                          unfocus();
+                        },
+                        errorText: 'Select ',
+                      )
+                      : CommonDropDown(
+                        listItems: controller.userRoleList,
+                        hintText: 'Select Role',
+                        notifyParent: (v) {
+                          controller.selectedRole.value = v.id!;
+                          print(v.id);
+                          unfocus();
+                        },
+                        errorText: 'Select staff type',
+                      ),
             ),
             setHeight(height: 10),
             PermissionWidgets(
@@ -110,24 +131,25 @@ class AddUserView extends GetView<AddUserController> {
               () => CustomPadding(
                 paddingOption: SymmetricPadding(horizontal: 30),
                 child: CommonButton(
-                  isLoading: controller.isLoading.value,
+                  isLoading: controller.isSaveLoading.value,
                   label: 'Save',
-                  onTap: () {
+                  onTap: () async {
                     if (inventoryScanKey.currentState!.validate()) {
-                      //  controller.createStaffAccount();
-                      Map<String, dynamic> finalData = {
-                        'name': controller.nameController.text.trim(),
-                        'mobile_no': controller.mobileController.text.trim(),
-                        'role': controller.selectedRole.value,
-                        // 'parent_id': effectiveShopId,
-                      };
+                      Map<String, dynamic> permissionData = {};
 
-                      // Permissions add karna
                       controller.permissions.forEach((key, value) {
-                        finalData[key] = value.value;
+                        permissionData[key] = value.value;
                       });
 
-                      // Aapka sawal: Object print karna
+                      Map<String, dynamic> finalData = {
+                        "name": controller.nameController.text.trim(),
+                        "email": controller.emailController.text.trim(),
+                        "mobile_no": controller.mobileController.text.trim(),
+                        "password": "Password@123",
+                        "role_id": controller.selectedRole.value,
+                        "permissions": permissionData,
+                      };
+                      await controller.addUserRole(body: finalData);
                       debugPrint("Final Object to Save: $finalData");
                     }
                   },

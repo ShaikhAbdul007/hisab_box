@@ -33,6 +33,8 @@ class ApiEndPoint {
   // ---------------- PRODUCTS ----------------
   static const String getProducts = "shop/products";
   static const String addProduct = "shop/products/add";
+  static const String addLoosedProduct =
+      "shop/products/convert-packet-to-loose";
   static const String getProductByBarcode =
       "shop/products/barcode"; // + barcode
 
@@ -42,6 +44,7 @@ class ApiEndPoint {
 
   // ---------------- SALES ----------------
   static const String sellProduct = "shop/sell";
+  static const String sell = "sales";
 
   // ---------------- BANK ----------------
   static const String getBankDetails = "shop/bank-details";
@@ -64,7 +67,18 @@ class ApiEndPoint {
   static const String salesReport =
       "shop/reports/sales"; // ?start_date=&end_date=&page=&limit=
   static const String dailyOverview = "reports/daily-overview";
+  static const String reportsTopProductsGraph = "reports/top-products/graph";
+  static const String reportsTopProductsList = "reports/top-products/list";
   static const String addCustomer = "customer/customers";
   static const String getAllCustomer = "customer/customers";
-  static const String getCustomerMobileNumber = "customer/customers/mobile/";//add mobile number
+  static const String getCustomerMobileNumber =
+      "customer/customers/mobile/"; //add mobile number
+  // ---------------- User Role ----------------
+
+  static const String getAllUserRoles =
+      "roles"; // ?start_date=&end_date=&page=&limit=
+  static const String createUserRoles =
+      "roles"; // ?start_date=&end_date=&page=&limit=
+  static const String updateUserRoles = "roles"; //pass role id for update
+  static const String deleteUserRoles = "roles"; //pass role id for delete
 }

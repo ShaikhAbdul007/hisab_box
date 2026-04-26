@@ -48,7 +48,7 @@ class LoginController extends GetxController with CacheManager {
         return false;
       }
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
       return false;
     } finally {
       loginLoading.value = false;
@@ -80,7 +80,7 @@ class LoginController extends GetxController with CacheManager {
       }
     } catch (e) {
       // ✅ CENTRALIZED ERROR HANDLING
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
       return false;
     } finally {
       verifyLoading.value = false;

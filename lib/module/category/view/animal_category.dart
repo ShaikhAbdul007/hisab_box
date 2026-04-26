@@ -41,7 +41,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
       body: Obx(
         () =>
             controller.isFetchAnimalCategory.value
-                ? CommonProgressbar(color: AppColors.blackColor, size: 30)
+                ? CommonProgressBar(color: AppColors.blackColor, size: 30)
                 : controller.animalTypeList.isNotEmpty
                 ? Stack(
                   children: [
@@ -115,7 +115,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                           controller.isDeleteAnimalCategory.value
                               ? BackdropFilter(
                                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                                child: CommonProgressbar(
+                                child: CommonProgressBar(
                                   color: AppColors.blackColor,
                                   size: 50,
                                 ),
@@ -124,7 +124,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                     ),
                   ],
                 )
-                : CommonNodatafound(message: 'No animal category found'),
+                : CommonNoDataFound(message: 'No animal category found'),
       ),
     );
   }

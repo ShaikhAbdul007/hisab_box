@@ -1,17 +1,18 @@
 import 'package:get/get.dart';
 import 'package:inventory/module/revenue/model/revenue_model.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 
 class DetailsRevenueController extends GetxController {
-  late SellsModel sellModels;
+  late SellItemData sellModels;
 
   var data = Get.arguments;
 
-  List<SellItem> sellDataList = [];
+  List<SellItemData> sellDataList = [];
 
   @override
   void onInit() {
     sellModels = data;
-    sellDataList = data.items ?? [];
+    sellDataList = data;
     super.onInit();
   }
 }

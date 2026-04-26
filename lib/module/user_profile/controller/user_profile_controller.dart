@@ -89,7 +89,7 @@ class UserProfileController extends GetxController with CacheManager {
       readOnly.value = true;
     showSnackBar(error: "Profile Updated Successfully ✅");
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isLoading.value = false;
     }

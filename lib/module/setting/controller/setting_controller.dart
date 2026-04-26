@@ -47,7 +47,7 @@ class SettingController extends GetxController with CacheManager {
         email.value = userModel.value.data?.email ?? '';
       }
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isProfileLoading.value = false;
     }
@@ -65,7 +65,7 @@ class SettingController extends GetxController with CacheManager {
       showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {}
   }
 
@@ -85,7 +85,7 @@ class SettingController extends GetxController with CacheManager {
       showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isUserlogout.value = false;
     }

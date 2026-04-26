@@ -47,7 +47,7 @@ class TabletScreen extends StatelessWidget {
       body: Obx(
         () =>
             controller.isListLoading.value
-                ? CommonProgressbar(color: AppColors.blackColor, size: 50)
+                ? CommonProgressBar(color: AppColors.blackColor, size: 50)
                 : SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +143,7 @@ class TabletScreen extends StatelessWidget {
                                     );
                                   },
                                 )
-                                : CommonNodatafound(message: 'No sell found'),
+                                : CommonNoDataFound(message: 'No Recent Activity found'),
                       ),
                     ],
                   ),
@@ -172,7 +172,7 @@ class DeskTopScreen extends StatelessWidget {
       body: Obx(
         () =>
             controller.isListLoading.value
-                ? CommonProgressbar(color: AppColors.blackColor, size: 50)
+                ? CommonProgressBar(color: AppColors.blackColor, size: 50)
                 : SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,7 +270,7 @@ class DeskTopScreen extends StatelessWidget {
                                     );
                                   },
                                 )
-                                : CommonNodatafound(message: 'No sell found'),
+                                : CommonNoDataFound(message: 'No Recent Activity found'),
                       ),
                     ],
                   ),
@@ -357,7 +357,7 @@ class MobileScreen extends StatelessWidget {
       body: Obx(
         () =>
             controller.isListLoading.value
-                ? CommonProgressbar(color: AppColors.blackColor, size: 50)
+                ? CommonProgressBar(color: AppColors.blackColor, size: 50)
                 : CustomPadding(
                   paddingOption: SymmetricPadding(horizontal: 10.0),
                   child: SingleChildScrollView(
@@ -445,22 +445,22 @@ class MobileScreen extends StatelessWidget {
                           ),
                         ),
                         controller.sellsList.isNotEmpty
-                            ? ReportCommonContiner(
-                              height: 450,
+                            ? ReportCommonContainer(
+                              height: 310,
                               width: 550,
                               child: ListView.builder(
                                 itemCount: controller.sellsList.length,
                                 itemBuilder: (context, index) {
                                   var product = controller.sellsList[index];
                                   return InkWell(
-                                    child: RevenueListText(
+                                    child: RecentActivitiesListText(
                                       billModel: product,
                                     ),
                                   );
                                 },
                               ),
                             )
-                            : CommonNodatafound(message: 'No sell found'),
+                            : CommonNoDataFound(message: 'No Recent Activity found'),
                       ],
                     ),
                   ),

@@ -2,9 +2,11 @@ import 'package:get/get.dart';
 import 'package:inventory/module/add_user/binding/add_user_binding.dart';
 import 'package:inventory/module/add_user/binding/all_user_bindings.dart';
 import 'package:inventory/module/add_user/binding/all_user_details_binding.dart';
+import 'package:inventory/module/add_user/binding/user_role_binding.dart';
 import 'package:inventory/module/add_user/view/add_user_view.dart';
 import 'package:inventory/module/add_user/view/all_user_detail_view.dart';
 import 'package:inventory/module/add_user/view/all_user_view.dart';
+import 'package:inventory/module/add_user/view/user_role_view.dart';
 import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
 import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
 import 'package:inventory/module/credits_amount/binding/credit_binding.dart';
@@ -84,6 +86,11 @@ class AppRoutes {
       binding: SplashBindings(),
     ),
     GetPage(name: AppRouteName.unknwonroute, page: () => UnknownRoute()),
+    GetPage(
+      name: AppRouteName.userRoleView,
+      page: () => UserRoleView(),
+      binding: UserRoleBinding(),
+    ),
     GetPage(name: AppRouteName.privacypolicy, page: () => PrivacyPolicy()),
     GetPage(name: AppRouteName.termandcodition, page: () => TermAndCondition()),
     GetPage(
@@ -300,6 +307,9 @@ class AppRoutes {
         break;
       case AppRouteName.reliableBarcodeView:
         Get.toNamed(AppRouteName.reliableBarcodeView, arguments: data);
+        break;
+      case AppRouteName.userRoleView:
+        Get.toNamed(AppRouteName.userRoleView, arguments: data);
         break;
       case AppRouteName.allUserDetail:
         Get.toNamed(AppRouteName.allUserDetail, arguments: data);

@@ -408,7 +408,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             ),
                             size: 200,
                             embeddedImageSize: const Size(60, 60),
-                            loader: CommonProgressbar(
+                            loader: CommonProgressBar(
                               color: AppColors.blackColor,
                             ),
                           ),

@@ -66,10 +66,10 @@ class CommonDropDown extends StatelessWidget {
               noResultFoundStyle: CustomTextStyle.customNato(fontSize: 11),
               searchFieldDecoration: SearchFieldDecoration(
                 hintStyle: CustomTextStyle.customNato(fontSize: 11),
+                textStyle: CustomTextStyle.customNato(fontSize: 12),
               ),
               closedErrorBorder: Border.all(color: AppColors.transparent),
               closedFillColor: AppColors.transparent,
-
               errorStyle: CustomTextStyle.customNato(
                 fontSize: 10,
                 color: AppColors.redColor,
@@ -111,6 +111,24 @@ class CommonDropDown extends StatelessWidget {
                   );
             },
             items: listItems,
+            listItemBuilder: (context, item, isSelected, onItemSelect) {
+              return isModelValueEnabled
+                  ? Text(
+                    item.name ?? '',
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 14,
+                      color: AppColors.blackColor,
+                    ),
+                  )
+                  : Text(
+                    item.toString(),
+                    style: CustomTextStyle.customOpenSans(
+                      color: AppColors.blackColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+            },
             onChanged: (value) {
               notifyParent(value);
             },

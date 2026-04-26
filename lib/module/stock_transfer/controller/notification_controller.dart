@@ -59,7 +59,7 @@ class NotificationController extends GetxController
       await LocalService.savePendingTransfers(freshList);
     } catch (e) {
       AppLogger.info(("🚨 Notification Fetch Error: $e").toString());
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     }
   }
 
@@ -107,7 +107,7 @@ class NotificationController extends GetxController
 
     showSnackBar(error: "✅ Stock received in shop");
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     } finally {
       isTransferLoading.value = false;
     }
@@ -131,7 +131,7 @@ class NotificationController extends GetxController
 
     showSnackBar(error: "❌ Transfer rejected");
     } catch (e) {
-    showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+    showSnackBar(error: e.toString());
     }
   }
 

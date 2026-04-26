@@ -5,14 +5,14 @@ import 'package:inventory/network/networking.dart';
 class AllUserViewRepo {
   Networking networking = Networking();
 
-  Future<EmpolyeeModel> getEmployees() async {
+  Future<EmployeeModel> getEmployees() async {
     try {
       final response = await networking.getData(
         url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getEmployees}',
       );
-      return EmpolyeeModel.fromJson(response);
+      return EmployeeModel.fromJson(response);
     } catch (e) {
-      return EmpolyeeModel(msg: e.toString(), success: false);
+      return EmployeeModel(msg: e.toString(), success: false);
     }
   }
 }

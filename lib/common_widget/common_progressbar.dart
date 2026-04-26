@@ -4,10 +4,10 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 import 'colors.dart';
 
-class CommonProgressbar extends StatelessWidget {
+class CommonProgressBar extends StatelessWidget {
   final double size;
   final Color color;
-  const CommonProgressbar({
+  const CommonProgressBar({
     super.key,
     this.size = 35,
     this.color = AppColors.whiteColor,

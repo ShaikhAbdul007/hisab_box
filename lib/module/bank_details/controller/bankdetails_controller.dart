@@ -32,7 +32,7 @@ class BankDetailsController extends GetxController with CacheManager {
 
   void getCacheHasData() {
     final bankData = retrieveBankModelDetail();
-    if (bankData.data != null) {
+    if (bankData.data?.bankName != null) {
       bankNameController.text = bankData.data?.bankName ?? "";
       accountHolderNameController.text = bankData.data?.accountHolder ?? '';
       upiIdController.text = bankData.data?.upiId ?? '';
@@ -51,8 +51,6 @@ class BankDetailsController extends GetxController with CacheManager {
         accountHolderNameController.text = response.data?.accountHolder ?? '';
         upiIdController.text = response.data?.upiId ?? '';
         saveBankModelData(response);
-        showSnackBar(error: response.msg!, isError: false);
-        readOnly.value = true;
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
@@ -60,7 +58,7 @@ class BankDetailsController extends GetxController with CacheManager {
       }
     } catch (e) {
       AppLogger.info((e).toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       setBankDetailsUpi.value = false;
     }
@@ -90,7 +88,7 @@ class BankDetailsController extends GetxController with CacheManager {
       }
     } catch (e) {
       AppLogger.info(("🚨 Bank Save Error: $e").toString());
-      showSnackBar(error: SupabaseErrorHandler.getMessage(e));
+      showSnackBar(error: e.toString());
     } finally {
       bankDetailsUpi.value = false;
     }
