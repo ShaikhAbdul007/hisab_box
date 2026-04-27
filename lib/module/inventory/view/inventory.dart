@@ -114,7 +114,7 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
-    final (bool exists, ProductModel? product) = await controller
+    final (bool exists, BarcodeExistingData? product) = await controller
         .existingProductInfo(scannedValue);
 
     if (!exists || product == null) {
@@ -124,12 +124,12 @@ class InventoryView extends GetView<InventroyController> {
 
     final productLocation = (product.location ?? '').trim().toLowerCase();
     if (productLocation != 'shop') {
-    showSnackBar(error: 'Product should be in shop to sell.');
+      showSnackBar(error: 'Product should be in shop to sell.');
       controller.mobileScannerController.start();
       return;
     }
 
-    if (product.isLooseCategory == true) {
+    if (product.isloosed == true) {
       checkProductStatusDialog(
         label: 'Is this product sold in Packet or Loose?',
         packetOnTap: () {
@@ -200,7 +200,7 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
-    final (bool exists, ProductModel? product) = await controller
+    final (bool exists, BarcodeExistingData? product) = await controller
         .existingProductInfo(scannedValue);
 
     if (!exists || product == null) {
@@ -210,7 +210,7 @@ class InventoryView extends GetView<InventroyController> {
 
     final productLocation = (product.location ?? '').trim().toLowerCase();
     final canAddInLooseInventory =
-        product.isLooseCategory == true && productLocation == 'shop';
+        product.isloosed == true && productLocation == 'shop';
 
     if (canAddInLooseInventory == false) {
       showMessage(
@@ -283,7 +283,7 @@ class InventoryView extends GetView<InventroyController> {
         } else {
           Get.back();
           controller.mobileScannerController.start();
-        showSnackBar(error: 'Please scan the product first');
+          showSnackBar(error: 'Please scan the product first');
         }
       },
     );
@@ -306,7 +306,7 @@ class InventoryView extends GetView<InventroyController> {
         } else {
           Get.back();
           controller.mobileScannerController.start();
-        showSnackBar(error: 'Please scan the product first');
+          showSnackBar(error: 'Please scan the product first');
         }
       },
       onTap: () {
@@ -330,7 +330,7 @@ class InventoryView extends GetView<InventroyController> {
         } else {
           Get.back();
           controller.mobileScannerController.start();
-        showSnackBar(error: 'Please scan the product first');
+          showSnackBar(error: 'Please scan the product first');
         }
       },
       onTap: () {

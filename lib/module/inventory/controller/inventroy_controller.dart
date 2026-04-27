@@ -6,20 +6,20 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore for RAM Access
 import 'package:inventory/local_db/local_db_service.dart';
-import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
+import 'package:inventory/module/inventory/repo/inventory_repo.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../helper/helper.dart';
 
 class InventroyController extends GetxController
     with CacheManager, LocalService {
-
   // Existing Variables (Nahi badle gaye - As per your instruction)
+
+  InventoryScanRepo inventoryScanRepo = InventoryScanRepo();
   RxList<ProductModel> scannedProductDetails = <ProductModel>[].obs;
-  RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
-  RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
+  //RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
+  //RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
   RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
   RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
   RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
@@ -60,121 +60,26 @@ class InventroyController extends GetxController
     super.onInit();
   }
 
-  // ==========================================
-  // 🔥 EXISTING PRODUCT CHECK (RAM FIRST)
-  // ==========================================
-  bool _parseLooseFlag(dynamic value) {
-    if (value is bool) return value;
-    if (value is num) return value != 0;
-    if (value is String) {
-      final normalized = value.trim().toLowerCase();
-      return normalized == 'true' ||
-          normalized == 't' ||
-          normalized == '1' ||
-          normalized == 'yes';
-    }
-    return false;
-  }
-
-  Future<void> _syncLooseCategoryFromDb(
-    String barcode,
-    ProductModel product,
-  ) async {
-    try {
-      final res =
-          await SupabaseConfig.from('product_barcodes')
-              .select('products!inner(is_loose_category)')
-              .eq('barcode', barcode)
-              .maybeSingle();
-
-      if (res == null) return;
-      final dynamic productsNode = res['products'];
-
-      Map<String, dynamic>? productMap;
-      if (productsNode is Map<String, dynamic>) {
-        productMap = productsNode;
-      } else if (productsNode is List && productsNode.isNotEmpty) {
-        final first = productsNode.first;
-        if (first is Map<String, dynamic>) {
-          productMap = first;
-        } else if (first is Map) {
-          productMap = Map<String, dynamic>.from(first);
-        }
-      } else if (productsNode is Map) {
-        productMap = Map<String, dynamic>.from(productsNode);
-      }
-
-      if (productMap == null) return;
-      product.isLooseCategory = _parseLooseFlag(
-        productMap['is_loose_category'],
-      );
-    } catch (e) {
-      // Keep existing value on any DB/read error.
-      AppLogger.error(
-        'Failed to sync loose-category flag from DB',
-        e,
-        'InventroyController',
-      );
-    }
-  }
-
-  Future<(bool existProductOrNot, ProductModel productModels)>
+  Future<(bool existProductOrNot, BarcodeExistingData barcodeExistingData)>
   existingProductInfo(String barcode) async {
-    final userId = resolveUserId(isExistingProductInfo.value);
-    if (userId == null) return (false, ProductModel());
     isExistingProductInfo.value = true;
-
+    var res = await fetchProductByBarcode(barcode: barcode);
     try {
-      // 1. RAM Sync Check (GlobalStore) - Based on Instruction [2026-01-31]
-      // Multiple barcodes ke liye humara map best hai.
-      final globalStore = Get.find<GlobalStore>();
-      var ramProductData = globalStore.barcodeToProductMap[barcode];
-
-      if (ramProductData != null) {
-        final model = ProductModel.fromJson(ramProductData.toJson());
-        await _syncLooseCategoryFromDb(barcode, model);
-        existProductName.value = model.name ?? '';
-        isExistingProductInfo.value = false;
-        return (true, model);
+      if (res.success == false &&
+          res.msg!.contains('Product not found with barcode')) {
+        return (false, res.data!);
+      } else {
+        return (false, res.data!);
       }
-
-      // 2. Fallback to Hive (LocalService)
-      final localProduct = LocalService.searchByBarcode(barcode);
-      if (localProduct != null) {
-        await _syncLooseCategoryFromDb(barcode, localProduct);
-        existProductName.value = localProduct.name ?? '';
-        isExistingProductInfo.value = false;
-        return (true, localProduct);
-      }
-
-      // 3. Last Fallback to Supabase
-      final res =
-          await SupabaseConfig.from('product_barcodes')
-              .select('product_id, products!fk_product_barcodes_products(*)')
-              .eq('barcode', barcode)
-              .maybeSingle();
-
-      if (res != null && res['products'] != null) {
-        final model = ProductModel.fromJson(res['products']);
-        model.barcode = barcode;
-        await _syncLooseCategoryFromDb(barcode, model);
-        existProductName.value = model.name ?? '';
-        return (true, model);
-      }
-
-      return (false, ProductModel());
     } catch (e) {
       AppLogger.info(("🚨 Info Error: $e").toString());
-    showSnackBar(error: e.toString());
-      return (false, ProductModel());
+      showSnackBar(error: e.toString());
+      return (false, BarcodeExistingData());
     } finally {
       isExistingProductInfo.value = false;
     }
   }
 
-  // ==========================================
-  // 🔥 HANDLE SCAN (RAM & MULTI-BARCODE READY)
-  // ==========================================
   Future<void> handleScan({
     required String barcode,
     required String sellType,
@@ -218,14 +123,14 @@ class InventroyController extends GetxController
           }
           product.barcode = barcode;
         } else {
-        showSnackBar(error: "❌ Product Not Found");
+          showSnackBar(error: "❌ Product Not Found");
           return;
         }
       }
 
       final productLocation = (product.location ?? '').trim().toLowerCase();
       if (productLocation != 'shop') {
-      showSnackBar(error: 'Product should be in shop to sell.');
+        showSnackBar(error: 'Product should be in shop to sell.');
         return;
       }
 
@@ -309,8 +214,15 @@ class InventroyController extends GetxController
       afterProductAdding();
     } catch (e) {
       AppLogger.info(("🚨 Scan Error: $e").toString());
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     }
+  }
+
+  Future<BarcodeExistingModel> fetchProductByBarcode({
+    required String barcode,
+  }) async {
+    var res = await inventoryScanRepo.fetchProductByBarcode(barcode: barcode);
+    return res;
   }
 
   void cameraStart() {

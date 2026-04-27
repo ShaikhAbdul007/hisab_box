@@ -71,7 +71,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
                               : CommonDropDown(
                                 errorText: emptyCategory,
                                 listItems: controller.categoryList,
-                                hintText: 'Select Category',
+                                hintText: 'Add Category First',
                                 notifyParent: (val) {
                                   controller.category.text = val.id;
                                 },
@@ -98,7 +98,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
                               )
                               : CommonDropDown(
                                 errorText: emptyAnimalCategory,
-                                hintText: 'Animal Type',
+                                hintText: 'Add Animal Category First',
                                 listItems: controller.animalTypeList,
                                 notifyParent: (val) {
                                   controller.animalType.text = val.id;

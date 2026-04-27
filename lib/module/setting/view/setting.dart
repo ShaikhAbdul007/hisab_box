@@ -103,7 +103,7 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
-              height: 240,
+              height: 245,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

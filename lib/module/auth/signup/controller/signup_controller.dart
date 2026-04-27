@@ -59,33 +59,6 @@ class SignupController extends GetxController with CacheManager {
   // ============================
   Future<void> signUpUser() async {
     unfocus();
-
-    /// basic validation
-    if (name.text.trim().isEmpty) {
-      showSnackBar(error: "Enter name");
-      return;
-    }
-
-    if (email.text.trim().isEmpty) {
-      showSnackBar(error: "Enter email");
-      return;
-    }
-
-    if (mobileNo.text.trim().isEmpty) {
-      showSnackBar(error: "Enter mobile number");
-      return;
-    }
-
-    // if (password.text.trim().isEmpty) {
-    //   showSnackBar(error: "Enter password");
-    //   return;
-    // }
-
-    // if (password.text.trim() != confirmpassword.text.trim()) {
-    //   showSnackBar(error: "Password does not match");
-    //   return;
-    // }
-
     signUpLoading.value = true;
 
     try {
@@ -130,7 +103,7 @@ class SignupController extends GetxController with CacheManager {
       };
 
       /// optional image
-      File? selectedFile;
+      File? selectedFile = profileImage.value;
 
       // TEMPORARY: Disable image upload for testing
       // if (profileImage.value != null &&
