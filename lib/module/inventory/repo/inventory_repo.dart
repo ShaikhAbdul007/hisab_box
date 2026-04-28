@@ -11,7 +11,7 @@ class InventoryScanRepo {
     try {
       final response = await networking.getData(
         url:
-            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProductByBarcode}/barcode',
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProductByBarcode}/$barcode',
       );
       return BarcodeExistingModel.fromJson(response);
     } catch (e) {

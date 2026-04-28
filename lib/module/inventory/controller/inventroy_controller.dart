@@ -63,13 +63,14 @@ class InventroyController extends GetxController
   Future<(bool existProductOrNot, BarcodeExistingData barcodeExistingData)>
   existingProductInfo(String barcode) async {
     isExistingProductInfo.value = true;
-    var res = await fetchProductByBarcode(barcode: barcode);
+    var res = await fetchProductByBarcode(scannedBarcode: barcode);
     try {
       if (res.success == false &&
           res.msg!.contains('Product not found with barcode')) {
-        return (false, res.data!);
+        return (false, res.data ?? BarcodeExistingData());
       } else {
-        return (false, res.data!);
+        existProductName.value = res.data?.name ?? '';
+        return (true, res.data ?? BarcodeExistingData());
       }
     } catch (e) {
       AppLogger.info(("🚨 Info Error: $e").toString());
@@ -219,9 +220,11 @@ class InventroyController extends GetxController
   }
 
   Future<BarcodeExistingModel> fetchProductByBarcode({
-    required String barcode,
+    required String scannedBarcode,
   }) async {
-    var res = await inventoryScanRepo.fetchProductByBarcode(barcode: barcode);
+    var res = await inventoryScanRepo.fetchProductByBarcode(
+      barcode: scannedBarcode,
+    );
     return res;
   }
 
