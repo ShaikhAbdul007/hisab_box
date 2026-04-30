@@ -3,9 +3,8 @@ import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
-
+import 'package:inventory/module/near_expire_product/widgets/near_expiry_text.dart';
 import '../../../common_widget/common_nodatafound.dart';
-import '../../inventorylist/widget/inventory_list_text.dart';
 import '../controller/near_expire_product_controller.dart';
 
 class NearExpireProductView extends GetView<NearExpireProductController> {
@@ -23,13 +22,12 @@ class NearExpireProductView extends GetView<NearExpireProductController> {
                 ? ListView.builder(
                   itemCount: controller.nearExpProductList.length,
                   itemBuilder: (context, index) {
-                    return InventroyListText(
+                    return NearExpiryText(
                       inventoryModel: controller.nearExpProductList[index],
-                      isInventoryScanSelected: true,
                     );
                   },
                 )
-                : CommonNoDataFound(message: 'No product found'),
+                : CommonNoDataFound(message: 'No near expiry product found'),
       ),
     );
   }

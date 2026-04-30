@@ -6,13 +6,8 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Reference
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
-import 'package:inventory/module/inventorylist/repo/inventory_repo.dart';
-import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/loose_sell/repo/loose_repo.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:inventory/helper/helper.dart';
-import '../../loose_category/model/loose_category_model.dart';
 
 class LooseController extends GetxController with CacheManager, LocalService {
   LoosedProductRepo loosedProductRepo = LoosedProductRepo();
@@ -22,7 +17,7 @@ class LooseController extends GetxController with CacheManager, LocalService {
   // TextEditingController amount = TextEditingController();
   // TextEditingController quantity = TextEditingController();
   // TextEditingController updateQuantity = TextEditingController();
-  
+
   // TextEditingController addSubtractQty = TextEditingController();
   // TextEditingController newSellingPrice = TextEditingController();
   // TextEditingController name = TextEditingController();
@@ -80,4 +75,3 @@ class LooseController extends GetxController with CacheManager, LocalService {
     // amount.clear();
   }
 }
-

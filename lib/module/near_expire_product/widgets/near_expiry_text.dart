@@ -1,22 +1,20 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
+import 'package:inventory/module/near_expire_product/model/near_expiry_model.dart';
+import '../../inventory/model/product_model.dart';
 
-class LooseInventroyListText extends StatelessWidget {
-  final InventoryItem inventoryModel;
+class NearExpiryText extends StatelessWidget {
+  final NeaExpiryItemData inventoryModel;
   final void Function()? onTap;
-  final bool isInventoryScanSelected;
-  const LooseInventroyListText({
-    super.key,
-    required this.inventoryModel,
-    this.onTap,
-    required this.isInventoryScanSelected,
-  });
+  const NearExpiryText({super.key, required this.inventoryModel, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +57,7 @@ class LooseInventroyListText extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '${inventoryModel.animalTypeName}',
+                            '${inventoryModel.animalCategoryName}',
                             style: CustomTextStyle.customOpenSans(
                               color: AppColors.greyColor,
                             ),
@@ -72,6 +70,7 @@ class LooseInventroyListText extends StatelessWidget {
                               ),
                             ),
                           },
+
                           Text(
                             '/${inventoryModel.categoryName}',
                             style: CustomTextStyle.customOpenSans(
@@ -97,53 +96,6 @@ class LooseInventroyListText extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // Row(
-                      //   children: [
-                      //     Text(
-                      //       level.isNotEmpty && rack.isNotEmpty
-                      //           ? '${inventoryModel.location}/$level/$rack'
-                      //           : level.isEmpty && rack.isNotEmpty
-                      //           ? '${inventoryModel.location}/$rack'
-                      //           : rack.isEmpty && level.isNotEmpty
-                      //           ? '${inventoryModel.location}/$level'
-                      //           : '${inventoryModel.location}',
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.greyColor,
-                      //       ),
-                      //     ),
-                      //     setWidth(width: 10),
-                      //     inventoryModel.isLoosed ?? false
-                      //         ? Text(
-                      //           'Loosed : ${inventoryModel.isLoosed}',
-                      //           style: CustomTextStyle.customOpenSans(
-                      //             color: AppColors.redColor,
-                      //           ),
-                      //         )
-                      //         : Container(),
-                      //   ],
-                      // ),
-                      // Row(
-                      //   children: [
-                      //     Text(
-                      //       inventoryModel.purchaseDate ?? '',
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.greyColor,
-                      //       ),
-                      //     ),
-                      //     Text(
-                      //       ' - ',
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.greyColor,
-                      //       ),
-                      //     ),
-                      //     Text(
-                      //       inventoryModel.expireDate ?? '',
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.redColor,
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
                     ],
                   ),
                 ),

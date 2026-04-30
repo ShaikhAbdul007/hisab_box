@@ -2,6 +2,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 
@@ -38,7 +39,7 @@ mixin class CacheManager {
     box.write(Key.inventoryScan.toString(), value);
   }
 
-  void saveCartProductList(List<ProductModel> product) {
+  void saveCartProductList(List<InventoryItem> product) {
     final productList = product.map((e) => e.toJson()).toList();
     box.write(Key.cartProduct.toString(), productList);
   }
@@ -133,10 +134,10 @@ mixin class CacheManager {
     return BankDetailsModel();
   }
 
-  Future<List<ProductModel>> retrieveCartProductList() async {
+  Future<List<InventoryItem>> retrieveCartProductList() async {
     final productList = box.read(Key.cartProduct.toString());
     if (productList != null && productList is List) {
-      return productList.map((e) => ProductModel.fromJson(e)).toList();
+      return productList.map((e) => InventoryItem.fromJson(e)).toList();
     }
     return [];
   }

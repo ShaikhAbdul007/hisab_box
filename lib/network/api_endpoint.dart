@@ -35,12 +35,9 @@ class ApiEndPoint {
   static const String addProduct = "shop/products/add";
   static const String addLoosedProduct =
       "shop/products/convert-packet-to-loose";
+  static const String updateLoosedProduct = "shop/products/loose-stock";
   static const String getProductByBarcode =
       "shop/products/barcode"; // + barcode
-
-  // ---------------- STOCK ACTION ----------------
-  static const String convertPacketToLoose =
-      "shop/products/convert-packet-to-loose";
 
   // ---------------- SALES ----------------
   static const String sellProduct = "shop/sell";

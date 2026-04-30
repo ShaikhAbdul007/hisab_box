@@ -4,8 +4,7 @@ import 'package:inventory/network/networking.dart' show Networking;
 
 class ProductRepo {
   Networking networking = Networking();
-  
-  
+
   Future<AddProductModel> addProduct({required dynamic body}) async {
     try {
       final response = await networking.postData(
@@ -14,7 +13,7 @@ class ProductRepo {
       );
       return AddProductModel.fromJson(response);
     } catch (e) {
-     return AddProductModel(success: false, msg: e.toString());
+      return AddProductModel(success: false, msg: e.toString());
     }
   }
 
@@ -26,7 +25,36 @@ class ProductRepo {
       );
       return AddProductModel.fromJson(response);
     } catch (e) {
-     return AddProductModel(success: false, msg: e.toString());
+      return AddProductModel(success: false, msg: e.toString());
+    }
+  }
+
+  Future<AddProductModel> updatePacketProduct({
+    required dynamic body,
+    required String productId,
+  }) async {
+    try {
+      final response = await networking.patchData(
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProducts}/$productId',
+        body: body,
+      );
+      return AddProductModel.fromJson(response);
+    } catch (e) {
+      return AddProductModel(success: false, msg: e.toString());
+    }
+  }
+
+  Future<AddProductModel> updateLoosePacketProduct({
+    required dynamic body,
+  }) async {
+    try {
+      final response = await networking.patchData(
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.updateLoosedProduct}',
+        body: body,
+      );
+      return AddProductModel.fromJson(response);
+    } catch (e) {
+      return AddProductModel(success: false, msg: e.toString());
     }
   }
 }

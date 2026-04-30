@@ -261,68 +261,89 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                         }
                       },
                     ),
-                    // Row(
-                    //   children: [
-                    //     Flexible(
-                    //       child: Obx(
-                    //         () =>
-                    //             controller.categoryList.isEmpty
-                    //                 ? Center(
-                    //                   child: CommonProgressbar(
-                    //                     color: AppColors.blackColor,
-                    //                   ),
-                    //                 )
-                    //                 : CommonDropDown(
-                    //                   isModelValueEnabled: false,
-                    //                   errorText: emptyCategory,
-                    //                   enabled:
-                    //                       controller.dropDownReadOnly.value,
-                    //                   selectedDropDownItem: controller
-                    //                       .getSelectedCategory(
-                    //                         categorysId:
-                    //                             controller.category.text,
-                    //                       ),
-                    //                   listItems: controller.categoryList,
-                    //                   hintText: 'Select Category',
-                    //                   notifyParent: (val) {
-                    //                     controller.category.text = val.id;
-                    //                   },
-                    //                 ),
-                    //       ),
-                    //     ),
-                    //     Flexible(
-                    //       child: Obx(
-                    //         () =>
-                    //             controller.animalTypeList.isEmpty
-                    //                 ? Center(
-                    //                   child: CommonProgressbar(
-                    //                     color: AppColors.blackColor,
-                    //                   ),
-                    //                 )
-                    //                 : CommonDropDown(
-                    //                   isModelValueEnabled: false,
-                    //                   errorText: emptyAnimalCategory,
-                    //                   enabled:
-                    //                       controller.dropDownReadOnly.value,
-                    //                   hintText: 'Animal Type',
-                    //                   selectedDropDownItem: controller
-                    //                       .getSelectedCategory(
-                    //                         categorysId:
-                    //                             controller.animalType.text,
-                    //                         categoryType: 'animal',
-                    //                       ),
-                    //                   listItems: controller.animalTypeList,
-                    //                   notifyParent: (val) {
-                    //                     controller.animalType.text = val.id;
-                    //                     customMessageOrErrorPrint(
-                    //                       message: controller.animalType.text,
-                    //                     );
-                    //                   },
-                    //                 ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
+                    Obx(
+                      () =>
+                          controller.readOnly.value
+                              ? InventoryBottomsheetComponentText(
+                                readOnly1: controller.readOnly.value,
+                                readOnly2: controller.readOnly.value,
+                                controller1: controller.category,
+                                controller2: controller.animalType,
+                                label1: 'Category',
+                                hintText1: 'Enter barcode',
+                                hintText2: 'Enter product name',
+                                label2: 'Product name',
+                                validator2: (name) {
+                                  if (name!.isEmpty) {
+                                    return emptyProductName;
+                                  } else {
+                                    return null;
+                                  }
+                                },
+                              )
+                              : Row(
+                                children: [
+                                  Flexible(
+                                    child: Obx(
+                                      () =>
+                                          controller.categoryList.isEmpty
+                                              ? Center(
+                                                child: CommonProgressBar(
+                                                  color: AppColors.blackColor,
+                                                ),
+                                              )
+                                              : CustomDropDown(
+                                                // isModelValueEnabled: true,
+                                                // errorText: emptyCategory,
+                                                // enabled:
+                                                //     controller.dropDownReadOnly.value,
+                                                selectedDropDownItem:
+                                                    controller.category.text,
+                                                listItems:
+                                                    controller.categoryList,
+                                                hintText: 'Select Category',
+                                                notifyParent: (val) {
+                                                  // controller
+                                                  //     .selectedCategory
+                                                  //     .value = val;
+                                                  controller.category.text =
+                                                      val.id.toString();
+                                                },
+                                              ),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: Obx(
+                                      () =>
+                                          controller.animalTypeList.isEmpty
+                                              ? Center(
+                                                child: CommonProgressBar(
+                                                  color: AppColors.blackColor,
+                                                ),
+                                              )
+                                              : CustomDropDown(
+                                                // isModelValueEnabled: true,
+                                                // errorText: emptyAnimalCategory,
+                                                // enabled:
+                                                //     controller.dropDownReadOnly.value,
+                                                hintText: 'Animal Type',
+                                                selectedDropDownItem:
+                                                    controller.animalType.text,
+                                                listItems:
+                                                    controller.animalTypeList,
+                                                notifyParent: (val) {
+                                                  // controller
+                                                  //     .selectedAnimalType
+                                                  //     .value = val;
+                                                  controller.animalType.text =
+                                                      val.id.toString();
+                                                },
+                                              ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                    ),
                     Obx(
                       () => Row(
                         children: [
@@ -349,10 +370,10 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                             ),
                           ),
                           Flexible(
-                            child: CommonDropDown(
-                              isModelValueEnabled: false,
-                              errorText: 'Please select',
-                              enabled: controller.dropDownReadOnly.value,
+                            child: CustomDropDown(
+                              // isModelValueEnabled: false,
+                              // errorText: 'Please select',
+                              // enabled: controller.dropDownReadOnly.value,
                               selectedDropDownItem: controller.isLoose,
                               listItems: [true, false],
                               hintText: 'Select isLoose',
@@ -423,11 +444,11 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                             ),
                           ),
                           Flexible(
-                            child: CommonDropDown(
-                              enabled: controller.dropDownReadOnly.value,
-                              selectedDropDownItem: controller.location.text,
-                              isModelValueEnabled: false,
-                              errorText: 'Select Location',
+                            child: CustomDropDown(
+                              // enabled: controller.dropDownReadOnly.value,
+                              // selectedDropDownItem: controller.location.text,
+                              // isModelValueEnabled: false,
+                              // errorText: 'Select Location',
                               listItems: ['Shop', 'Godown'],
                               hintText: 'Location',
                               notifyParent: (val) {
@@ -570,24 +591,71 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                                       .validate()) {
                                     unfocus();
                                     if (isProductLoosed) {
-                                      AppLogger.debug(
-                                        'Form validation passed, isLoose: ${controller.isLoose}',
-                                        'ProductDetailView',
-                                      );
+                                      var body = {
+                                        "name": controller.productName.text,
+                                        "barcodes": controller.barcode.text,
+                                        "quantity":
+                                            double.tryParse(
+                                              controller.quantity.text,
+                                            ) ??
+                                            0,
+                                        "selling_price":
+                                            double.tryParse(
+                                              controller.sellingPrice.text,
+                                            ) ??
+                                            0,
+                                        "purchase_price":
+                                            double.tryParse(
+                                              controller.purchasePrice.text,
+                                            ) ??
+                                            0,
+                                        "location": controller.location.text,
+                                        "stock_type": "packet",
+                                        "isloosed": controller.isLoose,
+                                        "isflavorRequired":
+                                            controller
+                                                    .isFlavorAndWeightNotRequired
+                                                    .value
+                                                ? false
+                                                : true,
+                                        "purchase_date":
+                                            controller.purchaseDate.text,
+                                        "expiry_date":
+                                            controller.exprieDate.text,
+                                        "category": controller.category.text,
+                                        "animal_type":
+                                            controller.animalType.text,
+                                        "flavour": controller.flavor.text,
+                                        "level": controller.level.text,
+                                        "rack": controller.rack.text,
+                                        "weight": controller.weight.text,
+                                        "discount":
+                                            double.tryParse(
+                                              controller.discount.text,
+                                            ) ??
+                                            0,
+                                      };
                                       controller.updateProductQuantity(
-                                        locationType: controller.location.text,
-                                        barcode: controller.barcode.text,
-                                        isLoosed: isProductLoosed,
+                                        body: body,
+                                        productId:
+                                            controller.data['productId']
+                                                .toString(),
                                       );
                                     } else {
                                       AppLogger.debug(
                                         'Form validation - isLoose: ${controller.isLoose}',
                                         'ProductDetailView',
                                       );
-                                      controller.updateProductQuantity(
-                                        locationType: controller.location.text,
-                                        barcode: controller.barcode.text,
-                                        isLoosed: isProductLoosed,
+                                      var body = {
+                                        "product_id":
+                                            controller.data['productId'],
+                                        "quantity":
+                                            controller.looseQuantity.text,
+                                        "selling_price":
+                                            controller.looseSellingPrice.text,
+                                      };
+                                      controller.updateLoosedProductQuantity(
+                                        body: body,
                                       );
                                     }
                                   }

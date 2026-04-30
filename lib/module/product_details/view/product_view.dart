@@ -73,16 +73,16 @@ class ProductView extends GetView<ProductController> {
                                 ),
                               )
                               : controller.categoryList.isEmpty
-                              ? CommonDropDown(
-                                errorText: emptyCategory,
+                              ? CustomDropDown(
+                                // errorText: emptyCategory,
                                 listItems: controller.categoryList,
                                 hintText: 'Category',
                                 notifyParent: (val) {
                                   controller.category.text = val.id;
                                 },
                               )
-                              : CommonDropDown(
-                                errorText: emptyCategory,
+                              : CustomDropDown(
+                                // errorText: emptyCategory,
                                 listItems: controller.categoryList,
                                 hintText: 'Select Category',
                                 notifyParent: (val) {
@@ -101,16 +101,16 @@ class ProductView extends GetView<ProductController> {
                                 ),
                               )
                               : controller.animalTypeList.isEmpty
-                              ? CommonDropDown(
-                                errorText: emptyCategory,
+                              ? CustomDropDown(
+                                //  errorText: emptyCategory,
                                 listItems: controller.animalTypeList,
                                 hintText: 'Animal Type',
                                 notifyParent: (val) {
                                   controller.category.text = val.id;
                                 },
                               )
-                              : CommonDropDown(
-                                errorText: emptyAnimalCategory,
+                              : CustomDropDown(
+                                // errorText: emptyAnimalCategory,
                                 hintText: 'Animal Type',
                                 listItems: controller.animalTypeList,
                                 notifyParent: (val) {
@@ -145,9 +145,9 @@ class ProductView extends GetView<ProductController> {
                     ),
                   ),
                   Flexible(
-                    child: CommonDropDown(
-                      isModelValueEnabled: false,
-                      errorText: 'Please select',
+                    child: CustomDropDown(
+                      // isModelValueEnabled: false,
+                      // errorText: 'Please select',
                       listItems: [true, false],
                       hintText: 'Select isLoose',
                       notifyParent: (val) {
@@ -236,9 +236,9 @@ class ProductView extends GetView<ProductController> {
                     ),
                   ),
                   Flexible(
-                    child: CommonDropDown(
-                      isModelValueEnabled: false,
-                      errorText: 'Select Location',
+                    child: CustomDropDown(
+                      // isModelValueEnabled: false,
+                      // errorText: 'Select Location',
                       listItems: ['Shop', 'Godown'],
                       hintText: 'Location',
                       notifyParent: (val) {

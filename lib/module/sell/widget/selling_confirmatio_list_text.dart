@@ -4,13 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import '../../../common_widget/colors.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
-import '../../inventory/model/product_model.dart';
 
 class SellingConfirmationListText extends StatelessWidget {
-  final ProductModel inventoryModel;
+  final InventoryItem inventoryModel;
   final void Function()? plusOnTap;
   final void Function()? minusOnTap;
   final void Function()? removeOnTap;
@@ -31,8 +31,10 @@ class SellingConfirmationListText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // bool isloosed = inventoryModel.isLoosed ?? false;
-    bool sellType = inventoryModel.sellType == 'Loose';
-    AppLogger.info(('inventoryModel.sellType is ${inventoryModel.sellType}').toString());
+    bool sellType = inventoryModel.stockType == 'packet';
+    AppLogger.info(
+      ('inventoryModel.sellType is ${inventoryModel.stockType}').toString(),
+    );
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,

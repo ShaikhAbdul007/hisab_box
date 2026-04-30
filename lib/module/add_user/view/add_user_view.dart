@@ -62,7 +62,7 @@ class AddUserView extends GetView<AddUserController> {
                   controller.isFetchUserRole.value
                       ? CommonProgressBar()
                       : controller.userRoleList.isEmpty
-                      ? CommonDropDown(
+                      ? CustomDropDown(
                         listItems: controller.userRoleList,
                         hintText: 'Select add user role first',
                         notifyParent: (v) {
@@ -70,9 +70,9 @@ class AddUserView extends GetView<AddUserController> {
                           print(v.id);
                           unfocus();
                         },
-                        errorText: 'Select ',
+                        //errorText: 'Select ',
                       )
-                      : CommonDropDown(
+                      : CustomDropDown(
                         listItems: controller.userRoleList,
                         hintText: 'Select Role',
                         notifyParent: (v) {
@@ -80,7 +80,7 @@ class AddUserView extends GetView<AddUserController> {
                           print(v.id);
                           unfocus();
                         },
-                        errorText: 'Select staff type',
+                        // errorText: 'Select staff type',
                       ),
             ),
             setHeight(height: 10),

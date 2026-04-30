@@ -82,7 +82,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                                   .value
                                                   .text,
                                             ) ||
-                                        inventoryList.category!
+                                        inventoryList.categoryName!
                                             .toLowerCase()
                                             .contains(
                                               controller
@@ -90,7 +90,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                                   .value
                                                   .text,
                                             ) ||
-                                        inventoryList.flavor!
+                                        inventoryList.flavour!
                                             .toLowerCase()
                                             .contains(
                                               controller
@@ -102,15 +102,15 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                       () => OutOfStockInventoryListText(
                                         isDeleteLoading:
                                             controller.isDeleteLoading.value,
-                                        inventoryModel: inventoryList,
+                                        neaExpiryItemData: inventoryList,
                                         deleteOnTap: () {
-                                          controller.deactivateSpecificProduct(
-                                            productId:
-                                                controller
-                                                    .productList[index]
-                                                    .id ??
-                                                '',
-                                          );
+                                          // controller.deactivateSpecificProduct(
+                                          //   productId:
+                                          //       controller
+                                          //           .productList[index]
+                                          //           .stockId ??
+                                          //       '',
+                                          // );
                                         },
                                       ),
                                     )

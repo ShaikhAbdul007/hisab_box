@@ -60,18 +60,18 @@ class GenerateBarcodeComponent extends StatelessWidget {
                                 ),
                               )
                               : controller.categoryList.isEmpty
-                              ? CommonDropDown(
-                                errorText: emptyCategory,
+                              ? CustomDropDown(
+                                //   errorText: emptyCategory,
                                 listItems: controller.categoryList,
-                                hintText: 'Category',
+                                hintText: 'Add Category First',
                                 notifyParent: (val) {
                                   controller.category.text = val.id;
                                 },
                               )
-                              : CommonDropDown(
-                                errorText: emptyCategory,
+                              : CustomDropDown(
+                                // errorText: emptyCategory,
                                 listItems: controller.categoryList,
-                                hintText: 'Add Category First',
+                                hintText: 'Category',
                                 notifyParent: (val) {
                                   controller.category.text = val.id;
                                 },
@@ -88,17 +88,17 @@ class GenerateBarcodeComponent extends StatelessWidget {
                                 ),
                               )
                               : controller.animalTypeList.isEmpty
-                              ? CommonDropDown(
-                                errorText: emptyCategory,
+                              ? CustomDropDown(
+                                // errorText: emptyCategory,
                                 listItems: controller.animalTypeList,
-                                hintText: 'Animal Type',
+                                hintText: 'Add Animal Category',
                                 notifyParent: (val) {
                                   controller.category.text = val.id;
                                 },
                               )
-                              : CommonDropDown(
-                                errorText: emptyAnimalCategory,
-                                hintText: 'Add Animal Category First',
+                              : CustomDropDown(
+                                // errorText: emptyAnimalCategory,
+                                hintText: 'Animal Category',
                                 listItems: controller.animalTypeList,
                                 notifyParent: (val) {
                                   controller.animalType.text = val.id;
@@ -132,16 +132,15 @@ class GenerateBarcodeComponent extends StatelessWidget {
                     ),
                   ),
                   Flexible(
-                    child: CommonDropDown(
-                      isModelValueEnabled: false,
-                      errorText: 'Please select',
+                    child: CustomDropDown(
+                      // isModelValueEnabled: false,
+                      // errorText: 'Please select',
+                      // enabled: controller.dropDownReadOnly.value,
+                      selectedDropDownItem: controller.isLoose,
                       listItems: [true, false],
                       hintText: 'Select isLoose',
                       notifyParent: (val) {
                         controller.isLoose = val;
-                        customMessageOrErrorPrint(
-                          message: ' controller.isLoose ${controller.isLoose}',
-                        );
                       },
                     ),
                   ),
@@ -216,9 +215,9 @@ class GenerateBarcodeComponent extends StatelessWidget {
                     ),
                   ),
                   Flexible(
-                    child: CommonDropDown(
-                      isModelValueEnabled: false,
-                      errorText: 'Select Location',
+                    child: CustomDropDown(
+                      // isModelValueEnabled: false,
+                      // errorText: 'Select Location',
                       listItems: ['Shop', 'Godown'],
                       hintText: 'Location',
                       notifyParent: (val) {

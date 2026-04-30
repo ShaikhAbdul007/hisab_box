@@ -156,10 +156,6 @@ class ProductController extends GetxController with CacheManager, LocalService {
       } else {
         showMessage(message: somethingWentMessage);
       }
-
-      showSnackBar(error: "✅ Converted & Synced!");
-      clear();
-      Get.back(result: true);
     } catch (e) {
       showSnackBar(error: e.toString());
     } finally {

@@ -91,12 +91,6 @@ class InventoryListController extends GetxController
         } else if (type == 'godown') {
           goDownProductList.value = response.data?.data ?? [];
         }
-
-        // /// optional combined list
-        // productList.value = [
-        //   ...shopProductList,
-        //   ...goDownProductList,
-        // ];
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {

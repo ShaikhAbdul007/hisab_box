@@ -53,6 +53,7 @@ class CustomerController extends GetxController with CacheManager {
     addressController.text = option?.address ?? '';
     nameController.text = option?.name ?? '';
     mobileController.text = option?.mobileNo ?? '';
+    descriptionController.text = option?.description ?? '';
   }
 
   // ================= CACHE FIRST =================
@@ -82,7 +83,11 @@ class CustomerController extends GetxController with CacheManager {
       if (response.success == success) {
         Get.back();
         clear();
-        showSnackBar(error: response.msg ?? 'Customer Created Successfully');
+        showSnackBar(
+          error: response.msg ?? 'Customer Created Successfully',
+          isError: false,
+        );
+        fetchAllCustomers();
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {

@@ -135,11 +135,11 @@ class ShopAddress extends StatelessWidget {
         setHeight(height: 10),
 
         /// Shop Type
-        CommonDropDown(
-          isModelValueEnabled: false,
-          enabled: true,
-          dropDownBgColor: AppColors.greyColorShade100,
-          errorText: 'Select shop type',
+        CustomDropDown(
+          // isModelValueEnabled: false,
+          // enabled: true,
+          // dropDownBgColor: AppColors.greyColorShade100,
+          // errorText: 'Select shop type',
           listItems: ['Pet Shop'],
           hintText: 'Shop type',
           notifyParent: notifyParent,

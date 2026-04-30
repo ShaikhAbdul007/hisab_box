@@ -90,7 +90,10 @@ class AddUserController extends GetxController with CacheManager {
       var response = await addUserRepo.addEmployees(body: body);
       if (response.success == success) {
         Get.back(result: true);
-        showSnackBar(error: response.msg ?? "Role added successfully", isError: false);
+        showSnackBar(
+          error: response.msg ?? "Role added successfully",
+          isError: false,
+        );
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {

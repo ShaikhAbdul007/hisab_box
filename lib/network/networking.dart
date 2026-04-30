@@ -130,6 +130,37 @@ class Networking extends BaseClient with CacheManager {
   }
 
   @override
+  Future patchData({
+    required String url,
+    required Map<String, dynamic> body,
+  }) async {
+    dynamic jsonPutResponse;
+    String? token;
+    token = checkingTokenExpireOrNot();
+    AppLogger.info(''' url: $url ,body: $body,token: $token ''');
+    try {
+      var response = await http.patch(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Accept': ApiEndPoint.accept,
+          'Content-Type': ApiEndPoint.contentType,
+          'Authorization': "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      jsonPutResponse = await fetchResponse(response);
+    } on SocketException {
+      return Future.error(internetError);
+    } on HttpException {
+      return Future.error(httpError);
+    } on Exception catch (e) {
+      return Future.error(e);
+    }
+    return jsonPutResponse;
+  }
+
+  @override
   Future<dynamic> postMultipartRequestData({
     required String url,
     required Map<String, String> body,
@@ -162,7 +193,7 @@ class Networking extends BaseClient with CacheManager {
           // Get file extension to determine content type
           final extension = file.path.split('.').last.toLowerCase();
           String contentType = 'image/jpeg'; // default
-          
+
           if (extension == 'png') {
             contentType = 'image/png';
           } else if (extension == 'jpg' || extension == 'jpeg') {
@@ -172,7 +203,7 @@ class Networking extends BaseClient with CacheManager {
           } else if (extension == 'webp') {
             contentType = 'image/webp';
           }
-          
+
           request.files.add(
             await http.MultipartFile.fromPath(
               fileField,

@@ -1,14 +1,14 @@
-class InventoryModel {
+class NeaExpiryModel {
   bool? success;
   String? msg;
-  InventoryData? data;
+  NeaExpiryData? data;
 
-  InventoryModel({this.success, this.msg, this.data});
+  NeaExpiryModel({this.success, this.msg, this.data});
 
-  InventoryModel.fromJson(Map<String, dynamic> json) {
+  NeaExpiryModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['msg'];
-    data = json['data'] != null ? InventoryData.fromJson(json['data']) : null;
+    data = json['data'] != null ? NeaExpiryData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -22,19 +22,21 @@ class InventoryModel {
   }
 }
 
-class InventoryData {
-  List<InventoryItem>? data;
+class NeaExpiryData {
+  List<NeaExpiryItemData>? data;
+  int? expiryThresholdDays;
   Pagination? pagination;
 
-  InventoryData({this.data, this.pagination});
+  NeaExpiryData({this.data, this.expiryThresholdDays, this.pagination});
 
-  InventoryData.fromJson(Map<String, dynamic> json) {
+  NeaExpiryData.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
-      data = <InventoryItem>[];
+      data = <NeaExpiryItemData>[];
       json['data'].forEach((v) {
-        data!.add(InventoryItem.fromJson(v));
+        data!.add(NeaExpiryItemData.fromJson(v));
       });
     }
+    expiryThresholdDays = json['expiry_threshold_days'];
     pagination =
         json['pagination'] != null
             ? Pagination.fromJson(json['pagination'])
@@ -46,6 +48,7 @@ class InventoryData {
     if (this.data != null) {
       data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
+    data['expiry_threshold_days'] = expiryThresholdDays;
     if (pagination != null) {
       data['pagination'] = pagination!.toJson();
     }
@@ -53,108 +56,80 @@ class InventoryData {
   }
 }
 
-class InventoryItem {
-  String? id;
+class NeaExpiryItemData {
+  String? stockId;
+  String? productId;
   String? name;
-  String? barcodes;
   String? barcode;
-  String? packetQuantity;
-  String? packetPrice;
   String? quantity;
   String? sellingPrice;
-  String? stockType;
   String? location;
-  String? categoryName;
-  String? animalTypeName;
-  bool? isloosed;
-  bool? isflavorRequired;
-  String? flavour;
+  String? stockType;
+  String? expiryDate;
   String? level;
   String? rack;
   String? weight;
-  int? discount;
-  String? purchasePrice;
-  String? expireDate;
+  String? categoryName;
+  String? animalCategoryName;
   String? purchaseDate;
+  String? flavour;
   String? createdAt;
+  bool? isloosed;
+  bool? isflavorRequired;
 
-  InventoryItem({
-    this.id,
+  NeaExpiryItemData({
+    this.stockId,
+    this.productId,
+    this.flavour,
     this.name,
-    this.barcodes,
     this.barcode,
-    this.packetQuantity,
-    this.packetPrice,
     this.quantity,
     this.sellingPrice,
-    this.stockType,
-    this.createdAt,
     this.location,
-    this.categoryName,
-    this.animalTypeName,
+    this.stockType,
+    this.expiryDate,
+    this.purchaseDate,
+    this.createdAt,
     this.isloosed,
     this.isflavorRequired,
-    this.flavour,
     this.level,
     this.rack,
     this.weight,
-    this.discount,
-    this.purchasePrice,
-    this.expireDate,
-    this.purchaseDate,
+    this.categoryName,
+    this.animalCategoryName,
   });
 
-  InventoryItem.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
+  NeaExpiryItemData.fromJson(Map<String, dynamic> json) {
+    stockId = json['stock_id'];
+    productId = json['product_id'];
     name = json['name'];
-    barcodes = json['barcodes'];
     barcode = json['barcode'];
-    packetQuantity = json['packet_quantity'];
-    packetPrice = json['packet_price'];
     quantity = json['quantity'];
     sellingPrice = json['selling_price'];
-    stockType = json['stock_type'];
     location = json['location'];
+    stockType = json['stock_type'];
+    expiryDate = json['expiry_date'];
+    purchaseDate = json['purchase_date'];
     createdAt = json['created_at'];
-    categoryName = json['category_name'];
-    animalTypeName = json['animal_type_name'];
     isloosed = json['isloosed'];
     isflavorRequired = json['isflavorRequired'];
-    flavour = json['flavour'];
-    level = json['level'];
-    rack = json['rack'];
-    weight = json['weight'];
-    discount = json['discount'];
-    purchasePrice = json['purchase_price'];
-    expireDate = json['expiry_date'];
-    purchaseDate = json['purchase_date'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
+    data['stock_id'] = stockId;
+    data['product_id'] = productId;
     data['name'] = name;
-    data['barcodes'] = barcodes;
     data['barcode'] = barcode;
-    data['packet_quantity'] = packetQuantity;
-    data['packet_price'] = packetPrice;
     data['quantity'] = quantity;
     data['selling_price'] = sellingPrice;
-    data['stock_type'] = stockType;
     data['location'] = location;
-    data['category_name'] = categoryName;
-    data['animal_type_name'] = animalTypeName;
+    data['stock_type'] = stockType;
+    data['expiry_date'] = expiryDate;
+    data['purchase_date'] = purchaseDate;
+    data['created_at'] = createdAt;
     data['isloosed'] = isloosed;
     data['isflavorRequired'] = isflavorRequired;
-    data['flavour'] = flavour;
-    data['level'] = level;
-    data['rack'] = rack;
-    data['weight'] = weight;
-    data['discount'] = discount;
-    data['purchase_price'] = purchasePrice;
-    data['created_at'] = createdAt;
-    data['expiry_date'] = expireDate;
-    data['purchase_date'] = purchaseDate;
     return data;
   }
 }

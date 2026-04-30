@@ -1,5 +1,5 @@
 abstract class BaseClient {
-  Future<dynamic> getData({required String url,Map<String, dynamic> body});
+  Future<dynamic> getData({required String url, Map<String, dynamic> body});
   Future<dynamic> postData({
     required String url,
     required Map<String, dynamic> body,
@@ -9,6 +9,10 @@ abstract class BaseClient {
     required Map<String, dynamic> body,
   });
   Future<dynamic> deleteData({
+    required String url,
+    required Map<String, dynamic> body,
+  });
+  Future<dynamic> patchData({
     required String url,
     required Map<String, dynamic> body,
   });

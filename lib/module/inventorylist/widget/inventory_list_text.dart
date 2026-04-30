@@ -100,53 +100,6 @@ class InventroyListText extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // Row(
-                      //   children: [
-                      //     Text(
-                      //       level.isNotEmpty && rack.isNotEmpty
-                      //           ? '${inventoryModel.location}/$level/$rack'
-                      //           : level.isEmpty && rack.isNotEmpty
-                      //           ? '${inventoryModel.location}/$rack'
-                      //           : rack.isEmpty && level.isNotEmpty
-                      //           ? '${inventoryModel.location}/$level'
-                      //           : '${inventoryModel.location}',
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.greyColor,
-                      //       ),
-                      //     ),
-                      //     setWidth(width: 10),
-                      //     inventoryModel.isLoosed ?? false
-                      //         ? Text(
-                      //           'Loosed : ${inventoryModel.isLoosed}',
-                      //           style: CustomTextStyle.customOpenSans(
-                      //             color: AppColors.redColor,
-                      //           ),
-                      //         )
-                      //         : Container(),
-                      //   ],
-                      // ),
-                      // Row(
-                      //   children: [
-                      //     Text(
-                      //       formatDate(inventoryModel.purchaseDate ?? ''),
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.greyColor,
-                      //       ),
-                      //     ),
-                      //     Text(
-                      //       ' - ',
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.greyColor,
-                      //       ),
-                      //     ),
-                      //     Text(
-                      //       formatDate(inventoryModel.expireDate ?? ''),
-                      //       style: CustomTextStyle.customOpenSans(
-                      //         color: AppColors.redColor,
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
                     ],
                   ),
                 ),
@@ -208,15 +161,15 @@ class InventroyListText extends StatelessWidget {
     return text ?? '';
   }
 
- Color getColor() {
-  double qty =
-      double.tryParse(inventoryModel.quantity?.toString() ?? '0') ?? 0;
-  if (qty > 0 && qty < 10) {
-    return AppColors.orangeColor;
-  } else if (qty == 0) {
-    return AppColors.redColor;
-  } else {
-    return AppColors.blackColor;
+  Color getColor() {
+    double qty =
+        double.tryParse(inventoryModel.quantity?.toString() ?? '0') ?? 0;
+    if (qty > 0 && qty < 10) {
+      return AppColors.orangeColor;
+    } else if (qty == 0) {
+      return AppColors.redColor;
+    } else {
+      return AppColors.blackColor;
+    }
   }
-}
 }

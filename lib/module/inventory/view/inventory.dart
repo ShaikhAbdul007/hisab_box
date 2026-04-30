@@ -177,17 +177,16 @@ class InventoryView extends GetView<InventroyController> {
       );
       return;
     } else {
-      
       print('else else else product');
       controller.mobileScannerController.start();
-      // final res = await AppRoutes.futureNavigationToRoute(
-      //   routeName: AppRouteName.productView,
-      //   data: {'barcode': scannedValue, 'flag': isloosedInventory},
-      // );
+      final res = await AppRoutes.futureNavigationToRoute(
+        routeName: AppRouteName.productView,
+        data: {'barcode': scannedValue, 'flag': isloosedInventory},
+      );
 
-      // if (res == true) {
-      //   controller.mobileScannerController.start();
-      // }
+      if (res == true) {
+        controller.mobileScannerController.start();
+      }
     }
   }
 

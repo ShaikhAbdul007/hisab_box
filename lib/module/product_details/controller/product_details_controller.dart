@@ -1,3 +1,4 @@
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/logger.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -7,8 +8,8 @@ import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
+import 'package:inventory/module/product_details/repo/product_repo.dart';
 import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
@@ -17,8 +18,8 @@ import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 Gl
 
 class ProductDetailsController extends GetxController
     with CacheManager, LocalService {
-  final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Reference
-
+  final globalStore = Get.find<GlobalStore>();
+  ProductRepo productRepo = ProductRepo();
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
@@ -43,8 +44,18 @@ class ProductDetailsController extends GetxController
   TextEditingController loooseProductName = TextEditingController();
   TextEditingController exprieDate = TextEditingController();
   TextEditingController purchaseDate = TextEditingController();
+  TextEditingController rack = TextEditingController();
+  TextEditingController level = TextEditingController();
   TextEditingController barcodeQytController = TextEditingController();
   RxList<CategoryModel> categoryModel = <CategoryModel>[].obs;
+
+  // Selected dropdown objects (used by CommonDropDown as selectedDropDownItem)
+  Rx<CategoryModelListData?> selectedCategory = Rx<CategoryModelListData?>(
+    null,
+  );
+  Rx<CategoryModelListData?> selectedAnimalType = Rx<CategoryModelListData?>(
+    null,
+  );
 
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isLooseProductSave = false.obs;
@@ -61,8 +72,9 @@ class ProductDetailsController extends GetxController
   @override
   void onInit() {
     dayDate.value = setFormateDate();
-    setData();
     getCategoryData();
+    print('setdata');
+    setData();
     super.onInit();
   }
 
@@ -73,15 +85,6 @@ class ProductDetailsController extends GetxController
     required ProductModel product,
     required double requestedQty,
   }) async {
-    final userId = resolveUserId(isTransferLoading.value);
-    if (userId == null) return;
-
-    // 1. Basic Validation
-    if (requestedQty <= 0) {
-      showSnackBar(error: "Bhai, quantity toh sahi dalo!");
-      return;
-    }
-
     isTransferLoading.value = true;
     try {
       // Unique Reference ID for tracking
@@ -91,7 +94,7 @@ class ProductDetailsController extends GetxController
       await SupabaseConfig.client.rpc(
         'process_stock_transfer',
         params: {
-          'p_user_id': userId,
+          'p_user_id': '',
           'p_product_id': product.id,
           'p_qty': requestedQty,
           'p_ref_id': refId,
@@ -127,22 +130,25 @@ class ProductDetailsController extends GetxController
     await fetchAnimalCategories();
   }
 
-  CategoryModelListData? getSelectedCategory({
-    required String categorysId,
-    String categoryType = '',
-  }) {
+  dynamic getCategorySelectedItem(String value) {
     try {
-      if (categoryType == 'animal') {
-        return animalTypeList.firstWhere(
-          (e) => e.id == categorysId || e.id == categorysId,
-          orElse: () => CategoryModelListData(),
-        );
-      } else {
-        return categoryList.firstWhere(
-          (e) => e.name == categorysId || e.id == categorysId,
-          orElse: () => CategoryModelListData(),
-        );
-      }
+      final found =
+          categoryList
+              .firstWhere((item) => item.name.toString().trim() == value.trim())
+              .name;
+      category.text = found ?? '';
+    } catch (e) {
+      return null;
+    }
+  }
+
+  dynamic getAnimalSelectedItem(String value) {
+    try {
+      final found =
+          animalTypeList
+              .firstWhere((item) => item.name.toString().trim() == value.trim())
+              .name;
+      animalType.text = found ?? '';
     } catch (e) {
       return null;
     }
@@ -150,7 +156,6 @@ class ProductDetailsController extends GetxController
 
   void setData() {
     var productData = data['product'];
-
     if (productData is InventoryItem) {
       InventoryItem p = productData;
       category.text = p.categoryName ?? '';
@@ -160,40 +165,22 @@ class ProductDetailsController extends GetxController
       barcode.text = p.barcode ?? '';
       quantity.text = p.quantity.toString();
       barcodeQytController.text = p.quantity.toString();
-
       sellingPrice.text = p.sellingPrice.toString();
       purchasePrice.text = p.purchasePrice.toString();
       flavor.text = p.flavour ?? '';
       weight.text = p.weight.toString();
+      rack.text = p.rack ?? '';
+      level.text = p.level ?? '';
       isLoose = p.isloosed ?? false;
       location.text = p.location?.toCapitalized() ?? '';
       discount.text = p.discount.toString();
-      // purchaseDate.text = p.purchaseDate ?? '';
-      // exprieDate.text = p.expireDate ?? '';
-    } else if (productData is LooseInvetoryModel) {
-      LooseInvetoryModel l = productData;
-      category.text = l.category ?? '';
-      animalType.text = l.animalType ?? '';
-      isFlavorAndWeightNotRequired.value =
-          l.isFlavorAndWeightNotRequired ?? false;
-      productName.text = l.name ?? '';
-      barcode.text = l.barcode ?? '';
-      quantity.text = l.quantity.toString();
-      barcodeQytController.text = l.quantity.toString();
-      sellingPrice.text = l.sellingPrice.toString();
-      purchasePrice.text = l.purchasePrice.toString();
-      flavor.text = l.flavor ?? '';
-      weight.text = l.weight ?? '';
-      isLoose = true;
-      location.text = l.location?.toCapitalized() ?? '';
-      discount.text = l.discount.toString();
-      purchaseDate.text = l.purchaseDate ?? '';
-      exprieDate.text = l.expireDate ?? '';
+      purchaseDate.text = p.purchaseDate ?? '';
+      exprieDate.text = p.expireDate ?? '';
+      getCategorySelectedItem(p.categoryName ?? '');
+      getAnimalSelectedItem(p.animalTypeName ?? '');
     } else {
       Map<String, dynamic> p = productData as Map<String, dynamic>;
-      category.text = p['category']?.toString() ?? '';
-      animalType.text =
-          p['animalType']?.toString() ?? p['animal_type']?.toString() ?? '';
+
       isFlavorAndWeightNotRequired.value =
           p['isFlavorAndWeightNotRequired'] ??
           p['is_flavor_and_weight_not_required'] ??
@@ -201,6 +188,8 @@ class ProductDetailsController extends GetxController
       productName.text = p['name']?.toString() ?? '';
       barcode.text = p['barcode']?.toString() ?? '';
       quantity.text = p['quantity']?.toString() ?? '0';
+      rack.text = p['rack']?.toString() ?? '';
+      level.text = p['level']?.toString() ?? '';
       barcodeQytController.text = p['quantity']?.toString() ?? '0';
       sellingPrice.text = p['sellingPrice']?.toString() ?? '0';
       purchasePrice.text = p['purchasePrice']?.toString() ?? '0';
@@ -211,6 +200,8 @@ class ProductDetailsController extends GetxController
       discount.text = p['discount']?.toString() ?? '0';
       purchaseDate.text = p['purchaseDate']?.toString() ?? '';
       exprieDate.text = p['expireDate']?.toString() ?? '';
+      getCategorySelectedItem(p['category_name']?.toString() ?? '');
+      getAnimalSelectedItem(p['animal_type_name']?.toString() ?? '');
     }
   }
 
@@ -218,79 +209,28 @@ class ProductDetailsController extends GetxController
   // 🔥 UPDATE: Supabase RPC -> Global Sync -> Hive Update
   // ==========================================
   void updateProductQuantity({
-    required String barcode,
-    required bool isLoosed,
-    required String locationType,
+    required dynamic body,
+
+    required String productId,
   }) async {
-    final userId = resolveUserId(isSaveLoading.value);
-    if (userId == null) return;
     isSaveLoading.value = true;
 
     try {
-      final selectedCategory = category.text.trim();
-      final selectedAnimal = animalType.text.trim();
-
-      final catId = '';
-      // categoryList
-      //     .firstWhereOrNull(
-      //       (e) => e.id == selectedCategory || e.name == selectedCategory,
-      //     )
-      //     ?.id ??
-      // (selectedCategory.isEmpty ? null : selectedCategory);
-
-      final aniId = '';
-      // animalTypeList
-      //     .firstWhereOrNull(
-      //       (e) => e.id == selectedAnimal || e.name == selectedAnimal,
-      //     )
-      //     ?.id ??
-      // (selectedAnimal.isEmpty ? null : selectedAnimal);
-
-      String? pid;
-      var productData = data['product'];
-      if (productData is ProductModel) {
-        pid = productData.id;
-      } else if (productData is LooseInvetoryModel) {
-        pid = productData.productId;
-      } else {
-        pid =
-            productData['id']?.toString() ??
-            productData['productId']?.toString();
-      }
-
-      if (pid == null) throw "Product ID not found";
-      final pDate = (purchaseDate.text);
-      final eDate = (exprieDate.text);
-      // 1. Transactional Update (Cloud)
-      await SupabaseConfig.client.rpc(
-        'update_product_and_stock_v2',
-        params: {
-          'p_pid': pid,
-          'p_user_id': userId,
-          'p_name': productName.text.trim(),
-          'p_cat_id': catId,
-          'p_ani_id': aniId,
-          'p_flavor': flavor.text,
-          'p_weight': weight.text,
-          'p_is_loose_cat': isLoose,
-          'p_is_flavor_weight_req': isFlavorAndWeightNotRequired.value,
-          'p_is_loosed_entry': isLoosed,
-          'p_qty': double.tryParse(quantity.text) ?? 0.0,
-          'p_s_price': double.tryParse(sellingPrice.text) ?? 0.0,
-          'p_p_price': double.tryParse(purchasePrice.text) ?? 0.0,
-          'p_p_date': pDate,
-          'p_e_date': eDate,
-          'p_location': location.text.toLowerCase().trim(),
-        },
+      var response = await productRepo.updatePacketProduct(
+        body: body,
+        productId: productId,
       );
-
-      // 2. 🔥 GLOBAL SYNC: GlobalStore ko bolo fresh data laaye
-      // Isse RAM wala data update hoga aur poori app refresh ho jayegi
-      await globalStore.loadInitialData();
-      // 3. Local Sync: Hive mein data update karna
-      await refreshAllLocalData(isLoosed: isLoosed);
-      Get.back(result: true);
-      showSnackBar(error: '✅ Product & Stock Updated Safely.');
+      if (response.success == success) {
+        showSnackBar(
+          error: response.msg ?? "Update SuccessFully!",
+          isError: false,
+        );
+        Get.back(result: true);
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? "Update Failed!");
+      } else {
+        showSnackBar(error: response.msg ?? "Update Failed!");
+      }
     } catch (e) {
       AppLogger.info(("🚨 Update Error: $e").toString());
       showSnackBar(error: e.toString());
@@ -299,95 +239,28 @@ class ProductDetailsController extends GetxController
     }
   }
 
-  // 🔥 Helper function for full Hive refresh
-  Future<void> refreshAllLocalData({required bool isLoosed}) async {
-    final userId = resolveUserId(isSaveLoading.value);
-    if (userId == null) return;
-    if (isLoosed == false) {
-      // Based on your logic if NOT loose
-      try {
-        final response = await SupabaseConfig.from('products')
-            .select('*, product_stock!inner(*)')
-            .eq('user_id', userId)
-            .eq('product_stock.is_active', true);
-
-        final freshList =
-            (response as List).map((e) => ProductModel.fromJson(e)).toList();
-        await LocalService.saveProducts(freshList);
-      } catch (e) {
-        AppLogger.info(("🚨 Background Sync failed: $e").toString());
-        showSnackBar(error: e.toString());
+  void updateLoosedProductQuantity({required dynamic body}) async {
+    isSaveLoading.value = true;
+    try {
+      var response = await productRepo.updateLoosePacketProduct(body: body);
+      if (response.success == success) {
+        showSnackBar(
+          error: response.msg ?? "Update SuccessFully!",
+          isError: false,
+        );
+        Get.back(result: true);
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? "Update Failed!");
+      } else {
+        showSnackBar(error: response.msg ?? "Update Failed!");
       }
-    } else {
-      try {
-        final response = await SupabaseConfig.from('loose_stocks')
-            .select('''
-          id, quantity, selling_price, product_id, user_id, created_at, updated_at,
-          products!fk_loose_stocks_products (
-            id, name, flavour, weight, rack, level,
-            is_loose_category, is_flavor_and_weight_not_required,
-            categories:category (id, name), 
-            animals:animal_type (id, name),
-            product_barcodes!fk_product_barcodes_products (barcode),
-            product_stock!fk_product_stock_products (location, stock_type, is_active),
-            stock_batches (purchase_date, expiry_date, purchase_price, location, stock_type)
-          )
-        ''')
-            .eq('user_id', userId)
-            .order('created_at', ascending: false);
-
-        final List dataResponse = response as List;
-        final List<LooseInvetoryModel> loosedfreshList =
-            dataResponse.map((e) => LooseInvetoryModel.fromJson(e)).toList();
-
-        looseInventoryLis.value = loosedfreshList;
-        await LocalService.saveLooseProducts(loosedfreshList);
-      } catch (e) {
-        AppLogger.info(("🚨 Loose Sync failed: $e").toString());
-        showSnackBar(error: e.toString());
-      }
+    } catch (e) {
+      AppLogger.info(("🚨 Update Error: $e").toString());
+      showSnackBar(error: e.toString());
+    } finally {
+      isSaveLoading.value = false;
     }
   }
-
-  // Future<void> fetchCategories() async {
-  //   final cached = LocalService.getCachedCategories();
-  //   if (cached.isNotEmpty) {
-  //     //categoryList.value = cached;
-  //   }
-  //   final userId = resolveUserId(isSaveLoading.value);
-  //   if (userId == null) return;
-  //   try {
-  //     final List response = await SupabaseConfig.from(
-  //       'categories',
-  //     ).select().eq('user_id', userId);
-  //     final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-  //     // categoryList.value = freshData;
-  //     await LocalService.saveCategories(freshData);
-  //   } catch (e) {
-  //     AppLogger.info(("🚨 Category fetch error: $e").toString());
-  //     showSnackBar(error: e.toString());
-  //   }
-  // }
-
-  // Future<void> fetchAnimalCategories() async {
-  //   final cached = LocalService.getCachedAnimalCategories();
-  //   if (cached.isNotEmpty) {
-  //     // animalTypeList.value = cached;
-  //   }
-  //   final userId = resolveUserId(isSaveLoading.value);
-  //   if (userId == null) return;
-  //   try {
-  //     final List response = await SupabaseConfig.from(
-  //       'animal_categories',
-  //     ).select().eq('user_id', userId);
-  //     final freshData = response.map((e) => CategoryModel.fromJson(e)).toList();
-  //     // animalTypeList.value = freshData;
-  //     await LocalService.saveAnimalCategories(freshData);
-  //   } catch (e) {
-  //     AppLogger.info(("🚨 Animal category error: $e").toString());
-  //     showSnackBar(error: e.toString());
-  //   }
-  // }
 
   Future<void> fetchCategories() async {
     try {
