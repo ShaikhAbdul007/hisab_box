@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import '../../../helper/textstyle.dart';
 import '../../inventory/model/product_model.dart';
 
 class LooseCategoryComponent extends StatelessWidget {
-  final ProductModel looseCategoryModel;
+  final InventoryItem looseCategoryModel;
   final void Function()? onTap;
 
   const LooseCategoryComponent({
@@ -44,12 +45,12 @@ class LooseCategoryComponent extends StatelessWidget {
           Row(
             children: [
               Text(
-                looseCategoryModel.createdDate ?? '',
+                looseCategoryModel.createdAt ?? '',
                 style: CustomTextStyle.customNato(),
               ),
               setWidth(width: 25),
               Text(
-                looseCategoryModel.createdTime ?? '',
+                looseCategoryModel.createdAt ?? '',
                 style: CustomTextStyle.customNato(),
               ),
             ],

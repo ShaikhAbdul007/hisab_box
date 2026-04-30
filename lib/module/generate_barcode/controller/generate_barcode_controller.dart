@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
@@ -14,8 +15,7 @@ import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService 
 import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 
-class GenerateBarcodeController extends GetxController
-    with CacheManager, LocalService {
+class GenerateBarcodeController extends GetxController with CacheManager {
   ProductRepo productRepo = ProductRepo();
   RxBool categoryListLoading = false.obs;
   final inventoryScanKey = GlobalKey<FormState>();
@@ -159,13 +159,13 @@ class GenerateBarcodeController extends GetxController
   Future<void> deleteProduct(String productId) async {
     try {
       // 1. Supabase se delete karo
-      await SupabaseConfig.from('products').delete().eq('id', productId);
+      // await SupabaseConfig.from('products').delete().eq('id', productId);
 
       // 2. Hive se delete karo
-      List<ProductModel> currentCachedProducts =
-          LocalService.getCachedProducts();
-      currentCachedProducts.removeWhere((p) => p.id == productId);
-      await LocalService.saveProducts(currentCachedProducts);
+      // List<InventoryItem> currentCachedProducts =
+      //     LocalService.getCachedProducts();
+      // currentCachedProducts.removeWhere((p) => p.id == productId);
+      // await LocalService.saveProducts(currentCachedProducts);
 
       showSnackBar(error: "Product deleted successfully");
     } catch (e) {

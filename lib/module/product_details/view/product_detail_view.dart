@@ -261,89 +261,65 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                         }
                       },
                     ),
-                    Obx(
-                      () =>
-                          controller.readOnly.value
-                              ? InventoryBottomsheetComponentText(
-                                readOnly1: controller.readOnly.value,
-                                readOnly2: controller.readOnly.value,
-                                controller1: controller.category,
-                                controller2: controller.animalType,
-                                label1: 'Category',
-                                hintText1: 'Enter barcode',
-                                hintText2: 'Enter product name',
-                                label2: 'Product name',
-                                validator2: (name) {
-                                  if (name!.isEmpty) {
-                                    return emptyProductName;
-                                  } else {
-                                    return null;
-                                  }
-                                },
-                              )
-                              : Row(
-                                children: [
-                                  Flexible(
-                                    child: Obx(
-                                      () =>
-                                          controller.categoryList.isEmpty
-                                              ? Center(
-                                                child: CommonProgressBar(
-                                                  color: AppColors.blackColor,
-                                                ),
-                                              )
-                                              : CustomDropDown(
-                                                // isModelValueEnabled: true,
-                                                // errorText: emptyCategory,
-                                                // enabled:
-                                                //     controller.dropDownReadOnly.value,
-                                                selectedDropDownItem:
-                                                    controller.category.text,
-                                                listItems:
-                                                    controller.categoryList,
-                                                hintText: 'Select Category',
-                                                notifyParent: (val) {
-                                                  // controller
-                                                  //     .selectedCategory
-                                                  //     .value = val;
-                                                  controller.category.text =
-                                                      val.id.toString();
-                                                },
-                                              ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Obx(
+                            () =>
+                                controller.categoryList.isEmpty
+                                    ? Center(
+                                      child: CommonProgressBar(
+                                        color: AppColors.blackColor,
+                                      ),
+                                    )
+                                    : CustomDropDown(
+                                      selectedDropDownItem:
+                                          controller.selectedCategoryId.value,
+                                      listItems: controller.categoryList,
+                                      hintText: 'Select Category',
+                                      notifyParent: (val) {
+                                        controller.selectedCategoryId.value =
+                                            val;
+                                        final match = controller.categoryList
+                                            .firstWhereOrNull(
+                                              (e) => e.id == val,
+                                            );
+                                        controller.category.text =
+                                            match?.name ?? '';
+                                      },
                                     ),
-                                  ),
-                                  Flexible(
-                                    child: Obx(
-                                      () =>
-                                          controller.animalTypeList.isEmpty
-                                              ? Center(
-                                                child: CommonProgressBar(
-                                                  color: AppColors.blackColor,
-                                                ),
-                                              )
-                                              : CustomDropDown(
-                                                // isModelValueEnabled: true,
-                                                // errorText: emptyAnimalCategory,
-                                                // enabled:
-                                                //     controller.dropDownReadOnly.value,
-                                                hintText: 'Animal Type',
-                                                selectedDropDownItem:
-                                                    controller.animalType.text,
-                                                listItems:
-                                                    controller.animalTypeList,
-                                                notifyParent: (val) {
-                                                  // controller
-                                                  //     .selectedAnimalType
-                                                  //     .value = val;
-                                                  controller.animalType.text =
-                                                      val.id.toString();
-                                                },
-                                              ),
+                          ),
+                        ),
+                        Flexible(
+                          child: Obx(
+                            () =>
+                                controller.animalTypeList.isEmpty
+                                    ? Center(
+                                      child: CommonProgressBar(
+                                        color: AppColors.blackColor,
+                                      ),
+                                    )
+                                    : CustomDropDown(
+                                      hintText: 'Animal Type',
+                                      selectedDropDownItem:
+                                          controller.selectedAnimalTypeId.value,
+                                      listItems: controller.animalTypeList,
+                                      notifyParent: (val) {
+                                        controller.selectedAnimalTypeId.value =
+                                            val;
+                                        final match = controller.animalTypeList
+                                            .firstWhereOrNull(
+                                              (e) => e.id == val,
+                                            );
+                                        controller.animalType.text =
+                                            match?.name ?? '';
+                                      },
                                     ),
-                                  ),
-                                ],
-                              ),
+                          ),
+                        ),
+                      ],
                     ),
+
                     Obx(
                       () => Row(
                         children: [
@@ -370,10 +346,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                             ),
                           ),
                           Flexible(
-                            child: CustomDropDown(
-                              // isModelValueEnabled: false,
-                              // errorText: 'Please select',
-                              // enabled: controller.dropDownReadOnly.value,
+                            child: CustomStaticDropDown(
                               selectedDropDownItem: controller.isLoose,
                               listItems: [true, false],
                               hintText: 'Select isLoose',
@@ -444,12 +417,9 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                             ),
                           ),
                           Flexible(
-                            child: CustomDropDown(
-                              // enabled: controller.dropDownReadOnly.value,
-                              // selectedDropDownItem: controller.location.text,
-                              // isModelValueEnabled: false,
-                              // errorText: 'Select Location',
-                              listItems: ['Shop', 'Godown'],
+                            child: CustomStaticDropDown(
+                              selectedDropDownItem: controller.location.text,
+                              listItems: ['shop', 'godown'],
                               hintText: 'Location',
                               notifyParent: (val) {
                                 controller.location.text = val;

@@ -8,12 +8,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/push_notification/local_notification_service.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'common_widget/colors.dart';
 import 'firebase_options.dart';
@@ -40,11 +38,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  await SupabaseConfig.init();
+
   await ScreenUtil.ensureScreenSize();
-  await LocalService.initHive();
+  // await LocalService.initHive();
   await GetStorage.init();
-  Get.put(GlobalStore(), permanent: true);
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -59,10 +56,10 @@ void main() async {
 }
 
 Future<void> checkResponse() async {
-  final user = Supabase.instance.client.auth.currentUser;
-  AppLogger.info(('USER -> $user').toString());
-  final session = Supabase.instance.client.auth.currentSession;
-  AppLogger.info(('SESSION -> $session').toString());
+  // final user = Supabase.instance.client.auth.currentUser;
+  // AppLogger.info(('USER -> $user').toString());
+  // final session = Supabase.instance.client.auth.currentSession;
+  // AppLogger.info(('SESSION -> $session').toString());
 }
 
 class MyApp extends StatefulWidget {

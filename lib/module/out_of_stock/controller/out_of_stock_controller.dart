@@ -8,8 +8,7 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/near_expire_product/model/near_expiry_model.dart';
 import 'package:inventory/module/out_of_stock/repo/out_of_stock_repo.dart';
 
-class OutOfStockController extends GetxController
-    with CacheManager, LocalService {
+class OutOfStockController extends GetxController with CacheManager {
   OutOfStockRepo outOfStockRepo = OutOfStockRepo();
   RxBool isDataLoading = false.obs;
   RxBool isDeleteLoading = false.obs;

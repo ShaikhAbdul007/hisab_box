@@ -47,7 +47,7 @@ class SettingController extends GetxController with CacheManager {
         email.value = userModel.value.data?.email ?? '';
       }
     } catch (e) {
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     } finally {
       isProfileLoading.value = false;
     }
@@ -60,12 +60,12 @@ class SettingController extends GetxController with CacheManager {
         userModel.value = response;
         saveUserData(userModel.value);
       } else if (response.success == failed) {
-      showSnackBar(error: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-      showSnackBar(error: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     } finally {}
   }
 
@@ -75,17 +75,17 @@ class SettingController extends GetxController with CacheManager {
       var response = await logoutRepo.logout();
       if (response.success == success) {
         removeBox();
-        LocalService.clearAllCache();
+
         Get.back();
-      showSnackBar(error: response.msg ?? logout);
+        showSnackBar(error: response.msg ?? logout);
         AppRoutes.navigateRoutes(routeName: AppRouteName.login);
       } else if (response.success == failed) {
-      showSnackBar(error: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-      showSnackBar(error: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     } finally {
       isUserlogout.value = false;
     }

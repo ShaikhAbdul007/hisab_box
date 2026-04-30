@@ -188,7 +188,6 @@ class PartailPaymentWidget extends StatelessWidget {
                         message: 'Please pay full amount before continuing!',
                       );
                     } else {
-                      controller.getPrintReadyList();
                       await controller.saleConfirmed(
                         isLoading: controller.isPartailLoading,
                       );

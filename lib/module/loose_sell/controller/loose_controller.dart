@@ -9,7 +9,7 @@ import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/repo/loose_repo.dart';
 import 'package:inventory/helper/helper.dart';
 
-class LooseController extends GetxController with CacheManager, LocalService {
+class LooseController extends GetxController with CacheManager {
   LoosedProductRepo loosedProductRepo = LoosedProductRepo();
   TextEditingController searchController = TextEditingController();
   // --- Text Controllers ---
@@ -30,7 +30,6 @@ class LooseController extends GetxController with CacheManager, LocalService {
   RxString searchText = ''.obs;
 
   // --- Dependencies ---
-  final globalStore = Get.find<GlobalStore>(); // 🔥 GlobalStore Instance
 
   @override
   void onInit() {

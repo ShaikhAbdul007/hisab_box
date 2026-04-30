@@ -16,17 +16,12 @@ import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Connection
 
-class ProductDetailsController extends GetxController
-    with CacheManager, LocalService {
-  final globalStore = Get.find<GlobalStore>();
+class ProductDetailsController extends GetxController with CacheManager {
   ProductRepo productRepo = ProductRepo();
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
-  RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
-  RxList<ProductModel> productList = <ProductModel>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
-  RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
   TextEditingController transferQuantityToShop = TextEditingController();
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
@@ -49,13 +44,9 @@ class ProductDetailsController extends GetxController
   TextEditingController barcodeQytController = TextEditingController();
   RxList<CategoryModel> categoryModel = <CategoryModel>[].obs;
 
-  // Selected dropdown objects (used by CommonDropDown as selectedDropDownItem)
-  Rx<CategoryModelListData?> selectedCategory = Rx<CategoryModelListData?>(
-    null,
-  );
-  Rx<CategoryModelListData?> selectedAnimalType = Rx<CategoryModelListData?>(
-    null,
-  );
+  // Selected dropdown ids (matched against item.id in CustomDropDown)
+  RxnString selectedCategoryId = RxnString(null);
+  RxnString selectedAnimalTypeId = RxnString(null);
 
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isLooseProductSave = false.obs;
@@ -74,7 +65,6 @@ class ProductDetailsController extends GetxController
     dayDate.value = setFormateDate();
     getCategoryData();
     print('setdata');
-    setData();
     super.onInit();
   }
 
@@ -82,7 +72,7 @@ class ProductDetailsController extends GetxController
   // 🔥 STOCK TRANSFER (SUPABASE + SYNC)
   // ==========================================
   Future<void> requestStockTransfer({
-    required ProductModel product,
+    required InventoryItem product,
     required double requestedQty,
   }) async {
     isTransferLoading.value = true;
@@ -91,20 +81,20 @@ class ProductDetailsController extends GetxController
       String refId = "TRF-${DateTime.now().millisecondsSinceEpoch}";
 
       // 🔥 Sirf ek call aur SQL function saara logic handle karega
-      await SupabaseConfig.client.rpc(
-        'process_stock_transfer',
-        params: {
-          'p_user_id': '',
-          'p_product_id': product.id,
-          'p_qty': requestedQty,
-          'p_ref_id': refId,
-          'p_stock_type': product.stockType ?? 'packet',
-          'p_price': product.sellingPrice ?? 0.0,
-          'p_title': "📦 New Stock Incoming!",
-          'p_body':
-              "${product.name} ke $requestedQty units Godown se bheje gaye hain.",
-        },
-      );
+      // await SupabaseConfig.client.rpc(
+      //   'process_stock_transfer',
+      //   params: {
+      //     'p_user_id': '',
+      //     'p_product_id': product.id,
+      //     'p_qty': requestedQty,
+      //     'p_ref_id': refId,
+      //     'p_stock_type': product.stockType ?? 'packet',
+      //     'p_price': product.sellingPrice ?? 0.0,
+      //     'p_title': "📦 New Stock Incoming!",
+      //     'p_body':
+      //         "${product.name} ke $requestedQty units Godown se bheje gaye hain.",
+      //   },
+      // );
 
       showSnackBar(error: "📤 Transfer Successful & Notification Sent!");
 
@@ -128,15 +118,16 @@ class ProductDetailsController extends GetxController
   void getCategoryData() async {
     await fetchCategories();
     await fetchAnimalCategories();
+    setData();
   }
 
   dynamic getCategorySelectedItem(String value) {
     try {
-      final found =
-          categoryList
-              .firstWhere((item) => item.name.toString().trim() == value.trim())
-              .name;
-      category.text = found ?? '';
+      final match = categoryList.firstWhereOrNull((e) => e.name == value);
+      if (match != null) {
+        category.text = match.name ?? '';
+        selectedCategoryId.value = match.id;
+      }
     } catch (e) {
       return null;
     }
@@ -144,11 +135,11 @@ class ProductDetailsController extends GetxController
 
   dynamic getAnimalSelectedItem(String value) {
     try {
-      final found =
-          animalTypeList
-              .firstWhere((item) => item.name.toString().trim() == value.trim())
-              .name;
-      animalType.text = found ?? '';
+      final match = animalTypeList.firstWhereOrNull((e) => e.name == value);
+      if (match != null) {
+        animalType.text = match.name ?? '';
+        selectedAnimalTypeId.value = match.id;
+      }
     } catch (e) {
       return null;
     }
@@ -168,11 +159,11 @@ class ProductDetailsController extends GetxController
       sellingPrice.text = p.sellingPrice.toString();
       purchasePrice.text = p.purchasePrice.toString();
       flavor.text = p.flavour ?? '';
-      weight.text = p.weight.toString();
+      weight.text = p.weight ?? '';
       rack.text = p.rack ?? '';
       level.text = p.level ?? '';
       isLoose = p.isloosed ?? false;
-      location.text = p.location?.toCapitalized() ?? '';
+      location.text = p.location!.toLowerCase();
       discount.text = p.discount.toString();
       purchaseDate.text = p.purchaseDate ?? '';
       exprieDate.text = p.expireDate ?? '';
@@ -195,7 +186,7 @@ class ProductDetailsController extends GetxController
       purchasePrice.text = p['purchasePrice']?.toString() ?? '0';
       flavor.text = p['flavor']?.toString() ?? p['flavour']?.toString() ?? '';
       weight.text = p['weight']?.toString() ?? '';
-      isLoose = p['isLoosed'] ?? p['isLooseCategory'] ?? false;
+      isLoose = p['isLoosed'] ?? false;
       location.text = p['location']?.toString() ?? '';
       discount.text = p['discount']?.toString() ?? '0';
       purchaseDate.text = p['purchaseDate']?.toString() ?? '';

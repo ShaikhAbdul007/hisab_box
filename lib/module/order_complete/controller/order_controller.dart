@@ -40,15 +40,12 @@ class OrderController extends GetxController with CacheManager {
     }
   }
 
- 
   Future<List<CustomerDetails>> loadAllCustomers() async {
-   
-
     try {
-           return [];
+      return [];
     } catch (e) {
       AppLogger.info(("Error loading customers: $e").toString());
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
       return [];
     }
   }
@@ -59,77 +56,79 @@ class OrderController extends GetxController with CacheManager {
   Future<bool> saveCustomerWithInvoice({
     required PrintInvoiceModel invoice,
   }) async {
-    final String? currentUid = resolveUserId(saveCustomerWithInvoiceLoading.value);
+    final String? currentUid = resolveUserId(
+      saveCustomerWithInvoiceLoading.value,
+    );
     if (currentUid == null) return false;
 
     saveCustomerWithInvoiceLoading.value = true;
 
     try {
-      String cMobile = mobileNumber.text.trim();
-      if (cMobile.isEmpty) return false;
+      // String cMobile = mobileNumber.text.trim();
+      // if (cMobile.isEmpty) return false;
 
-      // 1. Customer Search/Create
-      final customerResponse =
-          await SupabaseConfig.from('customers')
-              .select('id')
-              .eq('mobile_number', cMobile)
-              .eq('user_id', currentUid)
-              .maybeSingle();
+      // // 1. Customer Search/Create
+      // final customerResponse =
+      //     await SupabaseConfig.from('customers')
+      //         .select('id')
+      //         .eq('mobile_number', cMobile)
+      //         .eq('user_id', currentUid)
+      //         .maybeSingle();
 
-      dynamic customerId;
+      // dynamic customerId;
 
-      if (customerResponse != null) {
-        customerId = customerResponse['id'];
-        await SupabaseConfig.from('customers')
-            .update({
-              "name": name.text.trim(),
-              "address": address.text.trim(),
-              "description": description.text.trim(),
-            })
-            .eq('id', customerId);
-      } else {
-        final newCustomer =
-            await SupabaseConfig.from('customers')
-                .insert({
-                  "user_id": currentUid,
-                  "name": name.text.trim(),
-                  "address": address.text.trim(),
-                  "mobile_number": cMobile,
-                  "description": description.text.trim(),
-                })
-                .select('id')
-                .single();
-        customerId = newCustomer['id'];
-      }
+      // if (customerResponse != null) {
+      //   customerId = customerResponse['id'];
+      //   await SupabaseConfig.from('customers')
+      //       .update({
+      //         "name": name.text.trim(),
+      //         "address": address.text.trim(),
+      //         "description": description.text.trim(),
+      //       })
+      //       .eq('id', customerId);
+      // } else {
+      //   final newCustomer =
+      //       await SupabaseConfig.from('customers')
+      //           .insert({
+      //             "user_id": currentUid,
+      //             "name": name.text.trim(),
+      //             "address": address.text.trim(),
+      //             "mobile_number": cMobile,
+      //             "description": description.text.trim(),
+      //           })
+      //           .select('id')
+      //           .single();
+      //   customerId = newCustomer['id'];
+      // }
 
-      // 2. 🎯 TARGET FIX: Sales Update
-      // Hum bill_no ko int mein convert kar rahe hain aur user_id ka check laga rahe hain
-      final int numericBillNo = int.tryParse(invoice.billNo.toString()) ?? 0;
+      // // 2. 🎯 TARGET FIX: Sales Update
+      // // Hum bill_no ko int mein convert kar rahe hain aur user_id ka check laga rahe hain
+      // final int numericBillNo = int.tryParse(invoice.billNo.toString()) ?? 0;
 
-      final updateRes =
-          await SupabaseConfig.from('sales')
-              .update({'customer_id': customerId})
-              .eq(
-                'bill_no',
-                numericBillNo,
-              ) // 🔥 String ki jagah Int bhej rahe hain
-              .eq(
-                'user_id',
-                currentUid,
-              ) // 🔥 Security: Sirf apni hi dukan ka bill update ho
-              .select();
+      // final updateRes =
+      //     await SupabaseConfig.from('sales')
+      //         .update({'customer_id': customerId})
+      //         .eq(
+      //           'bill_no',
+      //           numericBillNo,
+      //         ) // 🔥 String ki jagah Int bhej rahe hain
+      //         .eq(
+      //           'user_id',
+      //           currentUid,
+      //         ) // 🔥 Security: Sirf apni hi dukan ka bill update ho
+      //         .select();
 
-      if (updateRes.isEmpty) {
-        AppLogger.info(("⚠️ Warning: Sales table mein Bill No $numericBillNo nahi mila!").toString());
-      } else {
-        AppLogger.info(("✅ Success: Customer linked to Bill No $numericBillNo").toString());
-      }
+      // if (updateRes.isEmpty) {
+      //   AppLogger.info(("⚠️ Warning: Sales table mein Bill No $numericBillNo nahi mila!").toString());
+      // } else {
+      //   AppLogger.info(("✅ Success: Customer linked to Bill No $numericBillNo").toString());
+      // }
 
-      await loadAllCustomers();
+      // await loadAllCustomers();
       return true;
     } catch (e) {
       AppLogger.info(("🚨 Save Customer Error Details: $e").toString());
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
       return false;
     } finally {
       saveCustomerWithInvoiceLoading.value = false;

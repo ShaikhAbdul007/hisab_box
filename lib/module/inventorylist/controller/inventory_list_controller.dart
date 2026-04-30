@@ -12,7 +12,7 @@ import 'package:inventory/module/inventorylist/repo/inventory_repo.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class InventoryListController extends GetxController
-    with GetSingleTickerProviderStateMixin, CacheManager, LocalService {
+    with GetSingleTickerProviderStateMixin, CacheManager {
   InventoryRepo inventoryRepo = InventoryRepo();
 
   // var productList = <InventoryItem>[].obs;

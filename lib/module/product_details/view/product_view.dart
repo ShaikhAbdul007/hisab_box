@@ -145,7 +145,7 @@ class ProductView extends GetView<ProductController> {
                     ),
                   ),
                   Flexible(
-                    child: CustomDropDown(
+                    child: CustomStaticDropDown(
                       // isModelValueEnabled: false,
                       // errorText: 'Please select',
                       listItems: [true, false],
@@ -236,7 +236,7 @@ class ProductView extends GetView<ProductController> {
                     ),
                   ),
                   Flexible(
-                    child: CustomDropDown(
+                    child: CustomStaticDropDown(
                       // isModelValueEnabled: false,
                       // errorText: 'Select Location',
                       listItems: ['Shop', 'Godown'],

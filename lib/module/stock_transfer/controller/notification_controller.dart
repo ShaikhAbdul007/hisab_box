@@ -5,12 +5,8 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
-import '../../../helper/set_format_date.dart';
 
-class NotificationController extends GetxController
-    with CacheManager, LocalService {
+class NotificationController extends GetxController with CacheManager {
   RxList<GoDownStockTransferToShopModel> pendingTransfers =
       <GoDownStockTransferToShopModel>[].obs;
 
@@ -32,34 +28,34 @@ class NotificationController extends GetxController
     if (userId == null) return;
 
     // 1️⃣ Hive Cache Check
-    var localNotifications = LocalService.getPendingTransfers();
+    var localNotifications = '';
     if (localNotifications.isNotEmpty) {
-      pendingTransfers.value = localNotifications;
+      //  pendingTransfers.value = localNotifications;
     }
 
     // 2️⃣ Supabase Fetch (Fallback & Refresh)
     try {
-      final response = await SupabaseConfig.from(
-        'stock_transfers',
-      ).select().eq('user_id', userId).eq('status', 'pending');
+      // final response = await SupabaseConfig.from(
+      //   'stock_transfers',
+      // ).select().eq('user_id', userId).eq('status', 'pending');
 
-      List<GoDownStockTransferToShopModel> freshList =
-          (response as List)
-              .map(
-                (e) => GoDownStockTransferToShopModel.fromJson(
-                  e,
-                  e['id'].toString(),
-                ),
-              )
-              .toList();
+      // List<GoDownStockTransferToShopModel> freshList =
+      //     (response as List)
+      //         .map(
+      //           (e) => GoDownStockTransferToShopModel.fromJson(
+      //             e,
+      //             e['id'].toString(),
+      //           ),
+      //         )
+      //         .toList();
 
-      pendingTransfers.value = freshList;
+      // pendingTransfers.value = freshList;
 
-      // 3️⃣ Save to Hive
-      await LocalService.savePendingTransfers(freshList);
+      // // 3️⃣ Save to Hive
+      // await LocalService.savePendingTransfers(freshList);
     } catch (e) {
       AppLogger.info(("🚨 Notification Fetch Error: $e").toString());
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     }
   }
 
@@ -74,40 +70,40 @@ class NotificationController extends GetxController
     try {
       // Supabase RPC use karna transaction ke liye best hai
       // Is function mein Godown -Qty hoga aur Shop +Qty hoga
-      await SupabaseConfig.client.rpc(
-        'accept_stock_transfer',
-        params: {
-          'p_transfer_id': transfer.id,
-          'p_user_id': userId,
-          'p_barcode': transfer.barcode,
-          'p_qty': transfer.requestedQty,
-          'p_accepted_at': setFormateDate(),
-        },
-      );
+      // await SupabaseConfig.client.rpc(
+      //   'accept_stock_transfer',
+      //   params: {
+      //     'p_transfer_id': transfer.id,
+      //     'p_user_id': userId,
+      //     'p_barcode': transfer.barcode,
+      //     'p_qty': transfer.requestedQty,
+      //     'p_accepted_at': setFormateDate(),
+      //   },
+      // );
 
-      // 🔥 UPDATE HIVE LOCALLY (Immediate Sync)
-      // Notification list se hatao
-      pendingTransfers.removeWhere((element) => element.id == transfer.id);
-      await LocalService.savePendingTransfers(pendingTransfers);
+      // // 🔥 UPDATE HIVE LOCALLY (Immediate Sync)
+      // // Notification list se hatao
+      // pendingTransfers.removeWhere((element) => element.id == transfer.id);
+      // await LocalService.savePendingTransfers(pendingTransfers);
 
-      // Local Stock Update (Hive)
-      // Shop stock badhao
-      double currentShopStock =
-          LocalService.getLocalStock(transfer.barcode, false) ?? 0;
-      await LocalService.updateLocalStock(
-        transfer.barcode,
-        currentShopStock + transfer.requestedQty,
-        false,
-      );
+      // // Local Stock Update (Hive)
+      // // Shop stock badhao
+      // double currentShopStock =
+      //     LocalService.getLocalStock(transfer.barcode, false) ?? 0;
+      // await LocalService.updateLocalStock(
+      //   transfer.barcode,
+      //   currentShopStock + transfer.requestedQty,
+      //   false,
+      // );
 
-      // 🔄 Purane invalidate cache methods
-      removePoductModel();
-      removeGodownProductList();
+      // // 🔄 Purane invalidate cache methods
+      // removePoductModel();
+      // removeGodownProductList();
       // recalculateInventoryDashboardOnly(); // Iska logic dashboard controller mein handle hoga
 
-    showSnackBar(error: "✅ Stock received in shop");
+      showSnackBar(error: "✅ Stock received in shop");
     } catch (e) {
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     } finally {
       isTransferLoading.value = false;
     }
@@ -121,17 +117,17 @@ class NotificationController extends GetxController
     if (userId == null) return;
 
     try {
-      await SupabaseConfig.from('stock_transfers')
-          .update({'status': 'rejected', 'rejectedAt': setFormateDate()})
-          .eq('id', transfer.id);
+      // await SupabaseConfig.from('stock_transfers')
+      //     .update({'status': 'rejected', 'rejectedAt': setFormateDate()})
+      //     .eq('id', transfer.id);
 
-      // Hive Update
-      pendingTransfers.removeWhere((element) => element.id == transfer.id);
-      await LocalService.savePendingTransfers(pendingTransfers);
+      // // Hive Update
+      // pendingTransfers.removeWhere((element) => element.id == transfer.id);
+      // await LocalService.savePendingTransfers(pendingTransfers);
 
-    showSnackBar(error: "❌ Transfer rejected");
+      showSnackBar(error: "❌ Transfer rejected");
     } catch (e) {
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     }
   }
 

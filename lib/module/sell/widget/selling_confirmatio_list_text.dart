@@ -30,7 +30,6 @@ class SellingConfirmationListText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // bool isloosed = inventoryModel.isLoosed ?? false;
     bool sellType = inventoryModel.stockType == 'packet';
     AppLogger.info(
       ('inventoryModel.sellType is ${inventoryModel.stockType}').toString(),

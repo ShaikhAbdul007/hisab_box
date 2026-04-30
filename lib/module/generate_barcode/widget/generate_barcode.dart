@@ -132,7 +132,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
                     ),
                   ),
                   Flexible(
-                    child: CustomDropDown(
+                    child: CustomStaticDropDown(
                       // isModelValueEnabled: false,
                       // errorText: 'Please select',
                       // enabled: controller.dropDownReadOnly.value,
@@ -215,7 +215,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
                     ),
                   ),
                   Flexible(
-                    child: CustomDropDown(
+                    child: CustomStaticDropDown(
                       // isModelValueEnabled: false,
                       // errorText: 'Select Location',
                       listItems: ['Shop', 'Godown'],

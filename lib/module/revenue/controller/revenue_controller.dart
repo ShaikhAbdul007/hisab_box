@@ -9,7 +9,7 @@ import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:inventory/module/sell/repo/sell_repo.dart';
 import '../model/revenue_model.dart';
 
-class RevenueController extends GetxController with LocalService {
+class RevenueController extends GetxController {
   RevenueRepo revenueRepo = RevenueRepo();
   RxBool isRevenueListLoading = false.obs;
   var sellsList = <SellItemData>[].obs;

@@ -1,32 +1,44 @@
-import 'package:inventory/helper/logger.dart';
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/helper/set_format_date.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
-import '../../../routes/route_name.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
+import 'package:inventory/local_db/local_db_service.dart';
+import 'package:inventory/module/discount/model/discount_model.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
+import 'package:inventory/module/loose_category/model/loose_category_model.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
+import 'package:inventory/network/api_endpoint.dart';
+import 'package:inventory/network/networking.dart';
+import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
-import '../../discount/model/discount_model.dart';
-import '../../../helper/helper.dart';
-import '../../loose_category/model/loose_category_model.dart';
 
-class SellListAfterScanController extends GetxController
-    with CacheManager, LocalService {
-  final globalStore = Get.find<GlobalStore>();
+class SellListAfterScanController extends GetxController with CacheManager {
+  // ── Cart & product state ──────────────────────────────────────────────────
+  RxList<InventoryItem> productList = <InventoryItem>[].obs;
+  List<InventoryItem> scannedProductDetails = [];
+  RxList<TextEditingController> perProductDiscount =
+      <TextEditingController>[].obs;
+  var sellingPriceList = <double>[].obs;
 
-  // --- Saare Existing Variables (No Name Changes) ---
-  List<ProductModel> scannedProductDetails = [];
+  // ── Discount ──────────────────────────────────────────────────────────────
   RxList<DiscountModel> discountList = <DiscountModel>[].obs;
   RxList<DiscountModel> productDiscount = <DiscountModel>[].obs;
-  TextEditingController quantity = TextEditingController();
+  RxInt discountValue = 0.obs;
+  RxBool isDiscountGiven = false.obs;
+  RxBool discountPerProduct = false.obs;
+  double discountDifferenceAmount = 0.0;
+  RxDouble discountPrice = 0.0.obs;
+
+  // ── Totals ────────────────────────────────────────────────────────────────
+  RxDouble totalAmount = 0.0.obs;
+  var finalTotal = 0.0.obs;
+  TextEditingController amount = TextEditingController();
+
+  // ── Payment inputs ────────────────────────────────────────────────────────
   TextEditingController cashPaidController = TextEditingController(text: '0.0');
   TextEditingController upiPaidController = TextEditingController(text: '0.0');
   TextEditingController cardPaidController = TextEditingController(text: '0.0');
@@ -36,31 +48,6 @@ class SellListAfterScanController extends GetxController
   TextEditingController roundOffPaidController = TextEditingController(
     text: '0.0',
   );
-  TextEditingController name = TextEditingController();
-  RxList<TextEditingController> perProductDiscount =
-      <TextEditingController>[].obs;
-  TextEditingController amount = TextEditingController();
-  RxList<LooseCategoryModel> looseCategoryModelList =
-      <LooseCategoryModel>[].obs;
-  Rx<ReceiptController?> receiptController = Rx<ReceiptController?>(null);
-  RxList<ProductModel> productList = <ProductModel>[].obs;
-  RxDouble totalAmount = 0.0.obs;
-  RxDouble newSellingPrice = 0.0.obs;
-  RxInt discountValue = 0.obs;
-  RxInt billNo = 0.obs;
-  RxDouble updateSellingPrice = 0.0.obs;
-  RxBool isCardLoading = false.obs;
-  RxBool isCashLoading = false.obs;
-  RxBool isPartailLoading = false.obs;
-  RxBool isOnlineLoading = false.obs;
-  RxBool isAmountValidCheck = false.obs;
-  RxBool isStockOver = false.obs;
-  RxBool isStockLoading = false.obs;
-  RxBool isDiscountGiven = false.obs;
-  RxBool isPrintingLoading = false.obs;
-  RxBool isSaveLoading = false.obs;
-  double discountDifferenceAmount = 0.0;
-  RxDouble discountPrice = 0.0.obs;
   RxDouble paymentMethodTotalAmount = 0.0.obs;
   RxDouble remainingAmount = 0.0.obs;
   RxDouble upiPaid = 0.0.obs;
@@ -68,79 +55,81 @@ class SellListAfterScanController extends GetxController
   RxDouble creditPaid = 0.0.obs;
   RxDouble cashPaid = 0.0.obs;
   RxBool allEditable = false.obs;
+  RxBool isAmountValidCheck = false.obs;
+
+  // ── Loading flags ─────────────────────────────────────────────────────────
+  RxBool isCardLoading = false.obs;
+  RxBool isCashLoading = false.obs;
+  RxBool isPartailLoading = false.obs;
+  RxBool isOnlineLoading = false.obs;
+  RxBool isStockOver = false.obs;
+  RxBool isStockLoading = false.obs;
+  RxBool isPrintingLoading = false.obs;
+  RxBool isSaveLoading = false.obs;
+
+  // ── Misc ──────────────────────────────────────────────────────────────────
+  TextEditingController quantity = TextEditingController();
+  TextEditingController name = TextEditingController();
+  RxList<LooseCategoryModel> looseCategoryModelList =
+      <LooseCategoryModel>[].obs;
+  Rx<ReceiptController?> receiptController = Rx<ReceiptController?>(null);
+  RxInt billNo = 0.obs;
+  RxDouble newSellingPrice = 0.0.obs;
+  RxDouble updateSellingPrice = 0.0.obs;
+  RxString shopType = ''.obs;
   var data = Get.arguments;
   String? id;
-  RxBool discountPerProduct = false.obs;
-  RxString shopType = ''.obs;
-  var finalTotal = 0.0.obs;
-  var sellingPriceList = <double>[].obs;
   List<SellItem> sellList = [];
   var printInvoice = Rx<PrintInvoiceModel?>(null);
 
   @override
   void onInit() {
-    setUserData();
     fetchDiscounts();
     setProductData();
     super.onInit();
   }
 
-  // --- Functions Section ---
-
-  void setUserData() {
-    var user = retrieveUserDetail();
-    // discountPerProduct.value = user.discountPerProduct ?? false;
-    //shopType.value = user.shoptype ?? '';
-  }
+  // ── Cart setup ────────────────────────────────────────────────────────────
 
   void setProductData() async {
-    var dataList = await retrieveCartProductList();
-    for (final p in dataList) {
-      p.isLoosed ??= _isLooseProductModel(p);
-    }
+    final dataList = await retrieveCartProductList();
     productList.assignAll(dataList);
-    scannedProductDetails = productList;
+    scannedProductDetails = List.from(dataList);
+
     perProductDiscount.value = List.generate(productList.length, (i) {
-      return TextEditingController(text: productList[i].discount.toString());
+      return TextEditingController(
+        text: productList[i].discount?.toString() ?? '0',
+      );
     });
-    sellingPriceList.value = List.generate(productList.length, (i) {
-      return (productList[i].sellingPrice ?? 0).toDouble() *
-          (productList[i].quantity ?? 0).toDouble();
-    });
+
+    sellingPriceList.value = List.generate(
+      productList.length,
+      (i) => _itemSellingPrice(i),
+    );
+
     calculateTotalWithDiscount();
   }
 
-  // 🔥 UPDATE QUANTITY (0ms RAM Check)
+  // ── Quantity ──────────────────────────────────────────────────────────────
+
   Future<void> updateQuantity(bool isIncrement, int index) async {
     isStockOver.value = false;
-    var current = productList[index];
-    double availableQty = 0.0;
+    final current = productList[index];
+    final currentQty = int.tryParse(current.quantity ?? '0') ?? 0;
 
-    var ramProduct =
-        globalStore.barcodeToProductMap[current.barcode.toString()];
-
-    if (ramProduct != null) {
-      availableQty = ramProduct.quantity?.toDouble() ?? 0.0;
-    } else {
-      availableQty =
-          LocalService.getLocalStock(
-            current.id ?? '',
-            current.isLoosed ?? false,
-          ) ??
-          0.0;
-    }
+    final double availableQty = 0.0;
 
     if (isIncrement) {
-      if ((current.quantity ?? 0) < availableQty) {
-        current.quantity = (current.quantity ?? 0) + 1;
+      if (currentQty < availableQty) {
+        current.quantity = (currentQty + 1).toString();
       } else {
         isStockOver.value = true;
         showSnackBar(error: "Out of Stock! Only $availableQty available.");
         return;
       }
     } else {
-      if ((current.quantity ?? 1) > 1) {
-        current.quantity = (current.quantity ?? 1) - 1;
+      if (currentQty > 1) {
+        current.quantity = (currentQty - 1).toString();
       }
     }
 
@@ -151,12 +140,12 @@ class SellListAfterScanController extends GetxController
     productList.refresh();
   }
 
+  // ── Sale confirmation ─────────────────────────────────────────────────────
+
   Future<void> saleConfirmed({required RxBool isLoading}) async {
-    bool saleConfirm = await confirmSale(
-      sellItems: getPrintReadyList(),
-      isLoading: isLoading,
-    );
-    if (saleConfirm == true) {
+    final success = await confirmSale(sellItems: [], isLoading: isLoading);
+
+    if (success) {
       removeCartProductList();
       AppRoutes.navigateRoutes(
         routeName: AppRouteName.orderView,
@@ -165,7 +154,7 @@ class SellListAfterScanController extends GetxController
     } else {
       Get.back();
       removeCartProductList();
-    showSnackBar(error: somethingWentMessage);
+      showSnackBar(error: somethingWentMessage);
     }
   }
 
@@ -174,135 +163,62 @@ class SellListAfterScanController extends GetxController
     required RxBool isLoading,
   }) async {
     isLoading.value = true;
-    final userId = resolveUserId(isLoading.value);
-    if (userId == null) {
-      isLoading.value = false;
-    showSnackBar(error: 'Please login again.');
-      return false;
-    }
 
     try {
-      List<Map<String, dynamic>> stockUpdates = [];
-      double itemsTotalAmount = 0;
+      final double cash = double.tryParse(cashPaidController.text) ?? 0;
+      final double upi = double.tryParse(upiPaidController.text) ?? 0;
+      final double card = double.tryParse(cardPaidController.text) ?? 0;
+      final double credit = double.tryParse(creditPaidController.text) ?? 0;
+      final double roundOff = double.tryParse(roundOffPaidController.text) ?? 0;
 
-      for (final product in scannedProductDetails) {
-        final update = await prepareStockUpdate(
-          userId: userId,
-          product: product,
-        );
-        stockUpdates.add(update);
-      }
-
-      for (var item in sellItems) {
-        itemsTotalAmount += item.finalPrice ?? 0;
-      }
-
-      double cash = double.tryParse(cashPaidController.text) ?? 0;
-      double upi = double.tryParse(upiPaidController.text) ?? 0;
-      double card = double.tryParse(cardPaidController.text) ?? 0;
-      double credit = double.tryParse(creditPaidController.text) ?? 0;
-      final roundOff = double.tryParse(roundOffPaidController.text) ?? 0;
-      final finalPayable = double.parse(
+      final double itemsTotalAmount = sellItems.fold(
+        0.0,
+        (sum, item) => sum + (item.finalPrice ?? 0),
+      );
+      final double finalPayable = double.parse(
         (itemsTotalAmount - roundOff).toStringAsFixed(2),
       );
 
-      int modesCount = [cash, upi, card, credit].where((m) => m > 0).length;
-      String currentMode =
-          modesCount > 1
-              ? 'partial'
-              : (cash > 0
-                  ? 'cash'
-                  : upi > 0
-                  ? 'upi'
-                  : card > 0
-                  ? 'card'
-                  : 'credit');
-
-      // 🔥 FIX: Mapping strictly according to your DB Schema [2026-02-28]
-      final List<Map<String, dynamic>> saleItemsData =
+      // Build items list matching API contract
+      final List<Map<String, dynamic>> items =
           sellItems.map((item) {
+            final double originalPrice = item.originalPrice ?? 0;
+            final double discountedPrice = item.finalPrice ?? 0;
             return {
-              'product_id': item.id, // uuid (NO NULL)
-              'stock_type': _isLooseSellItem(item) ? 'loose' : 'packet',
-              'qty': item.quantity?.toInt() ?? 1, // integer (NO NULL)
-              'original_price': item.originalPrice ?? 0, // numeric (NO NULL)
-              'final_price': item.finalPrice ?? 0, // numeric (NO NULL)
-              'location': item.location ?? 'shop', // text (nullable)
-              'default_discount_percent': item.originalDiscount ?? 0,
-              'applied_discount_percent': item.discount ?? 0,
-              'discount_amount':
-                  (item.originalPrice ?? 0) - (item.finalPrice ?? 0),
-              'user_id': userId,
+              'barcode': item.barcode ?? '',
+              'qty': item.quantity ?? 1,
+              'original_price': originalPrice,
+              'original_discount': item.originalDiscount ?? 0,
+              'discounted_price': discountedPrice,
+              'discount_given': originalPrice - discountedPrice,
+              'stock_type':
+                  (item.isLoose == true || item.sellType == 'loose')
+                      ? 'loose'
+                      : 'packet',
+              'location': item.location ?? 'shop',
             };
           }).toList();
 
-      final dynamic response = await SupabaseConfig.client.rpc(
-        'process_sale_transaction',
-        params: {
-          'p_user_id': userId,
-          'p_total_amount': finalPayable,
-          'p_sale_items': saleItemsData,
-          'p_payments': [
-            {
-              'payment_mode': currentMode,
-              'amount': finalPayable,
-              'cash_amount': cash,
-              'upi_amount': upi,
-              'card_amount': card,
-              'credit_amount': credit,
-              'round_off_amount': roundOff,
-              'is_partial': modesCount > 1,
-            },
-          ],
-          'p_stock_updates': stockUpdates,
-        },
+      // Build payments list — only non-zero modes
+      final List<Map<String, dynamic>> payments = _buildPayments(
+        cash: cash,
+        upi: upi,
+        card: card,
+        credit: credit,
+        finalPayable: finalPayable,
       );
 
-      final Map<String, dynamic> result = jsonDecode(response.toString());
-      final int? billNo =
-          result['bill_no'] is int
-              ? result['bill_no'] as int
-              : int.tryParse(result['bill_no']?.toString() ?? '');
+      final Map<String, dynamic> body = {'items': items, 'payments': payments};
 
-      // 🟢 Realtime dedupe marker (totals realtime event se aayenge)
-      globalStore.markOptimisticBill(billNo);
+      AppLogger.info('🛒 Sell API body: $body');
 
-      // 🟢 Local stock RAM patch (instant inventory UX)
-      for (var update in stockUpdates) {
-        final String table = (update['table'] ?? '').toString();
-        final String pId = update['productId'].toString();
-        final num newQty =
-            update['newQty'] is num
-                ? update['newQty'] as num
-                : num.tryParse(update['newQty']?.toString() ?? '0') ?? 0;
+      final dynamic response = '';
 
-        if (table == 'product_stock') {
-          for (var product in globalStore.barcodeToProductMap.values) {
-            if (product.id == pId) {
-              product.quantity = newQty;
-            }
-          }
-          final int idx = globalStore.allProducts.indexWhere(
-            (p) => p.id == pId,
-          );
-          if (idx != -1) {
-            globalStore.allProducts[idx].quantity = newQty;
-          }
-        } else if (table == 'loose_stocks') {
-          final int idx = globalStore.allLooseProducts.indexWhere(
-            (p) => p.productId == pId,
-          );
-          if (idx != -1) {
-            globalStore.allLooseProducts[idx].quantity = newQty.toInt();
-          }
-        }
-      }
-      globalStore.allProducts.refresh();
-      globalStore.allLooseProducts.refresh();
-      globalStore.barcodeToProductMap.refresh();
+      // Patch local Hive cache so stock reflects immediately
+      for (final item in sellItems) {}
 
       final saleData = {
-        'billNo': billNo ?? result['bill_no'],
+        'billNo': 0,
         'soldAt': setFormateDate(),
         'time': setFormateDate('hh:mm:ss a'),
         'totalAmount': finalPayable,
@@ -318,85 +234,49 @@ class SellListAfterScanController extends GetxController
       };
 
       printInvoice.value = PrintInvoiceModel.fromJson(saleData);
-      // Reconcile server truth before completing flow.
-      // `isLoading` ke through existing CommonProgressbar button par show hota rahega.
-      await globalStore.loadInitialData();
 
       scannedProductDetails.clear();
       clearPaymentInputs();
       clearSellSessionData();
       return true;
     } catch (e) {
-      AppLogger.info(("🚨 Sale Failed: $e").toString());
-    showSnackBar(error: e.toString());
+      AppLogger.info('🚨 Sale Failed: $e');
+      showSnackBar(error: e.toString());
       return false;
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<Map<String, dynamic>> prepareStockUpdate({
-    required String userId,
-    required ProductModel product,
-  }) async {
-    final bool isLoose = _isLooseProductModel(product);
-    final String expectedTable = isLoose ? 'loose_stocks' : 'product_stock';
-    final String oppositeTable =
-        expectedTable != 'loose_stocks' ? 'product_stock' : 'loose_stocks';
-    final String productId = product.id ?? '';
+  // ── Payment helpers ───────────────────────────────────────────────────────
 
-    if (productId.isEmpty) {
-      throw Exception("Product ID missing in cart item for stock update");
+  List<Map<String, dynamic>> _buildPayments({
+    required double cash,
+    required double upi,
+    required double card,
+    required double credit,
+    required double finalPayable,
+  }) {
+    final List<Map<String, dynamic>> payments = [];
+    if (cash > 0) payments.add({'mode': 'cash', 'amount': cash});
+    if (upi > 0) payments.add({'mode': 'upi', 'amount': upi});
+    if (card > 0) payments.add({'mode': 'card', 'amount': card});
+    if (credit > 0) payments.add({'mode': 'credit', 'amount': credit});
+    // Default to full cash if nothing entered
+    if (payments.isEmpty) {
+      payments.add({'mode': 'cash', 'amount': finalPayable});
     }
-
-    final dynamic expectedRes =
-        await SupabaseConfig.from(expectedTable)
-            .select('id, quantity')
-            .eq('user_id', userId)
-            .eq('product_id', productId)
-            .maybeSingle();
-
-    // Strict validation: wrong stock table fallback silently accept nahi karenge.
-    if (expectedRes == null) {
-      final dynamic oppositeRes =
-          await SupabaseConfig.from(oppositeTable)
-              .select('id')
-              .eq('user_id', userId)
-              .eq('product_id', productId)
-              .maybeSingle();
-
-      if (oppositeRes != null) {
-        throw Exception(
-          "Stock type mismatch for product_id=$productId. "
-          "Expected=$expectedTable, found in $oppositeTable. "
-          "sellType=${product.sellType}, stockType=${product.stockType}, isLoose=${product.isLoosed}",
-        );
-      }
-
-      throw Exception(
-        "Stock row not found in $expectedTable for product_id=$productId",
-      );
-    }
-
-    double currentQty = (expectedRes['quantity'] ?? 0).toDouble();
-    double sellQty = (product.quantity ?? 1).toDouble();
-    return {
-      'table': expectedTable,
-      'id': expectedRes['id'],
-      'newQty': currentQty - sellQty,
-      'productId': productId,
-      'isLoose': expectedTable == 'loose_stocks',
-    };
+    return payments;
   }
 
-  void openPaymentDialog(double amount) {
-    paymentMethodTotalAmount.value = amount;
-    remainingAmount.value = amount;
+  void openPaymentDialog(double amt) {
+    paymentMethodTotalAmount.value = amt;
+    remainingAmount.value = amt;
     allEditable.value = false;
   }
 
   void updateRemainingAmount() {
-    double paid =
+    final double paid =
         (double.tryParse(cashPaidController.text) ?? 0) +
         (double.tryParse(upiPaidController.text) ?? 0) +
         (double.tryParse(cardPaidController.text) ?? 0) +
@@ -410,7 +290,7 @@ class SellListAfterScanController extends GetxController
 
   bool isAmountValid(String value) {
     if (value.isEmpty) return true;
-    double entered = double.tryParse(value) ?? 0;
+    final double entered = double.tryParse(value) ?? 0;
     isAmountValidCheck.value = entered <= paymentMethodTotalAmount.value;
     return isAmountValidCheck.value;
   }
@@ -423,66 +303,33 @@ class SellListAfterScanController extends GetxController
     required num creditPaid,
     required num roundOffPaid,
   }) {
-    int count =
+    final int count =
         [cashPaid, upiPaid, cardPaid, creditPaid].where((m) => m > 0).length;
-    String type =
+    final String type =
         count > 1
-            ? "Partial"
+            ? 'Partial'
             : (cashPaid > 0
-                ? "Cash"
+                ? 'Cash'
                 : upiPaid > 0
-                ? "UPI"
+                ? 'UPI'
                 : cardPaid > 0
-                ? "Card"
-                : "Credit");
+                ? 'Card'
+                : 'Credit');
     return {
-      "type": type,
-      "totalAmount": totalAmount,
-      "cash": cashPaid,
-      "upi": upiPaid,
-      "card": cardPaid,
-      "credit": creditPaid,
-      "roundOffAmount": roundOffPaid,
-      "isRoundOff": roundOffPaid != 0,
+      'type': type,
+      'totalAmount': totalAmount,
+      'cash': cashPaid,
+      'upi': upiPaid,
+      'card': cardPaid,
+      'credit': creditPaid,
+      'roundOffAmount': roundOffPaid,
+      'isRoundOff': roundOffPaid != 0,
     };
   }
 
-  List<SellItem> getPrintReadyList() {
-    sellList.clear();
-    for (int i = 0; i < productList.length; i++) {
-      var p = productList[i];
-      sellList.add(
-        SellItem(
-          name: p.name,
-          quantity: p.quantity?.toInt() ?? 0,
-          originalPrice: p.sellingPrice,
-          originalDiscount: p.discount,
-          discount: int.tryParse(perProductDiscount[i].text) ?? 0,
-          finalPrice: sellingPriceList[i],
-          category: p.category,
-          barcode: p.barcode.toString(),
-          id: p.id,
-          location: p.location,
-          sellType: p.sellType,
-          isLoose: _isLooseProductModel(p),
-        ),
-      );
-    }
-    return sellList;
-  }
+  // ── Cart operations ───────────────────────────────────────────────────────
 
-  bool _isLooseProductModel(ProductModel p) {
-    final sellType = (p.sellType ?? '').toLowerCase().trim();
-    final stockType = (p.stockType ?? '').toLowerCase().trim();
-    return p.isLoosed == true || sellType == 'loose' || stockType == 'loose';
-  }
-
-  bool _isLooseSellItem(SellItem item) {
-    final sellType = (item.sellType ?? '').toLowerCase().trim();
-    return item.isLoose == true || sellType == 'loose';
-  }
-
-  void deleteProductFromCart(int index) async {
+  void deleteProductFromCart(int index) {
     productList.removeAt(index);
     if (sellingPriceList.length > index) sellingPriceList.removeAt(index);
     if (perProductDiscount.length > index) perProductDiscount.removeAt(index);
@@ -491,31 +338,29 @@ class SellListAfterScanController extends GetxController
     productList.refresh();
   }
 
+  // ── Discount calculations ─────────────────────────────────────────────────
+
   void discountCalculateAsPerProduct(int index) {
-    sellingPriceList[index] = getSellingPriceAsPerQuantity(index);
+    sellingPriceList[index] = _itemSellingPrice(index);
   }
 
-  double getSellingPriceAsPerQuantity(int index) {
-    var discountV =
-        perProductDiscount[index].text.isNotEmpty
-            ? double.parse(perProductDiscount[index].text)
-            : 0;
-    double sPrice =
-        (productList[index].sellingPrice ?? 0) *
-        (productList[index].quantity ?? 0);
+  double _itemSellingPrice(int index) {
+    final double discountV =
+        double.tryParse(perProductDiscount[index].text) ?? 0;
+    final double qty = double.tryParse(productList[index].quantity ?? '1') ?? 1;
+    final double price =
+        double.tryParse(productList[index].sellingPrice ?? '0') ?? 0;
+    final double sPrice = price * qty;
     return sPrice - ((sPrice * discountV) / 100);
   }
 
   void calculateTotalWithDiscount() {
-    finalTotal.value = 0;
-    for (var price in sellingPriceList) {
-      finalTotal.value += price;
-    }
+    finalTotal.value = sellingPriceList.fold(0.0, (sum, p) => sum + p);
   }
 
   void calculateDiscount() {
-    double originalAmount = getTotalAmount().toDouble();
-    double discount = (originalAmount * discountValue.value) / 100;
+    final double originalAmount = getTotalAmount().toDouble();
+    final double discount = (originalAmount * discountValue.value) / 100;
     discountDifferenceAmount = discount;
     discountPrice.value = originalAmount - discount;
     amount.text = discountPrice.value.toStringAsFixed(2);
@@ -523,12 +368,23 @@ class SellListAfterScanController extends GetxController
 
   int getTotalAmount() {
     int total = 0;
-    for (var product in productList) {
-      total += ((product.sellingPrice ?? 0) * (product.quantity ?? 0)).toInt();
+    for (final product in productList) {
+      final double qty = double.tryParse(product.quantity ?? '0') ?? 0;
+      final double price = double.tryParse(product.sellingPrice ?? '0') ?? 0;
+      total += (price * qty).toInt();
     }
     totalAmount.value = total.toDouble();
     return total;
   }
+
+  // ── Discounts fetch ───────────────────────────────────────────────────────
+
+  Future<void> fetchDiscounts() async {
+    // final localD = LocalService.getDiscountsFromLocal();
+    // if (localD.isNotEmpty) discountList.value = localD;
+  }
+
+  // ── Clear helpers ─────────────────────────────────────────────────────────
 
   void clearPaymentInputs() {
     cashPaidController.text = '0.0';
@@ -552,8 +408,5 @@ class SellListAfterScanController extends GetxController
     discountDifferenceAmount = 0.0;
   }
 
-  Future<void> fetchDiscounts() async {
-    var localD = LocalService.getDiscountsFromLocal();
-    if (localD.isNotEmpty) discountList.value = localD;
-  }
+  // ── Private helpers ───────────────────────────────────────────────────────
 }

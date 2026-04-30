@@ -3,12 +3,10 @@ import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/near_expire_product/model/near_expiry_model.dart';
 import 'package:inventory/module/near_expire_product/repo/near_expiry_repo.dart';
 
-class NearExpireProductController extends GetxController
-    with CacheManager, LocalService {
+class NearExpireProductController extends GetxController with CacheManager {
   NearExpiryRepo nearExpiryRepo = NearExpiryRepo();
   RxList<NeaExpiryItemData> nearExpProductList = <NeaExpiryItemData>[].obs;
   RxBool isDataloading = false.obs;

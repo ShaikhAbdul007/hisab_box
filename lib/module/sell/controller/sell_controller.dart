@@ -8,7 +8,7 @@ import 'package:inventory/module/sell/repo/sell_repo.dart';
 import '../../../helper/helper.dart';
 import '../model/sell_model.dart';
 
-class SellController extends GetxController with CacheManager, LocalService {
+class SellController extends GetxController with CacheManager {
   SellRepo sellRepo = SellRepo();
   RxBool isSellListLoading = false.obs;
   RxList<SellItemData> sellsList = <SellItemData>[].obs;

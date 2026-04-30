@@ -30,7 +30,7 @@ class HomeController extends GetxController with CacheManager {
   RxNum nearExpiryCount = RxNum(0); // 🔥 NEW: Near Expiry Variable
 
   var productList = <SellItemData>[].obs;
-  RxList<RecentActivitiesData>  sellsList = <RecentActivitiesData>[].obs;
+  RxList<RecentActivitiesData> sellsList = <RecentActivitiesData>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
 
   List<Map<String, dynamic>> chartData = [];
@@ -61,17 +61,16 @@ class HomeController extends GetxController with CacheManager {
         totalBusRevenue.value = response.data?.stats?.todaySales ?? 0.0;
         outOfStock.value = response.data?.stats?.outOfStock ?? 0.0;
         looseStock.value = response.data?.stats?.looseStock ?? 0.0;
-       
       } else if (response.success == failed) {
-        showSnackBar(error: SupabaseErrorHandler.getMessage(response.message));
+        showSnackBar(error: response.message ?? '');
       } else {
-        showSnackBar(error: SupabaseErrorHandler.getMessage(response.message));
+        showSnackBar(error: response.message ?? '');
       }
     } catch (e) {
       AppLogger.info((e).toString());
       showSnackBar(error: e.toString());
     } finally {
-       getDashBoardList();
+      getDashBoardList();
       isListLoading.value = false;
     }
   }

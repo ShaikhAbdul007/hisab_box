@@ -7,8 +7,7 @@ import 'package:inventory/module/category/repo/category_repo.dart';
 import '../../../helper/app_message.dart';
 import '../model/category_model.dart';
 
-class CategoryController extends GetxController
-    with CacheManager, LocalService {
+class CategoryController extends GetxController with CacheManager {
   CategoryRepo categoryRepo = CategoryRepo();
   TextEditingController category = TextEditingController();
   RxBool isSaveLoading = false.obs;

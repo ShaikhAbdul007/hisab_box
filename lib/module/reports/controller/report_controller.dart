@@ -17,11 +17,7 @@ import '../model/product_report_model.dart';
 import '../../reports/model/report_top_product_model.dart';
 
 class ReportController extends GetxController
-    with
-        GetSingleTickerProviderStateMixin,
-        DeviceInfoo,
-        LocalService,
-        CacheManager {
+    with GetSingleTickerProviderStateMixin, DeviceInfoo, CacheManager {
   ReportDashboardOverview reportDashboardOverview = ReportDashboardOverview();
   // --- Observables ---
   var selectedTab = 0.obs;

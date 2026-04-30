@@ -61,8 +61,8 @@ class NeaExpiryItemData {
   String? productId;
   String? name;
   String? barcode;
-  String? quantity;
-  String? sellingPrice;
+  int? quantity;
+  int? sellingPrice;
   String? location;
   String? stockType;
   String? expiryDate;
@@ -112,6 +112,11 @@ class NeaExpiryItemData {
     purchaseDate = json['purchase_date'];
     createdAt = json['created_at'];
     isloosed = json['isloosed'];
+    rack = json['rack'];
+    level = json['level'];
+    weight = json['weight'];
+    categoryName = json['category_name'];
+    animalCategoryName = json['animal_type_name'];
     isflavorRequired = json['isflavorRequired'];
   }
 

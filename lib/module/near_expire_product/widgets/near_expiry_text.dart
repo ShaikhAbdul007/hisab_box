@@ -96,6 +96,30 @@ class NearExpiryText extends StatelessWidget {
                           ),
                         ],
                       ),
+                      Row(
+                        children: [
+                          Text(
+                            formatDateTime(inventoryModel.purchaseDate ?? ''),
+                            // '${inventoryModel.purchaseDate}',
+                            style: CustomTextStyle.customOpenSans(
+                              color: AppColors.greyColor,
+                            ),
+                          ),
+
+                          Icon(
+                            CupertinoIcons.arrow_right,
+                            size: 15.sp,
+                            color: AppColors.blackColor,
+                          ),
+                          Text(
+                            formatDateTime(inventoryModel.expiryDate ?? ''),
+                            // '${}',
+                            style: CustomTextStyle.customOpenSans(
+                              color: AppColors.redColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -148,7 +172,7 @@ class NearExpiryText extends StatelessWidget {
 
   String getText() {
     String? text;
-    int qty = int.tryParse(inventoryModel.quantity ?? '0') ?? 0;
+    int qty = inventoryModel.quantity ?? 0;
     if (qty > 0 && qty < 10) {
       text = 'Low Stock';
     } else if (qty == 0) {

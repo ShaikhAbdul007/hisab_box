@@ -5,19 +5,20 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
 import '../../../helper/helper.dart';
 import '../../category/model/category_model.dart';
 import '../../inventory/model/product_model.dart';
 
-class ProductController extends GetxController with CacheManager, LocalService {
+class ProductController extends GetxController with CacheManager {
   final inventoryScanKey = GlobalKey<FormState>();
   ProductRepo productRepo = ProductRepo();
 
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
-  RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
+  RxList<InventoryItem> looseCatogorieList = <InventoryItem>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
 
   // Controllers

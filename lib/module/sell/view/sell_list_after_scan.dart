@@ -14,7 +14,6 @@ import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
-import '../../loose_sell/widget/loose_sell_bottomsheet_component.dart';
 import '../controller/sell_list_after_scan_controller.dart';
 import '../widget/payment_method_widget.dart';
 import '../widget/selling_confirmatio_list_text.dart';
@@ -223,6 +222,7 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                               },
 
                               inventoryModel: controller.productList[index],
+                              // productList is now RxList<InventoryItem> — type matches
                             );
                           },
                         ),
@@ -231,19 +231,6 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                   )
                   : CommonNoDataFound(message: 'No product found for sell'),
         ),
-      ),
-    );
-  }
-
-  void openManuallySaleBottomSheet({required GlobalKey<FormState> formkeys}) {
-    commonBottomSheet(
-      label: 'Add Manually',
-      onPressed: () {
-        Get.back();
-      },
-      child: LooseSellBottomsheetComponent(
-        controller: controller,
-        formkeys: formkeys,
       ),
     );
   }

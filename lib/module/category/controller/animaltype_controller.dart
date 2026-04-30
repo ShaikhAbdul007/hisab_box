@@ -9,8 +9,7 @@ import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
-class AnimalTypeController extends GetxController
-    with CacheManager, LocalService {
+class AnimalTypeController extends GetxController with CacheManager {
   AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
   TextEditingController animalCategory = TextEditingController();
   RxBool isSaveLoading = false.obs;

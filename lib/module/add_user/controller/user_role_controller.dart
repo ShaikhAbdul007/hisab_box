@@ -8,8 +8,7 @@ import 'package:inventory/module/add_user/repo/user_role_repo.dart';
 import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../helper/app_message.dart';
 
-class UserRoleController extends GetxController
-    with CacheManager, LocalService {
+class UserRoleController extends GetxController with CacheManager {
   UserRoleRepo userRoleRepo = UserRoleRepo();
   TextEditingController role = TextEditingController();
   RxBool isSaveLoading = false.obs;
