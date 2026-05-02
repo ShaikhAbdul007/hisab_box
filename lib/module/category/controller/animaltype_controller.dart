@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/category/repo/animal_category_repo.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
 import 'package:inventory/helper/app_message.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class AnimalTypeController extends GetxController with CacheManager {
   AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
@@ -15,9 +12,8 @@ class AnimalTypeController extends GetxController with CacheManager {
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteAnimalCategory = false.obs;
   RxBool isFetchAnimalCategory = false.obs;
-
+  RxString shopType = ''.obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
-
   var data = Get.arguments;
 
   @override
@@ -28,6 +24,11 @@ class AnimalTypeController extends GetxController with CacheManager {
 
   void getCategoryData() async {
     await fetchCategories();
+  }
+
+  void setShopType() async {
+    var user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? 'Pet Shop';
   }
 
   // ==========================================

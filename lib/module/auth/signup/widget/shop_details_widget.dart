@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:get/utils.dart';
 import 'package:inventory/common_widget/common_padding.dart';
-
 import '../../../../common_widget/size.dart';
 import '../../../../common_widget/textfiled.dart';
 import '../../../../helper/app_message.dart';

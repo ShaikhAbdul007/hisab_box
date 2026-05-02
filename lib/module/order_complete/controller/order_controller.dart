@@ -5,9 +5,6 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/customer/model/all_customer_model.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
-
 import '../../sell/model/print_model.dart';
 
 class OrderController extends GetxController with CacheManager {

@@ -1,6 +1,5 @@
 import 'package:inventory/module/add_user/model/add_user_role.dart';
 import 'package:inventory/module/add_user/model/all_user_role_model.dart';
-import 'package:inventory/module/add_user/model/employee_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';
 

@@ -4,16 +4,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart';
-import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
 import 'package:get/get.dart';
-import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
 
 class GenerateBarcodeController extends GetxController with CacheManager {
   ProductRepo productRepo = ProductRepo();

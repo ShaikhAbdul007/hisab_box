@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_dropdown.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import '../../../../common_widget/size.dart';
@@ -140,7 +139,7 @@ class ShopAddress extends StatelessWidget {
           // enabled: true,
           // dropDownBgColor: AppColors.greyColorShade100,
           // errorText: 'Select shop type',
-          listItems: ['Pet Shop'],
+          listItems: ['Pet Shop', 'Clothing Shop'],
           hintText: 'Shop type',
           notifyParent: notifyParent,
         ),

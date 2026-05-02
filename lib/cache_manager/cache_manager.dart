@@ -1,7 +1,6 @@
 import 'package:get_storage/get_storage.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
 import 'package:inventory/module/category/model/category_model.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/order_complete/model/customer_details_model.dart';
 import 'package:inventory/module/setting/model/user_model.dart';

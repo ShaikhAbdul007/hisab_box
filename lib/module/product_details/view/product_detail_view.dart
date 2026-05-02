@@ -34,6 +34,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
   @override
   Widget build(BuildContext context) {
     bool isProductLoosed = controller.data['isProductLoosed'];
+    print('isProductLoosed is $isProductLoosed');
     bool godown = controller.data['product'].location == 'godown';
     return CommonAppbar(
       isleadingButtonRequired: true,
@@ -185,459 +186,509 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               : 'Shop Product Detail',
       body: Form(
         key: controller.inventoryScanKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 4.sp,
-            children: [
-              Container(
-                height: 170,
-                decoration: BoxDecoration(
-                  color: AppColors.greyColorShade100,
-                  borderRadius: BorderRadius.only(
-                    bottomRight: Radius.circular(50),
-                    bottomLeft: Radius.circular(50),
-                  ),
-                ),
-                child: ListView(
-                  children: [
-                    Hero(
-                      transitionOnUserGestures: true,
-                      tag: 'herotag_${UniqueKey()}',
-                      child: Obx(
-                        () => Icon(
-                          CupertinoIcons.cube_box_fill,
-                          size: 70.sp,
-                          color:
-                              controller.readOnly.value
-                                  ? AppColors.blackColor
-                                  : AppColors.redColor,
-                        ),
-                      ),
-                    ),
-                    setHeight(height: 8),
-                    Text(
-                      textAlign: TextAlign.center,
-                      controller.productName.text,
-                      style: CustomTextStyle.customMontserrat(fontSize: 18),
-                    ),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        text: controller.quantity.text,
-                        style: CustomTextStyle.customPoppin(fontSize: 30),
-                        children: [
-                          TextSpan(
-                            text: ' in stock',
-                            style: CustomTextStyle.customPoppin(
-                              fontSize: 20,
-                              color: AppColors.greyColor,
+        child: Obx(
+          () =>
+              controller.isDataLoading.value
+                  ? CommonProgressBar()
+                  : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 4.sp,
+                      children: [
+                        Container(
+                          height: 170,
+                          decoration: BoxDecoration(
+                            color: AppColors.greyColorShade100,
+                            borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(50),
+                              bottomLeft: Radius.circular(50),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              CustomPadding(
-                paddingOption: SymmetricPadding(horizontal: 5.0),
-                child: Column(
-                  children: [
-                    InventoryBottomsheetComponentText(
-                      readOnly1: controller.readOnly.value,
-                      readOnly2: controller.readOnly.value,
-                      controller1: controller.barcode,
-                      controller2: controller.productName,
-                      label1: 'Barcode',
-                      hintText1: 'Enter barcode',
-                      hintText2: 'Enter product name',
-                      label2: 'Product name',
-                      validator2: (name) {
-                        if (name!.isEmpty) {
-                          return emptyProductName;
-                        } else {
-                          return null;
-                        }
-                      },
-                    ),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Obx(
-                            () =>
-                                controller.categoryList.isEmpty
-                                    ? Center(
-                                      child: CommonProgressBar(
-                                        color: AppColors.blackColor,
-                                      ),
-                                    )
-                                    : CustomDropDown(
-                                      selectedDropDownItem:
-                                          controller.selectedCategoryId.value,
-                                      listItems: controller.categoryList,
-                                      hintText: 'Select Category',
-                                      notifyParent: (val) {
-                                        controller.selectedCategoryId.value =
-                                            val;
-                                        final match = controller.categoryList
-                                            .firstWhereOrNull(
-                                              (e) => e.id == val,
-                                            );
-                                        controller.category.text =
-                                            match?.name ?? '';
-                                      },
-                                    ),
-                          ),
-                        ),
-                        Flexible(
-                          child: Obx(
-                            () =>
-                                controller.animalTypeList.isEmpty
-                                    ? Center(
-                                      child: CommonProgressBar(
-                                        color: AppColors.blackColor,
-                                      ),
-                                    )
-                                    : CustomDropDown(
-                                      hintText: 'Animal Type',
-                                      selectedDropDownItem:
-                                          controller.selectedAnimalTypeId.value,
-                                      listItems: controller.animalTypeList,
-                                      notifyParent: (val) {
-                                        controller.selectedAnimalTypeId.value =
-                                            val;
-                                        final match = controller.animalTypeList
-                                            .firstWhereOrNull(
-                                              (e) => e.id == val,
-                                            );
-                                        controller.animalType.text =
-                                            match?.name ?? '';
-                                      },
-                                    ),
-                          ),
-                        ),
-                      ],
-                    ),
+                          child: ListView(
+                            children: [
+                              Hero(
+                                transitionOnUserGestures: true,
+                                tag: 'herotag_${UniqueKey()}',
+                                child: Obx(
+                                  () => Icon(
+                                    CupertinoIcons.cube_box_fill,
+                                    size: 70.sp,
+                                    color:
+                                        controller.readOnly.value
+                                            ? AppColors.blackColor
+                                            : AppColors.redColor,
+                                  ),
+                                ),
+                              ),
+                              setHeight(height: 8),
 
-                    Obx(
-                      () => Row(
-                        children: [
-                          Flexible(
-                            child: CommonTextField(
-                              readOnly: controller.readOnly.value,
-                              validator: (quantity) {
-                                if (quantity!.isEmpty) {
-                                  return emptyProductQuantity;
-                                } else {
-                                  return null;
-                                }
-                              },
-                              contentPadding:
-                                  SymmetricPadding(
-                                    vertical: 5,
-                                    horizontal: 5,
-                                  ).getPadding(),
-                              inputLength: 5,
-                              keyboardType: TextInputType.number,
-                              hintText: 'Enter Stock',
-                              label: 'Stock',
-                              controller: controller.quantity,
-                            ),
-                          ),
-                          Flexible(
-                            child: CustomStaticDropDown(
-                              selectedDropDownItem: controller.isLoose,
-                              listItems: [true, false],
-                              hintText: 'Select isLoose',
-                              notifyParent: (val) {
-                                controller.isLoose = val;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Obx(
-                      () => InventoryBottomsheetComponentText(
-                        readOnly1: controller.readOnly.value,
-                        readOnly2: controller.readOnly.value,
-                        inputLength1: 10,
-                        keyboardType1: TextInputType.number,
-                        hintText2: 'Purcashe Price (mrp)',
-                        label2: 'Purcashe Price (₹)',
-                        controller2: controller.purchasePrice,
-                        validator2: (purchasePrice) {
-                          if (purchasePrice!.isEmpty) {
-                            return emptyProductPurchasePrice;
-                          } else {
-                            return null;
-                          }
-                        },
-                        inputLength2: 10,
-                        keyboardType2: TextInputType.number,
-                        hintText1: 'Selling Price (sp)',
-                        label1: 'Selling Price (₹)',
-                        controller1: controller.sellingPrice,
-                        validator1: (sellingPrice) {
-                          if (sellingPrice!.isEmpty) {
-                            return emptyProductSellingPrice;
-                          } else {
-                            return null;
-                          }
-                        },
-                        onChanged1: (v) {
-                          //controller.calculatePurchasePrice();
-                        },
-                      ),
-                    ),
-                    Obx(
-                      () => Row(
-                        children: [
-                          Flexible(
-                            child: CommonTextField(
-                              readOnly: controller.readOnly.value,
-                              validator: (discount) {
-                                if (discount!.isEmpty) {
-                                  return emptyDiscount;
-                                } else {
-                                  return null;
-                                }
-                              },
-                              contentPadding:
-                                  SymmetricPadding(
-                                    vertical: 5,
-                                    horizontal: 5,
-                                  ).getPadding(),
-                              inputLength: 5,
-                              keyboardType: TextInputType.number,
-                              hintText: 'Enter Discount',
-                              label: 'Discount (%)',
-                              controller: controller.discount,
-                            ),
-                          ),
-                          Flexible(
-                            child: CustomStaticDropDown(
-                              selectedDropDownItem: controller.location.text,
-                              listItems: ['shop', 'godown'],
-                              hintText: 'Location',
-                              notifyParent: (val) {
-                                controller.location.text = val;
-                                customMessageOrErrorPrint(
-                                  message:
-                                      ' controller.isLoose ${controller.isLoose}',
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: CommonTextField(
-                            readOnly: true,
-                            suffixIcon: CustomPadding(
-                              paddingOption: OnlyPadding(right: 10),
-                              child: InkWell(
-                                onTap: () async {
-                                  var res = await customDatePicker(
-                                    lastDate: DateTime(2040),
-                                    context: context,
-                                    selectedDate: DateTime.now(),
-                                    controller: controller.dayDate,
-                                  );
-                                  if (res.isNotEmpty) {
-                                    controller.purchaseDate.text = res;
-                                  }
-                                },
-                                child: Icon(
-                                  CupertinoIcons.calendar_today,
-                                  size: 20,
+                              Text(
+                                textAlign: TextAlign.center,
+                                controller.productName.text,
+                                style: CustomTextStyle.customMontserrat(
+                                  fontSize: 18,
                                 ),
                               ),
-                            ),
-                            validator: (purchase) {
-                              if (purchase!.isEmpty) {
-                                return emptyPurchase;
-                              } else {
-                                return null;
-                              }
-                            },
-                            contentPadding:
-                                SymmetricPadding(
-                                  vertical: 5,
-                                  horizontal: 5,
-                                ).getPadding(),
-                            hintText: 'dd-MM-yyyy',
-                            label: 'Purchase Date',
-                            controller: controller.purchaseDate,
+                              RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  text: controller.quantity.text,
+                                  style: CustomTextStyle.customPoppin(
+                                    fontSize: 30,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: ' in stock',
+                                      style: CustomTextStyle.customPoppin(
+                                        fontSize: 20,
+                                        color: AppColors.greyColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Flexible(
-                          child: CommonTextField(
-                            readOnly: true,
-                            suffixIcon: CustomPadding(
-                              paddingOption: OnlyPadding(right: 10),
-                              child: InkWell(
-                                onTap: () async {
-                                  var res = await customDatePicker(
-                                    context: context,
-                                    lastDate: DateTime(2040),
-                                    selectedDate: DateTime.now(),
-                                    controller: controller.dayDate,
-                                  );
-                                  if (res.isNotEmpty) {
-                                    controller.exprieDate.text = res;
+                        CustomPadding(
+                          paddingOption: SymmetricPadding(horizontal: 5.0),
+                          child: Column(
+                            children: [
+                              InventoryBottomsheetComponentText(
+                                readOnly1: true,
+                                readOnly2: controller.readOnly.value,
+                                controller1: controller.barcode,
+                                controller2: controller.productName,
+                                label1: 'Barcode',
+                                hintText1: 'Enter barcode',
+                                hintText2: 'Enter product name',
+                                label2: 'Product name',
+                                validator2: (name) {
+                                  if (name!.isEmpty) {
+                                    return emptyProductName;
+                                  } else {
+                                    return null;
                                   }
                                 },
-                                child: Icon(
-                                  CupertinoIcons.calendar_today,
-                                  size: 20,
+                              ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Obx(
+                                      () =>
+                                          controller.categoryList.isEmpty
+                                              ? Center(
+                                                child: CommonProgressBar(
+                                                  color: AppColors.blackColor,
+                                                ),
+                                              )
+                                              : CustomDropDown(
+                                                selectedDropDownItem:
+                                                    controller
+                                                        .selectedCategoryId
+                                                        .value,
+                                                listItems:
+                                                    controller.categoryList,
+                                                hintText: 'Select Category',
+                                                notifyParent: (val) {
+                                                  controller
+                                                      .selectedCategoryId
+                                                      .value = val;
+                                                  final match = controller
+                                                      .categoryList
+                                                      .firstWhereOrNull(
+                                                        (e) => e.id == val,
+                                                      );
+                                                  controller.category.text =
+                                                      match?.name ?? '';
+                                                },
+                                              ),
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: Obx(
+                                      () =>
+                                          controller.animalTypeList.isEmpty
+                                              ? Center(
+                                                child: CommonProgressBar(
+                                                  color: AppColors.blackColor,
+                                                ),
+                                              )
+                                              : CustomDropDown(
+                                                hintText: 'Animal Type',
+                                                selectedDropDownItem:
+                                                    controller
+                                                        .selectedAnimalTypeId
+                                                        .value,
+                                                listItems:
+                                                    controller.animalTypeList,
+                                                notifyParent: (val) {
+                                                  controller
+                                                      .selectedAnimalTypeId
+                                                      .value = val;
+                                                  final match = controller
+                                                      .animalTypeList
+                                                      .firstWhereOrNull(
+                                                        (e) => e.id == val,
+                                                      );
+                                                  controller.animalType.text =
+                                                      match?.name ?? '';
+                                                },
+                                              ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              Obx(
+                                () => Row(
+                                  children: [
+                                    Flexible(
+                                      child: CommonTextField(
+                                        readOnly: controller.readOnly.value,
+                                        validator: (quantity) {
+                                          if (quantity!.isEmpty) {
+                                            return emptyProductQuantity;
+                                          } else {
+                                            return null;
+                                          }
+                                        },
+                                        contentPadding:
+                                            SymmetricPadding(
+                                              vertical: 5,
+                                              horizontal: 5,
+                                            ).getPadding(),
+                                        inputLength: 5,
+                                        keyboardType: TextInputType.number,
+                                        hintText: 'Enter Stock',
+                                        label: 'Stock',
+                                        controller: controller.quantity,
+                                      ),
+                                    ),
+                                    Flexible(
+                                      child: CustomStaticDropDown(
+                                        selectedDropDownItem:
+                                            controller.isLoose,
+                                        listItems: [true, false],
+                                        hintText: 'Select isLoose',
+                                        notifyParent: (val) {
+                                          controller.isLoose = val;
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            validator: (expire) {
-                              if (expire!.isEmpty) {
-                                return emptyExpire;
-                              } else {
-                                return null;
-                              }
-                            },
-                            contentPadding:
-                                SymmetricPadding(
-                                  vertical: 5,
-                                  horizontal: 5,
-                                ).getPadding(),
-                            inputLength: 5,
-                            keyboardType: TextInputType.number,
-                            hintText: 'dd-MM-yyyy',
-                            label: 'Expire Date',
-                            controller: controller.exprieDate,
+                              Obx(
+                                () => InventoryBottomsheetComponentText(
+                                  readOnly1: controller.readOnly.value,
+                                  readOnly2: controller.readOnly.value,
+                                  inputLength1: 10,
+                                  keyboardType1: TextInputType.number,
+                                  hintText2: 'Purcashe Price (mrp)',
+                                  label2: 'Purcashe Price (₹)',
+                                  controller2: controller.purchasePrice,
+                                  validator2: (purchasePrice) {
+                                    if (purchasePrice!.isEmpty) {
+                                      return emptyProductPurchasePrice;
+                                    } else {
+                                      return null;
+                                    }
+                                  },
+                                  inputLength2: 10,
+                                  keyboardType2: TextInputType.number,
+                                  hintText1: 'Selling Price (sp)',
+                                  label1: 'Selling Price (₹)',
+                                  controller1: controller.sellingPrice,
+                                  validator1: (sellingPrice) {
+                                    if (sellingPrice!.isEmpty) {
+                                      return emptyProductSellingPrice;
+                                    } else {
+                                      return null;
+                                    }
+                                  },
+                                  onChanged1: (v) {
+                                    //controller.calculatePurchasePrice();
+                                  },
+                                ),
+                              ),
+                              Obx(
+                                () => Row(
+                                  children: [
+                                    Flexible(
+                                      child: CommonTextField(
+                                        readOnly: controller.readOnly.value,
+                                        validator: (discount) {
+                                          if (discount!.isEmpty) {
+                                            return emptyDiscount;
+                                          } else {
+                                            return null;
+                                          }
+                                        },
+                                        contentPadding:
+                                            SymmetricPadding(
+                                              vertical: 5,
+                                              horizontal: 5,
+                                            ).getPadding(),
+                                        inputLength: 5,
+                                        keyboardType: TextInputType.number,
+                                        hintText: 'Enter Discount',
+                                        label: 'Discount (%)',
+                                        controller: controller.discount,
+                                      ),
+                                    ),
+                                    Flexible(
+                                      child: CustomStaticDropDown(
+                                        selectedDropDownItem:
+                                            controller.location.text,
+                                        listItems: ['shop', 'godown'],
+                                        hintText: 'Location',
+                                        notifyParent: (val) {
+                                          controller.location.text = val;
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: CommonTextField(
+                                      readOnly: true,
+                                      suffixIcon: CustomPadding(
+                                        paddingOption: OnlyPadding(right: 10),
+                                        child: InkWell(
+                                          onTap: () async {
+                                            var res = await customDatePicker(
+                                              lastDate: DateTime(2040),
+                                              context: context,
+                                              selectedDate: DateTime.now(),
+                                              controller: controller.dayDate,
+                                            );
+                                            if (res.isNotEmpty) {
+                                              controller.purchaseDate.text =
+                                                  res;
+                                            }
+                                          },
+                                          child: Icon(
+                                            CupertinoIcons.calendar_today,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      validator: (purchase) {
+                                        if (purchase!.isEmpty) {
+                                          return emptyPurchase;
+                                        } else {
+                                          return null;
+                                        }
+                                      },
+                                      contentPadding:
+                                          SymmetricPadding(
+                                            vertical: 5,
+                                            horizontal: 5,
+                                          ).getPadding(),
+                                      hintText: 'dd-MM-yyyy',
+                                      label: 'Purchase Date',
+                                      controller: controller.purchaseDate,
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: CommonTextField(
+                                      readOnly: true,
+                                      suffixIcon: CustomPadding(
+                                        paddingOption: OnlyPadding(right: 10),
+                                        child: InkWell(
+                                          onTap: () async {
+                                            var res = await customDatePicker(
+                                              context: context,
+                                              lastDate: DateTime(2040),
+                                              selectedDate: DateTime.now(),
+                                              controller: controller.dayDate,
+                                            );
+                                            if (res.isNotEmpty) {
+                                              controller.exprieDate.text = res;
+                                            }
+                                          },
+                                          child: Icon(
+                                            CupertinoIcons.calendar_today,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      validator: (expire) {
+                                        if (expire!.isEmpty) {
+                                          return emptyExpire;
+                                        } else {
+                                          return null;
+                                        }
+                                      },
+                                      contentPadding:
+                                          SymmetricPadding(
+                                            vertical: 5,
+                                            horizontal: 5,
+                                          ).getPadding(),
+                                      inputLength: 5,
+                                      keyboardType: TextInputType.number,
+                                      hintText: 'dd-MM-yyyy',
+                                      label: 'Expire Date',
+                                      controller: controller.exprieDate,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Obx(
+                                () =>
+                                    controller
+                                            .isFlavorAndWeightNotRequired
+                                            .value
+                                        ? InventoryBottomsheetComponentText(
+                                          readOnly1: controller.readOnly.value,
+                                          readOnly2: controller.readOnly.value,
+                                          hintText1: 'Flavor',
+                                          label1: 'Flavor',
+                                          controller1: controller.flavor,
+                                          validator1: (flavor) {
+                                            if (flavor!.isEmpty) {
+                                              return emptyflavor;
+                                            } else {
+                                              return null;
+                                            }
+                                          },
+                                          hintText2: 'Weight',
+                                          label2: 'Weight',
+                                          controller2: controller.weight,
+                                          validator2: (weight) {
+                                            if (weight!.isEmpty) {
+                                              return emptyWeight;
+                                            } else {
+                                              return null;
+                                            }
+                                          },
+                                        )
+                                        : Container(),
+                              ),
+                              setHeight(height: 20),
+                              Obx(
+                                () =>
+                                    controller.readOnly.value
+                                        ? Container()
+                                        : CommonButton(
+                                          isLoading:
+                                              controller.isSaveLoading.value,
+                                          label: saveButton,
+                                          onTap: () async {
+                                            if (controller
+                                                .inventoryScanKey
+                                                .currentState!
+                                                .validate()) {
+                                              unfocus();
+                                              if (!isProductLoosed) {
+                                                var body = {
+                                                  "name":
+                                                      controller
+                                                          .productName
+                                                          .text,
+                                                  "barcodes":
+                                                      controller.barcode.text,
+                                                  "quantity": num.parse(
+                                                    controller.quantity.text,
+                                                  ),
+                                                  "selling_price": num.parse(
+                                                    controller
+                                                        .sellingPrice
+                                                        .text,
+                                                  ),
+
+                                                  "purchase_price": num.parse(
+                                                    controller
+                                                        .purchasePrice
+                                                        .text,
+                                                  ),
+                                                  "location":
+                                                      controller.location.text,
+                                                  "stock_type": "packet",
+                                                  "isloosed":
+                                                      controller.isLoose,
+                                                  "isflavorRequired":
+                                                      controller
+                                                              .isFlavorAndWeightNotRequired
+                                                              .value
+                                                          ? false
+                                                          : true,
+                                                  "purchase_date":
+                                                      controller
+                                                          .purchaseDate
+                                                          .text,
+                                                  "expiry_date":
+                                                      controller
+                                                          .exprieDate
+                                                          .text,
+                                                  "category":
+                                                      controller.category.text,
+                                                  "animal_type":
+                                                      controller
+                                                          .animalType
+                                                          .text,
+                                                  "flavour":
+                                                      controller.flavor.text,
+                                                  "level":
+                                                      controller.level.text,
+                                                  "rack": controller.rack.text,
+                                                  "weight":
+                                                      controller.weight.text,
+                                                  "discount": num.parse(
+                                                    controller.discount.text,
+                                                  ),
+                                                };
+                                                print('the body is $body');
+                                                print(
+                                                  controller.productId.value,
+                                                );
+                                                // controller
+                                                //     .updateProductQuantity(
+                                                //       body: body,
+                                                //       productId:
+                                                // controller
+                                                //     .productId
+                                                // .value),
+                                                //     );
+                                              } else {
+                                                AppLogger.debug(
+                                                  'Form validation - isLoose: ${controller.isLoose}',
+                                                  'ProductDetailView',
+                                                );
+                                                var body = {
+                                                  "product_id":
+                                                      controller
+                                                          .productId
+                                                          .value,
+                                                  "quantity":
+                                                      controller
+                                                          .looseQuantity
+                                                          .text,
+                                                  "selling_price":
+                                                      controller
+                                                          .looseSellingPrice
+                                                          .text,
+                                                };
+                                                controller
+                                                    .updateLoosedProductQuantity(
+                                                      body: body,
+                                                    );
+                                              }
+                                            }
+                                          },
+                                        ),
+                              ),
+                              setHeight(height: 30),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    Obx(
-                      () =>
-                          controller.isFlavorAndWeightNotRequired.value
-                              ? InventoryBottomsheetComponentText(
-                                readOnly1: controller.readOnly.value,
-                                readOnly2: controller.readOnly.value,
-                                hintText1: 'Flavor',
-                                label1: 'Flavor',
-                                controller1: controller.flavor,
-                                validator1: (flavor) {
-                                  if (flavor!.isEmpty) {
-                                    return emptyflavor;
-                                  } else {
-                                    return null;
-                                  }
-                                },
-                                hintText2: 'Weight',
-                                label2: 'Weight',
-                                controller2: controller.weight,
-                                validator2: (weight) {
-                                  if (weight!.isEmpty) {
-                                    return emptyWeight;
-                                  } else {
-                                    return null;
-                                  }
-                                },
-                              )
-                              : Container(),
-                    ),
-                    setHeight(height: 20),
-                    Obx(
-                      () =>
-                          controller.readOnly.value
-                              ? Container()
-                              : CommonButton(
-                                isLoading: controller.isSaveLoading.value,
-                                label: saveButton,
-                                onTap: () async {
-                                  if (controller.inventoryScanKey.currentState!
-                                      .validate()) {
-                                    unfocus();
-                                    if (isProductLoosed) {
-                                      var body = {
-                                        "name": controller.productName.text,
-                                        "barcodes": controller.barcode.text,
-                                        "quantity":
-                                            double.tryParse(
-                                              controller.quantity.text,
-                                            ) ??
-                                            0,
-                                        "selling_price":
-                                            double.tryParse(
-                                              controller.sellingPrice.text,
-                                            ) ??
-                                            0,
-                                        "purchase_price":
-                                            double.tryParse(
-                                              controller.purchasePrice.text,
-                                            ) ??
-                                            0,
-                                        "location": controller.location.text,
-                                        "stock_type": "packet",
-                                        "isloosed": controller.isLoose,
-                                        "isflavorRequired":
-                                            controller
-                                                    .isFlavorAndWeightNotRequired
-                                                    .value
-                                                ? false
-                                                : true,
-                                        "purchase_date":
-                                            controller.purchaseDate.text,
-                                        "expiry_date":
-                                            controller.exprieDate.text,
-                                        "category": controller.category.text,
-                                        "animal_type":
-                                            controller.animalType.text,
-                                        "flavour": controller.flavor.text,
-                                        "level": controller.level.text,
-                                        "rack": controller.rack.text,
-                                        "weight": controller.weight.text,
-                                        "discount":
-                                            double.tryParse(
-                                              controller.discount.text,
-                                            ) ??
-                                            0,
-                                      };
-                                      controller.updateProductQuantity(
-                                        body: body,
-                                        productId:
-                                            controller.data['productId']
-                                                .toString(),
-                                      );
-                                    } else {
-                                      AppLogger.debug(
-                                        'Form validation - isLoose: ${controller.isLoose}',
-                                        'ProductDetailView',
-                                      );
-                                      var body = {
-                                        "product_id":
-                                            controller.data['productId'],
-                                        "quantity":
-                                            controller.looseQuantity.text,
-                                        "selling_price":
-                                            controller.looseSellingPrice.text,
-                                      };
-                                      controller.updateLoosedProductQuantity(
-                                        body: body,
-                                      );
-                                    }
-                                  }
-                                },
-                              ),
-                    ),
-                    setHeight(height: 30),
-                  ],
-                ),
-              ),
-            ],
-          ),
+                  ),
         ),
       ),
     );

@@ -5,12 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/helper/logger.dart';
-import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/user_profile/repo/user_repo.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
-import 'package:inventory/supabase_db/storage_service.dart';
 import '../../setting/model/user_model.dart';
 
 class UserProfileController extends GetxController with CacheManager {
@@ -82,14 +77,14 @@ class UserProfileController extends GetxController with CacheManager {
         saveUserData(response);
         setUserDetails();
       } else if (response.success == failed) {
-      showSnackBar(error: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-      showSnackBar(error: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
       readOnly.value = true;
-    showSnackBar(error: "Profile Updated Successfully ✅");
+      showSnackBar(error: "Profile Updated Successfully ✅");
     } catch (e) {
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     } finally {
       isLoading.value = false;
     }
@@ -107,9 +102,9 @@ class UserProfileController extends GetxController with CacheManager {
         if (response.success == success) {
           _fillControllers(response);
         } else if (response.success == failed) {
-        showSnackBar(error: response.msg ?? somethingWentMessage);
+          showSnackBar(error: response.msg ?? somethingWentMessage);
         } else {
-        showSnackBar(error: somethingWentMessage);
+          showSnackBar(error: somethingWentMessage);
         }
       }
     } catch (e) {

@@ -11,7 +11,6 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/app_settings/controller/app_setting_controller.dart';
 import 'package:inventory/module/app_settings/widget/app_setting_text.dart';
 import 'package:inventory/module/invoice/widget/bluetooth_validate_widget.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 import '../../../common_widget/common_switch.dart';
 import '../../../helper/helper.dart';
@@ -87,7 +86,7 @@ class AppSettingView extends GetView<AppSettingController> {
 
       if (device != null) {
         controller.savePrinterAddress(device.address);
-      showSnackBar(error: "✅ Printer saved: ${device.name}");
+        showSnackBar(error: "✅ Printer saved: ${device.name}");
       } else {
         commonBottomSheet(
           label: 'Bluetooth Info',
@@ -100,7 +99,7 @@ class AppSettingView extends GetView<AppSettingController> {
       }
     } catch (e) {
       AppLogger.error('Printer selection failed', e, 'AppSettingView');
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     }
   }
 }

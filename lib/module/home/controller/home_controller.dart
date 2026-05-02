@@ -1,18 +1,15 @@
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
-import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/home/model/dashboard_model.dart';
 import 'package:inventory/module/home/repo/home_repo.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../routes/route_name.dart';
 import '../model/grid_model.dart';
 
@@ -35,7 +32,7 @@ class HomeController extends GetxController with CacheManager {
 
   List<Map<String, dynamic>> chartData = [];
   List<CustomGridModel> lis = [];
-
+  RxString shopType = ''.obs;
   RxBool isListLoading = false.obs;
 
   // ================= STOCK TRANSFER =================
@@ -45,8 +42,14 @@ class HomeController extends GetxController with CacheManager {
   // ================= INIT =================
   @override
   void onInit() {
+    setShopType();
     loadDashboard();
     super.onInit();
+  }
+
+  void setShopType() {
+    var user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? 'Pet Shop';
   }
 
   // ================= SYNC LOGIC (ZERO SUPABASE CALLS) =================
@@ -98,7 +101,10 @@ class HomeController extends GetxController with CacheManager {
       ),
       CustomGridModel(
         routeName: AppRouteName.looseSell,
-        label: 'Loose Stock',
+        label:
+            shopType.value == 'Clothing Shop'
+                ? 'Good Return(GR)'
+                : 'Loose Stock',
         icon: CupertinoIcons.info,
         numbers: looseStock.value.toDouble(),
       ),

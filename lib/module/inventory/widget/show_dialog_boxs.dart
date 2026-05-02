@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_padding.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';

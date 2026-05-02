@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 import 'package:inventory/module/setting/repo/logout_repo.dart';
 import 'package:inventory/module/user_profile/repo/user_repo.dart';
 import 'package:inventory/routes/routes.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
@@ -41,10 +39,12 @@ class SettingController extends GetxController with CacheManager {
       if (user.data?.name != null && user.data!.name!.isNotEmpty) {
         storeName.value = user.data?.name ?? '';
         email.value = user.data?.email ?? '';
+        shoptype.value = user.data?.shopType ?? 'Pet Shop';
       } else {
         await getUserData();
         storeName.value = userModel.value.data?.name ?? '';
         email.value = userModel.value.data?.email ?? '';
+        shoptype.value = user.data?.shopType ?? 'Pet Shop';
       }
     } catch (e) {
       showSnackBar(error: e.toString());

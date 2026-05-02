@@ -1,30 +1,31 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
-import 'package:inventory/local_db/local_db_service.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/inventorylist/repo/inventory_repo.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class InventoryListController extends GetxController
     with GetSingleTickerProviderStateMixin, CacheManager {
   InventoryRepo inventoryRepo = InventoryRepo();
 
-  // var productList = <InventoryItem>[].obs;
   var goDownProductList = <InventoryItem>[].obs;
   var shopProductList = <InventoryItem>[].obs;
 
   RxBool isDataLoading = false.obs;
   RxBool isSaveLoading = false.obs;
   RxBool isInventoryScanSelected = false.obs;
-  RxBool isSea = false.obs;
   RxBool isLoose = false.obs;
   RxBool isFlavorAndWeightNotRequired = false.obs;
+
+  // ── Pagination state ──────────────────────────────────────────────────────
+  int _shopPage = 1;
+  int _godownPage = 1;
+  int _shopTotalPages = 1;
+  int _godownTotalPages = 1;
+  RxBool isLoadingMore = false.obs;
 
   RxString searchText = ''.obs;
 
@@ -37,16 +38,18 @@ class InventoryListController extends GetxController
   TextEditingController searchController = TextEditingController();
   TextEditingController addSubtractQty = TextEditingController();
 
+  // Scroll controllers for infinite scroll
+  final ScrollController shopScrollController = ScrollController();
+  final ScrollController godownScrollController = ScrollController();
+
   TabController? tabController;
 
   @override
   void onInit() {
     isInventoryScanSelectedValue();
-    super.onInit();
-
     tabController = TabController(length: 2, vsync: this);
-
-    /// default first tab = shop
+    _attachScrollListeners();
+    super.onInit();
   }
 
   @override
@@ -55,7 +58,6 @@ class InventoryListController extends GetxController
 
     tabController!.addListener(() {
       if (tabController!.indexIsChanging) return;
-
       if (tabController!.index == 0) {
         fetchInventoryByTab('shop');
       } else if (tabController!.index == 1) {
@@ -65,10 +67,33 @@ class InventoryListController extends GetxController
     super.onReady();
   }
 
+  void _attachScrollListeners() {
+    shopScrollController.addListener(() {
+      if (_isNearBottom(shopScrollController) &&
+          !isLoadingMore.value &&
+          _shopPage < _shopTotalPages) {
+        _loadMoreByTab('shop');
+      }
+    });
+
+    godownScrollController.addListener(() {
+      if (_isNearBottom(godownScrollController) &&
+          !isLoadingMore.value &&
+          _godownPage < _godownTotalPages) {
+        _loadMoreByTab('godown');
+      }
+    });
+  }
+
+  bool _isNearBottom(ScrollController sc) {
+    if (!sc.hasClients) return false;
+    return sc.position.pixels >= sc.position.maxScrollExtent - 200;
+  }
+
   Future<void> isInventoryScanSelectedValue() async {
     try {
-      bool isInventoryScanSelecteds = await retrieveInventoryScan();
-      isInventoryScanSelected.value = isInventoryScanSelecteds;
+      bool val = await retrieveInventoryScan();
+      isInventoryScanSelected.value = val;
     } catch (e) {
       AppLogger.error(
         'Failed to load inventory scan setting',
@@ -79,22 +104,38 @@ class InventoryListController extends GetxController
     }
   }
 
+  /// Fresh load — resets page to 1 and clears list
   Future<void> fetchInventoryByTab(String type) async {
     isDataLoading.value = true;
 
+    if (type == 'shop') {
+      _shopPage = 1;
+      shopProductList.clear();
+    } else {
+      _godownPage = 1;
+      goDownProductList.clear();
+    }
+
     try {
-      var response = await inventoryRepo.getProductData(search: type);
+      final page = type == 'shop' ? _shopPage : _godownPage;
+      final response = await inventoryRepo.getProductData(
+        search: type,
+        page: page,
+      );
 
       if (response.success == success) {
+        final items = response.data?.data ?? [];
+        final pagination = response.data?.pagination;
+
         if (type == 'shop') {
-          shopProductList.value = response.data?.data ?? [];
-        } else if (type == 'godown') {
-          goDownProductList.value = response.data?.data ?? [];
+          shopProductList.assignAll(items);
+          _shopTotalPages = pagination?.totalPages ?? 1;
+        } else {
+          goDownProductList.assignAll(items);
+          _godownTotalPages = pagination?.totalPages ?? 1;
         }
-      } else if (response.success == failed) {
-        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showSnackBar(error: somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());
@@ -103,32 +144,57 @@ class InventoryListController extends GetxController
     }
   }
 
-  /// agar kabhi all data chahiye future me
-  // Future<void> fetchAllInventory() async {
-  //   isDataLoading.value = true;
+  /// Load next page — appends to existing list
+  Future<void> _loadMoreByTab(String type) async {
+    isLoadingMore.value = true;
 
-  //   try {
-  //     var response = await inventoryRepo.getProductData(search: 'all');
+    if (type == 'shop') {
+      _shopPage++;
+    } else {
+      _godownPage++;
+    }
 
-  //     if (response.success == success) {
-  //       productList.value = response.data?.data ?? [];
+    try {
+      final page = type == 'shop' ? _shopPage : _godownPage;
+      final response = await inventoryRepo.getProductData(
+        search: type,
+        page: page,
+      );
 
-  //       goDownProductList.value =
-  //           productList.where((p) => p.location == 'godown').toList();
+      if (response.success == success) {
+        final items = response.data?.data ?? [];
+        final pagination = response.data?.pagination;
 
-  //       shopProductList.value =
-  //           productList.where((p) => p.location == 'shop').toList();
-  //     } else if (response.success == failed) {
-  //       showSnackBar(error: response.msg ?? somethingWentMessage);
-  //     } else {
-  //       showSnackBar(error: somethingWentMessage);
-  //     }
-  //   } catch (e) {
-  //     showSnackBar(error: e.toString());
-  //   } finally {
-  //     isDataLoading.value = false;
-  //   }
-  // }
+        if (type == 'shop') {
+          shopProductList.addAll(items);
+          _shopTotalPages = pagination?.totalPages ?? _shopTotalPages;
+        } else {
+          goDownProductList.addAll(items);
+          _godownTotalPages = pagination?.totalPages ?? _godownTotalPages;
+        }
+      } else {
+        // revert page increment on failure
+        if (type == 'shop') {
+          _shopPage--;
+        } else {
+          _godownPage--;
+        }
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      }
+    } catch (e) {
+      if (type == 'shop') {
+        _shopPage--;
+      } else {
+        _godownPage--;
+      }
+      showSnackBar(error: e.toString());
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  bool get shopHasMore => _shopPage < _shopTotalPages;
+  bool get godownHasMore => _godownPage < _godownTotalPages;
 
   void clear() {
     searchController.clear();
@@ -142,7 +208,8 @@ class InventoryListController extends GetxController
   @override
   void onClose() {
     tabController?.dispose();
-
+    shopScrollController.dispose();
+    godownScrollController.dispose();
     updateQuantity.dispose();
     name.dispose();
     sellingPrice.dispose();
@@ -151,7 +218,6 @@ class InventoryListController extends GetxController
     purchasePrice.dispose();
     searchController.dispose();
     addSubtractQty.dispose();
-
     super.onClose();
   }
 }

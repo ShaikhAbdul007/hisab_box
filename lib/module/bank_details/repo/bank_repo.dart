@@ -1,5 +1,3 @@
-import 'package:inventory/module/auth/login/model/login_model.dart';
-import 'package:inventory/module/auth/login/model/otp_model.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';

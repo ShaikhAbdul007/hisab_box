@@ -6,7 +6,6 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/add_user/model/all_user_role_model.dart';
 import 'package:inventory/module/add_user/repo/add_user_repo.dart';
 import 'package:inventory/module/add_user/repo/user_role_repo.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class AddUserController extends GetxController with CacheManager {
   UserRoleRepo userRoleRepo = UserRoleRepo();

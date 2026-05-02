@@ -12,7 +12,6 @@ import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/invoice/model/invoice_model.dart';
-import 'package:inventory/module/sell/model/print_model.dart';
 import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
 
 import '../../../common_widget/common_divider.dart';

@@ -239,7 +239,7 @@ class InvoiceModel {
   InvoiceModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['msg'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -293,13 +293,13 @@ class Data {
     if (json['items'] != null) {
       items = <Items>[];
       json['items'].forEach((v) {
-        items!.add(new Items.fromJson(v));
+        items!.add(Items.fromJson(v));
       });
     }
     if (json['payments'] != null) {
       payments = <Payments>[];
       json['payments'].forEach((v) {
-        payments!.add(new Payments.fromJson(v));
+        payments!.add(Payments.fromJson(v));
       });
     }
   }
@@ -371,7 +371,7 @@ class Payments {
   String? id;
   String? paymentMode;
   String? amount;
-  Null? referenceNo;
+  dynamic referenceNo;
 
   Payments({this.id, this.paymentMode, this.amount, this.referenceNo});
 

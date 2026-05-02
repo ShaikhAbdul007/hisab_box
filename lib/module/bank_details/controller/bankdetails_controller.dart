@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
 import 'package:inventory/module/bank_details/repo/bank_repo.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
@@ -14,7 +13,6 @@ class BankDetailsController extends GetxController with CacheManager {
   TextEditingController upiIdController = TextEditingController();
   TextEditingController bankNameController = TextEditingController();
   TextEditingController accountHolderNameController = TextEditingController();
-
   RxBool bankDetailsUpi = false.obs;
   RxBool setBankDetailsUpi = false.obs;
   RxBool readOnly = false.obs;

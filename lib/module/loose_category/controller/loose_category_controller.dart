@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/local_db/local_db_service.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class LooseCategoryController extends GetxController with CacheManager {
   TextEditingController name = TextEditingController();

@@ -5,7 +5,6 @@ import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import '../../../helper/textstyle.dart';
-import '../../inventory/model/product_model.dart';
 
 class LooseCategoryComponent extends StatelessWidget {
   final InventoryItem looseCategoryModel;

@@ -3,7 +3,6 @@ import 'package:inventory/helper/logger.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/near_expire_product/model/near_expiry_model.dart';
 import 'package:inventory/module/out_of_stock/repo/out_of_stock_repo.dart';

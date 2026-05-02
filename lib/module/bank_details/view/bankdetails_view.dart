@@ -27,8 +27,8 @@ class BankdetailsView extends GetView<BankDetailsController> {
           CupertinoIcons.square_pencil_fill,
           color:
               controller.readOnly.value
-                  ? AppColors.blackColor
-                  : AppColors.redColor,
+                  ? AppColors.redColor
+                  : AppColors.blackColor,
         ),
       ),
       body: CustomPadding(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/category/repo/category_repo.dart';
 import '../../../helper/app_message.dart';

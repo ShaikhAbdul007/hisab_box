@@ -1,6 +1,3 @@
-
-
-
 class ReportTopProductModel {
   bool? success;
   String? msg;
@@ -14,15 +11,15 @@ class ReportTopProductModel {
     if (json['data'] != null) {
       data = <ReportTopProductData>[];
       json['data'].forEach((v) {
-        data!.add( ReportTopProductData.fromJson(v));
+        data!.add(ReportTopProductData.fromJson(v));
       });
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['success'] = this.success;
-    data['msg'] = this.msg;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['success'] = success;
+    data['msg'] = msg;
     if (this.data != null) {
       data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
@@ -42,9 +39,9 @@ class ReportTopProductData {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['productName'] = this.productName;
-    data['qty'] = this.qty;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['productName'] = productName;
+    data['qty'] = qty;
     return data;
   }
 }

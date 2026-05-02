@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/commom_aminatedtext.dart';
@@ -8,7 +9,6 @@ import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
-import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/routes/route_name.dart';
 import 'package:inventory/routes/routes.dart';
@@ -118,6 +118,43 @@ class LoginView extends GetView<LoginController> {
                         ),
                       );
                     }
+
+                    // commonBottomSheet(
+                    //   label: 'OTP Verification',
+                    //   onPressed: () {
+                    //     if (controller.verifyLoading.value == false) {
+                    //       Get.back();
+                    //     }
+                    //   },
+                    //   child: Column(
+                    //     crossAxisAlignment: CrossAxisAlignment.start,
+                    //     children: [
+                    //       setHeight(height: 20),
+                    //       otpVerificationBottomSheet(),
+                    //       // Row(
+                    //       //   children: [
+                    //       //     Text(
+                    //       //       'opt will be expire in 5 min',
+                    //       //       style: CustomTextStyle.customMontserrat(
+                    //       //         color: AppColors.greyColor,
+                    //       //       ),
+                    //       //     ),
+                    //       //   ],
+                    //       // ),
+                    //       setHeight(height: 20),
+                    //       Obx(
+                    //         () => CommonButton(
+                    //           isLoading: controller.verifyLoading.value,
+                    //           label: 'Verify Otp',
+                    //           onTap: () {
+                    //             controller.verifyOtp(otp: '123456');
+                    //           },
+                    //         ),
+                    //       ),
+                    //       setHeight(height: 20),
+                    //     ],
+                    //   ),
+                    // );
                   }
                 },
               ),
@@ -163,37 +200,40 @@ class LoginView extends GetView<LoginController> {
     final defaultPinTheme = PinTheme(
       width: 56,
       height: 56,
-      textStyle: TextStyle(
-        fontSize: 20,
+      textStyle: CustomTextStyle.customPoppin(
+        fontSize: 14,
         color: AppColors.blackColor,
         fontWeight: FontWeight.w600,
       ),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.blackColor),
-        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.greenColor),
+        borderRadius: BorderRadius.circular(15),
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
-      border: Border.all(color: AppColors.greyColor),
-      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: AppColors.greenColor),
+      borderRadius: BorderRadius.circular(15),
     );
 
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
-        color: AppColors.greyColor.withOpacity(0.5),
+        color: AppColors.greenAccentColor,
       ),
     );
-
-    return Pinput(
-      defaultPinTheme: defaultPinTheme,
-      focusedPinTheme: focusedPinTheme,
-      submittedPinTheme: submittedPinTheme,
-      length: 6,
-      keyboardType: TextInputType.number,
-      pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-      showCursor: true,
-      onCompleted: (pin) => controller.verifyOtp(otp: pin),
+    return Container(
+      margin: EdgeInsets.all(10),
+      child: Pinput(
+        defaultPinTheme: defaultPinTheme,
+        focusedPinTheme: focusedPinTheme,
+        submittedPinTheme: submittedPinTheme,
+        closeKeyboardWhenCompleted: true,
+        length: 6,
+        keyboardType: TextInputType.number,
+        pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+        showCursor: true,
+        onCompleted: (pin) => controller.verifyOtp(otp: pin),
+      ),
     );
   }
 

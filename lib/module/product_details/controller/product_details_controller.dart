@@ -4,17 +4,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/capitalization_strings.dart';
-import 'package:inventory/local_db/local_db_service.dart'; // 🔥 Hive Service
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
-import 'package:inventory/supabase_db/supabase_client.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import '../../category/model/category_model.dart';
-import '../../inventory/model/product_model.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Connection
 
 class ProductDetailsController extends GetxController with CacheManager {
   ProductRepo productRepo = ProductRepo();
@@ -24,12 +19,12 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
   TextEditingController transferQuantityToShop = TextEditingController();
   TextEditingController productName = TextEditingController();
+  TextEditingController location = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
   TextEditingController looseSellingPrice = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController animalType = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
-  TextEditingController location = TextEditingController();
   TextEditingController discount = TextEditingController();
   TextEditingController purchasePrice = TextEditingController();
   TextEditingController flavor = TextEditingController();
@@ -53,8 +48,9 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxBool isSaveLoading = false.obs;
   RxBool readOnly = true.obs;
   RxBool dropDownReadOnly = false.obs;
-  RxString barcodeValue = ''.obs;
+  RxBool isDataLoading = false.obs;
   RxString dayDate = ''.obs;
+  RxString productId = ''.obs;
   bool isLoose = false;
 
   RxBool isTransferLoading = false.obs;
@@ -77,9 +73,6 @@ class ProductDetailsController extends GetxController with CacheManager {
   }) async {
     isTransferLoading.value = true;
     try {
-      // Unique Reference ID for tracking
-      String refId = "TRF-${DateTime.now().millisecondsSinceEpoch}";
-
       // 🔥 Sirf ek call aur SQL function saara logic handle karega
       // await SupabaseConfig.client.rpc(
       //   'process_stock_transfer',
@@ -116,9 +109,11 @@ class ProductDetailsController extends GetxController with CacheManager {
   }
 
   void getCategoryData() async {
+    isDataLoading.value = true;
     await fetchCategories();
     await fetchAnimalCategories();
     setData();
+    isDataLoading.value = false;
   }
 
   dynamic getCategorySelectedItem(String value) {
@@ -149,6 +144,7 @@ class ProductDetailsController extends GetxController with CacheManager {
     var productData = data['product'];
     if (productData is InventoryItem) {
       InventoryItem p = productData;
+      productId.value = p.id ?? '';
       category.text = p.categoryName ?? '';
       animalType.text = p.animalTypeName ?? '';
       isFlavorAndWeightNotRequired.value = p.isflavorRequired ?? false;
@@ -156,6 +152,7 @@ class ProductDetailsController extends GetxController with CacheManager {
       barcode.text = p.barcode ?? '';
       quantity.text = p.quantity.toString();
       barcodeQytController.text = p.quantity.toString();
+      location.text = p.location ?? '';
       sellingPrice.text = p.sellingPrice.toString();
       purchasePrice.text = p.purchasePrice.toString();
       flavor.text = p.flavour ?? '';
@@ -163,7 +160,6 @@ class ProductDetailsController extends GetxController with CacheManager {
       rack.text = p.rack ?? '';
       level.text = p.level ?? '';
       isLoose = p.isloosed ?? false;
-      location.text = p.location!.toLowerCase();
       discount.text = p.discount.toString();
       purchaseDate.text = p.purchaseDate ?? '';
       exprieDate.text = p.expireDate ?? '';
@@ -182,12 +178,12 @@ class ProductDetailsController extends GetxController with CacheManager {
       rack.text = p['rack']?.toString() ?? '';
       level.text = p['level']?.toString() ?? '';
       barcodeQytController.text = p['quantity']?.toString() ?? '0';
+
       sellingPrice.text = p['sellingPrice']?.toString() ?? '0';
       purchasePrice.text = p['purchasePrice']?.toString() ?? '0';
       flavor.text = p['flavor']?.toString() ?? p['flavour']?.toString() ?? '';
       weight.text = p['weight']?.toString() ?? '';
       isLoose = p['isLoosed'] ?? false;
-      location.text = p['location']?.toString() ?? '';
       discount.text = p['discount']?.toString() ?? '0';
       purchaseDate.text = p['purchaseDate']?.toString() ?? '';
       exprieDate.text = p['expireDate']?.toString() ?? '';

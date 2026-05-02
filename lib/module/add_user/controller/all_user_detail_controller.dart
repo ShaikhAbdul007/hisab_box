@@ -5,7 +5,6 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/add_user/model/employee_model.dart';
 import 'package:inventory/module/add_user/repo/add_user_repo.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 
 class AllUserDetailController extends GetxController {
   AddUserRepo addUserRepo = AddUserRepo();

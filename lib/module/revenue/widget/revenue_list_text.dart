@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
@@ -8,7 +7,6 @@ import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/home/model/dashboard_model.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
 import '../../../common_widget/common_divider.dart';
-import '../model/revenue_model.dart';
 
 class RecentActivitiesListText extends StatelessWidget {
   final RecentActivitiesData billModel;
@@ -98,8 +96,6 @@ class RecentActivitiesListText extends StatelessWidget {
   }
 }
 
-
-
 class RevenueListText extends StatelessWidget {
   final SellItemData sellItemData;
   const RevenueListText({super.key, required this.sellItemData});
@@ -187,8 +183,3 @@ class RevenueListText extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

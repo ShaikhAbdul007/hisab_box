@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
-import 'package:inventory/module/home/model/dashboard_model.dart';
 import '../../../common_widget/common_nodatafound.dart';
 import '../../revenue/widget/revenue_list_text.dart';
 import '../controller/report_controller.dart';

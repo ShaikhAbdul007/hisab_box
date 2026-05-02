@@ -37,7 +37,10 @@ class AnimalCategory extends GetView<AnimalTypeController> {
           child: Icon(CupertinoIcons.add),
         ),
       ),
-      appBarLabel: 'Animal Category',
+      appBarLabel:
+          controller.shopType.value == 'Clothing Shop'
+              ? 'Size Category'
+              : 'Animal Category',
       body: Obx(
         () =>
             controller.isFetchAnimalCategory.value
@@ -124,7 +127,12 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                     ),
                   ],
                 )
-                : CommonNoDataFound(message: 'No animal category found'),
+                : CommonNoDataFound(
+                  message:
+                      controller.shopType.value == 'Clothing Shop'
+                          ? 'No size category found'
+                          : 'No animal category found',
+                ),
       ),
     );
   }

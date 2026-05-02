@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
-import 'package:inventory/local_db/local_db_service.dart'; // 🔥 LocalService Mixin
 
 class NotificationController extends GetxController with CacheManager {
   RxList<GoDownStockTransferToShopModel> pendingTransfers =

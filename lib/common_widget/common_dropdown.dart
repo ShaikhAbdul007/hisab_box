@@ -1,4 +1,3 @@
-import 'package:animated_custom_dropdown/custom_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -12,6 +11,7 @@ class CustomStaticDropDown extends StatelessWidget {
   final dynamic hintText;
   final Color? dropDownBgColor;
   final Function(dynamic value) notifyParent;
+  final bool enable;
   const CustomStaticDropDown({
     super.key,
     required this.listItems,
@@ -19,6 +19,7 @@ class CustomStaticDropDown extends StatelessWidget {
     required this.notifyParent,
     this.selectedDropDownItem,
     this.dropDownBgColor,
+    this.enable = true,
   });
 
   @override
@@ -49,7 +50,6 @@ class CustomStaticDropDown extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: AppColors.greyColor, width: 0.5.w),
           ),
-
           child: DropdownButtonHideUnderline(
             child: DropdownButtonFormField<dynamic>(
               decoration: InputDecoration(
@@ -87,6 +87,7 @@ class CustomStaticDropDown extends StatelessWidget {
               items:
                   listItems.map<DropdownMenuItem<dynamic>>((dynamic item) {
                     return DropdownMenuItem<dynamic>(
+                      enabled: enable,
                       value: item,
                       child: Text(
                         "$item",
@@ -114,6 +115,7 @@ class CustomDropDown extends StatelessWidget {
   final dynamic hintText;
   final Color? dropDownBgColor;
   final Function(dynamic value) notifyParent;
+  final bool enable;
   const CustomDropDown({
     super.key,
     required this.listItems,
@@ -121,6 +123,7 @@ class CustomDropDown extends StatelessWidget {
     required this.notifyParent,
     this.selectedDropDownItem,
     this.dropDownBgColor,
+    this.enable = true,
   });
 
   @override
@@ -188,6 +191,7 @@ class CustomDropDown extends StatelessWidget {
               items:
                   listItems.map<DropdownMenuItem<dynamic>>((dynamic item) {
                     return DropdownMenuItem<dynamic>(
+                      enabled: enable,
                       value: item.id,
                       child: Text(
                         "${item.name}",

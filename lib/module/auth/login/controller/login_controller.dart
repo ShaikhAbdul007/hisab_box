@@ -3,8 +3,6 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/auth/login/repo/login_repo.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../helper/app_message.dart';
 import '../../../../helper/helper.dart';
 import '../../../../routes/route_name.dart';
@@ -14,7 +12,6 @@ class LoginController extends GetxController with CacheManager {
   LoginRepo loginRepo = LoginRepo();
   final email = TextEditingController();
   final password = TextEditingController();
-
   RxBool loginLoading = false.obs;
   RxBool verifyLoading = false.obs;
   RxBool obscureTextValue = true.obs;
@@ -41,14 +38,14 @@ class LoginController extends GetxController with CacheManager {
         );
         return true;
       } else if (response.success == failed) {
-      showSnackBar(error: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
         return false;
       } else {
-      showSnackBar(error: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
         return false;
       }
     } catch (e) {
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
       return false;
     } finally {
       loginLoading.value = false;
@@ -65,22 +62,21 @@ class LoginController extends GetxController with CacheManager {
         AppLogger.info('Login successful, token: ${response.data?.token}');
         saveToken(response.data?.token ?? '');
         saveUserLoggedIn(true);
-        showSnackBar(error: response.msg ?? loginSuccessFul, isError: false);
         Future.delayed(const Duration(seconds: 1), () {
           AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
         });
         showSnackBar(error: response.msg!, isError: false);
         return true;
       } else if (response.success == failed) {
-      showSnackBar(error: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
         return false;
       } else {
-      showSnackBar(error: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
         return false;
       }
     } catch (e) {
       // ✅ CENTRALIZED ERROR HANDLING
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
       return false;
     } finally {
       verifyLoading.value = false;

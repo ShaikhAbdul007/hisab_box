@@ -8,15 +8,16 @@ class CategoryModel {
   CategoryModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['msg'];
-    categorymodeldata = json['data'] != null ? CategoryModelData.fromJson(json['data']) : null;
+    categorymodeldata =
+        json['data'] != null ? CategoryModelData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
     data['msg'] = msg;
-    if (this.categorymodeldata != null) {
-      data['data'] = this.categorymodeldata!.toJson();
+    if (categorymodeldata != null) {
+      data['data'] = categorymodeldata!.toJson();
     }
     return data;
   }
@@ -35,9 +36,10 @@ class CategoryModelData {
         data!.add(CategoryModelListData.fromJson(v));
       });
     }
-    pagination = json['pagination'] != null
-        ? Pagination.fromJson(json['pagination'])
-        : null;
+    pagination =
+        json['pagination'] != null
+            ? Pagination.fromJson(json['pagination'])
+            : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -59,7 +61,13 @@ class CategoryModelListData {
   String? createdAt;
   dynamic time;
 
-  CategoryModelListData({this.id, this.userId, this.name, this.createdAt, this.time});
+  CategoryModelListData({
+    this.id,
+    this.userId,
+    this.name,
+    this.createdAt,
+    this.time,
+  });
 
   CategoryModelListData.fromJson(Map<String, dynamic> json) {
     id = json['id'];

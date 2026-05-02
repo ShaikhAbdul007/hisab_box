@@ -3,14 +3,13 @@ import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
 import '../../../helper/helper.dart';
 import '../../category/model/category_model.dart';
-import '../../inventory/model/product_model.dart';
 
 class ProductController extends GetxController with CacheManager {
   final inventoryScanKey = GlobalKey<FormState>();
@@ -44,12 +43,15 @@ class ProductController extends GetxController with CacheManager {
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isLooseProductSave = false.obs;
   RxBool isSaveLoading = false.obs;
-  RxString barcodeValue = ''.obs;
+  RxString scannedBarcodeValue = ''.obs;
   RxBool loosedProduct = false.obs;
   RxBool categoryListLoading = false.obs;
   RxBool animalCategoryListLoading = false.obs;
   RxString dayDate = ''.obs;
+  RxString shopType = ''.obs;
   bool isLoose = false;
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
   var data = Get.arguments;
 
   @override
@@ -63,6 +65,8 @@ class ProductController extends GetxController with CacheManager {
   }
 
   void setLoosedProduct() {
+    var user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
     loosedProduct.value = data['flag'];
     if (loosedProduct.value) {
       loooseProductName.text = data['productName'];
@@ -71,7 +75,7 @@ class ProductController extends GetxController with CacheManager {
 
   void setBarcode() {
     barcode.text = data['barcode'] ?? '';
-    barcodeValue.value = barcode.text;
+    scannedBarcodeValue.value = barcode.text;
   }
 
   void calculatePurchasePrice() {

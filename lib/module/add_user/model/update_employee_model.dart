@@ -8,7 +8,7 @@ class UpdateEmpolyeeModel {
   UpdateEmpolyeeModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['msg'];
-    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -30,9 +30,10 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     employeeId = json['employeeId'];
-    permissions = json['permissions'] != null
-        ? new Permissions.fromJson(json['permissions'])
-        : null;
+    permissions =
+        json['permissions'] != null
+            ? Permissions.fromJson(json['permissions'])
+            : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -51,11 +52,12 @@ class Permissions {
   bool? pAddProduct;
   bool? pSeeReport;
 
-  Permissions(
-      {this.pCustomerList,
-      this.pSeeTodaySale,
-      this.pAddProduct,
-      this.pSeeReport});
+  Permissions({
+    this.pCustomerList,
+    this.pSeeTodaySale,
+    this.pAddProduct,
+    this.pSeeReport,
+  });
 
   Permissions.fromJson(Map<String, dynamic> json) {
     pCustomerList = json['p_customer_list'];

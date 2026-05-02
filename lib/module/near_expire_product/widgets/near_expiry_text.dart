@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
-import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/near_expire_product/model/near_expiry_model.dart';
-import '../../inventory/model/product_model.dart';
 
 class NearExpiryText extends StatelessWidget {
   final NeaExpiryItemData inventoryModel;

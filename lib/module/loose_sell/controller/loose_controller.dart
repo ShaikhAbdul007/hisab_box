@@ -3,8 +3,6 @@ import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/module/gobal_module/gobal_controller.dart'; // 🔥 GlobalStore Reference
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/repo/loose_repo.dart';
 import 'package:inventory/helper/helper.dart';

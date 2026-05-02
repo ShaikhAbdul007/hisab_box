@@ -125,7 +125,9 @@ class SettingView extends GetView<SettingController> {
                       icon: CupertinoIcons.person_solid,
                     ),
                     onTap: () {
-                      AppRoutes.navigateRoutes(routeName: AppRouteName.userRoleView);
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.userRoleView,
+                      );
                     },
                   ),
                   CommonDivider(indent: 20, endIndent: 20),
@@ -162,8 +164,14 @@ class SettingView extends GetView<SettingController> {
                   ),
                   CommonDivider(indent: 20, endIndent: 20),
                   SettingItem(
-                    label: 'Animal Category',
-                    subtitle: 'Manage your animal categories',
+                    label:
+                        controller.shoptype.value == 'Clothing Shop'
+                            ? 'Size Category '
+                            : 'Animal Category',
+                    subtitle:
+                        controller.shoptype.value == 'Clothing Shop'
+                            ? 'Manage your size categories '
+                            : 'Manage your animal categories',
                     leading: SettingIconContainer(
                       icon: CupertinoIcons.circle_grid_3x3,
                     ),
@@ -201,7 +209,7 @@ class SettingView extends GetView<SettingController> {
                     leading: SettingIconContainer(icon: Icons.support_agent),
                     onTap: () {
                       commonBottomSheet(
-                        label: ' Customer Support',
+                        label: 'Customer Support',
                         onPressed: () {
                           Get.back();
                         },

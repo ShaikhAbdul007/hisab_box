@@ -1,5 +1,4 @@
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
-import 'package:inventory/module/product_details/model/add_product_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';
 

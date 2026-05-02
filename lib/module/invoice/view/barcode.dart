@@ -7,7 +7,6 @@ import '../../../common_widget/common_appbar.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../helper/helper.dart';
-import '../../../supabase_db/supabase_error_handler.dart';
 import '../controller/bardcode_controller.dart';
 import '../widget/bluetooth_info_widget.dart';
 
@@ -60,7 +59,7 @@ class BarcodeView extends GetView<BardcodeController> {
                 }
               } catch (e) {
                 AppLogger.error('Barcode print failed', e, 'BarcodeView');
-              showSnackBar(error: e.toString());
+                showSnackBar(error: e.toString());
               } finally {
                 controller.isPrintingLoading.value = false;
               }
@@ -90,7 +89,7 @@ class BarcodeView extends GetView<BardcodeController> {
       if (device != null && device.isNotEmpty) {
         var res = await rController.print(address: device, delayTime: 0);
         if (res == true) {
-        showSnackBar(error: 'Barcode printed successfully.');
+          showSnackBar(error: 'Barcode printed successfully.');
           Get.back();
         } else {
           showMessage(
@@ -111,7 +110,7 @@ class BarcodeView extends GetView<BardcodeController> {
       }
     } catch (e) {
       AppLogger.error('Barcode printReceipt failed', e, 'BarcodeView');
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     } finally {
       controller.isPrintingLoading.value = false;
     }

@@ -8,10 +8,7 @@ class AddUserRole {
   AddUserRole.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['msg'];
-    data =
-        json['data'] != null
-            ? new AddUserRoleData.fromJson(json['data'])
-            : null;
+    data = json['data'] != null ? AddUserRoleData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -55,10 +52,10 @@ class AddUserRoleData {
     data['id'] = id;
     data['name'] = name;
     data['level'] = level;
-    data['created_at'] = this.createdAt;
-    data['updated_at'] = this.updatedAt;
-    data['updatedAt'] = this.updatedAt;
-    data['createdAt'] = this.createdAt;
+    data['created_at'] = createdAt;
+    data['updated_at'] = updatedAt;
+    data['updatedAt'] = updatedAt;
+    data['createdAt'] = createdAt;
     return data;
   }
 }

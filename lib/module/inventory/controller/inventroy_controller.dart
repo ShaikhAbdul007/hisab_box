@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/inventory/repo/inventory_repo.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
