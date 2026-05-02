@@ -115,7 +115,7 @@ class InventoryView extends GetView<InventroyController> {
     }
 
     final (bool exists, BarcodeExistingData? product) = await controller
-        .existingProductInfo(scannedValue);
+        .existingProductInfo(scannedValue, 'packet');
 
     if (!exists || product == null) {
       _showProductNotFoundDialog();
@@ -134,17 +134,17 @@ class InventoryView extends GetView<InventroyController> {
         label: 'Is this product sold in Packet or Loose?',
         packetOnTap: () {
           Get.back();
-          _handleSell(scannedValue, 'Packet', inventoryScanKey);
+          _handleSell(scannedValue, 'packet', inventoryScanKey);
         },
         looseDoneOnTap: () {
           Get.back();
-          _handleSell(scannedValue, 'Loose', inventoryScanKey);
+          _handleSell(scannedValue, 'loose', inventoryScanKey);
         },
       );
       return;
     }
 
-    _handleSell(scannedValue, 'Packet', inventoryScanKey);
+    _handleSell(scannedValue, 'packet', inventoryScanKey);
   }
 
   // ===============================
@@ -163,7 +163,10 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
-    final (bool exists, _) = await controller.existingProductInfo(scannedValue);
+    final (bool exists, _) = await controller.existingProductInfo(
+      scannedValue,
+      'packet',
+    );
 
     if (exists) {
       exisitngProductDialog(
@@ -203,7 +206,7 @@ class InventoryView extends GetView<InventroyController> {
     }
 
     final (bool exists, BarcodeExistingData? product) = await controller
-        .existingProductInfo(scannedValue);
+        .existingProductInfo(scannedValue, 'loose');
 
     if (!exists || product == null) {
       _showProductNotFoundDialog();

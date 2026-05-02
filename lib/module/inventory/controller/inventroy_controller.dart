@@ -53,9 +53,12 @@ class InventroyController extends GetxController with CacheManager {
   }
 
   Future<(bool existProductOrNot, BarcodeExistingData barcodeExistingData)>
-  existingProductInfo(String barcode) async {
+  existingProductInfo(String barcode, String stocktype) async {
     isExistingProductInfo.value = true;
-    var res = await fetchProductByBarcode(scannedBarcode: barcode);
+    var res = await fetchProductByBarcode(
+      scannedBarcode: barcode,
+      stocktype: stocktype,
+    );
     try {
       if (res.success == true &&
           res.msg!.contains('Product fetched successfully')) {
@@ -84,7 +87,10 @@ class InventroyController extends GetxController with CacheManager {
     required VoidCallback qtyIsNotEnough,
   }) async {
     try {
-      final res = await fetchProductByBarcode(scannedBarcode: barcode);
+      final res = await fetchProductByBarcode(
+        scannedBarcode: barcode,
+        stocktype: sellType,
+      );
 
       if (res.success != success || res.data == null) {
         showSnackBar(error: "❌ Product Not Found");
@@ -147,9 +153,11 @@ class InventroyController extends GetxController with CacheManager {
 
   Future<BarcodeExistingModel> fetchProductByBarcode({
     required String scannedBarcode,
+    required String stocktype,
   }) async {
     var res = await inventoryScanRepo.fetchProductByBarcode(
       barcode: scannedBarcode,
+      stocktype: stocktype,
     );
     return res;
   }

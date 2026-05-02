@@ -65,15 +65,14 @@ class GenerateBarcodeComponent extends StatelessWidget {
                                 listItems: controller.categoryList,
                                 hintText: 'Add Category First',
                                 notifyParent: (val) {
-                                  controller.category.text = val.id;
+                                  //controller.category.text = val.id;
                                 },
                               )
                               : CustomDropDown(
-                                // errorText: emptyCategory,
                                 listItems: controller.categoryList,
                                 hintText: 'Category',
                                 notifyParent: (val) {
-                                  controller.category.text = val.id;
+                                  controller.category.text = val ?? '';
                                 },
                               ),
                     ),
@@ -93,7 +92,8 @@ class GenerateBarcodeComponent extends StatelessWidget {
                                 listItems: controller.animalTypeList,
                                 hintText: 'Add Animal Category',
                                 notifyParent: (val) {
-                                  controller.category.text = val.id;
+                                  //controller.animalType.text = val.id;
+                                  print('animalTypeList $val');
                                 },
                               )
                               : CustomDropDown(
@@ -101,7 +101,8 @@ class GenerateBarcodeComponent extends StatelessWidget {
                                 hintText: 'Animal Category',
                                 listItems: controller.animalTypeList,
                                 notifyParent: (val) {
-                                  controller.animalType.text = val.id;
+                                  controller.animalType.text = val ?? '';
+                                  print('animalTypeList $val');
                                 },
                               ),
                     ),
@@ -136,7 +137,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
                       // isModelValueEnabled: false,
                       // errorText: 'Please select',
                       // enabled: controller.dropDownReadOnly.value,
-                      selectedDropDownItem: controller.isLoose,
+                      // selectedDropDownItem: controller.isLoose,
                       listItems: [true, false],
                       hintText: 'Select isLoose',
                       notifyParent: (val) {

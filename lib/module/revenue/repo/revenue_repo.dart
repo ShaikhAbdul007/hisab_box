@@ -1,3 +1,4 @@
+import 'package:inventory/module/sell/model/sell_details_model.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';
@@ -16,16 +17,14 @@ class RevenueRepo {
     }
   }
 
-
- Future<SellModel> fetchSellById({required String saleId}) async {
+  Future<SellDetailsModel> fetchSellById({required String saleId}) async {
     try {
       final response = await networking.getData(
-        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.sell}/saleId',
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.sell}/$saleId',
       );
-      return SellModel.fromJson(response);
+      return SellDetailsModel.fromJson(response);
     } catch (e) {
-      return SellModel(msg: e.toString(), success: false);
+      return SellDetailsModel(msg: e.toString(), success: false);
     }
   }
-
 }

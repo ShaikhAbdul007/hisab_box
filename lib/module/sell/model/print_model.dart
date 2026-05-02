@@ -228,3 +228,166 @@ class PaymentModel {
     };
   }
 }
+
+class InvoiceModel {
+  bool? success;
+  String? msg;
+  Data? data;
+
+  InvoiceModel({this.success, this.msg, this.data});
+
+  InvoiceModel.fromJson(Map<String, dynamic> json) {
+    success = json['success'];
+    msg = json['msg'];
+    data = json['data'] != null ? new Data.fromJson(json['data']) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['success'] = success;
+    data['msg'] = msg;
+    if (this.data != null) {
+      data['data'] = this.data!.toJson();
+    }
+    return data;
+  }
+}
+
+class Data {
+  String? id;
+  String? invoiceNo;
+  String? finalAmount;
+  String? totalAmount;
+  int? roundOff;
+  String? createdAt;
+  dynamic customerName;
+  dynamic customerMobile;
+  String? status;
+  List<Items>? items;
+  List<Payments>? payments;
+
+  Data({
+    this.id,
+    this.invoiceNo,
+    this.finalAmount,
+    this.totalAmount,
+    this.roundOff,
+    this.createdAt,
+    this.customerName,
+    this.customerMobile,
+    this.status,
+    this.items,
+    this.payments,
+  });
+
+  Data.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    invoiceNo = json['invoice_no'];
+    finalAmount = json['final_amount'];
+    totalAmount = json['total_amount'];
+    roundOff = json['round_off'];
+    createdAt = json['created_at'];
+    customerName = json['customer_name'];
+    customerMobile = json['customer_mobile'];
+    status = json['status'];
+    if (json['items'] != null) {
+      items = <Items>[];
+      json['items'].forEach((v) {
+        items!.add(new Items.fromJson(v));
+      });
+    }
+    if (json['payments'] != null) {
+      payments = <Payments>[];
+      json['payments'].forEach((v) {
+        payments!.add(new Payments.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['invoice_no'] = invoiceNo;
+    data['final_amount'] = finalAmount;
+    data['total_amount'] = totalAmount;
+    data['round_off'] = roundOff;
+    data['created_at'] = createdAt;
+    data['customer_name'] = customerName;
+    data['customer_mobile'] = customerMobile;
+    data['status'] = status;
+    if (items != null) {
+      data['items'] = items!.map((v) => v.toJson()).toList();
+    }
+    if (payments != null) {
+      data['payments'] = payments!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class Items {
+  String? id;
+  String? productName;
+  int? quantity;
+  String? originalPrice;
+  String? totalPrice;
+  String? stockType;
+  String? location;
+
+  Items({
+    this.id,
+    this.productName,
+    this.quantity,
+    this.originalPrice,
+    this.totalPrice,
+    this.stockType,
+    this.location,
+  });
+
+  Items.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    productName = json['product_name'];
+    quantity = json['quantity'];
+    originalPrice = json['original_price'];
+    totalPrice = json['total_price'];
+    stockType = json['stock_type'];
+    location = json['location'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['product_name'] = productName;
+    data['quantity'] = quantity;
+    data['original_price'] = originalPrice;
+    data['total_price'] = totalPrice;
+    data['stock_type'] = stockType;
+    data['location'] = location;
+    return data;
+  }
+}
+
+class Payments {
+  String? id;
+  String? paymentMode;
+  String? amount;
+  Null? referenceNo;
+
+  Payments({this.id, this.paymentMode, this.amount, this.referenceNo});
+
+  Payments.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    paymentMode = json['payment_mode'];
+    amount = json['amount'];
+    referenceNo = json['reference_no'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['payment_mode'] = paymentMode;
+    data['amount'] = amount;
+    data['reference_no'] = referenceNo;
+    return data;
+  }
+}

@@ -4,19 +4,16 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/helper/logger.dart';
-import 'package:inventory/helper/set_format_date.dart';
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/module/discount/model/discount_model.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_category/model/loose_category_model.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
-import 'package:inventory/network/api_endpoint.dart';
-import 'package:inventory/network/networking.dart';
+import 'package:inventory/module/sell/repo/sell_repo.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 
 class SellListAfterScanController extends GetxController with CacheManager {
+  SellRepo sellRepo = SellRepo();
   // ── Cart & product state ──────────────────────────────────────────────────
   RxList<InventoryItem> productList = <InventoryItem>[].obs;
   List<InventoryItem> scannedProductDetails = [];
@@ -143,9 +140,59 @@ class SellListAfterScanController extends GetxController with CacheManager {
   // ── Sale confirmation ─────────────────────────────────────────────────────
 
   Future<void> saleConfirmed({required RxBool isLoading}) async {
-    final success = await confirmSale(sellItems: [], isLoading: isLoading);
+    isLoading.value = true;
 
-    if (success) {
+    // Build items list
+    final List<Map<String, dynamic>> items = [];
+    for (int i = 0; i < productList.length; i++) {
+      final item = productList[i];
+      final double qty = double.tryParse(item.quantity ?? '1') ?? 1;
+      final double originalPrice =
+          double.tryParse(item.sellingPrice ?? '0') ?? 0;
+      final int originalDiscount = item.discount ?? 0;
+      final double discountGivenPct =
+          double.tryParse(perProductDiscount[i].text) ?? 0;
+
+      // price after item-level discount (per-product discount given in dialog)
+      final double discountedPrice = double.parse(
+        (originalPrice - (originalPrice * discountGivenPct / 100))
+            .toStringAsFixed(2),
+      );
+
+      items.add({
+        'barcode': item.barcode ?? item.barcodes ?? '',
+        'qty': qty.toInt(),
+        'original_price': originalPrice,
+        'original_discount': originalDiscount,
+        'discounted_price': discountedPrice,
+        'discount_given': discountGivenPct,
+        'stock_type': item.stockType ?? '',
+        'location': item.location ?? '',
+      });
+    }
+
+    // Build payments list (only modes with amount > 0)
+    final List<Map<String, dynamic>> payments = [];
+    final Map<String, double> modes = {
+      'cash': double.tryParse(cashPaidController.text) ?? 0,
+      'upi': double.tryParse(upiPaidController.text) ?? 0,
+      'card': double.tryParse(cardPaidController.text) ?? 0,
+      'credit': double.tryParse(creditPaidController.text) ?? 0,
+      'round_off': double.tryParse(roundOffPaidController.text) ?? 0,
+    };
+    modes.forEach((mode, amount) {
+      if (amount > 0) {
+        payments.add({'mode': mode, 'amount': amount});
+      }
+    });
+
+    final body = {'items': items, 'payments': payments};
+
+    print('the sale body is $body');
+    final response = await sellRepo.postSellData(body: body);
+    isLoading.value = false;
+
+    if (response.success == true) {
       removeCartProductList();
       AppRoutes.navigateRoutes(
         routeName: AppRouteName.orderView,
@@ -156,117 +203,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
       removeCartProductList();
       showSnackBar(error: somethingWentMessage);
     }
-  }
-
-  Future<bool> confirmSale({
-    required List<SellItem> sellItems,
-    required RxBool isLoading,
-  }) async {
-    isLoading.value = true;
-
-    try {
-      final double cash = double.tryParse(cashPaidController.text) ?? 0;
-      final double upi = double.tryParse(upiPaidController.text) ?? 0;
-      final double card = double.tryParse(cardPaidController.text) ?? 0;
-      final double credit = double.tryParse(creditPaidController.text) ?? 0;
-      final double roundOff = double.tryParse(roundOffPaidController.text) ?? 0;
-
-      final double itemsTotalAmount = sellItems.fold(
-        0.0,
-        (sum, item) => sum + (item.finalPrice ?? 0),
-      );
-      final double finalPayable = double.parse(
-        (itemsTotalAmount - roundOff).toStringAsFixed(2),
-      );
-
-      // Build items list matching API contract
-      final List<Map<String, dynamic>> items =
-          sellItems.map((item) {
-            final double originalPrice = item.originalPrice ?? 0;
-            final double discountedPrice = item.finalPrice ?? 0;
-            return {
-              'barcode': item.barcode ?? '',
-              'qty': item.quantity ?? 1,
-              'original_price': originalPrice,
-              'original_discount': item.originalDiscount ?? 0,
-              'discounted_price': discountedPrice,
-              'discount_given': originalPrice - discountedPrice,
-              'stock_type':
-                  (item.isLoose == true || item.sellType == 'loose')
-                      ? 'loose'
-                      : 'packet',
-              'location': item.location ?? 'shop',
-            };
-          }).toList();
-
-      // Build payments list — only non-zero modes
-      final List<Map<String, dynamic>> payments = _buildPayments(
-        cash: cash,
-        upi: upi,
-        card: card,
-        credit: credit,
-        finalPayable: finalPayable,
-      );
-
-      final Map<String, dynamic> body = {'items': items, 'payments': payments};
-
-      AppLogger.info('🛒 Sell API body: $body');
-
-      final dynamic response = '';
-
-      // Patch local Hive cache so stock reflects immediately
-      for (final item in sellItems) {}
-
-      final saleData = {
-        'billNo': 0,
-        'soldAt': setFormateDate(),
-        'time': setFormateDate('hh:mm:ss a'),
-        'totalAmount': finalPayable,
-        'payment': buildPaymentMap(
-          totalAmount: itemsTotalAmount,
-          cashPaid: cash,
-          upiPaid: upi,
-          cardPaid: card,
-          creditPaid: credit,
-          roundOffPaid: roundOff,
-        ),
-        'items': sellItems.map((e) => e.toJson()).toList(),
-      };
-
-      printInvoice.value = PrintInvoiceModel.fromJson(saleData);
-
-      scannedProductDetails.clear();
-      clearPaymentInputs();
-      clearSellSessionData();
-      return true;
-    } catch (e) {
-      AppLogger.info('🚨 Sale Failed: $e');
-      showSnackBar(error: e.toString());
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // ── Payment helpers ───────────────────────────────────────────────────────
-
-  List<Map<String, dynamic>> _buildPayments({
-    required double cash,
-    required double upi,
-    required double card,
-    required double credit,
-    required double finalPayable,
-  }) {
-    final List<Map<String, dynamic>> payments = [];
-    if (cash > 0) payments.add({'mode': 'cash', 'amount': cash});
-    if (upi > 0) payments.add({'mode': 'upi', 'amount': upi});
-    if (card > 0) payments.add({'mode': 'card', 'amount': card});
-    if (credit > 0) payments.add({'mode': 'credit', 'amount': credit});
-    // Default to full cash if nothing entered
-    if (payments.isEmpty) {
-      payments.add({'mode': 'cash', 'amount': finalPayable});
-    }
-    return payments;
   }
 
   void openPaymentDialog(double amt) {
@@ -293,38 +229,6 @@ class SellListAfterScanController extends GetxController with CacheManager {
     final double entered = double.tryParse(value) ?? 0;
     isAmountValidCheck.value = entered <= paymentMethodTotalAmount.value;
     return isAmountValidCheck.value;
-  }
-
-  Map<String, dynamic> buildPaymentMap({
-    required num totalAmount,
-    required num cashPaid,
-    required num upiPaid,
-    required num cardPaid,
-    required num creditPaid,
-    required num roundOffPaid,
-  }) {
-    final int count =
-        [cashPaid, upiPaid, cardPaid, creditPaid].where((m) => m > 0).length;
-    final String type =
-        count > 1
-            ? 'Partial'
-            : (cashPaid > 0
-                ? 'Cash'
-                : upiPaid > 0
-                ? 'UPI'
-                : cardPaid > 0
-                ? 'Card'
-                : 'Credit');
-    return {
-      'type': type,
-      'totalAmount': totalAmount,
-      'cash': cashPaid,
-      'upi': upiPaid,
-      'card': cardPaid,
-      'credit': creditPaid,
-      'roundOffAmount': roundOffPaid,
-      'isRoundOff': roundOffPaid != 0,
-    };
   }
 
   // ── Cart operations ───────────────────────────────────────────────────────
@@ -407,6 +311,4 @@ class SellListAfterScanController extends GetxController with CacheManager {
     discountPrice.value = 0.0;
     discountDifferenceAmount = 0.0;
   }
-
-  // ── Private helpers ───────────────────────────────────────────────────────
 }

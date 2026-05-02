@@ -2,12 +2,9 @@ import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
-import 'package:inventory/local_db/local_db_service.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/revenue/repo/revenue_repo.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
-import 'package:inventory/module/sell/repo/sell_repo.dart';
-import '../model/revenue_model.dart';
 
 class RevenueController extends GetxController {
   RevenueRepo revenueRepo = RevenueRepo();

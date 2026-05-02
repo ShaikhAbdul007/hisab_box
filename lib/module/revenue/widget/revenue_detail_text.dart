@@ -3,13 +3,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
-import 'package:inventory/module/sell/model/sell_model.dart';
-
+import 'package:inventory/module/sell/model/sell_details_model.dart';
 import '../../../common_widget/common_padding.dart';
 
 class RevenueDetailList extends StatelessWidget {
-  final SellItemData revenueModel;
-  const RevenueDetailList({super.key, required this.revenueModel});
+  final SellDetailsItems revenueModel;
+  final String date;
+  const RevenueDetailList({
+    super.key,
+    required this.revenueModel,
+    required this.date,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,56 +30,26 @@ class RevenueDetailList extends StatelessWidget {
             flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  revenueModel.name ?? '',
+                  revenueModel.productName ?? '',
                   style: CustomTextStyle.customPoppin(fontSize: 17),
                 ),
                 setHeight(height: 2),
-                Text(
-                  revenueModel.barcode ?? '',
-                  style: CustomTextStyle.customOpenSans(
-                    color: AppColors.greyColor,
-                  ),
-                ),
-                if (revenueModel.flavor?.isNotEmpty ?? false) ...{
-                  Text(
-                    revenueModel.flavor ?? '',
-                    style: CustomTextStyle.customOpenSans(
-                      color: AppColors.greyColor,
-                    ),
-                  ),
-                },
                 Row(
                   children: [
-                    RichText(
-                      text: TextSpan(
-                        text: '${revenueModel.animalType} ',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: '${revenueModel.weight} ',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          TextSpan(
-                            text: '${revenueModel.category}  ',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                          TextSpan(
-                            text: '\u{20B9} ${revenueModel.finalPrice}',
-                            style: CustomTextStyle.customPoppin(
-                              color: AppColors.blackColor,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      date,
+                      style: CustomTextStyle.customOpenSans(
+                        color: AppColors.greyColor,
+                      ),
+                    ),
+                    setWidth(width: 5),
+                    Text(
+                      '\u{20B9}${revenueModel.rate.toString()}',
+                      style: CustomTextStyle.customOpenSans(
+                        color: AppColors.greyColor,
                       ),
                     ),
                   ],
@@ -93,7 +67,7 @@ class RevenueDetailList extends StatelessWidget {
                 ),
                 setHeight(height: 5),
                 Text(
-                  '\u{20B9}${revenueModel.finalPrice}',
+                  '\u{20B9}${revenueModel.total}',
                   style: CustomTextStyle.customPoppin(
                     color: AppColors.greenColor,
                     fontSize: 18,
@@ -101,7 +75,7 @@ class RevenueDetailList extends StatelessWidget {
                 ),
                 RichText(
                   text: TextSpan(
-                    text: revenueModel.quantity.toString(),
+                    text: revenueModel.qty.toString(),
                     style: CustomTextStyle.customOpenSans(
                       color: AppColors.blackColor,
                       fontWeight: FontWeight.w600,

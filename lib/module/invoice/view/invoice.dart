@@ -5,7 +5,6 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/module/invoice/controller/invoice_controller.dart';
-import 'package:inventory/supabase_db/supabase_error_handler.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
@@ -55,7 +54,7 @@ class InvoicePrint extends GetView<InvoiceController> {
                           paymentMethod: 'paymentMethod',
                         );
                       } else {
-                      showSnackBar(error: 'Printer is not initialized yet');
+                        showSnackBar(error: 'Printer is not initialized yet');
                       }
                     } else {
                       commonBottomSheet(
@@ -68,7 +67,7 @@ class InvoicePrint extends GetView<InvoiceController> {
                     }
                   } catch (e) {
                     AppLogger.error('Print button flow failed', e, 'Invoice');
-                  showSnackBar(error: e.toString());
+                    showSnackBar(error: e.toString());
                   }
                 },
               ),
@@ -80,7 +79,6 @@ class InvoicePrint extends GetView<InvoiceController> {
         printInvoiceModel: controller.data,
         paymentMethod: controller.data.payment.type ?? '',
         onInitialized: (p0) => controller.setReceiptController(p0),
-        scannedProductDetails: controller.data.items,
       ),
     );
   }
@@ -108,7 +106,7 @@ class InvoicePrint extends GetView<InvoiceController> {
       await Future.delayed(const Duration(milliseconds: 500));
       final res = await rController.print(address: device, delayTime: 0);
       if (res == true) {
-      showSnackBar(error: 'Invoice printed successfully.');
+        showSnackBar(error: 'Invoice printed successfully.');
         AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
       } else {
         showMessage(
@@ -117,7 +115,7 @@ class InvoicePrint extends GetView<InvoiceController> {
       }
     } catch (e) {
       AppLogger.error('Receipt print failed', e, 'Invoice');
-    showSnackBar(error: e.toString());
+      showSnackBar(error: e.toString());
     } finally {
       controller.isPrintingLoading.value = false;
     }

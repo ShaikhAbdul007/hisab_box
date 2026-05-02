@@ -194,7 +194,6 @@ class InventroyList extends GetView<InventoryListController> {
                                       controller.shopProductList[index];
                                   return Obx(
                                     () =>
-                      
                                         (inventoryList.name ?? '')
                                                     .toLowerCase()
                                                     .contains(
@@ -229,15 +228,18 @@ class InventroyList extends GetView<InventoryListController> {
                                                         "List id: ${inventoryList.id}",
                                                   );
 
-                                                  await AppRoutes.futureNavigationToRoute(
-                                                    routeName:
-                                                        AppRouteName
-                                                            .productDetailView,
-                                                    data: {
-                                                      'product': inventoryList,
-                                                      'isProductLoosed': false,
-                                                    },
-                                                  );
+                                                  var res =
+                                                      await AppRoutes.futureNavigationToRoute(
+                                                        routeName:
+                                                            AppRouteName
+                                                                .productDetailView,
+                                                        data: {
+                                                          'product':
+                                                              inventoryList,
+                                                          'isProductLoosed':
+                                                              false,
+                                                        },
+                                                      );
                                                 },
                                                 isInventoryScanSelected:
                                                     controller

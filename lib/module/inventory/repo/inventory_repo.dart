@@ -7,11 +7,12 @@ class InventoryScanRepo {
 
   Future<BarcodeExistingModel> fetchProductByBarcode({
     required String barcode,
+    required String stocktype,
   }) async {
     try {
       final response = await networking.getData(
         url:
-            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProductByBarcode}/$barcode',
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProductByBarcode}/$barcode?stocktype=$stocktype',
       );
       return BarcodeExistingModel.fromJson(response);
     } catch (e) {

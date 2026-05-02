@@ -9,20 +9,21 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/capitalization_strings.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/module/invoice/model/invoice_model.dart';
 import 'package:inventory/module/sell/model/print_model.dart';
 import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
 
 import '../../../common_widget/common_divider.dart';
 
 class InvoicePrinterView extends StatelessWidget with CacheManager {
-  final List<SellItem> scannedProductDetails;
-  final PrintInvoiceModel printInvoiceModel;
+  final InvoiceData printInvoiceModel;
   final String paymentMethod;
   final void Function(ReceiptController) onInitialized;
   InvoicePrinterView({
     super.key,
-    required this.scannedProductDetails,
+
     required this.onInitialized,
     required this.paymentMethod,
     required this.printInvoiceModel,
@@ -143,7 +144,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                     Expanded(
                       child: Text(
-                        'HB-${printInvoiceModel.billNo}',
+                        printInvoiceModel.invoiceNo ?? '',
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -163,7 +164,10 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                     Expanded(
                       child: Text(
-                        printInvoiceModel.soldAt ?? '',
+                        formatDateTime(
+                          printInvoiceModel.createdAt ?? '',
+                          showDate: true,
+                        ),
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -183,7 +187,11 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     ),
                     Expanded(
                       child: Text(
-                        printInvoiceModel.time ?? '',
+                        formatDateTime(
+                          printInvoiceModel.createdAt ?? '',
+                          showDate: false,
+                          showTime: true,
+                        ),
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -215,12 +223,12 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 setHeight(height: 10),
                 const CommonDivider(color: AppColors.blackColor),
                 setHeight(height: 10),
-                ...scannedProductDetails.map((item) {
-                  discountPercentage = item.discount ?? 0;
-                  total += (item.finalPrice ?? 0);
-                  savedAmount +=
-                      ((item.originalPrice ?? 0) * (item.quantity ?? 1)) -
-                      (item.finalPrice ?? 0);
+                ...printInvoiceModel.items!.map((item) {
+                  // discountPercentage = item.discount ?? 0;
+                  // total += (item.finalPrice ?? 0);
+                  // savedAmount +=
+                  //     ((item.originalPrice ?? 0) * (item.quantity ?? 1)) -
+                  //     (item.finalPrice ?? 0);
 
                   return CustomPadding(
                     paddingOption: OnlyPadding(bottom: 10.0),
@@ -232,22 +240,22 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                item.name ?? "No Name",
+                                item.productName ?? "No Name",
                                 style: CustomTextStyle.customMontserrat(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 24,
                                 ),
                               ),
-                              if (item.flavours!.isNotEmpty) ...{
-                                setHeight(height: 5),
-                                Text(
-                                  item.flavours ?? "",
-                                  style: CustomTextStyle.customMontserrat(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              },
+                              // if (item.flavours!.isNotEmpty) ...{
+                              //   setHeight(height: 5),
+                              //   Text(
+                              //     item.flavours ?? "",
+                              //     style: CustomTextStyle.customMontserrat(
+                              //       fontWeight: FontWeight.w500,
+                              //       fontSize: 18,
+                              //     ),
+                              //   ),
+                              // },
                               setHeight(height: 5),
                               RichText(
                                 text: TextSpan(
@@ -258,26 +266,27 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                     fontSize: 18,
                                   ),
                                   children:
-                                      item.discount! > 0
-                                          ? [
-                                            TextSpan(
-                                              text: " @ ",
-                                              style:
-                                                  CustomTextStyle.customMontserrat(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15,
-                                                  ),
-                                            ),
-                                            TextSpan(
-                                              text: "${item.discount} %",
-                                              style:
-                                                  CustomTextStyle.customMontserrat(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 18,
-                                                  ),
-                                            ),
-                                          ]
-                                          : [],
+                                      // item.discount! > 0
+                                      //     ? [
+                                      //       TextSpan(
+                                      //         text: " @ ",
+                                      //         style:
+                                      //             CustomTextStyle.customMontserrat(
+                                      //               fontWeight: FontWeight.w500,
+                                      //               fontSize: 15,
+                                      //             ),
+                                      //       ),
+                                      //       TextSpan(
+                                      //         text: "${item.discount} %",
+                                      //         style:
+                                      //             CustomTextStyle.customMontserrat(
+                                      //               fontWeight: FontWeight.w500,
+                                      //               fontSize: 18,
+                                      //             ),
+                                      //       ),
+                                      //     ]
+                                      //     :
+                                      [],
                                 ),
                               ),
                             ],
@@ -286,7 +295,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                         Expanded(
                           flex: 3,
                           child: Text(
-                            "₹ ${item.finalPrice}",
+                            "₹ ${item.totalPrice}",
                             textAlign: TextAlign.right,
                             style: CustomTextStyle.customMontserrat(
                               fontWeight: FontWeight.bold,
