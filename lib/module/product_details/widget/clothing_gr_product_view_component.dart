@@ -82,12 +82,13 @@ class ClothingGrProductViewComponent extends StatelessWidget {
               label: saveButton,
               onTap: () async {
                 var body = {
-                  "barcode": controller.scannedBarcodeValue.value,
-                  "looseQtyToAdd": num.tryParse(controller.looseQuantity.text),
-                  "sellingPrice": num.tryParse(
-                    controller.looseSellingPrice.text,
+                  "product_barcode": controller.scannedBarcodeValue.value,
+                  "return_quantity": num.tryParse(
+                    controller.looseQuantity.text,
                   ),
+                  "condition": controller.looseSellingPrice.text,
                   "reason": "Manual conversion",
+                  "notes": "Added from GR product",
                 };
                 if (formkeys.currentState!.validate()) {
                   unfocus();

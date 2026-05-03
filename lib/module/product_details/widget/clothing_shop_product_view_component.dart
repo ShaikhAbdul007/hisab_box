@@ -127,7 +127,7 @@ class ClothingShopProductViewComponent extends StatelessWidget {
                           "size_id":
                               controller.selectedAnimalTypeId.value ?? '',
                           "color_id": controller.selectedColorId.value ?? '',
-                          "brand_type": controller.brandType.value,
+                          "brand": controller.brandType.value,
                           "level": controller.level.text,
                           "rack": controller.rack.text,
                           "discount": controller.discount.text,
