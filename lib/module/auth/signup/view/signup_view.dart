@@ -19,14 +19,31 @@ import '../widget/shop_details_widget.dart';
 class SignupView extends GetView<SignupController> {
   const SignupView({super.key});
 
+  Future<bool> _handleBack() async {
+    if (controller.isShopDetailFilled.value) {
+      controller.isShopDetailFilled.value = false;
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.whiteColor,
-      body: CustomPadding(
-        paddingOption: SymmetricPadding(horizontal: 20, vertical: 40),
-        child: Obx(
-          () => ListView(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _handleBack();
+        if (shouldPop) {
+          Get.back();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.whiteColor,
+        body: CustomPadding(
+          paddingOption: SymmetricPadding(horizontal: 20, vertical: 40),
+          child: Obx(
+            () => ListView(
             children: [
               Row(
                 children: [
@@ -36,8 +53,11 @@ class SignupView extends GetView<SignupController> {
                     radius: 60,
                     isIconReq: true,
                     label: '',
-                    onTap: () {
-                      Get.back();
+                    onTap: () async {
+                      final shouldPop = await _handleBack();
+                      if (shouldPop) {
+                        Get.back();
+                      }
                     },
                   ),
                   setWidth(width: 15),
@@ -149,6 +169,7 @@ class SignupView extends GetView<SignupController> {
               ),
               setHeight(height: 20),
             ],
+            ),
           ),
         ),
       ),
