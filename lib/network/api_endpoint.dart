@@ -30,6 +30,11 @@ class ApiEndPoint {
   static const String createAnimalCategory = "shop/animal-categories";
   static const String deleteAnimalCategory = "shop/animal-categories"; // + id
 
+  // ---------------- COLOR CATEGORY ----------------
+  static const String getColorCategories = "colors";
+  static const String createColorCategory = "colors";
+  static const String deleteColorCategory = "colors"; // + id
+
   // ---------------- PRODUCTS ----------------
   static const String getProducts = "shop/products";
   static const String addProduct = "shop/products/add";

@@ -4,6 +4,7 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/inventorylist/repo/inventory_repo.dart';
 
@@ -19,6 +20,9 @@ class InventoryListController extends GetxController
   RxBool isInventoryScanSelected = false.obs;
   RxBool isLoose = false.obs;
   RxBool isFlavorAndWeightNotRequired = false.obs;
+  RxString shopType = ''.obs;
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   // ── Pagination state ──────────────────────────────────────────────────────
   int _shopPage = 1;
@@ -49,6 +53,8 @@ class InventoryListController extends GetxController
     isInventoryScanSelectedValue();
     tabController = TabController(length: 2, vsync: this);
     _attachScrollListeners();
+    final user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
     super.onInit();
   }
 

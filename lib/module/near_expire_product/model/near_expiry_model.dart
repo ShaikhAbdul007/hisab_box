@@ -76,6 +76,9 @@ class NeaExpiryItemData {
   String? createdAt;
   bool? isloosed;
   bool? isflavorRequired;
+  String? color;
+  String? brand;
+  String? brandType;
 
   NeaExpiryItemData({
     this.stockId,
@@ -118,6 +121,10 @@ class NeaExpiryItemData {
     categoryName = json['category_name'];
     animalCategoryName = json['animal_type_name'];
     isflavorRequired = json['isflavorRequired'];
+    flavour = json['flavour'];
+    color = json['color_name'];
+    brand = json['brand'];
+    brandType = json['brand_type'];
   }
 
   Map<String, dynamic> toJson() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/category/model/category_model.dart';
 import 'package:inventory/module/category/repo/animal_category_repo.dart';
 import 'package:inventory/helper/app_message.dart';
@@ -16,8 +17,11 @@ class AnimalTypeController extends GetxController with CacheManager {
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
   var data = Get.arguments;
 
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
+
   @override
   void onInit() {
+    setShopType();
     getCategoryData();
     super.onInit();
   }
@@ -36,7 +40,6 @@ class AnimalTypeController extends GetxController with CacheManager {
   // ==========================================
   Future<void> addAnimalCategory(String categoryName) async {
     isSaveLoading.value = true;
-
     try {
       var body = {"name": categoryName};
       final response = await animalCategoryRepo.createAnimalCategory(
@@ -46,7 +49,10 @@ class AnimalTypeController extends GetxController with CacheManager {
         Get.back();
         clear();
         await fetchCategories();
-        showSnackBar(error: response.msg!, isError: false);
+        showSnackBar(
+          error: shopTypeEnum.config.categoryAddSuccess,
+          isError: false,
+        );
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);
       } else {
@@ -85,13 +91,15 @@ class AnimalTypeController extends GetxController with CacheManager {
 
   Future<void> deleteAnimalCategory(String animalCategoryId) async {
     isDeleteAnimalCategory.value = true;
-
     try {
       var response = await animalCategoryRepo.deleteAnimalCategory(
         id: animalCategoryId,
       );
       if (response.success == success) {
-        showSnackBar(error: response.msg!, isError: false);
+        showSnackBar(
+          error: shopTypeEnum.config.categoryDeleteSuccess,
+          isError: false,
+        );
         await fetchCategories();
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);

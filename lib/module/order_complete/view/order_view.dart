@@ -54,7 +54,7 @@ class OrderView extends GetView<OrderController> {
               ),
               setHeight(height: 20),
               Text(
-                '${controller.data.soldAt} ${controller.data.time}',
+                '${controller.invoiceData.value?.dateTime}',
                 style: CustomTextStyle.customMontserrat(letterSpacing: 1),
               ),
               setHeight(height: 10),
@@ -76,7 +76,7 @@ class OrderView extends GetView<OrderController> {
                   style: CustomTextStyle.customPoppin(fontSize: 25),
                   children: [
                     TextSpan(
-                      text: '${controller.data.totalAmount}',
+                      text: '${controller.invoiceData.value?.finalAmount}',
                       style: CustomTextStyle.customNato(
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
@@ -161,11 +161,15 @@ class OrderView extends GetView<OrderController> {
                                       showMessage(
                                         message: "Customer added with invoice",
                                       );
-                                      AppRoutes.navigateRoutes(
-                                        routeName:
-                                            AppRouteName.invoicePrintView,
-                                        data: controller.data,
-                                      );
+                                      final invoice =
+                                          controller.invoiceData.value;
+                                      if (invoice != null) {
+                                        AppRoutes.navigateRoutes(
+                                          routeName:
+                                              AppRouteName.invoicePrintView,
+                                          data: invoice,
+                                        );
+                                      }
                                     } else {
                                       showMessage(
                                         message: somethingWentMessage,
@@ -218,17 +222,34 @@ class OrderView extends GetView<OrderController> {
                                 );
                               },
                             ),
-                            CommonButton(
-                              bgColor: AppColors.redColor,
-                              textColor: AppColors.whiteColor,
-                              width: 150,
-                              label: 'Print',
-                              onTap: () {
-                                AppRoutes.navigateRoutes(
-                                  routeName: AppRouteName.invoicePrintView,
-                                  data: controller.data,
-                                );
-                              },
+                            Obx(
+                              () => CommonButton(
+                                bgColor: AppColors.redColor,
+                                textColor: AppColors.whiteColor,
+                                width: 150,
+                                isLoading: controller.isInvoiceLoading.value,
+                                label: 'Print',
+                                onTap: () {
+                                  final invoice = controller.invoiceData.value;
+                                  if (invoice != null) {
+                                    AppRoutes.navigateRoutes(
+                                      routeName: AppRouteName.invoicePrintView,
+                                      data: invoice,
+                                    );
+                                  } else if (controller
+                                      .isInvoiceLoading
+                                      .value) {
+                                    showSnackBar(
+                                      error:
+                                          'Invoice is loading, please wait...',
+                                    );
+                                  } else {
+                                    showSnackBar(
+                                      error: 'Invoice not available',
+                                    );
+                                  }
+                                },
+                              ),
                             ),
                           ],
                         )

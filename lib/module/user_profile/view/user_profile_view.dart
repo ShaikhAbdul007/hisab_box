@@ -41,58 +41,60 @@ class UserProfileView extends GetView<UserProfileController> {
           child: Form(
             key: userProfile,
             child: ListView(
-              physics: const BouncingScrollPhysics(),
               children: [
                 setHeight(height: 20),
 
                 // 📸 PROFILE IMAGE SECTION
                 Center(
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.blackColor,
-                            width: 2,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: _buildProfileImage(), // Clean helper function
-                        ),
-                      ),
-                      // Edit Button - Only show when not in ReadOnly mode
-                      if (!controller.readOnly.value)
-                        GestureDetector(
-                          onTap: () => controller.pickImage(),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.blackColor,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                  child: Obx(() {
+                    final bool isEditing = !controller.readOnly.value;
+                    return Stack(
+                      children: [
+                        // Avatar — same size as SettingView (radius 50)
+                        _buildProfileAvatar(),
+                        // Camera icon — only in edit mode
+                        if (isEditing)
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: () => controller.pickImage(),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.blackColor,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              color: Colors.white,
-                              size: 20,
-                            ),
                           ),
-                        ),
-                    ],
-                  ),
+                      ],
+                    );
+                  }),
                 ),
-
-                setHeight(height: 30),
-
-                // 📝 FORM FIELDS
+                setHeight(height: 10),
                 UserProfileWidget(
-                  readOnly: controller.readOnly.value,
+                  readOnly: true,
                   controller: controller.shopNameController,
-                  controller2: controller.emailController,
+                  controller2: controller.shopType,
                   label: 'Shop Name',
-                  label2: 'Email',
+                  label2: 'shop Type',
+                ),
+                setHeight(height: 10),
+                CommonTextField(
+                  readOnly: true,
+                  label: 'Email',
+                  hintText: 'Email',
+                  controller: controller.emailController,
                 ),
                 setHeight(height: 10),
                 UserProfileWidget(
@@ -125,7 +127,7 @@ class UserProfileView extends GetView<UserProfileController> {
                   label2: 'Pincode',
                 ),
 
-                setHeight(height: 40),
+                setHeight(height: 20),
 
                 // 💾 SAVE BUTTON
                 if (!controller.readOnly.value)
@@ -146,53 +148,66 @@ class UserProfileView extends GetView<UserProfileController> {
     );
   }
 
-  // Helper to handle Image Logic
-  Widget _buildProfileImage() {
+  // ── Profile avatar — same logic as SettingView ──────────────────────────
+  Widget _buildProfileAvatar() {
     return Obx(() {
       final file = controller.profileImage.value;
-      final url = controller.profileImageUrl.value;
+      final url = controller.profileImageUrl.value.trim();
+      final name = controller.shopNameController.text;
+      final initials = name.isNotEmpty ? name[0].toUpperCase() : 'HB';
 
-      // 1. Agar user ne abhi gallery se photo pick ki hai (Local File)
+      // 1. Local picked file
       if (file != null && file.existsSync()) {
-        return Image.file(
-          file,
-          width: 120,
-          height: 120,
-          fit: BoxFit.cover,
-          // Key add karne se Flutter ko pata chalta hai ki image change hui hai
+        return CircleAvatar(
+          radius: 50,
+          backgroundImage: FileImage(file),
           key: ValueKey(file.path),
         );
       }
 
-      // 2. Agar koi local file nahi hai, toh check karo Supabase ka URL hai?
-      if (url.isNotEmpty && url.startsWith('http') ||
-          url.isNotEmpty && url.startsWith('https')) {
-        return Image.network(
-          url,
-          width: 120,
-          height: 120,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const Center(child: CupertinoActivityIndicator());
-          },
-          errorBuilder: (context, error, stack) => _buildPlaceholder(),
+      // 2. Network image from API
+      if (url.isNotEmpty) {
+        return CircleAvatar(
+          radius: 50,
+          backgroundColor: AppColors.blackColor,
+          child: ClipOval(
+            child: Image.network(
+              url,
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+              loadingBuilder:
+                  (context, child, progress) =>
+                      progress == null
+                          ? child
+                          : const CupertinoActivityIndicator(),
+              errorBuilder:
+                  (_, __, ___) => Text(
+                    initials,
+                    style: const TextStyle(
+                      fontSize: 40,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+            ),
+          ),
         );
       }
 
-      // 3. Agar kuch bhi nahi hai, toh default placeholder
-      return _buildPlaceholder();
+      // 3. Fallback — initials
+      return CircleAvatar(
+        radius: 50,
+        backgroundColor: AppColors.blackColor,
+        child: Text(
+          initials,
+          style: const TextStyle(
+            fontSize: 40,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
     });
-  }
-
-  Widget _buildPlaceholder() {
-    return Center(
-      child: Text(
-        controller.shopNameController.text.isNotEmpty
-            ? controller.shopNameController.text[0].toUpperCase()
-            : "👤",
-        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-      ),
-    );
   }
 }

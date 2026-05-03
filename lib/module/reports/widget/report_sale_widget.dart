@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
+import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_nodatafound.dart';
 import '../../revenue/widget/revenue_list_text.dart';
 import '../controller/report_controller.dart';
@@ -13,27 +16,20 @@ class ReportSaleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ReportOverViewContainer(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Total Revenue — reactive
+        Obx(
+          () => ReportOverViewContainer(
             width: 500,
             label: 'Total Revenue',
             labelValue: controller.totalRevenue.value.toStringAsFixed(2),
           ),
-          // Row(
-          //   children: [
-
-          //     ReportOverViewContainer(
-          //       width: 180,
-          //       label: 'Total Profit',
-          //       labelValue: controller.totalProfit.value.toStringAsFixed(2),
-          //     ),
-          //   ],
-          // ),
-          ReportCommonContainer(
+        ),
+        // Sales list
+        Expanded(
+          child: ReportCommonContainer(
             height: 500,
             width: 500,
             child: Column(
@@ -46,27 +42,35 @@ class ReportSaleWidget extends StatelessWidget {
                     letterSpacing: 0.5,
                   ),
                 ),
-                setHeight(height: 20),
+                setHeight(height: 10),
                 Expanded(
-                  child:
-                      controller.sellsList.isNotEmpty
-                          ? ListView.builder(
-                            itemCount: controller.sellsList.length,
-                            itemBuilder: (context, index) {
-                              var product = controller.sellsList[index];
-                              return RevenueListText(
-                                sellItemData: product,
-                                // index: index,
-                              );
-                            },
-                          )
-                          : CommonNoDataFound(message: 'No sell found'),
+                  child: Obx(() {
+                    if (controller.isSalesLoading.value) {
+                      return const Center(
+                        child: CommonProgressBar(
+                          color: AppColors.blackColor,
+                          size: 30,
+                        ),
+                      );
+                    }
+                    if (controller.sellsList.isEmpty) {
+                      return CommonNoDataFound(message: 'No sell found');
+                    }
+                    return ListView.builder(
+                      itemCount: controller.sellsList.length,
+                      itemBuilder: (context, index) {
+                        return RevenueListText(
+                          sellItemData: controller.sellsList[index],
+                        );
+                      },
+                    );
+                  }),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

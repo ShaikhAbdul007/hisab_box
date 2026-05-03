@@ -242,6 +242,7 @@ class _ProductListTab extends StatelessWidget {
               },
               isInventoryScanSelected: controller.isInventoryScanSelected.value,
               inventoryModel: item,
+              shopType: controller.shopTypeEnum,
             ),
           );
         },

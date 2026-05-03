@@ -2,8 +2,9 @@ class ReportTopProductModel {
   bool? success;
   String? msg;
   List<ReportTopProductData>? data;
+  int? totalPages;
 
-  ReportTopProductModel({this.success, this.msg, this.data});
+  ReportTopProductModel({this.success, this.msg, this.data, this.totalPages});
 
   ReportTopProductModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
@@ -14,6 +15,8 @@ class ReportTopProductModel {
         data!.add(ReportTopProductData.fromJson(v));
       });
     }
+    // pagination support
+    totalPages = json['pagination']?['totalPages'] ?? json['totalPages'];
   }
 
   Map<String, dynamic> toJson() {
@@ -23,6 +26,7 @@ class ReportTopProductModel {
     if (this.data != null) {
       data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
+    data['totalPages'] = totalPages;
     return data;
   }
 }

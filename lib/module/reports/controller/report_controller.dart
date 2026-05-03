@@ -6,8 +6,10 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/device_info.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/reports/model/report_over_view_model.dart';
 import 'package:inventory/module/reports/repo/report_dashboard_overview.dart';
+import 'package:inventory/module/revenue/repo/revenue_repo.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:open_file/open_file.dart';
 import '../../../helper/helper.dart';
@@ -18,6 +20,7 @@ import '../../reports/model/report_top_product_model.dart';
 class ReportController extends GetxController
     with GetSingleTickerProviderStateMixin, DeviceInfoo, CacheManager {
   ReportDashboardOverview reportDashboardOverview = ReportDashboardOverview();
+  RevenueRepo revenueRepo = RevenueRepo();
   // --- Observables ---
   var selectedTab = 0.obs;
   RxDouble totalRevenue = 0.0.obs;
@@ -44,6 +47,14 @@ class ReportController extends GetxController
       <ReportTopProductData>[].obs;
   RxList<ReportTopProductData> reportTopProductList =
       <ReportTopProductData>[].obs;
+
+  // Pagination for top products list
+  int _topProductPage = 1;
+  int _topProductTotalPages = 1;
+  RxBool isLoadingMoreTopProducts = false.obs;
+  bool get topProductHasMore => _topProductPage < _topProductTotalPages;
+  RxBool isSalesLoading = false.obs;
+  RxString salesDate = ''.obs;
   List<String> daysOtionLabel = ['Today', 'Week', 'Month'];
   List<String> reportLabel = [
     'Product Stock In',
@@ -55,9 +66,11 @@ class ReportController extends GetxController
   @override
   void onInit() {
     tabController = TabController(length: 2, vsync: this);
+    salesDate.value = setFormateDate();
     fetchModeOfPaymentStats();
     fetchTopSellingProductsChart();
     fetchTopSellingProducts();
+    fetchSales();
     super.onInit();
   }
 
@@ -66,7 +79,12 @@ class ReportController extends GetxController
     try {
       var response = await reportDashboardOverview.getDailyOverviewData();
       if (response.success == success) {
-        reportOverViewStats.value = response.data ?? ReportOverviewData();
+        final d = response.data?.data;
+        totalCash.value = (d?.cash ?? 0).toDouble();
+        totalUpi.value = (d?.upi ?? 0).toDouble();
+        totalCard.value = (d?.card ?? 0).toDouble();
+        totalCredit.value = (d?.creditUnpaid ?? 0).toDouble();
+        totalRevenue.value = (d?.totalRevenue ?? 0).toDouble();
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);
       } else {
@@ -75,11 +93,12 @@ class ReportController extends GetxController
     } catch (e) {
       showSnackBar(error: e.toString());
     } finally {
-      isDashBoardOverView.value = true;
+      isDashBoardOverView.value = false;
     }
   }
 
   Future<void> fetchTopSellingProductsChart() async {
+    isTopSellingProductsChart.value = true;
     try {
       var response = await reportDashboardOverview.getTopProductsGraphData();
       if (response.success == success) {
@@ -92,15 +111,21 @@ class ReportController extends GetxController
     } catch (e) {
       showSnackBar(error: e.toString());
     } finally {
-      isDashBoardOverView.value = true;
+      isTopSellingProductsChart.value = false;
     }
   }
 
   Future<void> fetchTopSellingProducts() async {
+    _topProductPage = 1;
+    reportTopProductList.clear();
+    isTopSellingProducts.value = true;
     try {
-      var response = await reportDashboardOverview.getTopProductsListData();
+      var response = await reportDashboardOverview.getTopProductsListData(
+        page: _topProductPage,
+      );
       if (response.success == success) {
         reportTopProductList.value = response.data ?? [];
+        _topProductTotalPages = response.totalPages ?? 1;
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);
       } else {
@@ -109,7 +134,50 @@ class ReportController extends GetxController
     } catch (e) {
       showSnackBar(error: e.toString());
     } finally {
-      // isDashBoardOverView.value = true;
+      isTopSellingProducts.value = false;
+    }
+  }
+
+  Future<void> loadMoreTopProducts() async {
+    if (!topProductHasMore || isLoadingMoreTopProducts.value) return;
+    _topProductPage++;
+    isLoadingMoreTopProducts.value = true;
+    try {
+      var response = await reportDashboardOverview.getTopProductsListData(
+        page: _topProductPage,
+      );
+      if (response.success == success) {
+        reportTopProductList.addAll(response.data ?? []);
+        _topProductTotalPages = response.totalPages ?? _topProductTotalPages;
+      } else {
+        _topProductPage--;
+      }
+    } catch (e) {
+      _topProductPage--;
+      showSnackBar(error: e.toString());
+    } finally {
+      isLoadingMoreTopProducts.value = false;
+    }
+  }
+
+  // --- SALE TAB — reuses RevenueRepo.fetchSell (existing pattern) ---
+  Future<void> fetchSales({String? date}) async {
+    isSalesLoading.value = true;
+    final selectedDate = getFormattedDate(date ?? salesDate.value);
+    try {
+      final response = await revenueRepo.fetchSell(date: selectedDate);
+      if (response.success == success) {
+        sellsList.value = response.data?.data ?? [];
+        totalRevenue.value = (response.data?.grandTotal ?? 0).toDouble();
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isSalesLoading.value = false;
     }
   }
 
@@ -307,29 +375,11 @@ class ReportController extends GetxController
     required String label,
     required String reportType,
   }) async {
-    // final userId = resolveUserId(isExporting.value);
-    //if (userId == null) return [];
-    var range = getDateRange(
-      label: label,
-      customEndDate: '',
-      customStartDate: '',
-    );
-    String start = _convertDateFormat(range.$1);
-    String end = _convertDateFormat(range.$2);
     try {
       return [];
     } catch (e) {
       showSnackBar(error: e.toString());
       return [];
-    }
-  }
-
-  String _convertDateFormat(String ddMMyyyy) {
-    try {
-      List<String> p = ddMMyyyy.split('-');
-      return "${p[2]}-${p[1]}-${p[0]}";
-    } catch (e) {
-      return ddMMyyyy;
     }
   }
 }

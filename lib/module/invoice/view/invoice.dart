@@ -5,6 +5,7 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/module/invoice/controller/invoice_controller.dart';
+import 'package:inventory/module/invoice/model/invoice_model.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
@@ -20,6 +21,14 @@ class InvoicePrint extends GetView<InvoiceController> {
 
   @override
   Widget build(BuildContext context) {
+    // Get.arguments is InvoiceData passed from RevenueDetailView
+    final InvoiceData invoiceData = controller.data as InvoiceData;
+    // Payment type — first payment mode from list
+    final String paymentMethod =
+        invoiceData.payments?.isNotEmpty == true
+            ? invoiceData.payments!.first.mode ?? ''
+            : '';
+
     return CommonAppbar(
       appBarLabel: 'Invoice',
       persistentFooterButtons: [
@@ -51,7 +60,7 @@ class InvoicePrint extends GetView<InvoiceController> {
                       if (controller.receiptController.value != null) {
                         await printReceipt(
                           rController: controller.receiptController.value!,
-                          paymentMethod: 'paymentMethod',
+                          paymentMethod: paymentMethod,
                         );
                       } else {
                         showSnackBar(error: 'Printer is not initialized yet');
@@ -76,8 +85,8 @@ class InvoicePrint extends GetView<InvoiceController> {
         ),
       ],
       body: InvoicePrinterView(
-        printInvoiceModel: controller.data,
-        paymentMethod: controller.data.payment.type ?? '',
+        printInvoiceModel: invoiceData,
+        paymentMethod: paymentMethod,
         onInitialized: (p0) => controller.setReceiptController(p0),
       ),
     );

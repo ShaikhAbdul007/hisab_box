@@ -28,6 +28,7 @@ class UserProfileController extends GetxController with CacheManager {
   final cityController = TextEditingController();
   final pincodeController = TextEditingController();
   final stateController = TextEditingController();
+  final shopType = TextEditingController();
 
   @override
   void onInit() {
@@ -56,7 +57,6 @@ class UserProfileController extends GetxController with CacheManager {
   Future<void> updateUserDetails() async {
     isLoading.value = true;
     unfocus();
-
     try {
       final updatedData = {
         "name": shopNameController.text.trim(),
@@ -70,19 +70,18 @@ class UserProfileController extends GetxController with CacheManager {
       };
       var response = await userProfileRepo.updateUserDetails(body: updatedData);
       if (response.success == success) {
+        saveUserData(response);
+        setUserDetails();
+        readOnly.value = true;
         showSnackBar(
           error: response.msg ?? updateProfileSuccessfull,
           isError: false,
         );
-        saveUserData(response);
-        setUserDetails();
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
         showSnackBar(error: somethingWentMessage);
       }
-      readOnly.value = true;
-      showSnackBar(error: "Profile Updated Successfully ✅");
     } catch (e) {
       showSnackBar(error: e.toString());
     } finally {
@@ -94,18 +93,16 @@ class UserProfileController extends GetxController with CacheManager {
   void setUserDetails() async {
     isDataLoading.value = true;
     try {
-      final user = retrieveUserDetail();
-      if (user.data?.name != null && user.data!.name!.isNotEmpty) {
-        _fillControllers(user);
-      } else {
-        var response = await userProfileRepo.getUserDetails();
-        if (response.success == success) {
-          _fillControllers(response);
-        } else if (response.success == failed) {
-          showSnackBar(error: response.msg ?? somethingWentMessage);
-        } else {
-          showSnackBar(error: somethingWentMessage);
-        }
+      final cached = retrieveUserDetail();
+      if (cached.data?.name != null && cached.data!.name!.isNotEmpty) {
+        _fillControllers(cached);
+      }
+
+      // Hamesha API call karo fresh data ke liye (image bhi aayegi)
+      final response = await userProfileRepo.getUserDetails();
+      if (response.success == success) {
+        saveUserData(response); // Cache update karo image ke saath
+        _fillControllers(response);
       }
     } catch (e) {
       debugPrint("Error loading profile: $e");
@@ -123,6 +120,11 @@ class UserProfileController extends GetxController with CacheManager {
     addressController.text = user.data?.address ?? '';
     cityController.text = user.data?.city ?? '';
     emailController.text = user.data?.email ?? '';
+    shopType.text = user.data?.shopType ?? '';
+    final image = user.data?.profilepic ?? '';
+    if (image.isNotEmpty) {
+      profileImageUrl.value = image;
+    }
   }
 
   @override

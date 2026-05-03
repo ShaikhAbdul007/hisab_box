@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 
@@ -11,17 +13,23 @@ class InventroyListText extends StatelessWidget {
   final InventoryItem inventoryModel;
   final void Function()? onTap;
   final bool isInventoryScanSelected;
+  final ShopType shopType;
+
   const InventroyListText({
     super.key,
     required this.inventoryModel,
     this.onTap,
     required this.isInventoryScanSelected,
+    required this.shopType,
   });
+
+  bool get _isClothing => shopType == ShopType.clothingShop;
 
   @override
   Widget build(BuildContext context) {
-    String rack = inventoryModel.rack ?? '';
-    String level = inventoryModel.level ?? '';
+    final String rack = inventoryModel.rack ?? '';
+    final String level = inventoryModel.level ?? '';
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -35,73 +43,96 @@ class InventroyListText extends StatelessWidget {
           padding: SymmetricPadding(horizontal: 5, vertical: 4).getPadding(),
           child: Row(
             children: [
+              // ── Left column ──────────────────────────────────────────────
               Expanded(
                 flex: 3,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        inventoryModel.name ?? '',
-                        style: CustomTextStyle.customPoppin(fontSize: 17),
-                      ),
-                      if (inventoryModel.flavour case ('' || null)) ...{
-                        Container(),
-                      } else ...{
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Product name — always shown
+                    Text(
+                      inventoryModel.name ?? '',
+                      style: CustomTextStyle.customPoppin(fontSize: 17),
+                    ),
+
+                    // ── Pet Shop only ─────────────────────────────────────
+                    if (!_isClothing) ...[
+                      // Flavour
+                      if ((inventoryModel.flavour ?? '').isNotEmpty) ...[
                         setHeight(height: 2),
                         Text(
-                          inventoryModel.flavour ?? '',
+                          inventoryModel.flavour!,
                           style: CustomTextStyle.customOpenSans(
                             color: AppColors.greyColor,
                           ),
                         ),
-                      },
-                      Row(
-                        children: [
-                          Text(
-                            '${inventoryModel.animalTypeName}',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                          if (inventoryModel.weight?.isNotEmpty ?? false) ...{
-                            Text(
-                              '/${inventoryModel.weight}',
-                              style: CustomTextStyle.customOpenSans(
-                                color: AppColors.greyColor,
-                              ),
-                            ),
-                          },
-
-                          Text(
-                            '/${inventoryModel.categoryName}',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Icon(CupertinoIcons.map_pin, size: 15.sp),
-                          Text(
-                            level.isNotEmpty && rack.isNotEmpty
-                                ? '${inventoryModel.location}/$level/$rack'
-                                : level.isEmpty && rack.isNotEmpty
-                                ? '${inventoryModel.location}/$rack'
-                                : rack.isEmpty && level.isNotEmpty
-                                ? '${inventoryModel.location}/$level'
-                                : '${inventoryModel.location}',
-                            style: CustomTextStyle.customOpenSans(
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                        ],
-                      ),
+                      ],
+                      // weight / category (pet shop specific)
+                      _infoRow([
+                        inventoryModel.weight,
+                        inventoryModel.categoryName,
+                      ]),
+                      // Purchase date → Expiry date
+                      if ((inventoryModel.purchaseDate ?? '').isNotEmpty ||
+                          (inventoryModel.expireDate ?? '').isNotEmpty)
+                        _dateRow(
+                          inventoryModel.purchaseDate,
+                          inventoryModel.expireDate,
+                        ),
                     ],
-                  ),
+
+                    // ── Clothing Shop only ────────────────────────────────
+                    if (_isClothing) ...[
+                      // Category / Color / Brand (size is animalTypeName — shown in common)
+                      _infoRow([
+                        inventoryModel.categoryName,
+                        inventoryModel.color,
+                        inventoryModel.brand,
+                      ]),
+                      // Brand type
+                      if ((inventoryModel.brandType ?? '').isNotEmpty)
+                        Text(
+                          inventoryModel.brandType!,
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.greyColor,
+                          ),
+                        ),
+                    ],
+
+                    // ── Common ────────────────────────────────────────────
+                    // Animal type (pet: animal, clothing: size)
+                    if ((inventoryModel.animalTypeName ?? '').isNotEmpty)
+                      Text(
+                        inventoryModel.animalTypeName!,
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.greyColor,
+                        ),
+                      ),
+                    Row(
+                      children: [
+                        Icon(CupertinoIcons.map_pin, size: 15.sp),
+                        Text(
+                          _locationText(level, rack),
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.greyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Barcode
+                    if ((inventoryModel.barcode ?? '').isNotEmpty)
+                      Text(
+                        inventoryModel.barcode!,
+                        style: CustomTextStyle.customOpenSans(
+                          color: AppColors.greyColor,
+                          fontSize: 11,
+                        ),
+                      ),
+                  ],
                 ),
               ),
+
+              // ── Right column ─────────────────────────────────────────────
               Expanded(
                 child: Column(
                   children: [
@@ -112,7 +143,7 @@ class InventroyListText extends StatelessWidget {
                     ),
                     setHeight(height: 5),
                     Text(
-                      '\u{20B9} ${inventoryModel.sellingPrice}',
+                      '\u{20B9} ${inventoryModel.sellingPrice ?? ''}',
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.blackColor,
                         fontSize: 18,
@@ -148,26 +179,62 @@ class InventroyListText extends StatelessWidget {
     );
   }
 
-  String getText() {
-    String? text;
-    int qty = int.tryParse(inventoryModel.quantity ?? '0') ?? 0;
-    if (qty > 0 && qty < 10) {
-      text = 'Low Stock';
-    } else if (qty == 0) {
-      text = 'Out of Stock';
-    }
-    return text ?? '';
+  /// Renders non-empty values joined by ' / '
+  Widget _infoRow(List<String?> values) {
+    final parts = values.where((v) => v != null && v.isNotEmpty).toList();
+    if (parts.isEmpty) return const SizedBox.shrink();
+    return Text(
+      parts.join(' / '),
+      style: CustomTextStyle.customOpenSans(color: AppColors.greyColor),
+    );
+  }
+
+  /// Purchase date → Expiry date row
+  Widget _dateRow(String? purchase, String? expiry) {
+    final p = formatDateTime(purchase ?? '');
+    final e = formatDateTime(expiry ?? '');
+    if (p.isEmpty && e.isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: [
+        if (p.isNotEmpty)
+          Text(
+            p,
+            style: CustomTextStyle.customOpenSans(
+              color: AppColors.greyColor,
+              fontSize: 11,
+            ),
+          ),
+        if (p.isNotEmpty && e.isNotEmpty)
+          Icon(
+            CupertinoIcons.arrow_right,
+            size: 12.sp,
+            color: AppColors.blackColor,
+          ),
+        if (e.isNotEmpty)
+          Text(
+            e,
+            style: CustomTextStyle.customOpenSans(
+              color: AppColors.redColor,
+              fontSize: 11,
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _locationText(String level, String rack) {
+    final loc = inventoryModel.location ?? '';
+    if (level.isNotEmpty && rack.isNotEmpty) return '$loc/$level/$rack';
+    if (rack.isNotEmpty) return '$loc/$rack';
+    if (level.isNotEmpty) return '$loc/$level';
+    return loc;
   }
 
   Color getColor() {
-    double qty =
+    final qty =
         double.tryParse(inventoryModel.quantity?.toString() ?? '0') ?? 0;
-    if (qty > 0 && qty < 10) {
-      return AppColors.orangeColor;
-    } else if (qty == 0) {
-      return AppColors.redColor;
-    } else {
-      return AppColors.blackColor;
-    }
+    if (qty > 0 && qty < 10) return AppColors.orangeColor;
+    if (qty == 0) return AppColors.redColor;
+    return AppColors.blackColor;
   }
 }

@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
+import 'package:inventory/module/customer/model/add_customer_model.dart';
+import 'package:inventory/module/customer/model/all_customer_model.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_container.dart';
@@ -44,48 +47,122 @@ class CustomerView extends GetView<CustomerController> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           setHeight(height: 10),
-
-                          // CustomerViewMobileAutoCompleteWidget(
-                          //   controller: controller,
-                          // ),
-                          Obx(
-                            () => CommonTextField(
-                              hintText: 'Mobile No',
-                              label: 'Mobile No',
-                              controller: controller.mobileController,
-                              keyboardType: TextInputType.number,
-                              inputLength: 10,
-                              validator: (no) {
-                                if (no?.isEmpty ?? false) {
-                                  return 'Enter mobile no';
-                                } else if (no!.length > 10) {
-                                  return 'Mobile no should be 10 digit';
-                                }
-                                return null;
-                              },
-                              suffixIcon:
-                                  controller
-                                          .isCustomerFetchingByMobileNumberLoading
-                                          .value
-                                      ? Container(
-                                        height: 30,
-                                        width: 40,
-                                        color: AppColors.whiteColor,
-                                        child: CommonProgressBar(
-                                          size: 40,
-                                          color: AppColors.blackColor,
-                                        ),
-                                      )
-                                      : null,
-                              onChanged: (v) {
-                                //  int? no=int.tryParse(controller.mobileController.text);
-                                if (v.length >= 10) {
-                                  controller.fetchCustomersByMobileNumber(
-                                    body: v,
-                                  );
-                                }
-                              },
-                            ),
+                          // Mobile autocomplete — same pattern as OrderView
+                          Autocomplete<CustomerItem>(
+                            optionsBuilder: (TextEditingValue tv) {
+                              if (tv.text.isEmpty) {
+                                return const Iterable.empty();
+                              }
+                              return controller.customerList.where((e) {
+                                final mobile = e.mobileNo ?? '';
+                                final name = (e.name ?? '').toLowerCase();
+                                final q = tv.text.toLowerCase();
+                                return mobile.contains(q) || name.contains(q);
+                              });
+                            },
+                            displayStringForOption: (o) => o.mobileNo ?? '',
+                            onSelected: (option) {
+                              controller.setDataAsPerOptionSelected(
+                                AddCustomerData(
+                                  name: option.name,
+                                  mobileNo: option.mobileNo,
+                                  address: option.address,
+                                ),
+                              );
+                            },
+                            fieldViewBuilder: (
+                              ctx,
+                              textCtrl,
+                              focusNode,
+                              onSubmit,
+                            ) {
+                              return Obx(
+                                () => CommonTextField(
+                                  hintText: 'Mobile No',
+                                  label: 'Mobile No',
+                                  controller: controller.mobileController,
+                                  keyboardType: TextInputType.number,
+                                  inputLength: 10,
+                                  validator: (no) {
+                                    if (no?.isEmpty ?? false) {
+                                      return 'Enter mobile no';
+                                    } else if ((no?.length ?? 0) > 10) {
+                                      return 'Mobile no should be 10 digit';
+                                    }
+                                    return null;
+                                  },
+                                  // suffixIcon:
+                                  //     controller
+                                  //             .isCustomerFetchingByMobileNumberLoading
+                                  //             .value
+                                  //         ? Container(
+                                  //           height: 30,
+                                  //           width: 40,
+                                  //           color: AppColors.whiteColor,
+                                  //           child: CommonProgressBar(
+                                  //             size: 40,
+                                  //             color: AppColors.blackColor,
+                                  //           ),
+                                  //         )
+                                  //         : null,
+                                  onChanged: (v) {
+                                    textCtrl.text = v;
+                                    controller.mobileController.text = v;
+                                  },
+                                ),
+                              );
+                            },
+                            optionsViewBuilder: (ctx, onSelected, options) {
+                              return CustomPadding(
+                                paddingOption: SymmetricPadding(horizontal: 16),
+                                child: Material(
+                                  color: AppColors.greyColorShade100,
+                                  elevation: 5,
+                                  borderRadius: BorderRadius.only(
+                                    bottomLeft: Radius.circular(10.r),
+                                    bottomRight: Radius.circular(10.r),
+                                  ),
+                                  child: SizedBox(
+                                    height: 150.h,
+                                    child: ListView.builder(
+                                      itemCount: options.length,
+                                      itemBuilder: (ctx, i) {
+                                        final c = options.elementAt(i);
+                                        return InkWell(
+                                          onTap: () => onSelected(c),
+                                          child: Container(
+                                            height: 40.h,
+                                            margin:
+                                                OnlyPadding(
+                                                  left: 5,
+                                                  bottom: 5,
+                                                  right: 5,
+                                                  top: 8,
+                                                ).getPadding(),
+                                            padding:
+                                                OnlyPadding(
+                                                  top: 5,
+                                                  left: 8,
+                                                  bottom: 5,
+                                                ).getPadding(),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black12,
+                                              borderRadius:
+                                                  BorderRadius.circular(8.r),
+                                            ),
+                                            child: Text(
+                                              c.mobileNo ?? '',
+                                              style:
+                                                  CustomTextStyle.customMontserrat(),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           setHeight(height: 10),
                           CommonTextField(
@@ -105,12 +182,6 @@ class CustomerView extends GetView<CustomerController> {
                             hintText: 'Address',
                             label: 'Address',
                             controller: controller.addressController,
-                            // validator: (add) {
-                            //   if (add?.isEmpty ?? false) {
-                            //     return 'Enter address';
-                            //   }
-                            //   return null;
-                            // },
                           ),
                           setHeight(height: 10),
                           CommonTextField(
@@ -118,12 +189,6 @@ class CustomerView extends GetView<CustomerController> {
                             hintText: 'Description',
                             label: 'Description',
                             controller: controller.descriptionController,
-                            // validator: (add) {
-                            //   if (add?.isEmpty ?? false) {
-                            //     return 'Enter address';
-                            //   }
-                            //   return null;
-                            // },
                           ),
                           setHeight(height: 30),
                           Obx(
@@ -144,7 +209,7 @@ class CustomerView extends GetView<CustomerController> {
                                       : () async {
                                         if (inventoryScanKey.currentState!
                                             .validate()) {
-                                          var body = {
+                                          final body = {
                                             "mobile_no":
                                                 controller
                                                     .mobileController
@@ -177,7 +242,7 @@ class CustomerView extends GetView<CustomerController> {
                   },
                 );
               },
-              child: Icon(CupertinoIcons.add),
+              child: const Icon(CupertinoIcons.add),
             ),
           ),
         ],
@@ -186,9 +251,7 @@ class CustomerView extends GetView<CustomerController> {
       body: CustomPadding(
         paddingOption: SymmetricPadding(horizontal: 8.0),
         child: RefreshIndicator.adaptive(
-          onRefresh: () {
-            return controller.fetchAllCustomers();
-          },
+          onRefresh: () => controller.fetchAllCustomers(),
           child: Column(
             children: [
               setHeight(height: 10),
@@ -228,13 +291,16 @@ class CustomerView extends GetView<CustomerController> {
                           : ListView.builder(
                             itemCount: controller.customerList.length,
                             itemBuilder: (context, index) {
-                              var customerData = controller.customerList[index];
+                              final customerData =
+                                  controller.customerList[index];
                               return Obx(
                                 () =>
-                                    customerData.name!.toLowerCase().contains(
-                                              controller.searchText.value,
-                                            ) ||
-                                            customerData.mobileNo!
+                                    (customerData.name ?? '')
+                                                .toLowerCase()
+                                                .contains(
+                                                  controller.searchText.value,
+                                                ) ||
+                                            (customerData.mobileNo ?? '')
                                                 .toLowerCase()
                                                 .contains(
                                                   controller.searchText.value,
@@ -256,7 +322,7 @@ class CustomerView extends GetView<CustomerController> {
                                                 CustomTextStyle.customOpenSans(),
                                           ),
                                         )
-                                        : Container(),
+                                        : const SizedBox.shrink(),
                               );
                             },
                           ),

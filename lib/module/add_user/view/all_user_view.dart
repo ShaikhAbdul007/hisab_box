@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_container.dart';
+import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/module/add_user/controller/all_user_controller.dart';
 import 'package:inventory/routes/route_name.dart';
@@ -38,6 +39,8 @@ class AllUserView extends GetView<AllUserController> {
         () =>
             controller.isLoading.value
                 ? CommonProgressBar(color: AppColors.blackColor)
+                : controller.empolyeeModel.value.data!.isEmpty
+                ? CommonNoDataFound(message: 'No user found')
                 : ListView.builder(
                   itemCount: controller.empolyeeModel.value.data?.length,
                   itemBuilder: (context, index) {

@@ -46,46 +46,35 @@ class SettingView extends GetView<SettingController> {
                   subtitle: controller.email.value,
                   leading:
                       (() {
-                        final profile = controller.profileImage.value;
-                        final profileUrl =
-                            controller.profileImageUrl.value.trim();
-                        final canShowImage =
-                            profile != null && profile.existsSync();
-                        if (canShowImage) {
-                          return ClipOval(
-                            child: Image.file(
-                              controller.profileImage.value!,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Text(
-                                  "HB",
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    color: Colors.white,
-                                  ),
-                                );
-                              },
-                            ),
+                        final url = controller.profileImageUrl.value.trim();
+                        final file = controller.profileImage.value;
+                        if (file != null && file.existsSync()) {
+                          return CircleAvatar(
+                            radius: 30,
+                            backgroundImage: FileImage(file),
                           );
                         }
-                        if (profileUrl.isNotEmpty) {
-                          return ClipOval(
-                            child: Image.network(
-                              controller.profileImageUrl.value.trim(),
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Text(
-                                  "HB",
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    color: Colors.white,
-                                  ),
-                                );
-                              },
+                        if (url.isNotEmpty) {
+                          return Obx(
+                            () => CircleAvatar(
+                              radius: 30,
+                              backgroundColor: AppColors.blackColor,
+                              child: ClipOval(
+                                child: Image.network(
+                                  controller.profileImageUrl.value.trim(),
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (_, __, ___) => const Text(
+                                        "HB",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                ),
+                              ),
                             ),
                           );
                         }
@@ -146,7 +135,7 @@ class SettingView extends GetView<SettingController> {
             ),
             setHeight(height: 5),
             CommonContainer(
-              height: 170,
+              height: 250,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -163,24 +152,44 @@ class SettingView extends GetView<SettingController> {
                     },
                   ),
                   CommonDivider(indent: 20, endIndent: 20),
-                  SettingItem(
-                    label:
-                        controller.shoptype.value == 'Clothing Shop'
-                            ? 'Size Category '
-                            : 'Animal Category',
-                    subtitle:
-                        controller.shoptype.value == 'Clothing Shop'
-                            ? 'Manage your size categories '
-                            : 'Manage your animal categories',
-                    leading: SettingIconContainer(
-                      icon: CupertinoIcons.circle_grid_3x3,
+                  Obx(
+                    () => SettingItem(
+                      label: controller.shopTypeEnum.config.categoryLabel,
+                      subtitle:
+                          'Manage your ${controller.shopTypeEnum.config.categoryLabel.toLowerCase()}s',
+                      leading: SettingIconContainer(
+                        icon: CupertinoIcons.circle_grid_3x3,
+                      ),
+                      onTap: () {
+                        AppRoutes.navigateRoutes(
+                          routeName: AppRouteName.animalCategory,
+                          data: controller.shoptype.value,
+                        );
+                      },
                     ),
-                    onTap: () {
-                      AppRoutes.navigateRoutes(
-                        routeName: AppRouteName.animalCategory,
-                        data: controller.shoptype.value,
-                      );
-                    },
+                  ),
+                  Obx(
+                    () =>
+                        controller.shopTypeEnum.config.supportsColorModule
+                            ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CommonDivider(indent: 20, endIndent: 20),
+                                SettingItem(
+                                  label: 'Color Category',
+                                  subtitle: 'Manage your color categories',
+                                  leading: SettingIconContainer(
+                                    icon: CupertinoIcons.paintbrush_fill,
+                                  ),
+                                  onTap: () {
+                                    AppRoutes.navigateRoutes(
+                                      routeName: AppRouteName.colorCategory,
+                                    );
+                                  },
+                                ),
+                              ],
+                            )
+                            : const SizedBox.shrink(),
                   ),
                 ],
               ),

@@ -62,7 +62,7 @@ class LoginController extends GetxController with CacheManager {
         AppLogger.info('Login successful, token: ${response.data?.token}');
         saveToken(response.data?.token ?? '');
         saveUserLoggedIn(true);
-        Future.delayed(const Duration(seconds: 1), () {
+        Future.delayed(const Duration(milliseconds: 100), () {
           AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
         });
         showSnackBar(error: response.msg!, isError: false);

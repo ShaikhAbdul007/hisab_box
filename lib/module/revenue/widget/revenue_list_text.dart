@@ -120,6 +120,7 @@ class RevenueListText extends StatelessWidget {
                       style: CustomTextStyle.customPoppin(fontSize: 17),
                     ),
                     setHeight(height: 5),
+
                     Row(
                       children: [
                         Text(
@@ -160,15 +161,20 @@ class RevenueListText extends StatelessWidget {
                       size: 27,
                       color: AppColors.greyColor,
                     ),
-                    RichText(
-                      text: TextSpan(
-                        text: sellItemData.amount ?? '',
-                        style: CustomTextStyle.customMontserrat(
-                          color: AppColors.greyColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                        children: [],
+                    Text(
+                      sellItemData.amount ?? '',
+                      style: CustomTextStyle.customMontserrat(
+                        color: AppColors.greenColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      sellItemData.paymentType ?? '',
+                      style: CustomTextStyle.customMontserrat(
+                        color: AppColors.greenColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
                       ),
                     ),
                   ],

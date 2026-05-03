@@ -1,5 +1,6 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/helper/logger.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
@@ -44,9 +45,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
     AppLogger.info((user.data?.alternateMobileNo).toString());
     AppLogger.info((user.data?.mobileNo).toString());
     AppLogger.info((user.data?.city).toString());
-    //  bool isFileAvailable = user.data?.image != null && user.data!.image!.isNotEmpty;
 
-    bool isFileAvailable = true;
     double total = 0;
     double savedAmount = 0;
     int discountPercentage = 0;
@@ -60,7 +59,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               children: [
                 Row(
                   children: [
-                    user.data?.image == null || !isFileAvailable
+                    user.data?.profilepic == null ||
+                            (user.data?.profilepic?.isEmpty ?? true)
                         ? CircleAvatar(
                           radius: 50,
                           backgroundColor: AppColors.blackColor,
@@ -77,11 +77,23 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             width: 100.w,
                             height: 100.h,
                             child: Image.network(
+                              user.data!.profilepic!,
                               filterQuality: FilterQuality.high,
                               fit: BoxFit.cover,
-                              user.data?.image ?? '',
+                              errorBuilder:
+                                  (_, __, ___) => CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: AppColors.blackColor,
+                                    child: Text(
+                                      userName,
+                                      style: CustomTextStyle.customMontserrat(
+                                        color: AppColors.whiteColor,
+                                        fontSize: 40,
+                                      ),
+                                    ),
+                                  ),
                             ),
-                          ), // Ab crash nahi hoga
+                          ),
                         ),
                     setWidth(width: 15),
                     Column(
@@ -166,6 +178,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                         formatDateTime(
                           printInvoiceModel.createdAt ?? '',
                           showDate: true,
+                          showTime: false,
                         ),
                         style: CustomTextStyle.customMontserrat(
                           fontSize: 20,
@@ -223,12 +236,6 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 const CommonDivider(color: AppColors.blackColor),
                 setHeight(height: 10),
                 ...printInvoiceModel.items!.map((item) {
-                  // discountPercentage = item.discount ?? 0;
-                  // total += (item.finalPrice ?? 0);
-                  // savedAmount +=
-                  //     ((item.originalPrice ?? 0) * (item.quantity ?? 1)) -
-                  //     (item.finalPrice ?? 0);
-
                   return CustomPadding(
                     paddingOption: OnlyPadding(bottom: 10.0),
                     child: Row(
@@ -245,16 +252,16 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                   fontSize: 24,
                                 ),
                               ),
-                              // if (item.flavours!.isNotEmpty) ...{
-                              //   setHeight(height: 5),
-                              //   Text(
-                              //     item.flavours ?? "",
-                              //     style: CustomTextStyle.customMontserrat(
-                              //       fontWeight: FontWeight.w500,
-                              //       fontSize: 18,
-                              //     ),
-                              //   ),
-                              // },
+                              if (item.categoryName!.isNotEmpty) ...{
+                                setHeight(height: 5),
+                                Text(
+                                  "${item.categoryName} x ${item.animalTypeName}",
+                                  style: CustomTextStyle.customMontserrat(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              },
                               setHeight(height: 5),
                               RichText(
                                 text: TextSpan(
@@ -265,27 +272,30 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                     fontSize: 18,
                                   ),
                                   children:
-                                      // item.discount! > 0
-                                      //     ? [
-                                      //       TextSpan(
-                                      //         text: " @ ",
-                                      //         style:
-                                      //             CustomTextStyle.customMontserrat(
-                                      //               fontWeight: FontWeight.w500,
-                                      //               fontSize: 15,
-                                      //             ),
-                                      //       ),
-                                      //       TextSpan(
-                                      //         text: "${item.discount} %",
-                                      //         style:
-                                      //             CustomTextStyle.customMontserrat(
-                                      //               fontWeight: FontWeight.w500,
-                                      //               fontSize: 18,
-                                      //             ),
-                                      //       ),
-                                      //     ]
-                                      //     :
-                                      [],
+                                      printInvoiceModel
+                                                  .orderSummary
+                                                  ?.customerSaved! ==
+                                              "0.0"
+                                          ? [
+                                            TextSpan(
+                                              text: " @ ",
+                                              style:
+                                                  CustomTextStyle.customMontserrat(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 15,
+                                                  ),
+                                            ),
+                                            TextSpan(
+                                              text:
+                                                  "${printInvoiceModel.orderSummary?.totalDiscount} %",
+                                              style:
+                                                  CustomTextStyle.customMontserrat(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 18,
+                                                  ),
+                                            ),
+                                          ]
+                                          : [],
                                 ),
                               ),
                             ],
@@ -294,7 +304,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                         Expanded(
                           flex: 3,
                           child: Text(
-                            "₹ ${item.totalPrice}",
+                            "₹ ${printInvoiceModel.orderSummary?.finalAmount}",
                             textAlign: TextAlign.right,
                             style: CustomTextStyle.customMontserrat(
                               fontWeight: FontWeight.bold,
@@ -325,7 +335,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                     Expanded(
                       flex: 3,
                       child: Text(
-                        "₹ ${total.toStringAsFixed(2)}",
+                        "₹ ${printInvoiceModel.orderSummary!.finalAmount}",
                         textAlign: TextAlign.right,
                         style: CustomTextStyle.customPoppin(
                           fontWeight: FontWeight.bold,
@@ -432,57 +442,59 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                       ),
                     )
                     : Container(),
-                RichText(
-                  text: TextSpan(
-                    style: CustomTextStyle.customMontserrat(),
-                    children: [
-                      TextSpan(
-                        text: '#Add.\n',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.blackColor,
-                          fontSize: 18,
+                // Add section — Pet Shop only
+                if (ShopType.fromString(user.data?.shopType ?? '') ==
+                    ShopType.petShop)
+                  RichText(
+                    text: TextSpan(
+                      style: CustomTextStyle.customMontserrat(),
+                      children: [
+                        TextSpan(
+                          text: '#Add.\n',
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.blackColor,
+                            fontSize: 18,
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: 'Raah Constra\n',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.blackColor,
-                          fontSize: 20,
+                        TextSpan(
+                          text: 'Raah Constra\n',
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.blackColor,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text:
-                            'Water Proofing | Interior Design | False Ceiling|',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.blackColor,
-                          fontSize: 20,
+                        TextSpan(
+                          text:
+                              'Water Proofing | Interior Design | False Ceiling|',
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.blackColor,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: 'Painting | All Renovation Work.\n',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.blackColor,
-                          fontSize: 20,
+                        TextSpan(
+                          text: 'Painting | All Renovation Work.\n',
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.blackColor,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-
-                      TextSpan(
-                        text: 'www.raahconstra.com\n',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.blackColor,
-                          fontSize: 20,
+                        TextSpan(
+                          text: 'www.raahconstra.com\n',
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.blackColor,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: 'Contact on - 9930024594',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.blackColor,
-                          fontSize: 25,
+                        TextSpan(
+                          text: 'Contact on - 9930024594',
+                          style: CustomTextStyle.customOpenSans(
+                            color: AppColors.blackColor,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 setHeight(height: 150),
               ],
             ),

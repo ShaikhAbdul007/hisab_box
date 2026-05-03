@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/near_expire_product/model/near_expiry_model.dart';
 import 'package:inventory/module/out_of_stock/repo/out_of_stock_repo.dart';
 
@@ -13,10 +14,15 @@ class OutOfStockController extends GetxController with CacheManager {
   RxBool isDeleteLoading = false.obs;
   RxList<NeaExpiryItemData> productList = <NeaExpiryItemData>[].obs;
   RxString searchText = ''.obs;
+  RxString shopType = ''.obs;
   TextEditingController searchController = TextEditingController();
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   @override
   void onInit() {
+    final user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
     loadOutOfStockProducts();
     super.onInit();
   }

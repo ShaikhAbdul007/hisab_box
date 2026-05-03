@@ -6,49 +6,67 @@ import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
+import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
+import 'package:inventory/common_widget/common_progressbar.dart';
+import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/common_widget/textfiled.dart';
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/set_format_date.dart';
-import 'package:inventory/module/category/controller/animaltype_controller.dart';
-import '../../../common_widget/common_button.dart';
-import '../../../common_widget/common_progressbar.dart';
-import '../../../common_widget/size.dart';
-import '../../../common_widget/textfiled.dart';
-import '../../../helper/app_message.dart';
-import '../../../helper/textstyle.dart';
-import '../../../keys/keys.dart';
+import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/keys/keys.dart';
+import 'package:inventory/module/color_category/controller/color_category_controller.dart';
 
-class AnimalCategory extends GetView<AnimalTypeController> {
-  const AnimalCategory({super.key});
+class ColorCategoryView extends GetView<ColorCategoryController> {
+  const ColorCategoryView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
+      appBarLabel: 'Color Category',
       firstActionChild: CommonContainer(
         height: 30,
         width: 40,
         radius: 5,
         color: AppColors.whiteColor,
         child: InkWell(
-          onTap: () {
-            addNewCategory(keys: categoryKey);
-          },
-          child: Icon(CupertinoIcons.add),
+          onTap: () => _addColorSheet(keys: categoryKey),
+          child: const Icon(CupertinoIcons.add),
         ),
       ),
-      appBarLabel: controller.shopTypeEnum.config.categoryLabel,
       body: Obx(
         () =>
-            controller.isFetchAnimalCategory.value
+            controller.isFetchLoading.value
                 ? CommonProgressBar(color: AppColors.blackColor, size: 30)
-                : controller.animalTypeList.isNotEmpty
+                : controller.colorList.isNotEmpty
                 ? Stack(
                   children: [
                     ListView.builder(
-                      itemCount: controller.animalTypeList.length,
+                      controller: controller.scrollController,
+                      itemCount: controller.colorList.length + 1,
                       itemBuilder: (context, index) {
-                        var list = controller.animalTypeList[index];
+                        // Bottom loader
+                        if (index == controller.colorList.length) {
+                          return Obx(
+                            () =>
+                                controller.isLoadingMore.value
+                                    ? const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      child: Center(
+                                        child: CommonProgressBar(
+                                          size: 30,
+                                          color: AppColors.blackColor,
+                                        ),
+                                      ),
+                                    )
+                                    : const SizedBox(height: 16),
+                          );
+                        }
+                        final item = controller.colorList[index];
                         return CustomPadding(
                           paddingOption: SymmetricPadding(
                             horizontal: 10,
@@ -60,7 +78,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                             ),
                             tileColor: AppColors.whiteLigthColor,
                             title: Text(
-                              list.name ?? '',
+                              item.name ?? '',
                               style: CustomTextStyle.customNato(
                                 fontSize: 18,
                                 color: AppColors.blackColor,
@@ -69,13 +87,13 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                             subtitle: Row(
                               children: [
                                 Text(
-                                  formatDateTime(list.createdAt ?? ''),
+                                  formatDateTime(item.createdAt ?? ''),
                                   style: CustomTextStyle.customNato(),
                                 ),
                                 setWidth(width: 25),
                                 Text(
                                   formatDateTime(
-                                    list.createdAt ?? '',
+                                    item.createdAt ?? '',
                                     showDate: false,
                                     showTime: true,
                                   ),
@@ -86,11 +104,11 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                             trailing: Obx(
                               () => InkWell(
                                 onTap:
-                                    controller.isDeleteAnimalCategory.value
+                                    controller.isDeleteLoading.value
                                         ? null
                                         : () async {
-                                          await controller.deleteAnimalCategory(
-                                            list.id ?? '',
+                                          await controller.deleteColor(
+                                            item.id ?? '',
                                           );
                                         },
                                 child: CommonContainer(
@@ -112,7 +130,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                     ),
                     Obx(
                       () =>
-                          controller.isDeleteAnimalCategory.value
+                          controller.isDeleteLoading.value
                               ? BackdropFilter(
                                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                                 child: CommonProgressBar(
@@ -120,21 +138,18 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                                   size: 50,
                                 ),
                               )
-                              : Container(),
+                              : const SizedBox.shrink(),
                     ),
                   ],
                 )
-                : CommonNoDataFound(
-                  message: controller.shopTypeEnum.config.categoryEmptyMsg,
-                ),
+                : CommonNoDataFound(message: 'No color category found'),
       ),
     );
   }
 
-  void addNewCategory({required GlobalKey<FormState> keys}) {
-    final config = controller.shopTypeEnum.config;
+  void _addColorSheet({required GlobalKey<FormState> keys}) {
     commonBottomSheet(
-      label: config.categoryAddLabel,
+      label: 'Add Color Category',
       onPressed: () {
         Get.back();
         controller.clear();
@@ -145,12 +160,12 @@ class AnimalCategory extends GetView<AnimalTypeController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             CommonTextField(
-              hintText: config.categoryHintText,
-              label: config.categoryLabel,
+              hintText: 'Enter color name',
+              label: 'Color',
               contentPadding: SymmetricPadding(horizontal: 10).getPadding(),
-              controller: controller.animalCategory,
+              controller: controller.colorName,
               validator: (val) {
-                if (val!.isEmpty) return config.categoryValidationMsg;
+                if (val!.isEmpty) return 'Please enter color name';
                 return null;
               },
             ),
@@ -161,9 +176,7 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                 label: saveButton,
                 onTap: () async {
                   if (keys.currentState!.validate()) {
-                    await controller.addAnimalCategory(
-                      controller.animalCategory.text,
-                    );
+                    await controller.addColor(controller.colorName.text);
                   }
                 },
               ),

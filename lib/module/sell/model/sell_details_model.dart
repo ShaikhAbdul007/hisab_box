@@ -32,6 +32,8 @@ class SellDetailsData {
   String? totalAmount;
   int? roundOff;
   String? finalTotal;
+  String? status;
+  OrderSummary? orderSummary;
   List<SellDetailsItems>? items;
   List<SellDetailsPayments>? payments;
 
@@ -45,6 +47,8 @@ class SellDetailsData {
     this.totalAmount,
     this.roundOff,
     this.finalTotal,
+    this.status,
+    this.orderSummary,
     this.items,
     this.payments,
   });
@@ -59,6 +63,11 @@ class SellDetailsData {
     totalAmount = json['totalAmount'];
     roundOff = json['roundOff'];
     finalTotal = json['finalTotal'];
+    status = json['status'];
+    orderSummary =
+        json['orderSummary'] != null
+            ? OrderSummary.fromJson(json['orderSummary'])
+            : null;
     if (json['items'] != null) {
       items = <SellDetailsItems>[];
       json['items'].forEach((v) {
@@ -84,6 +93,10 @@ class SellDetailsData {
     data['totalAmount'] = totalAmount;
     data['roundOff'] = roundOff;
     data['finalTotal'] = finalTotal;
+    data['status'] = status;
+    if (orderSummary != null) {
+      data['orderSummary'] = orderSummary!.toJson();
+    }
     if (items != null) {
       data['items'] = items!.map((v) => v.toJson()).toList();
     }
@@ -94,55 +107,168 @@ class SellDetailsData {
   }
 }
 
-class SellDetailsItems {
-  String? productName;
-  int? qty;
-  String? rate;
-  int? discount;
-  String? total;
+class OrderSummary {
+  String? subtotal;
+  String? totalDiscount;
+  String? customerSaved;
+  String? roundOff;
+  String? finalAmount;
 
-  SellDetailsItems({
-    this.productName,
-    this.qty,
-    this.rate,
-    this.discount,
-    this.total,
+  OrderSummary({
+    this.subtotal,
+    this.totalDiscount,
+    this.customerSaved,
+    this.roundOff,
+    this.finalAmount,
   });
 
-  SellDetailsItems.fromJson(Map<String, dynamic> json) {
-    productName = json['productName'];
-    qty = json['qty'];
-    rate = json['rate'];
-    discount = json['discount'];
-    total = json['total'];
+  OrderSummary.fromJson(Map<String, dynamic> json) {
+    subtotal = json['subtotal'];
+    totalDiscount = json['totalDiscount'];
+    customerSaved = json['customerSaved'];
+    roundOff = json['roundOff'];
+    finalAmount = json['finalAmount'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+    data['subtotal'] = subtotal;
+    data['totalDiscount'] = totalDiscount;
+    data['customerSaved'] = customerSaved;
+    data['roundOff'] = roundOff;
+    data['finalAmount'] = finalAmount;
+    return data;
+  }
+}
+
+class SellDetailsItems {
+  String? id;
+  String? productId;
+  String? productName;
+  // backward compat aliases — existing code uses these
+
+  // new fields from API
+  int? quantity;
+  String? originalPrice;
+  int? discountPercent;
+  String? discountAmount;
+  int? discountGiven;
+  String? finalPrice;
+  String? totalPrice;
+  String? stockType;
+  String? location;
+  String? barcode;
+  String? flavour;
+  String? weight;
+  String? level;
+  String? rack;
+  int? productDiscount;
+  String? sellingPrice;
+  String? purchasePrice;
+  String? categoryName;
+  String? animalTypeName;
+
+  SellDetailsItems({
+    this.id,
+    this.productId,
+    this.productName,
+
+    this.quantity,
+    this.originalPrice,
+    this.discountPercent,
+    this.discountAmount,
+    this.discountGiven,
+    this.finalPrice,
+    this.totalPrice,
+    this.stockType,
+    this.location,
+    this.barcode,
+    this.flavour,
+    this.weight,
+    this.level,
+    this.rack,
+    this.productDiscount,
+    this.sellingPrice,
+    this.purchasePrice,
+    this.categoryName,
+    this.animalTypeName,
+  });
+
+  SellDetailsItems.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    productId = json['productId'];
+    productName = json['productName'];
+    quantity = json['quantity'];
+    originalPrice = json['originalPrice'];
+    discountPercent = json['discountPercent'];
+    discountAmount = json['discountAmount'];
+    discountGiven = json['discountGiven'];
+    finalPrice = json['finalPrice'];
+    totalPrice = json['totalPrice'];
+    stockType = json['stockType'];
+    location = json['location'];
+    barcode = json['barcode'];
+    flavour = json['flavour'];
+    weight = json['weight'];
+    level = json['level'];
+    rack = json['rack'];
+    productDiscount = json['productDiscount'];
+    sellingPrice = json['sellingPrice'];
+    purchasePrice = json['purchasePrice'];
+    categoryName = json['categoryName'];
+    animalTypeName = json['animalTypeName'];
+    // backward compat
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['productId'] = productId;
     data['productName'] = productName;
-    data['qty'] = qty;
-    data['rate'] = rate;
-    data['discount'] = discount;
-    data['total'] = total;
+    data['quantity'] = quantity;
+    data['originalPrice'] = originalPrice;
+    data['discountPercent'] = discountPercent;
+    data['discountAmount'] = discountAmount;
+    data['discountGiven'] = discountGiven;
+    data['finalPrice'] = finalPrice;
+    data['totalPrice'] = totalPrice;
+    data['stockType'] = stockType;
+    data['location'] = location;
+    data['barcode'] = barcode;
+    data['flavour'] = flavour;
+    data['weight'] = weight;
+    data['level'] = level;
+    data['rack'] = rack;
+    data['productDiscount'] = productDiscount;
+    data['sellingPrice'] = sellingPrice;
+    data['purchasePrice'] = purchasePrice;
+    data['categoryName'] = categoryName;
+    data['animalTypeName'] = animalTypeName;
     return data;
   }
 }
 
 class SellDetailsPayments {
+  String? id;
   String? mode;
   String? amount;
+  String? referenceNo;
 
-  SellDetailsPayments({this.mode, this.amount});
+  SellDetailsPayments({this.id, this.mode, this.amount, this.referenceNo});
 
   SellDetailsPayments.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
     mode = json['mode'];
     amount = json['amount'];
+    referenceNo = json['referenceNo'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
     data['mode'] = mode;
     data['amount'] = amount;
+    data['referenceNo'] = referenceNo;
     return data;
   }
 }

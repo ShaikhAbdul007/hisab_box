@@ -15,7 +15,7 @@ class UserProfileRepo {
       );
       return UserModel.fromJson(response);
     } catch (e) {
-      rethrow;
+      return UserModel(success: false, msg: e.toString());
     }
   }
 
@@ -26,7 +26,7 @@ class UserProfileRepo {
       );
       return UserModel.fromJson(response);
     } catch (e) {
-      rethrow;
+      return UserModel(success: false, msg: e.toString());
     }
   }
 }

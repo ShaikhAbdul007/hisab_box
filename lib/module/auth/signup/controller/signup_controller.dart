@@ -99,6 +99,9 @@ class SignupController extends GetxController with CacheManager {
           "p_add_user": true,
           "p_add_bank_details": true,
           "p_edit_profile": true,
+          "p_create_grn": true,
+          "p_approve_grn": true,
+          "p_view_grn": true,
         }),
       };
 
@@ -123,7 +126,7 @@ class SignupController extends GetxController with CacheManager {
 
       if (response.success == success) {
         saveUserData(response);
-        showSnackBar(error: singUpSuccessFul);
+        showSnackBar(error: singUpSuccessFul, isError: false);
         AppRoutes.navigateRoutes(routeName: AppRouteName.login);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);

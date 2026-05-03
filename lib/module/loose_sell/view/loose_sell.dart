@@ -118,6 +118,7 @@ class LooseSell extends GetView<LooseController> {
                                       },
                                       isInventoryScanSelected: true,
                                       inventoryModel: inventoryList,
+                                      shopType: controller.shopTypeEnum,
                                     )
                                     : Container(),
                           );

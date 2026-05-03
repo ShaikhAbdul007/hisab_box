@@ -22,7 +22,7 @@ class SignupView extends GetView<SignupController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.greyColorShade100,
+      backgroundColor: AppColors.whiteColor,
       body: CustomPadding(
         paddingOption: SymmetricPadding(horizontal: 20, vertical: 40),
         child: Obx(
@@ -64,6 +64,7 @@ class SignupView extends GetView<SignupController> {
                           () => ShopAddress(
                             notifyParent: (v) {
                               controller.shopType.text = v;
+                              print(v);
                             },
                             profileImage:
                                 controller.profileImage.value ??

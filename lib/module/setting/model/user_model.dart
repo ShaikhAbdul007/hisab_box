@@ -61,7 +61,10 @@ class UserModelData {
   dynamic profileImage;
   dynamic fcmToken;
   dynamic parentId;
-  String? image;
+  bool? viewGrn;
+  bool? approveGrn;
+  bool? createGrn;
+  String? profilepic;
 
   UserModelData({
     this.createdAt,
@@ -74,6 +77,7 @@ class UserModelData {
     this.address,
     this.city,
     this.state,
+    this.profilepic,
     this.pincode,
     this.roleId,
     this.pCustomerList,
@@ -101,8 +105,10 @@ class UserModelData {
     this.alternateMobileNo,
     this.profileImage,
     this.fcmToken,
-    this.image,
     this.parentId,
+    this.viewGrn,
+    this.approveGrn,
+    this.createGrn,
   });
 
   UserModelData.fromJson(Map<String, dynamic> json) {
@@ -114,6 +120,7 @@ class UserModelData {
     mobileNo = json['mobile_no'];
     shopType = json['shop_type'];
     address = json['address'];
+    profilepic = json['profilepic'];
     city = json['city'];
     state = json['state'];
     pincode = json['pincode'];
@@ -144,6 +151,9 @@ class UserModelData {
     profileImage = json['profile_image'];
     fcmToken = json['fcm_token'];
     parentId = json['parent_id'];
+    createGrn = json['p_create_grn'];
+    approveGrn = json['p_approve_grn'];
+    viewGrn = json['p_view_grn'];
   }
 
   Map<String, dynamic> toJson() {
@@ -157,6 +167,7 @@ class UserModelData {
     data['shop_type'] = shopType;
     data['address'] = address;
     data['city'] = city;
+    data['profilepic'] = profilepic;
     data['state'] = state;
     data['pincode'] = pincode;
     data['role_id'] = roleId;
@@ -186,6 +197,9 @@ class UserModelData {
     data['profile_image'] = profileImage;
     data['fcm_token'] = fcmToken;
     data['parent_id'] = parentId;
+    data['p_create_grn'] = createGrn;
+    data['p_approve_grn'] = approveGrn;
+    data['p_view_grn'] = viewGrn;
     return data;
   }
 }

@@ -9,6 +9,8 @@ import 'package:inventory/module/add_user/view/all_user_view.dart';
 import 'package:inventory/module/add_user/view/user_role_view.dart';
 import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
 import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
+import 'package:inventory/module/color_category/binding/color_category_binding.dart';
+import 'package:inventory/module/color_category/view/color_category_view.dart';
 import 'package:inventory/module/credits_amount/binding/credit_binding.dart';
 import 'package:inventory/module/invoice/binding/invoice_binding.dart';
 import 'package:inventory/module/invoice/view/barcode.dart';
@@ -276,6 +278,11 @@ class AppRoutes {
       page: () => ProductDetailView(),
       binding: ProductDetailsBinding(),
     ),
+    GetPage(
+      name: AppRouteName.colorCategory,
+      page: () => ColorCategoryView(),
+      binding: ColorCategoryBinding(),
+    ),
   ];
 
   static Future<dynamic> futureNavigationToRoute({
@@ -401,6 +408,9 @@ class AppRoutes {
         break;
       case AppRouteName.notificationView:
         Get.toNamed(AppRouteName.notificationView, arguments: data);
+        break;
+      case AppRouteName.colorCategory:
+        Get.toNamed(AppRouteName.colorCategory, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

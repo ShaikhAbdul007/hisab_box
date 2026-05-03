@@ -1,3 +1,5 @@
+import 'package:inventory/helper/shop_config.dart';
+
 enum ShopType {
   clothingShop,
   petShop;
@@ -11,4 +13,6 @@ enum ShopType {
         return ShopType.petShop;
     }
   }
+
+  ShopConfig get config => configFor(this);
 }

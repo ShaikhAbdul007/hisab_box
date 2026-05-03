@@ -4,19 +4,31 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/module/category/model/category_model.dart';
+import 'package:inventory/module/category/repo/animal_category_repo.dart';
+import 'package:inventory/module/category/repo/category_repo.dart';
+import 'package:inventory/module/color_category/repo/color_category_repo.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
-import '../../category/model/category_model.dart';
 import 'package:get/get.dart';
 
 class GenerateBarcodeController extends GetxController with CacheManager {
   ProductRepo productRepo = ProductRepo();
+  CategoryRepo categoryRepo = CategoryRepo();
+  AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
+  ColorCategoryRepo colorCategoryRepo = ColorCategoryRepo();
+
   RxBool categoryListLoading = false.obs;
-  final inventoryScanKey = GlobalKey<FormState>();
   RxBool animalCategoryListLoading = false.obs;
+  RxBool colorListLoading = false.obs;
+
+  final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
+  RxList<CategoryModelListData> colorList = <CategoryModelListData>[].obs;
+
   TextEditingController level = TextEditingController();
   TextEditingController rack = TextEditingController();
   TextEditingController productName = TextEditingController();
@@ -24,6 +36,7 @@ class GenerateBarcodeController extends GetxController with CacheManager {
   TextEditingController looseSellingPrice = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController animalType = TextEditingController();
+  TextEditingController color = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController purchasePrice = TextEditingController();
   TextEditingController flavor = TextEditingController();
@@ -39,11 +52,23 @@ class GenerateBarcodeController extends GetxController with CacheManager {
   RxBool isSaveLoading = false.obs;
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxString dayDate = ''.obs;
+  RxString shopType = ''.obs;
+  RxString brandType = ''.obs;
+
+  // Selected IDs for dropdowns
+  RxnString selectedCategoryId = RxnString(null);
+  RxnString selectedAnimalTypeId = RxnString(null);
+  RxnString selectedColorId = RxnString(null);
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   @override
   void onInit() {
     setBarcode();
     dayDate.value = setFormateDate();
+    purchaseDate.text = setFormateDate(); // default today
+    final user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
     super.onInit();
   }
 
@@ -75,6 +100,9 @@ class GenerateBarcodeController extends GetxController with CacheManager {
   void getCategoryDataAndAnimalData() async {
     await fetchCategories();
     await fetchAnimalCategories();
+    if (shopTypeEnum == ShopType.clothingShop) {
+      await fetchColorCategories();
+    }
   }
 
   void calculatePurchasePrice() {
@@ -87,45 +115,61 @@ class GenerateBarcodeController extends GetxController with CacheManager {
 
   Future<void> fetchCategories() async {
     categoryListLoading.value = true;
-
     try {
+      // Cache first
       final cached = await retrieveCategory();
-      if (cached.isNotEmpty) {
-        categoryList.value = cached;
+      if (cached.isNotEmpty) categoryList.value = cached;
+      // Always fetch fresh from API
+      final response = await categoryRepo.getCategory();
+      if (response.success == success) {
+        categoryList.value = response.categorymodeldata?.data ?? [];
+        saveCategoryList(categoryList);
       }
     } catch (e) {
       AppLogger.info(("🚨 Category Error: $e").toString());
-      showSnackBar(error: e.toString());
     } finally {
       categoryListLoading.value = false;
     }
   }
 
-  // 🔥 FETCH ANIMAL CATEGORIES
   Future<void> fetchAnimalCategories() async {
     animalCategoryListLoading.value = true;
-
     try {
-      var cached = await retrieveAnimalCategory();
-      if (cached.isNotEmpty) {
-        animalTypeList.value = cached;
+      // Cache first
+      final cached = await retrieveAnimalCategory();
+      if (cached.isNotEmpty) animalTypeList.value = cached;
+      // Always fetch fresh from API
+      final response = await animalCategoryRepo.getAnimalCategory();
+      if (response.success == success) {
+        animalTypeList.value = response.categorymodeldata?.data ?? [];
+        saveAnimalList(animalTypeList);
       }
     } catch (e) {
       AppLogger.info(("🚨 Animal Error: $e").toString());
-      showSnackBar(error: e.toString());
     } finally {
       animalCategoryListLoading.value = false;
     }
   }
 
+  Future<void> fetchColorCategories() async {
+    colorListLoading.value = true;
+    try {
+      final response = await colorCategoryRepo.getColorCategories();
+      if (response.success == success) {
+        colorList.value = response.categorymodeldata?.data ?? [];
+      }
+    } catch (e) {
+      AppLogger.info(("🚨 Color Error: $e").toString());
+    } finally {
+      colorListLoading.value = false;
+    }
+  }
+
   String generateBarcodeNo() {
     int timestamp = DateTime.now().millisecondsSinceEpoch;
-
     String timeStr = timestamp.toString();
     String uniqueSuffix = timeStr.substring(timeStr.length - 8);
-
-    int randomExtra = Random().nextInt(90) + 10; // 10 se 99 tak random
-
+    int randomExtra = Random().nextInt(90) + 10;
     return "HB$uniqueSuffix$randomExtra";
   }
 
@@ -150,35 +194,21 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     }
   }
 
-  // --- 4. Delete Product (Supabase Delete + Hive Update) ---
-  Future<void> deleteProduct(String productId) async {
-    try {
-      // 1. Supabase se delete karo
-      // await SupabaseConfig.from('products').delete().eq('id', productId);
-
-      // 2. Hive se delete karo
-      // List<InventoryItem> currentCachedProducts =
-      //     LocalService.getCachedProducts();
-      // currentCachedProducts.removeWhere((p) => p.id == productId);
-      // await LocalService.saveProducts(currentCachedProducts);
-
-      showSnackBar(error: "Product deleted successfully");
-    } catch (e) {
-      AppLogger.info(("🚨 Delete Error: $e").toString());
-      showSnackBar(error: e.toString());
-    }
-  }
-
   void clear() {
     barcode.clear();
     productName.clear();
     looseQuantity.clear();
     looseSellingPrice.clear();
     category.clear();
+    color.clear();
     sellingPrice.clear();
     purchasePrice.clear();
     flavor.clear();
     weight.clear();
     quantity.clear();
+    selectedCategoryId.value = null;
+    selectedAnimalTypeId.value = null;
+    selectedColorId.value = null;
+    brandType.value = '';
   }
 }

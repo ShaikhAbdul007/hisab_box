@@ -76,8 +76,8 @@ class SellListAfterScanController extends GetxController with CacheManager {
   RxString shopType = ''.obs;
   var data = Get.arguments;
   String? id;
-  List<SellItem> sellList = [];
-  var printInvoice = Rx<PrintInvoiceModel?>(null);
+  //List<SellItem> sellList = [];
+  // var printInvoice = Rx<PrintInvoiceModel?>(null);
 
   @override
   void onInit() {
@@ -196,7 +196,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
       removeCartProductList();
       AppRoutes.navigateRoutes(
         routeName: AppRouteName.orderView,
-        data: printInvoice.value,
+        data: response.data?.invoiceNo,
       );
     } else {
       Get.back();

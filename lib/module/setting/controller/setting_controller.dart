@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/setting/model/user_model.dart';
 import 'package:inventory/module/setting/repo/logout_repo.dart';
 import 'package:inventory/module/user_profile/repo/user_repo.dart';
@@ -16,6 +17,8 @@ class SettingController extends GetxController with CacheManager {
   RxString storeName = ''.obs;
   RxString email = ''.obs;
   RxString shoptype = ''.obs;
+
+  ShopType get shopTypeEnum => ShopType.fromString(shoptype.value);
   RxBool isUserlogout = false.obs;
   RxBool discountPerProduct = false.obs;
   RxBool isProfileLoading = false.obs;
@@ -40,11 +43,13 @@ class SettingController extends GetxController with CacheManager {
         storeName.value = user.data?.name ?? '';
         email.value = user.data?.email ?? '';
         shoptype.value = user.data?.shopType ?? 'Pet Shop';
+        profileImageUrl.value = user.data?.profilepic ?? '';
       } else {
         await getUserData();
         storeName.value = userModel.value.data?.name ?? '';
         email.value = userModel.value.data?.email ?? '';
-        shoptype.value = user.data?.shopType ?? 'Pet Shop';
+        shoptype.value = userModel.value.data?.shopType ?? 'Pet Shop';
+        profileImageUrl.value = userModel.value.data?.profilepic ?? '';
       }
     } catch (e) {
       showSnackBar(error: e.toString());

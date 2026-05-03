@@ -5,6 +5,9 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/module/category/repo/animal_category_repo.dart';
+import 'package:inventory/module/category/repo/category_repo.dart';
+import 'package:inventory/module/color_category/repo/color_category_repo.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
@@ -14,11 +17,20 @@ import '../../category/model/category_model.dart';
 class ProductController extends GetxController with CacheManager {
   final inventoryScanKey = GlobalKey<FormState>();
   ProductRepo productRepo = ProductRepo();
+  CategoryRepo categoryRepo = CategoryRepo();
+  AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
+  ColorCategoryRepo colorCategoryRepo = ColorCategoryRepo();
 
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
+  RxList<CategoryModelListData> colorList = <CategoryModelListData>[].obs;
   RxList<InventoryItem> looseCatogorieList = <InventoryItem>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
+
+  // Selected IDs
+  RxnString selectedCategoryId = RxnString(null);
+  RxnString selectedAnimalTypeId = RxnString(null);
+  RxnString selectedColorId = RxnString(null);
 
   // Controllers
   TextEditingController productName = TextEditingController();
@@ -26,6 +38,7 @@ class ProductController extends GetxController with CacheManager {
   TextEditingController looseSellingPrice = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController animalType = TextEditingController();
+  TextEditingController color = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController location = TextEditingController();
   TextEditingController discount = TextEditingController(text: '0');
@@ -47,8 +60,10 @@ class ProductController extends GetxController with CacheManager {
   RxBool loosedProduct = false.obs;
   RxBool categoryListLoading = false.obs;
   RxBool animalCategoryListLoading = false.obs;
+  RxBool colorListLoading = false.obs;
   RxString dayDate = ''.obs;
   RxString shopType = ''.obs;
+  RxString brandType = ''.obs;
   bool isLoose = false;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
@@ -57,9 +72,9 @@ class ProductController extends GetxController with CacheManager {
   @override
   void onInit() async {
     dayDate.value = setFormateDate();
+    purchaseDate.text = setFormateDate(); // default today
     setLoosedProduct();
     setBarcode();
-    // Categories aur Animals ko fetch karna padega kyunki ye GlobalStore mein nahi hain
     getCategoryData();
     super.onInit();
   }
@@ -89,43 +104,59 @@ class ProductController extends GetxController with CacheManager {
   void getCategoryData() async {
     await fetchCategories();
     await fetchAnimalCategories();
+    if (shopTypeEnum == ShopType.clothingShop) {
+      await fetchColorCategories();
+    }
   }
 
-  // 🔥 FETCH CATEGORIES (From Hive then Supabase)
   Future<void> fetchCategories() async {
     categoryListLoading.value = true;
-
     try {
       final cached = await retrieveCategory();
-      if (cached.isNotEmpty) {
-        categoryList.value = cached;
+      if (cached.isNotEmpty) categoryList.value = cached;
+      final response = await categoryRepo.getCategory();
+      if (response.success == success) {
+        categoryList.value = response.categorymodeldata?.data ?? [];
+        saveCategoryList(categoryList);
       }
     } catch (e) {
       AppLogger.info(("🚨 Category Error: $e").toString());
-      showSnackBar(error: e.toString());
     } finally {
       categoryListLoading.value = false;
     }
   }
 
-  // 🔥 FETCH ANIMAL CATEGORIES
   Future<void> fetchAnimalCategories() async {
     animalCategoryListLoading.value = true;
-
     try {
-      var cached = await retrieveAnimalCategory();
-      if (cached.isNotEmpty) {
-        animalTypeList.value = cached;
+      final cached = await retrieveAnimalCategory();
+      if (cached.isNotEmpty) animalTypeList.value = cached;
+      final response = await animalCategoryRepo.getAnimalCategory();
+      if (response.success == success) {
+        animalTypeList.value = response.categorymodeldata?.data ?? [];
+        saveAnimalList(animalTypeList);
       }
     } catch (e) {
       AppLogger.info(("🚨 Animal Error: $e").toString());
-      showSnackBar(error: e.toString());
     } finally {
       animalCategoryListLoading.value = false;
     }
   }
 
-  // 🔥 SAVE NEW PRODUCT
+  Future<void> fetchColorCategories() async {
+    colorListLoading.value = true;
+    try {
+      final response = await colorCategoryRepo.getColorCategories();
+      if (response.success == success) {
+        colorList.value = response.categorymodeldata?.data ?? [];
+      }
+    } catch (e) {
+      AppLogger.info(("🚨 Color Error: $e").toString());
+    } finally {
+      colorListLoading.value = false;
+    }
+  }
+
   Future<void> saveNewProduct({required dynamic body}) async {
     isSaveLoading.value = true;
     try {
@@ -147,7 +178,6 @@ class ProductController extends GetxController with CacheManager {
     }
   }
 
-  // 🔥 SAVE LOOSE PRODUCT
   Future<void> saveNewLooseProduct({required dynamic body}) async {
     isLooseProductSave.value = true;
     try {
@@ -174,11 +204,16 @@ class ProductController extends GetxController with CacheManager {
     looseQuantity.clear();
     looseSellingPrice.clear();
     category.clear();
+    color.clear();
     sellingPrice.clear();
     purchasePrice.clear();
     flavor.clear();
     weight.clear();
     quantity.clear();
+    selectedCategoryId.value = null;
+    selectedAnimalTypeId.value = null;
+    selectedColorId.value = null;
+    brandType.value = '';
   }
 
   @override
@@ -188,6 +223,7 @@ class ProductController extends GetxController with CacheManager {
     looseSellingPrice.dispose();
     category.dispose();
     animalType.dispose();
+    color.dispose();
     sellingPrice.dispose();
     location.dispose();
     discount.dispose();

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
@@ -24,6 +25,8 @@ class ProductDetailsController extends GetxController with CacheManager {
   TextEditingController looseSellingPrice = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController animalType = TextEditingController();
+  TextEditingController color = TextEditingController();
+  TextEditingController brand = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController discount = TextEditingController();
   TextEditingController purchasePrice = TextEditingController();
@@ -51,7 +54,13 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxBool isDataLoading = false.obs;
   RxString dayDate = ''.obs;
   RxString productId = ''.obs;
+  RxString shopType = ''.obs;
+  RxString rxProductName = ''.obs;
+  RxString rxQuantity = ''.obs;
+  RxString brandType = ''.obs;
   bool isLoose = false;
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   RxBool isTransferLoading = false.obs;
   var data = Get.arguments;
@@ -110,6 +119,8 @@ class ProductDetailsController extends GetxController with CacheManager {
 
   void getCategoryData() async {
     isDataLoading.value = true;
+    final user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
     await fetchCategories();
     await fetchAnimalCategories();
     setData();
@@ -152,6 +163,8 @@ class ProductDetailsController extends GetxController with CacheManager {
       barcode.text = p.barcode ?? '';
       quantity.text = p.quantity.toString();
       barcodeQytController.text = p.quantity.toString();
+      rxProductName.value = p.name ?? '';
+      rxQuantity.value = p.quantity.toString();
       location.text = p.location ?? '';
       sellingPrice.text = p.sellingPrice.toString();
       purchasePrice.text = p.purchasePrice.toString();
@@ -159,6 +172,9 @@ class ProductDetailsController extends GetxController with CacheManager {
       weight.text = p.weight ?? '';
       rack.text = p.rack ?? '';
       level.text = p.level ?? '';
+      color.text = p.color ?? '';
+      brand.text = p.brand ?? '';
+      brandType.value = p.brandType ?? '';
       isLoose = p.isloosed ?? false;
       discount.text = p.discount.toString();
       purchaseDate.text = p.purchaseDate ?? '';
@@ -178,11 +194,16 @@ class ProductDetailsController extends GetxController with CacheManager {
       rack.text = p['rack']?.toString() ?? '';
       level.text = p['level']?.toString() ?? '';
       barcodeQytController.text = p['quantity']?.toString() ?? '0';
+      rxProductName.value = p['name']?.toString() ?? '';
+      rxQuantity.value = p['quantity']?.toString() ?? '0';
 
       sellingPrice.text = p['sellingPrice']?.toString() ?? '0';
       purchasePrice.text = p['purchasePrice']?.toString() ?? '0';
       flavor.text = p['flavor']?.toString() ?? p['flavour']?.toString() ?? '';
       weight.text = p['weight']?.toString() ?? '';
+      color.text = p['color']?.toString() ?? '';
+      brand.text = p['brand']?.toString() ?? '';
+      brandType.value = p['brand_type']?.toString() ?? '';
       isLoose = p['isLoosed'] ?? false;
       discount.text = p['discount']?.toString() ?? '0';
       purchaseDate.text = p['purchaseDate']?.toString() ?? '';

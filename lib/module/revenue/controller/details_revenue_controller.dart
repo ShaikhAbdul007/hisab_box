@@ -18,7 +18,7 @@ class DetailsRevenueController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    print(data.billNo);
+    AppLogger.info('saleId: ${data.saleId}');
     fetchSales(saleId: data.saleId);
   }
 

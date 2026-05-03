@@ -65,8 +65,8 @@ class AddUserView extends GetView<AddUserController> {
                         listItems: controller.userRoleList,
                         hintText: 'Select add user role first',
                         notifyParent: (v) {
-                          controller.selectedRole.value = v.id!;
-                          print(v.id);
+                          controller.selectedRole.value = v;
+                          print(v);
                           unfocus();
                         },
                         //errorText: 'Select ',
@@ -75,8 +75,8 @@ class AddUserView extends GetView<AddUserController> {
                         listItems: controller.userRoleList,
                         hintText: 'Select Role',
                         notifyParent: (v) {
-                          controller.selectedRole.value = v.id!;
-                          print(v.id);
+                          controller.selectedRole.value = v!;
+                          print(v);
                           unfocus();
                         },
                         // errorText: 'Select staff type',

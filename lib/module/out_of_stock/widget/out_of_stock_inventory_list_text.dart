@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/near_expire_product/model/near_expiry_model.dart';
 
@@ -11,17 +14,22 @@ class OutOfStockInventoryListText extends StatelessWidget {
   final NeaExpiryItemData neaExpiryItemData;
   final void Function() deleteOnTap;
   final bool isDeleteLoading;
+  final ShopType shopType;
+
   const OutOfStockInventoryListText({
     super.key,
     required this.neaExpiryItemData,
     required this.deleteOnTap,
     required this.isDeleteLoading,
+    required this.shopType,
   });
+
+  bool get _isClothing => shopType == ShopType.clothingShop;
 
   @override
   Widget build(BuildContext context) {
-    String rack = neaExpiryItemData.rack ?? '';
-    String level = neaExpiryItemData.level ?? '';
+    final String rack = neaExpiryItemData.rack ?? '';
+    final String level = neaExpiryItemData.level ?? '';
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
@@ -33,86 +41,75 @@ class OutOfStockInventoryListText extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    neaExpiryItemData.name ?? '',
-                    style: CustomTextStyle.customPoppin(fontSize: 17),
-                  ),
-                  if (neaExpiryItemData.flavour case ('' || null)) ...{
-                    Container(),
-                  } else ...{
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  neaExpiryItemData.name ?? '',
+                  style: CustomTextStyle.customPoppin(fontSize: 17),
+                ),
+                if (!_isClothing) ...[
+                  if ((neaExpiryItemData.flavour ?? '').isNotEmpty) ...[
                     setHeight(height: 2),
                     Text(
-                      neaExpiryItemData.flavour ?? '',
+                      neaExpiryItemData.flavour!,
                       style: CustomTextStyle.customOpenSans(
                         color: AppColors.greyColor,
                       ),
                     ),
-                  },
-                  Row(
-                    children: [
-                      Text(
-                        '${neaExpiryItemData.animalCategoryName}',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
-                      if (neaExpiryItemData.weight?.isNotEmpty ?? false) ...{
-                        Text(
-                          '/${neaExpiryItemData.weight}',
-                          style: CustomTextStyle.customOpenSans(
-                            color: AppColors.greyColor,
-                          ),
-                        ),
-                      },
-                      Text(
-                        '/${neaExpiryItemData.categoryName}',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
-                      Icon(CupertinoIcons.map_pin, size: 15.sp),
-                      Text(
-                        level.isNotEmpty && rack.isNotEmpty
-                            ? '${neaExpiryItemData.location}/$level/$rack'
-                            : level.isEmpty && rack.isNotEmpty
-                            ? '${neaExpiryItemData.location}/$rack'
-                            : rack.isEmpty && level.isNotEmpty
-                            ? '${neaExpiryItemData.location}/$level'
-                            : '${neaExpiryItemData.location}',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        (neaExpiryItemData.purchaseDate ?? ''),
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
-                      Text(
-                        ' - ',
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
-                      Text(
-                        (neaExpiryItemData.expiryDate ?? ''),
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.redColor,
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
+                  _infoRow([
+                    neaExpiryItemData.weight,
+                    neaExpiryItemData.categoryName,
+                  ]),
+                  if ((neaExpiryItemData.purchaseDate ?? '').isNotEmpty ||
+                      (neaExpiryItemData.expiryDate ?? '').isNotEmpty)
+                    _dateRow(
+                      neaExpiryItemData.purchaseDate,
+                      neaExpiryItemData.expiryDate,
+                    ),
                 ],
-              ),
+                if (_isClothing) ...[
+                  _infoRow([
+                    neaExpiryItemData.categoryName,
+                    neaExpiryItemData.color,
+                    neaExpiryItemData.brand,
+                  ]),
+                  if ((neaExpiryItemData.brandType ?? '').isNotEmpty)
+                    Text(
+                      neaExpiryItemData.brandType!,
+                      style: CustomTextStyle.customOpenSans(
+                        color: AppColors.greyColor,
+                      ),
+                    ),
+                ],
+                if ((neaExpiryItemData.animalCategoryName ?? '').isNotEmpty)
+                  Text(
+                    neaExpiryItemData.animalCategoryName!,
+                    style: CustomTextStyle.customOpenSans(
+                      color: AppColors.greyColor,
+                    ),
+                  ),
+                Row(
+                  children: [
+                    Icon(CupertinoIcons.map_pin, size: 15.sp),
+                    Text(
+                      _locationText(level, rack),
+                      style: CustomTextStyle.customOpenSans(
+                        color: AppColors.greyColor,
+                      ),
+                    ),
+                  ],
+                ),
+                if ((neaExpiryItemData.barcode ?? '').isNotEmpty)
+                  Text(
+                    neaExpiryItemData.barcode!,
+                    style: CustomTextStyle.customOpenSans(
+                      color: AppColors.greyColor,
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
             ),
           ),
           Expanded(
@@ -125,7 +122,7 @@ class OutOfStockInventoryListText extends StatelessWidget {
                 ),
                 setHeight(height: 5),
                 Text(
-                  '\u{20B9} ${neaExpiryItemData.sellingPrice}',
+                  '\u{20B9} ${neaExpiryItemData.sellingPrice ?? ''}',
                   style: CustomTextStyle.customPoppin(
                     color: AppColors.blackColor,
                     fontSize: 18,
@@ -165,5 +162,54 @@ class OutOfStockInventoryListText extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _infoRow(List<String?> values) {
+    final parts = values.where((v) => v != null && v.isNotEmpty).toList();
+    if (parts.isEmpty) return const SizedBox.shrink();
+    return Text(
+      parts.join(' / '),
+      style: CustomTextStyle.customOpenSans(color: AppColors.greyColor),
+    );
+  }
+
+  Widget _dateRow(String? purchase, String? expiry) {
+    final p = formatDateTime(purchase ?? '');
+    final e = formatDateTime(expiry ?? '');
+    if (p.isEmpty && e.isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: [
+        if (p.isNotEmpty)
+          Text(
+            p,
+            style: CustomTextStyle.customOpenSans(
+              color: AppColors.greyColor,
+              fontSize: 11,
+            ),
+          ),
+        if (p.isNotEmpty && e.isNotEmpty)
+          Icon(
+            CupertinoIcons.arrow_right,
+            size: 12.sp,
+            color: AppColors.blackColor,
+          ),
+        if (e.isNotEmpty)
+          Text(
+            e,
+            style: CustomTextStyle.customOpenSans(
+              color: AppColors.redColor,
+              fontSize: 11,
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _locationText(String level, String rack) {
+    final loc = neaExpiryItemData.location ?? '';
+    if (level.isNotEmpty && rack.isNotEmpty) return '$loc/$level/$rack';
+    if (rack.isNotEmpty) return '$loc/$rack';
+    if (level.isNotEmpty) return '$loc/$level';
+    return loc;
   }
 }

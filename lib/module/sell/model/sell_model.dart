@@ -23,8 +23,8 @@ class SellModel {
 }
 
 class SellData {
-  int? grandTotal;
-  int? totalBills;
+  num? grandTotal;
+  num? totalBills;
   List<SellItemData>? data;
 
   SellData({this.grandTotal, this.totalBills, this.data});

@@ -143,7 +143,9 @@ class TabletScreen extends StatelessWidget {
                                     );
                                   },
                                 )
-                                : CommonNoDataFound(message: 'No Recent Activity found'),
+                                : CommonNoDataFound(
+                                  message: 'No Recent Activity found',
+                                ),
                       ),
                     ],
                   ),
@@ -270,7 +272,9 @@ class DeskTopScreen extends StatelessWidget {
                                     );
                                   },
                                 )
-                                : CommonNoDataFound(message: 'No Recent Activity found'),
+                                : CommonNoDataFound(
+                                  message: 'No Recent Activity found',
+                                ),
                       ),
                     ],
                   ),
@@ -460,7 +464,9 @@ class MobileScreen extends StatelessWidget {
                                 },
                               ),
                             )
-                            : CommonNoDataFound(message: 'No Recent Activity found'),
+                            : CommonNoDataFound(
+                              message: 'No Recent Activity found',
+                            ),
                       ],
                     ),
                   ),

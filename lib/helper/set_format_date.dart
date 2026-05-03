@@ -19,7 +19,7 @@ String formatDateTime(
   String timeFormat = 'hh:mm:ss a',
 }) {
   try {
-    final DateTime parsedDate = DateTime.parse(dateString); // ISO SAFE
+    final DateTime parsedDate = DateTime.parse(dateString).toLocal(); // 🔥 FIX
 
     final List<String> parts = [];
 
@@ -33,7 +33,7 @@ String formatDateTime(
 
     return parts.join(' ');
   } catch (e) {
-    return dateString; // fallback (never crash UI)
+    return dateString;
   }
 }
 
@@ -59,4 +59,22 @@ String? parseAppDate(String? value) {
   final parsedDate = DateFormat('dd-MM-yyyy').parseStrict(input);
 
   return DateFormat('yyyy-MM-dd').format(parsedDate);
+}
+
+num safeNum(dynamic value) {
+  if (value == null) return 0;
+
+  if (value is num) return value;
+
+  final str = value.toString().trim();
+
+  if (str.isEmpty) return 0;
+
+  final intVal = int.tryParse(str);
+  if (intVal != null) return intVal;
+
+  final doubleVal = double.tryParse(str);
+  if (doubleVal != null) return doubleVal;
+
+  return 0;
 }

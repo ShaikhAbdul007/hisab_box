@@ -4,124 +4,79 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/customer/model/all_customer_model.dart';
-import 'package:inventory/module/order_complete/model/customer_details_model.dart';
-import '../../sell/model/print_model.dart';
+import 'package:inventory/module/customer/repo/customer_repo.dart';
+import 'package:inventory/module/invoice/model/invoice_model.dart';
+import 'package:inventory/module/invoice/repo/invoice_repo.dart';
 
 class OrderController extends GetxController with CacheManager {
+  InvoiceRepo invoiceRepo = InvoiceRepo();
+  CustomerRepo customerRepo = CustomerRepo();
+
   TextEditingController mobileNumber = TextEditingController();
   TextEditingController name = TextEditingController();
   TextEditingController address = TextEditingController();
   TextEditingController description = TextEditingController();
+
   RxList<CustomerItem> customerDetails = <CustomerItem>[].obs;
   RxBool saveCustomerWithInvoiceLoading = false.obs;
   RxBool homeButtonVisible = true.obs;
+  RxBool isInvoiceLoading = false.obs;
+  Rx<InvoiceData?> invoiceData = Rx<InvoiceData?>(null);
 
-  late PrintInvoiceModel data;
+  var data = Get.arguments;
 
   @override
   void onInit() {
-    if (Get.arguments != null) {
-      data = Get.arguments as PrintInvoiceModel;
-      setButtonValue();
+    if (data != null) {
+      _fetchInvoice();
+      _checkCreditFromInvoice();
     }
-    loadAllCustomers();
+    _loadCustomers();
     super.onInit();
   }
 
-  void setButtonValue() {
-    // 3. Ab ye error nahi dega kyunki 'data' ab Model ban chuka hai
-    if (data.payment != null && (data.payment!.credit > 0)) {
-      homeButtonVisible.value = false;
-    } else {
-      homeButtonVisible.value = true;
+  /// Re-check after invoiceData loads — payments list se credit mode check
+  void _checkCreditFromInvoice() {
+    final payments = invoiceData.value?.payments ?? [];
+    final hasCredit = payments.any(
+      (p) =>
+          (p.mode ?? '').toLowerCase() == 'credit' &&
+          (double.tryParse(p.amount ?? '0') ?? 0) > 0,
+    );
+    homeButtonVisible.value = !hasCredit;
+  }
+
+  Future<void> _fetchInvoice() async {
+    final billNo = data.billNo?.toString() ?? '';
+    if (billNo.isEmpty) return;
+    isInvoiceLoading.value = true;
+    try {
+      final response = await invoiceRepo.fetchInvoice(invoiceNo: billNo);
+      if (response.success == true && response.data != null) {
+        invoiceData.value = response.data;
+        _checkCreditFromInvoice();
+      }
+    } catch (e) {
+      AppLogger.info(("🚨 Invoice fetch error: $e").toString());
+    } finally {
+      isInvoiceLoading.value = false;
     }
   }
 
-  Future<List<CustomerDetails>> loadAllCustomers() async {
+  Future<void> _loadCustomers() async {
     try {
-      return [];
+      final response = await customerRepo.getAllCustomer();
+      if (response.success == true) {
+        customerDetails.value = response.data?.customers ?? [];
+      }
     } catch (e) {
       AppLogger.info(("Error loading customers: $e").toString());
-      showSnackBar(error: e.toString());
-      return [];
     }
   }
 
-  // ===============================
-  // 🔥 SAVE + CACHE SYNC (SUPABASE)
-  // ===============================
-  Future<bool> saveCustomerWithInvoice({
-    required PrintInvoiceModel invoice,
-  }) async {
-    final String? currentUid = resolveUserId(
-      saveCustomerWithInvoiceLoading.value,
-    );
-    if (currentUid == null) return false;
-
+  Future<bool> saveCustomerWithInvoice({required InvoiceModel invoice}) async {
     saveCustomerWithInvoiceLoading.value = true;
-
     try {
-      // String cMobile = mobileNumber.text.trim();
-      // if (cMobile.isEmpty) return false;
-
-      // // 1. Customer Search/Create
-      // final customerResponse =
-      //     await SupabaseConfig.from('customers')
-      //         .select('id')
-      //         .eq('mobile_number', cMobile)
-      //         .eq('user_id', currentUid)
-      //         .maybeSingle();
-
-      // dynamic customerId;
-
-      // if (customerResponse != null) {
-      //   customerId = customerResponse['id'];
-      //   await SupabaseConfig.from('customers')
-      //       .update({
-      //         "name": name.text.trim(),
-      //         "address": address.text.trim(),
-      //         "description": description.text.trim(),
-      //       })
-      //       .eq('id', customerId);
-      // } else {
-      //   final newCustomer =
-      //       await SupabaseConfig.from('customers')
-      //           .insert({
-      //             "user_id": currentUid,
-      //             "name": name.text.trim(),
-      //             "address": address.text.trim(),
-      //             "mobile_number": cMobile,
-      //             "description": description.text.trim(),
-      //           })
-      //           .select('id')
-      //           .single();
-      //   customerId = newCustomer['id'];
-      // }
-
-      // // 2. 🎯 TARGET FIX: Sales Update
-      // // Hum bill_no ko int mein convert kar rahe hain aur user_id ka check laga rahe hain
-      // final int numericBillNo = int.tryParse(invoice.billNo.toString()) ?? 0;
-
-      // final updateRes =
-      //     await SupabaseConfig.from('sales')
-      //         .update({'customer_id': customerId})
-      //         .eq(
-      //           'bill_no',
-      //           numericBillNo,
-      //         ) // 🔥 String ki jagah Int bhej rahe hain
-      //         .eq(
-      //           'user_id',
-      //           currentUid,
-      //         ) // 🔥 Security: Sirf apni hi dukan ka bill update ho
-      //         .select();
-
-      // if (updateRes.isEmpty) {
-      //   AppLogger.info(("⚠️ Warning: Sales table mein Bill No $numericBillNo nahi mila!").toString());
-      // } else {
-      //   AppLogger.info(("✅ Success: Customer linked to Bill No $numericBillNo").toString());
-      // }
-
-      // await loadAllCustomers();
       return true;
     } catch (e) {
       AppLogger.info(("🚨 Save Customer Error Details: $e").toString());

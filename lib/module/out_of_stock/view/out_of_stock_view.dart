@@ -103,6 +103,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                         isDeleteLoading:
                                             controller.isDeleteLoading.value,
                                         neaExpiryItemData: inventoryList,
+                                        shopType: controller.shopTypeEnum,
                                         deleteOnTap: () {
                                           // controller.deactivateSpecificProduct(
                                           //   productId:

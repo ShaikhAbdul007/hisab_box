@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/module/reports/widget/report_common_continer.dart';
 import '../../../common_widget/colors.dart';
@@ -18,37 +19,42 @@ class ReportOverviewWidget extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Cash',
-                  labelValue: controller.totalCash.value.toStringAsFixed(2),
+          // ── Payment mode stats ─────────────────────────────────────────
+          Obx(
+            () => Row(
+              children: [
+                Expanded(
+                  child: ReportOverViewContainer(
+                    label: 'Cash',
+                    labelValue: controller.totalCash.value.toStringAsFixed(2),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Upi',
-                  labelValue: controller.totalUpi.value.toStringAsFixed(2),
+                Expanded(
+                  child: ReportOverViewContainer(
+                    label: 'Upi',
+                    labelValue: controller.totalUpi.value.toStringAsFixed(2),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          Row(
-            children: [
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Credit',
-                  labelValue: controller.totalCredit.value.toStringAsFixed(2),
+          Obx(
+            () => Row(
+              children: [
+                Expanded(
+                  child: ReportOverViewContainer(
+                    label: 'Credit',
+                    labelValue: controller.totalCredit.value.toStringAsFixed(2),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: ReportOverViewContainer(
-                  label: 'Card Machine',
-                  labelValue: controller.totalCard.value.toStringAsFixed(2),
+                Expanded(
+                  child: ReportOverViewContainer(
+                    label: 'Card Machine',
+                    labelValue: controller.totalCard.value.toStringAsFixed(2),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           ReportCommonContainer(
             padding: SymmetricPadding(horizontal: 10, vertical: 5).getPadding(),
@@ -66,7 +72,7 @@ class ReportOverviewWidget extends StatelessWidget {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  controller.reportTopChart.isEmpty
+                  controller.reportTopProductGraph.isEmpty
                       ? CommonNoDataFound(message: 'No trend found')
                       : AspectRatio(
                         aspectRatio: 14 / 7,
@@ -90,7 +96,8 @@ class ReportOverviewWidget extends StatelessWidget {
                                     rodIndex,
                                   ) {
                                     final data =
-                                        controller.reportTopChart[groupIndex];
+                                        controller
+                                            .reportTopProductGraph[groupIndex];
                                     return BarTooltipItem(
                                       "${data.productName}\n",
                                       CustomTextStyle.customMontserrat(
@@ -142,7 +149,8 @@ class ReportOverviewWidget extends StatelessWidget {
                                     showTitles: false,
                                     reservedSize: 50.sp,
                                     getTitlesWidget: (value, meta) {
-                                      var data = controller.reportTopChart;
+                                      var data =
+                                          controller.reportTopProductGraph;
                                       if (value.toInt() < data.length) {
                                         return CustomPadding(
                                           paddingOption: OnlyPadding(top: 8),
@@ -164,9 +172,10 @@ class ReportOverviewWidget extends StatelessWidget {
                               ),
 
                               barGroups: List.generate(
-                                controller.reportTopChart.length,
+                                controller.reportTopProductGraph.length,
                                 (index) {
-                                  final item = controller.reportTopChart[index];
+                                  final item =
+                                      controller.reportTopProductGraph[index];
                                   final qty =
                                       double.tryParse(item.qty.toString()) ?? 0;
 
@@ -227,12 +236,13 @@ class ReportOverviewWidget extends StatelessWidget {
 
                 Expanded(
                   child:
-                      controller.reportTopModel.isEmpty
+                      controller.reportTopProductList.isEmpty
                           ? CommonNoDataFound(message: 'No product found')
                           : ListView.builder(
-                            itemCount: controller.reportTopModel.length,
+                            itemCount: controller.reportTopProductList.length,
                             itemBuilder: (context, index) {
-                              var product = controller.reportTopModel[index];
+                              var product =
+                                  controller.reportTopProductList[index];
                               return ListTile(
                                 leading: Container(
                                   height: 40.h,

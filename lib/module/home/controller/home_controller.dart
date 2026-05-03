@@ -1,6 +1,7 @@
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -34,6 +35,8 @@ class HomeController extends GetxController with CacheManager {
   List<CustomGridModel> lis = [];
   RxString shopType = ''.obs;
   RxBool isListLoading = false.obs;
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   // ================= STOCK TRANSFER =================
   RxList<GoDownStockTransferToShopModel> pendingTransfers =
@@ -101,10 +104,7 @@ class HomeController extends GetxController with CacheManager {
       ),
       CustomGridModel(
         routeName: AppRouteName.looseSell,
-        label:
-            shopType.value == 'Clothing Shop'
-                ? 'Good Return(GR)'
-                : 'Loose Stock',
+        label: shopTypeEnum.config.looseStockGridLabel,
         icon: CupertinoIcons.info,
         numbers: looseStock.value.toDouble(),
       ),

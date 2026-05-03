@@ -182,7 +182,7 @@ class SellingConfirmationListText extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
-                      sellType ? 'PC' : 'PKT',
+                      sellType ? 'PKT' : 'PC',
                       style: CustomTextStyle.customRaleway(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,

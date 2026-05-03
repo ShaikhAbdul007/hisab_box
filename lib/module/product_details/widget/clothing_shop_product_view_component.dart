@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
@@ -8,7 +7,6 @@ import 'package:inventory/common_widget/common_calender.dart';
 import 'package:inventory/common_widget/common_dropdown.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
-import 'package:inventory/common_widget/common_switch.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
@@ -39,6 +37,7 @@ class ClothingShopProductViewComponent extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             spacing: 10,
             children: [
+              // Barcode + Product Name
               InventoryBottomsheetComponentText(
                 readOnly1: true,
                 controller1: controller.barcode,
@@ -47,202 +46,63 @@ class ClothingShopProductViewComponent extends StatelessWidget {
                 hintText1: 'Enter barcode',
                 hintText2: 'Enter product name',
                 label2: 'Product Name',
-                validator2: (name) {
-                  if (name!.isEmpty) {
-                    return emptyProductName;
-                  } else {
-                    return null;
-                  }
-                },
+                validator2: (v) => v!.isEmpty ? emptyProductName : null,
               ),
+              // Category + Size
               Row(
                 children: [
-                  Flexible(
-                    child: Obx(
-                      () =>
-                          controller.categoryListLoading.value
-                              ? Center(
-                                child: CommonProgressBar(
-                                  color: AppColors.blackColor,
-                                ),
-                              )
-                              : controller.categoryList.isEmpty
-                              ? CustomDropDown(
-                                // errorText: emptyCategory,
-                                listItems: controller.categoryList,
-                                hintText: 'Category',
-                                notifyParent: (val) {
-                                  // controller.category.text = val.id;
-                                },
-                              )
-                              : CustomDropDown(
-                                // errorText: emptyCategory,
-                                listItems: controller.categoryList,
-                                hintText: 'Select Category',
-                                notifyParent: (val) {
-                                  controller.category.text = val;
-                                },
-                              ),
-                    ),
-                  ),
-                  Flexible(
-                    child: Obx(
-                      () =>
-                          controller.animalCategoryListLoading.value
-                              ? Center(
-                                child: CommonProgressBar(
-                                  color: AppColors.blackColor,
-                                ),
-                              )
-                              : controller.animalTypeList.isEmpty
-                              ? CustomDropDown(
-                                //  errorText: emptyCategory,
-                                listItems: controller.animalTypeList,
-                                hintText: 'Size',
-                                notifyParent: (val) {
-                                  // controller.category.text = val.id;
-                                },
-                              )
-                              : CustomDropDown(
-                                // errorText: emptyAnimalCategory,
-                                hintText: 'Size',
-                                listItems: controller.animalTypeList,
-                                notifyParent: (val) {
-                                  controller.animalType.text = val;
-                                },
-                              ),
-                    ),
-                  ),
+                  Flexible(child: _categoryDropdown()),
+                  Flexible(child: _sizeDropdown()),
                 ],
               ),
+              // Color + Brand Type
               Row(
                 children: [
-                  Flexible(
-                    child: CommonTextField(
-                      validator: (quantity) {
-                        if (quantity!.isEmpty) {
-                          return emptyProductQuantity;
-                        } else {
-                          return null;
-                        }
-                      },
-                      contentPadding:
-                          SymmetricPadding(
-                            vertical: 5,
-                            horizontal: 5,
-                          ).getPadding(),
-                      inputLength: 5,
-                      keyboardType: TextInputType.number,
-                      hintText: 'Enter stock',
-                      label: 'Stock',
-                      controller: controller.quantity,
-                    ),
-                  ),
-                  Flexible(
-                    child: CustomStaticDropDown(
-                      // isModelValueEnabled: false,
-                      // errorText: 'Please select',
-                      listItems: [true, false],
-                      hintText: 'Select Type',
-                      notifyParent: (val) {
-                        controller.isLoose = val;
-                        customMessageOrErrorPrint(
-                          message: ' controller.isLoose ${controller.isLoose}',
-                        );
-                      },
-                    ),
-                  ),
+                  Flexible(child: _colorDropdown()),
+                  Flexible(child: _brandTypeDropdown()),
                 ],
               ),
+              // Stock + Location
+              Row(
+                children: [
+                  Flexible(child: _stockField()),
+                  Flexible(child: _locationDropdown()),
+                ],
+              ),
+              // Selling + Purchase price
               InventoryBottomsheetComponentText(
                 inputLength1: 10,
                 keyboardType1: TextInputType.number,
-                hintText2: 'Purcashe Price (mrp)',
-                label2: 'Purcashe Price (₹)',
-                controller2: controller.purchasePrice,
-                validator2: (purchasePrice) {
-                  if (purchasePrice!.isEmpty) {
-                    return emptyProductPurchasePrice;
-                  } else {
-                    return null;
-                  }
-                },
-                inputLength2: 10,
-                keyboardType2: TextInputType.number,
                 hintText1: 'Selling Price (sp)',
                 label1: 'Selling Price (₹)',
                 controller1: controller.sellingPrice,
-                validator1: (sellingPrice) {
-                  if (sellingPrice!.isEmpty) {
-                    return emptyProductSellingPrice;
-                  } else {
-                    return null;
-                  }
-                },
-                onChanged1: (v) {
-                  controller.calculatePurchasePrice();
-                },
+                validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
+                inputLength2: 10,
+                keyboardType2: TextInputType.number,
+                hintText2: 'Purchase Price (mrp)',
+                label2: 'Purchase Price (₹)',
+                controller2: controller.purchasePrice,
+                validator2:
+                    (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
+                onChanged1: (_) => controller.calculatePurchasePrice(),
               ),
+              // Discount + Level
               InventoryBottomsheetComponentText(
                 inputLength1: 2,
                 keyboardType1: TextInputType.number,
-                hintText2: 'Level',
-                label2: 'Level',
-                controller2: controller.level,
-                // validator2: (location) {
-                //   if (location!.isEmpty) {
-                //     return emptyLocation;
-                //   } else {
-                //     return null;
-                //   }
-                // },
                 hintText1: 'Enter discount',
                 label1: 'Discount (%)',
                 controller1: controller.discount,
-                validator1: (discount) {
-                  if (discount!.isEmpty) {
-                    return emptyDiscount;
-                  } else {
-                    return null;
-                  }
-                },
+                validator1: (v) => v!.isEmpty ? emptyDiscount : null,
+                hintText2: 'Level',
+                label2: 'Level',
+                controller2: controller.level,
               ),
+              // Rack + Purchase Date
               Row(
                 children: [
-                  Flexible(
-                    child: CommonTextField(
-                      // validator: (expire) {
-                      //   if (expire!.isEmpty) {
-                      //     return emptyExpire;
-                      //   } else {
-                      //     return null;
-                      //   }
-                      // },
-                      contentPadding:
-                          SymmetricPadding(
-                            vertical: 5,
-                            horizontal: 5,
-                          ).getPadding(),
-
-                      hintText: 'Rack',
-                      label: 'Rack',
-                      controller: controller.rack,
-                    ),
-                  ),
-                  Flexible(
-                    child: CustomStaticDropDown(
-                      // isModelValueEnabled: false,
-                      // errorText: 'Select Location',
-                      listItems: ['Shop', 'Godown'],
-                      hintText: 'Location',
-                      notifyParent: (val) {
-                        controller.location.text = val;
-                        customMessageOrErrorPrint(
-                          message: ' controller.isLoose ${controller.isLoose}',
-                        );
-                      },
-                    ),
-                  ),
+                  Flexible(child: _rackField()),
+                  Flexible(child: _purchaseDateField(context)),
                 ],
               ),
               setHeight(height: 5),
@@ -251,32 +111,31 @@ class ClothingShopProductViewComponent extends StatelessWidget {
                   isLoading: controller.isSaveLoading.value,
                   label: saveButton,
                   onTap: () async {
-                    var body = {
-                      "name": controller.productName.text,
-                      "barcodes": controller.barcode.text,
-                      "quantity": controller.quantity.text,
-                      "selling_price": controller.sellingPrice.text,
-                      "purchase_price": controller.purchasePrice.text,
-                      "location": controller.location.text.toLowerCase(),
-                      "stock_type": "packet",
-                      "isloosed": controller.isLoose,
-                      "isflavorRequired":
-                          controller.isFlavorAndWeightNotRequired.value,
-                      "purchase_date": parseAppDate(
-                        controller.purchaseDate.text,
-                      ),
-                      "expiry_date": parseAppDate(controller.exprieDate.text),
-                      "category": controller.category.text,
-                      "animal_type": controller.animalType.text,
-                      "flavour": controller.flavor.text,
-                      "level": controller.level.text,
-                      "rack": controller.rack.text,
-                      "weight": controller.weight.text,
-                      "discount": controller.discount.text,
-                    };
                     if (controller.inventoryScanKey.currentState!.validate()) {
                       unfocus();
-                      controller.saveNewProduct(body: body);
+                      controller.saveNewProduct(
+                        body: {
+                          "name": controller.productName.text,
+                          "barcodes": controller.barcode.text,
+                          "quantity": controller.quantity.text,
+                          "selling_price": controller.sellingPrice.text,
+                          "purchase_price": controller.purchasePrice.text,
+                          "location": controller.location.text.toLowerCase(),
+                          "stock_type": "clothing",
+                          "category_id":
+                              controller.selectedCategoryId.value ?? '',
+                          "size_id":
+                              controller.selectedAnimalTypeId.value ?? '',
+                          "color_id": controller.selectedColorId.value ?? '',
+                          "brand_type": controller.brandType.value,
+                          "level": controller.level.text,
+                          "rack": controller.rack.text,
+                          "discount": controller.discount.text,
+                          "purchase_date": parseAppDate(
+                            controller.purchaseDate.text,
+                          ),
+                        },
+                      );
                     }
                   },
                 ),
@@ -286,6 +145,155 @@ class ClothingShopProductViewComponent extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _categoryDropdown() {
+    return Obx(
+      () =>
+          controller.categoryListLoading.value
+              ? Center(child: CommonProgressBar(color: AppColors.blackColor))
+              : controller.categoryList.isEmpty
+              ? CustomDropDown(
+                listItems: controller.categoryList,
+                hintText: 'Add Category First',
+                notifyParent: (_) {},
+              )
+              : CustomDropDown(
+                selectedDropDownItem: controller.selectedCategoryId.value,
+                listItems: controller.categoryList,
+                hintText: 'Category',
+                notifyParent: (val) {
+                  controller.selectedCategoryId.value = val;
+                  final match = controller.categoryList
+                      .cast<dynamic>()
+                      .firstWhere((e) => e.id == val, orElse: () => null);
+                  controller.category.text = match?.name ?? '';
+                },
+              ),
+    );
+  }
+
+  Widget _sizeDropdown() {
+    return Obx(
+      () =>
+          controller.animalCategoryListLoading.value
+              ? Center(child: CommonProgressBar(color: AppColors.blackColor))
+              : controller.animalTypeList.isEmpty
+              ? CustomDropDown(
+                listItems: controller.animalTypeList,
+                hintText: 'Add Size First',
+                notifyParent: (_) {},
+              )
+              : CustomDropDown(
+                selectedDropDownItem: controller.selectedAnimalTypeId.value,
+                hintText: 'Size',
+                listItems: controller.animalTypeList,
+                notifyParent: (val) {
+                  controller.selectedAnimalTypeId.value = val;
+                  final match = controller.animalTypeList
+                      .cast<dynamic>()
+                      .firstWhere((e) => e.id == val, orElse: () => null);
+                  controller.animalType.text = match?.name ?? '';
+                },
+              ),
+    );
+  }
+
+  Widget _colorDropdown() {
+    return Obx(
+      () =>
+          controller.colorListLoading.value
+              ? Center(child: CommonProgressBar(color: AppColors.blackColor))
+              : controller.colorList.isEmpty
+              ? CustomDropDown(
+                listItems: controller.colorList,
+                hintText: 'Add Color First',
+                notifyParent: (_) {},
+              )
+              : CustomDropDown(
+                selectedDropDownItem: controller.selectedColorId.value,
+                hintText: 'Color',
+                listItems: controller.colorList,
+                notifyParent: (val) {
+                  controller.selectedColorId.value = val;
+                  final match = controller.colorList.cast<dynamic>().firstWhere(
+                    (e) => e.id == val,
+                    orElse: () => null,
+                  );
+                  controller.color.text = match?.name ?? '';
+                },
+              ),
+    );
+  }
+
+  Widget _brandTypeDropdown() {
+    return Obx(
+      () => CustomStaticDropDown(
+        selectedDropDownItem:
+            ['Normal', 'Imp'].contains(controller.brandType.value)
+                ? controller.brandType.value
+                : null,
+        listItems: const ['Normal', 'Imp'],
+        hintText: 'Brand Type',
+        notifyParent:
+            (val) => controller.brandType.value = (val ?? '').toString(),
+      ),
+    );
+  }
+
+  Widget _stockField() {
+    return CommonTextField(
+      validator: (v) => v!.isEmpty ? emptyProductQuantity : null,
+      contentPadding: SymmetricPadding(vertical: 5, horizontal: 5).getPadding(),
+      inputLength: 5,
+      keyboardType: TextInputType.number,
+      hintText: 'Enter stock',
+      label: 'Stock',
+      controller: controller.quantity,
+    );
+  }
+
+  Widget _locationDropdown() {
+    return CustomStaticDropDown(
+      listItems: const ['Shop', 'Godown'],
+      hintText: 'Location',
+      notifyParent: (val) => controller.location.text = val?.toString() ?? '',
+    );
+  }
+
+  Widget _rackField() {
+    return CommonTextField(
+      contentPadding: SymmetricPadding(vertical: 5, horizontal: 5).getPadding(),
+      hintText: 'Rack',
+      label: 'Rack',
+      controller: controller.rack,
+    );
+  }
+
+  Widget _purchaseDateField(BuildContext context) {
+    return CommonTextField(
+      readOnly: true,
+      suffixIcon: CustomPadding(
+        paddingOption: OnlyPadding(right: 10),
+        child: InkWell(
+          onTap: () async {
+            final res = await customDatePicker(
+              lastDate: DateTime(2040),
+              context: context,
+              selectedDate: DateTime.now(),
+              controller: controller.dayDate,
+            );
+            if (res.isNotEmpty) controller.purchaseDate.text = res;
+          },
+          child: const Icon(CupertinoIcons.calendar_today, size: 20),
+        ),
+      ),
+      validator: (v) => v!.isEmpty ? emptyPurchase : null,
+      contentPadding: SymmetricPadding(vertical: 5, horizontal: 5).getPadding(),
+      hintText: 'dd-MM-yyyy',
+      label: 'Purchase Date',
+      controller: controller.purchaseDate,
     );
   }
 }

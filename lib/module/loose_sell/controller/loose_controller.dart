@@ -3,6 +3,7 @@ import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/repo/loose_repo.dart';
 import 'package:inventory/helper/helper.dart';
@@ -26,11 +27,14 @@ class LooseController extends GetxController with CacheManager {
   String? id;
   RxList<InventoryItem> looseCategoryModelList = <InventoryItem>[].obs;
   RxString searchText = ''.obs;
+  RxString shopType = ''.obs;
 
-  // --- Dependencies ---
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   @override
   void onInit() {
+    final user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
     fetchLooseList();
     super.onInit();
   }

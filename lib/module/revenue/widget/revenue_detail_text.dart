@@ -47,7 +47,7 @@ class RevenueDetailList extends StatelessWidget {
                     ),
                     setWidth(width: 5),
                     Text(
-                      '\u{20B9}${revenueModel.rate.toString()}',
+                      '\u{20B9}${revenueModel.originalPrice.toString()}',
                       style: CustomTextStyle.customOpenSans(
                         color: AppColors.greyColor,
                       ),
@@ -67,7 +67,7 @@ class RevenueDetailList extends StatelessWidget {
                 ),
                 setHeight(height: 5),
                 Text(
-                  '\u{20B9}${revenueModel.total}',
+                  '\u{20B9}${revenueModel.finalPrice}',
                   style: CustomTextStyle.customPoppin(
                     color: AppColors.greenColor,
                     fontSize: 18,
@@ -75,7 +75,7 @@ class RevenueDetailList extends StatelessWidget {
                 ),
                 RichText(
                   text: TextSpan(
-                    text: revenueModel.qty.toString(),
+                    text: revenueModel.quantity.toString(),
                     style: CustomTextStyle.customOpenSans(
                       color: AppColors.blackColor,
                       fontWeight: FontWeight.w600,
@@ -83,7 +83,7 @@ class RevenueDetailList extends StatelessWidget {
                     ),
                     children: [
                       TextSpan(
-                        text: ' at ${revenueModel.discount}%',
+                        text: ' at ${revenueModel.discountGiven}%',
                         style: CustomTextStyle.customOpenSans(
                           color: AppColors.deepPurple,
                         ),
