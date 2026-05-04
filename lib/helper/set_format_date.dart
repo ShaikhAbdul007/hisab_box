@@ -37,6 +37,15 @@ String formatDateTime(
   }
 }
 
+(String date, String time) splitDateTime(String input) {
+  final parts = input.split(',');
+
+  final date = parts.isNotEmpty ? parts[0].trim() : '';
+  final time = parts.length > 1 ? parts[1].trim() : '';
+
+  return (date, time);
+}
+
 String getStringLengthText(String value) {
   String? substring;
   if (value.isNotEmpty) {

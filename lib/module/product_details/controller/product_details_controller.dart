@@ -18,6 +18,8 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
   RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
+
+  RxList<CategoryModelListData> colorOptions = <CategoryModelListData>[].obs;
   TextEditingController transferQuantityToShop = TextEditingController();
   TextEditingController productName = TextEditingController();
   TextEditingController location = TextEditingController();
@@ -45,6 +47,7 @@ class ProductDetailsController extends GetxController with CacheManager {
   // Selected dropdown ids (matched against item.id in CustomDropDown)
   RxnString selectedCategoryId = RxnString(null);
   RxnString selectedAnimalTypeId = RxnString(null);
+  RxnString selectedColorId = RxnString(null);
 
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isLooseProductSave = false.obs;
@@ -58,6 +61,7 @@ class ProductDetailsController extends GetxController with CacheManager {
   RxString rxProductName = ''.obs;
   RxString rxQuantity = ''.obs;
   RxString brandType = ''.obs;
+  RxList<String> locationOptions = <String>['shop'].obs;
   bool isLoose = false;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
@@ -69,8 +73,18 @@ class ProductDetailsController extends GetxController with CacheManager {
   void onInit() {
     dayDate.value = setFormateDate();
     getCategoryData();
+    retrieveGodownValue();
     print('setdata');
     super.onInit();
+  }
+
+  Future<void> retrieveGodownValue() async {
+    final isGodownEnabled = await retrieveGodown();
+    locationOptions.value =
+        isGodownEnabled ? <String>['shop', 'godown'] : <String>['shop'];
+    if (!locationOptions.contains(location.text)) {
+      location.text = locationOptions.first;
+    }
   }
 
   // ==========================================
@@ -123,6 +137,7 @@ class ProductDetailsController extends GetxController with CacheManager {
     shopType.value = user.data?.shopType ?? '';
     await fetchCategories();
     await fetchAnimalCategories();
+    await fetchColorOptions();
     setData();
     isDataLoading.value = false;
   }
@@ -133,6 +148,18 @@ class ProductDetailsController extends GetxController with CacheManager {
       if (match != null) {
         category.text = match.name ?? '';
         selectedCategoryId.value = match.id;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  dynamic getColorSelectedItem(String value) {
+    try {
+      final match = colorOptions.firstWhereOrNull((e) => e.name == value);
+      if (match != null) {
+        color.text = match.name ?? '';
+        selectedColorId.value = match.id;
       }
     } catch (e) {
       return null;
@@ -172,15 +199,14 @@ class ProductDetailsController extends GetxController with CacheManager {
       weight.text = p.weight ?? '';
       rack.text = p.rack ?? '';
       level.text = p.level ?? '';
-      color.text = p.color ?? '';
       brand.text = p.brand ?? '';
-      brandType.value = p.brandType ?? '';
       isLoose = p.isloosed ?? false;
       discount.text = p.discount.toString();
       purchaseDate.text = p.purchaseDate ?? '';
       exprieDate.text = p.expireDate ?? '';
       getCategorySelectedItem(p.categoryName ?? '');
       getAnimalSelectedItem(p.animalTypeName ?? '');
+      getColorSelectedItem(p.color ?? '');
     } else {
       Map<String, dynamic> p = productData as Map<String, dynamic>;
 
@@ -204,6 +230,7 @@ class ProductDetailsController extends GetxController with CacheManager {
       color.text = p['color']?.toString() ?? '';
       brand.text = p['brand']?.toString() ?? '';
       brandType.value = p['brand_type']?.toString() ?? '';
+
       isLoose = p['isLoosed'] ?? false;
       discount.text = p['discount']?.toString() ?? '0';
       purchaseDate.text = p['purchaseDate']?.toString() ?? '';
@@ -229,11 +256,11 @@ class ProductDetailsController extends GetxController with CacheManager {
         productId: productId,
       );
       if (response.success == success) {
+        Get.back(result: true);
         showSnackBar(
           error: response.msg ?? "Update SuccessFully!",
           isError: false,
         );
-        Get.back(result: true);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? "Update Failed!");
       } else {
@@ -278,6 +305,20 @@ class ProductDetailsController extends GetxController with CacheManager {
       }
     } catch (e) {
       AppLogger.info(("🚨 Category Error: $e").toString());
+      showSnackBar(error: e.toString());
+    } finally {
+      // categoryListLoading.value = false;
+    }
+  }
+
+  Future<void> fetchColorOptions() async {
+    try {
+      final cached = await retrieveColorCategory();
+      if (cached.isNotEmpty) {
+        colorOptions.value = cached;
+      }
+    } catch (e) {
+      AppLogger.info(("🚨 Color Error: $e").toString());
       showSnackBar(error: e.toString());
     } finally {
       // categoryListLoading.value = false;

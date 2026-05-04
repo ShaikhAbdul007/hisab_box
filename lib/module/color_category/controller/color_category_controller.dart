@@ -48,6 +48,7 @@ class ColorCategoryController extends GetxController with CacheManager {
       if (response.success == success) {
         colorList.value = response.categorymodeldata?.data ?? [];
         _totalPages = response.categorymodeldata?.pagination?.totalPages ?? 1;
+        saveColorCategoryList(colorList);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
@@ -70,6 +71,7 @@ class ColorCategoryController extends GetxController with CacheManager {
         colorList.addAll(response.categorymodeldata?.data ?? []);
         _totalPages =
             response.categorymodeldata?.pagination?.totalPages ?? _totalPages;
+        saveColorCategoryList(colorList);
       } else {
         _page--; // revert on failure
       }

@@ -28,7 +28,7 @@ class RecentActivitiesListText extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      billModel.module ?? '',
+                      billModel.referenceNo ?? '',
                       style: CustomTextStyle.customPoppin(fontSize: 17),
                     ),
                     setHeight(height: 5),
@@ -60,6 +60,11 @@ class RecentActivitiesListText extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                    Text(
+                      maxLines: 3,
+                      billModel.description ?? '',
+                      style: CustomTextStyle.customPoppin(fontSize: 17),
                     ),
                   ],
                 ),

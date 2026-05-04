@@ -54,6 +54,7 @@ class GenerateBarcodeController extends GetxController with CacheManager {
   RxString dayDate = ''.obs;
   RxString shopType = ''.obs;
   RxString brandType = ''.obs;
+  RxList<String> locationOptions = <String>['Shop'].obs;
 
   // Selected IDs for dropdowns
   RxnString selectedCategoryId = RxnString(null);
@@ -69,7 +70,17 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     purchaseDate.text = setFormateDate(); // default today
     final user = retrieveUserDetail();
     shopType.value = user.data?.shopType ?? '';
+    retrieveGodownValue();
     super.onInit();
+  }
+
+  Future<void> retrieveGodownValue() async {
+    final isGodownEnabled = await retrieveGodown();
+    locationOptions.value =
+        isGodownEnabled ? <String>['Shop', 'Godown'] : <String>['Shop'];
+    if (!locationOptions.contains(location.text)) {
+      location.text = locationOptions.first;
+    }
   }
 
   @override

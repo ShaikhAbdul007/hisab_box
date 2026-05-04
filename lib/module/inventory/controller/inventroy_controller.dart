@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:inventory/module/inventory/repo/inventory_repo.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
@@ -14,7 +15,8 @@ import '../../../helper/helper.dart';
 class InventroyController extends GetxController with CacheManager {
   InventoryScanRepo inventoryScanRepo = InventoryScanRepo();
   RxList<InventoryItem> scannedProductDetails = <InventoryItem>[].obs;
-
+  RxString shopType = ''.obs;
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
   RxBool isTreatSelected = false.obs;
   RxBool isCameraStop = false.obs;
   RxBool isProductSaving = false.obs;
@@ -40,6 +42,7 @@ class InventroyController extends GetxController with CacheManager {
 
   @override
   void onInit() {
+    setShopType();
     flag = data['flag'];
     navigate = data['navigate'];
 
@@ -49,6 +52,11 @@ class InventroyController extends GetxController with CacheManager {
     );
     player = AudioPlayer();
     super.onInit();
+  }
+
+  void setShopType() {
+    var user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? 'Pet Shop';
   }
 
   Future<(bool existProductOrNot, BarcodeExistingData barcodeExistingData)>

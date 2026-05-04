@@ -55,27 +55,25 @@ class ClothingGrProductViewComponent extends StatelessWidget {
             controller1: controller.looseQuantity,
             validator1: (purchasePrice) {
               if (purchasePrice!.isEmpty) {
-                return emptyProductPurchasePrice;
+                return emptyProductQuantity;
               } else {
                 return null;
               }
             },
-            inputLength2: 5,
-            keyboardType2: TextInputType.numberWithOptions(
-              signed: false,
-              decimal: false,
-            ),
-            hintText2: 'Selling Price (sp)',
-            label2: 'Selling Price (₹)',
+
+            hintText2: 'Note',
+            label2: 'Notes',
             controller2: controller.looseSellingPrice,
             validator2: (sellingPrice) {
-              if (sellingPrice!.isEmpty) {
-                return emptyProductSellingPrice;
-              } else {
-                return null;
-              }
+              // if (sellingPrice!.isEmpty) {
+              //   return emptyProductSellingPrice;
+              // } else {
+              //   return null;
+              // }
             },
           ),
+
+          setHeight(height: 20),
           Obx(
             () => CommonButton(
               isLoading: controller.isLooseProductSave.value,
@@ -92,7 +90,7 @@ class ClothingGrProductViewComponent extends StatelessWidget {
                 };
                 if (formkeys.currentState!.validate()) {
                   unfocus();
-                  controller.saveNewLooseProduct(body: body);
+                  controller.saveNewGrProduct(body: body);
                 }
               },
             ),

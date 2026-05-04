@@ -54,6 +54,12 @@ class InventroyListText extends StatelessWidget {
                       inventoryModel.name ?? '',
                       style: CustomTextStyle.customPoppin(fontSize: 17),
                     ),
+                    Text(
+                      inventoryModel.barcode!,
+                      style: CustomTextStyle.customOpenSans(
+                        color: AppColors.greyColor,
+                      ),
+                    ),
 
                     // ── Pet Shop only ─────────────────────────────────────
                     if (!_isClothing) ...[
@@ -86,28 +92,12 @@ class InventroyListText extends StatelessWidget {
                       // Category / Color / Brand (size is animalTypeName — shown in common)
                       _infoRow([
                         inventoryModel.categoryName,
+                        inventoryModel.animalTypeName,
                         inventoryModel.color,
                         inventoryModel.brand,
                       ]),
-                      // Brand type
-                      if ((inventoryModel.brandType ?? '').isNotEmpty)
-                        Text(
-                          inventoryModel.brandType!,
-                          style: CustomTextStyle.customOpenSans(
-                            color: AppColors.greyColor,
-                          ),
-                        ),
                     ],
 
-                    // ── Common ────────────────────────────────────────────
-                    // Animal type (pet: animal, clothing: size)
-                    if ((inventoryModel.animalTypeName ?? '').isNotEmpty)
-                      Text(
-                        inventoryModel.animalTypeName!,
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                        ),
-                      ),
                     Row(
                       children: [
                         Icon(CupertinoIcons.map_pin, size: 15.sp),
@@ -119,15 +109,6 @@ class InventroyListText extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // Barcode
-                    if ((inventoryModel.barcode ?? '').isNotEmpty)
-                      Text(
-                        inventoryModel.barcode!,
-                        style: CustomTextStyle.customOpenSans(
-                          color: AppColors.greyColor,
-                          fontSize: 11,
-                        ),
-                      ),
                   ],
                 ),
               ),

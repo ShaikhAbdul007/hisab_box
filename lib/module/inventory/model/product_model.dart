@@ -52,7 +52,7 @@ class BarcodeExistingData {
   String? flag;
   String? categoryName;
   String? animalTypeName;
-  String? packetQuantity;
+  int? packetQuantity;
   String? packetPrice;
 
   bool? isflavorRequired;

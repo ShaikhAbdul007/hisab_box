@@ -13,7 +13,7 @@ class InventoryRepo {
     try {
       final response = await networking.getData(
         url:
-            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProducts}?page=$page&limit=$limit&search&location=$search',
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProducts}?page=$page&limit=$limit&location=$search',
       );
       return InventoryModel.fromJson(response);
     } catch (e) {

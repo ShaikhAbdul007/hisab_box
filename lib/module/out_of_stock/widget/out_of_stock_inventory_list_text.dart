@@ -48,6 +48,12 @@ class OutOfStockInventoryListText extends StatelessWidget {
                   neaExpiryItemData.name ?? '',
                   style: CustomTextStyle.customPoppin(fontSize: 17),
                 ),
+                Text(
+                  neaExpiryItemData.barcode!,
+                  style: CustomTextStyle.customOpenSans(
+                    color: AppColors.greyColor,
+                  ),
+                ),
                 if (!_isClothing) ...[
                   if ((neaExpiryItemData.flavour ?? '').isNotEmpty) ...[
                     setHeight(height: 2),
@@ -72,24 +78,12 @@ class OutOfStockInventoryListText extends StatelessWidget {
                 if (_isClothing) ...[
                   _infoRow([
                     neaExpiryItemData.categoryName,
+                    neaExpiryItemData.animalCategoryName,
                     neaExpiryItemData.color,
                     neaExpiryItemData.brand,
                   ]),
-                  if ((neaExpiryItemData.brandType ?? '').isNotEmpty)
-                    Text(
-                      neaExpiryItemData.brandType!,
-                      style: CustomTextStyle.customOpenSans(
-                        color: AppColors.greyColor,
-                      ),
-                    ),
                 ],
-                if ((neaExpiryItemData.animalCategoryName ?? '').isNotEmpty)
-                  Text(
-                    neaExpiryItemData.animalCategoryName!,
-                    style: CustomTextStyle.customOpenSans(
-                      color: AppColors.greyColor,
-                    ),
-                  ),
+
                 Row(
                   children: [
                     Icon(CupertinoIcons.map_pin, size: 15.sp),
@@ -101,14 +95,6 @@ class OutOfStockInventoryListText extends StatelessWidget {
                     ),
                   ],
                 ),
-                if ((neaExpiryItemData.barcode ?? '').isNotEmpty)
-                  Text(
-                    neaExpiryItemData.barcode!,
-                    style: CustomTextStyle.customOpenSans(
-                      color: AppColors.greyColor,
-                      fontSize: 11,
-                    ),
-                  ),
               ],
             ),
           ),
@@ -148,14 +134,14 @@ class OutOfStockInventoryListText extends StatelessWidget {
                     ),
                   ),
                 ),
-                CommonButton(
-                  isLoading: isDeleteLoading,
-                  height: 25,
-                  radius: 5,
-                  bgColor: AppColors.redColor,
-                  onTap: deleteOnTap,
-                  label: 'Delete',
-                ),
+                // CommonButton(
+                //   isLoading: isDeleteLoading,
+                //   height: 25,
+                //   radius: 5,
+                //   bgColor: AppColors.redColor,
+                //   onTap: deleteOnTap,
+                //   label: 'Delete',
+                // ),
               ],
             ),
           ),

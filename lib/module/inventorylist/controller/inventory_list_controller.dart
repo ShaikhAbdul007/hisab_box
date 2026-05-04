@@ -9,7 +9,7 @@ import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/inventorylist/repo/inventory_repo.dart';
 
 class InventoryListController extends GetxController
-    with GetSingleTickerProviderStateMixin, CacheManager {
+    with GetTickerProviderStateMixin, CacheManager {
   InventoryRepo inventoryRepo = InventoryRepo();
 
   var goDownProductList = <InventoryItem>[].obs;
@@ -21,6 +21,7 @@ class InventoryListController extends GetxController
   RxBool isLoose = false.obs;
   RxBool isFlavorAndWeightNotRequired = false.obs;
   RxString shopType = ''.obs;
+  RxBool isGodownEnabled = false.obs;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
@@ -51,7 +52,7 @@ class InventoryListController extends GetxController
   @override
   void onInit() {
     isInventoryScanSelectedValue();
-    tabController = TabController(length: 2, vsync: this);
+    retrieveGodownValue();
     _attachScrollListeners();
     final user = retrieveUserDetail();
     shopType.value = user.data?.shopType ?? '';
@@ -60,17 +61,24 @@ class InventoryListController extends GetxController
 
   @override
   void onReady() {
-    fetchInventoryByTab('shop');
+    // fetchInventoryByTab is called inside _initTabController after godown value loads
+    super.onReady();
+  }
 
+  void _initTabController({required int length}) {
+    tabController?.dispose();
+    tabController = TabController(length: length, vsync: this);
     tabController!.addListener(() {
       if (tabController!.indexIsChanging) return;
       if (tabController!.index == 0) {
         fetchInventoryByTab('shop');
-      } else if (tabController!.index == 1) {
+      } else if (isGodownEnabled.value && tabController!.index == 1) {
         fetchInventoryByTab('godown');
       }
     });
-    super.onReady();
+    update();
+    // Initial load after tab controller is ready
+    fetchInventoryByTab('shop');
   }
 
   void _attachScrollListeners() {
@@ -107,6 +115,22 @@ class InventoryListController extends GetxController
         'InventoryListController',
       );
       isInventoryScanSelected.value = false;
+    }
+  }
+
+  Future<void> retrieveGodownValue() async {
+    try {
+      final value = await retrieveGodown();
+      isGodownEnabled.value = value;
+      _initTabController(length: value ? 2 : 1);
+    } catch (e) {
+      AppLogger.error(
+        'Failed to load godown setting',
+        e,
+        'InventoryListController',
+      );
+      isGodownEnabled.value = false;
+      _initTabController(length: 1);
     }
   }
 

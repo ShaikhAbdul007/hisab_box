@@ -5,10 +5,14 @@ import 'package:inventory/network/networking.dart';
 class AnimalCategoryRepo {
   Networking networking = Networking();
 
-  Future<CategoryModel> getAnimalCategory() async {
+  Future<CategoryModel> getAnimalCategory({
+    int page = 1,
+    int pageLimit = 20,
+  }) async {
     try {
       final response = await networking.getData(
-        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getAnimalCategories}',
+        url:
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getAnimalCategories}?page=$page&limit=$pageLimit',
       );
       return CategoryModel.fromJson(response);
     } catch (e) {

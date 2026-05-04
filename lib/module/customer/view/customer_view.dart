@@ -6,6 +6,7 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/module/customer/model/add_customer_model.dart';
 import 'package:inventory/module/customer/model/all_customer_model.dart';
+import 'package:inventory/module/customer/widget/customer_view_mobile_no_auto_complete_widget.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_bottom_sheet.dart';
 import '../../../common_widget/common_container.dart';
@@ -47,122 +48,8 @@ class CustomerView extends GetView<CustomerController> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           setHeight(height: 10),
-                          // Mobile autocomplete — same pattern as OrderView
-                          Autocomplete<CustomerItem>(
-                            optionsBuilder: (TextEditingValue tv) {
-                              if (tv.text.isEmpty) {
-                                return const Iterable.empty();
-                              }
-                              return controller.customerList.where((e) {
-                                final mobile = e.mobileNo ?? '';
-                                final name = (e.name ?? '').toLowerCase();
-                                final q = tv.text.toLowerCase();
-                                return mobile.contains(q) || name.contains(q);
-                              });
-                            },
-                            displayStringForOption: (o) => o.mobileNo ?? '',
-                            onSelected: (option) {
-                              controller.setDataAsPerOptionSelected(
-                                AddCustomerData(
-                                  name: option.name,
-                                  mobileNo: option.mobileNo,
-                                  address: option.address,
-                                ),
-                              );
-                            },
-                            fieldViewBuilder: (
-                              ctx,
-                              textCtrl,
-                              focusNode,
-                              onSubmit,
-                            ) {
-                              return Obx(
-                                () => CommonTextField(
-                                  hintText: 'Mobile No',
-                                  label: 'Mobile No',
-                                  controller: controller.mobileController,
-                                  keyboardType: TextInputType.number,
-                                  inputLength: 10,
-                                  validator: (no) {
-                                    if (no?.isEmpty ?? false) {
-                                      return 'Enter mobile no';
-                                    } else if ((no?.length ?? 0) > 10) {
-                                      return 'Mobile no should be 10 digit';
-                                    }
-                                    return null;
-                                  },
-                                  // suffixIcon:
-                                  //     controller
-                                  //             .isCustomerFetchingByMobileNumberLoading
-                                  //             .value
-                                  //         ? Container(
-                                  //           height: 30,
-                                  //           width: 40,
-                                  //           color: AppColors.whiteColor,
-                                  //           child: CommonProgressBar(
-                                  //             size: 40,
-                                  //             color: AppColors.blackColor,
-                                  //           ),
-                                  //         )
-                                  //         : null,
-                                  onChanged: (v) {
-                                    textCtrl.text = v;
-                                    controller.mobileController.text = v;
-                                  },
-                                ),
-                              );
-                            },
-                            optionsViewBuilder: (ctx, onSelected, options) {
-                              return CustomPadding(
-                                paddingOption: SymmetricPadding(horizontal: 16),
-                                child: Material(
-                                  color: AppColors.greyColorShade100,
-                                  elevation: 5,
-                                  borderRadius: BorderRadius.only(
-                                    bottomLeft: Radius.circular(10.r),
-                                    bottomRight: Radius.circular(10.r),
-                                  ),
-                                  child: SizedBox(
-                                    height: 150.h,
-                                    child: ListView.builder(
-                                      itemCount: options.length,
-                                      itemBuilder: (ctx, i) {
-                                        final c = options.elementAt(i);
-                                        return InkWell(
-                                          onTap: () => onSelected(c),
-                                          child: Container(
-                                            height: 40.h,
-                                            margin:
-                                                OnlyPadding(
-                                                  left: 5,
-                                                  bottom: 5,
-                                                  right: 5,
-                                                  top: 8,
-                                                ).getPadding(),
-                                            padding:
-                                                OnlyPadding(
-                                                  top: 5,
-                                                  left: 8,
-                                                  bottom: 5,
-                                                ).getPadding(),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black12,
-                                              borderRadius:
-                                                  BorderRadius.circular(8.r),
-                                            ),
-                                            child: Text(
-                                              c.mobileNo ?? '',
-                                              style:
-                                                  CustomTextStyle.customMontserrat(),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+                          CustomerViewDetailsMobileAutoCompleteWidget(
+                            controller: controller,
                           ),
                           setHeight(height: 10),
                           CommonTextField(

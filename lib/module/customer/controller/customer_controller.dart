@@ -49,7 +49,7 @@ class CustomerController extends GetxController with CacheManager {
     return customer.totalCredit;
   }
 
-  void setDataAsPerOptionSelected(AddCustomerData? option) {
+  void setDataAsPerOptionSelected(CustomerItem? option) {
     addressController.text = option?.address ?? '';
     nameController.text = option?.name ?? '';
     mobileController.text = option?.mobileNo ?? '';
@@ -109,7 +109,7 @@ class CustomerController extends GetxController with CacheManager {
         mobileNumber: mobileNumber,
       );
       if (response.success == success) {
-        setDataAsPerOptionSelected(response.data);
+        // setDataAsPerOptionSelected(response.data);
       } else if (response.success == failed) {
         // showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {

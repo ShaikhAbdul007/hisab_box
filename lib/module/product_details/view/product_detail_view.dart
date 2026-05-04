@@ -406,27 +406,13 @@ class ProductDetailView extends GetView<ProductDetailsController> {
           ],
         ),
         // Color + Brand
-        Obx(
-          () => InventoryBottomsheetComponentText(
-            readOnly1: controller.readOnly.value,
-            readOnly2: controller.readOnly.value,
-            hintText1: 'Enter color',
-            label1: 'Color',
-            controller1: controller.color,
-            hintText2: 'Enter brand',
-            label2: 'Brand',
-            controller2: controller.brand,
-          ),
+        Row(
+          children: [
+            Flexible(child: _colorDropdown()),
+            Flexible(child: _brandDropdown()),
+          ],
         ),
-        // Quantity + Brand type
-        Obx(
-          () => Row(
-            children: [
-              Flexible(child: _stockField()),
-              Flexible(child: _brandTypeDropdown()),
-            ],
-          ),
-        ),
+        Row(children: [Flexible(child: _stockField())]),
         // Selling + Purchase price
         Obx(
           () => InventoryBottomsheetComponentText(
@@ -485,8 +471,9 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               : CustomDropDown(
                 selectedDropDownItem: controller.selectedCategoryId.value,
                 listItems: controller.categoryList,
-                hintText: 'Select Category',
+                hintText: 'Category',
                 notifyParent: (val) {
+                  print(val);
                   controller.selectedCategoryId.value = val;
                   final match = controller.categoryList.firstWhereOrNull(
                     (e) => e.id == val,
@@ -513,6 +500,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                     (e) => e.id == val,
                   );
                   controller.animalType.text = match?.name ?? '';
+                  //  controller.selectedAnimalTypeId.value = match?.id ?? '';
                 },
               ),
     );
@@ -540,18 +528,39 @@ class ProductDetailView extends GetView<ProductDetailsController> {
     );
   }
 
-  Widget _brandTypeDropdown() {
+  Widget _brandDropdown() {
     return Obx(
       () => CustomStaticDropDown(
-        selectedDropDownItem:
-            ['Normal', 'Imp'].contains(controller.brandType.value)
-                ? controller.brandType.value
-                : null,
-        listItems: const ['Normal', 'Imp'],
-        hintText: 'Brand Type',
-        notifyParent:
-            (val) => controller.brandType.value = (val ?? '').toString(),
+        selectedDropDownItem: controller.brand.text,
+        listItems: ['Imp', 'Normal'],
+        hintText: 'Brand',
+        notifyParent: (val) => controller.brand.text = (val ?? '').toString(),
+        enable: !controller.readOnly.value,
       ),
+    );
+  }
+
+  Widget _colorDropdown() {
+    return Obx(
+      () =>
+          controller.colorOptions.isEmpty
+              ? Center(child: CommonProgressBar(color: AppColors.blackColor))
+              : CustomDropDown(
+                selectedDropDownItem: controller.selectedColorId.value,
+                listItems: controller.colorOptions,
+                hintText: 'Color',
+                notifyParent: (val) {
+                  controller.selectedColorId.value = val;
+                  print(
+                    'Selected Color ID: ${controller.selectedColorId.value}',
+                  );
+                  final match = controller.colorOptions.firstWhereOrNull(
+                    (e) => e.id == val,
+                  );
+                  controller.color.text = match?.name ?? '';
+                },
+                enable: !controller.readOnly.value,
+              ),
     );
   }
 
@@ -569,11 +578,16 @@ class ProductDetailView extends GetView<ProductDetailsController> {
   }
 
   Widget _locationDropdown() {
-    return CustomStaticDropDown(
-      selectedDropDownItem: controller.location.text,
-      listItems: const ['shop', 'godown'],
-      hintText: 'Location',
-      notifyParent: (val) => controller.location.text = val,
+    return Obx(
+      () => CustomStaticDropDown(
+        selectedDropDownItem:
+            controller.locationOptions.contains(controller.location.text)
+                ? controller.location.text
+                : null,
+        listItems: controller.locationOptions,
+        hintText: 'Location',
+        notifyParent: (val) => controller.location.text = val,
+      ),
     );
   }
 
@@ -641,32 +655,71 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                   if (controller.inventoryScanKey.currentState!.validate()) {
                     unfocus();
                     if (!isProductLoosed) {
-                      final body = {
-                        "name": controller.productName.text,
-                        "barcodes": controller.barcode.text,
-                        "quantity": num.tryParse(controller.quantity.text) ?? 0,
-                        "selling_price":
-                            num.tryParse(controller.sellingPrice.text) ?? 0,
-                        "purchase_price":
-                            num.tryParse(controller.purchasePrice.text) ?? 0,
-                        "location": controller.location.value,
-                        "stock_type": "packet",
-                        "isloosed": controller.isLoose,
-                        "isflavorRequired":
-                            !controller.isFlavorAndWeightNotRequired.value,
-                        "purchase_date": controller.purchaseDate.text,
-                        "expiry_date": controller.exprieDate.text,
-                        "category": controller.category.text,
-                        "animal_type": controller.animalType.text,
-                        "flavour": controller.flavor.text,
-                        "color": controller.color.text,
-                        "brand": controller.brand.text,
-                        "brand_type": controller.brandType.value,
-                        "level": controller.level.text,
-                        "rack": controller.rack.text,
-                        "weight": controller.weight.text,
-                        "discount": num.tryParse(controller.discount.text) ?? 0,
-                      };
+                      final body =
+                          controller.shopTypeEnum == ShopType.clothingShop
+                              ? {
+                                "name": controller.productName.text,
+                                "barcodes": controller.barcode.text,
+                                "quantity":
+                                    num.tryParse(controller.quantity.text) ?? 0,
+                                "selling_price":
+                                    num.tryParse(
+                                      controller.sellingPrice.text,
+                                    ) ??
+                                    0,
+                                "purchase_price":
+                                    num.tryParse(
+                                      controller.purchasePrice.text,
+                                    ) ??
+                                    0,
+                                "location": controller.location.text,
+                                "stock_type": "clothing",
+                                "purchase_date": controller.purchaseDate.text,
+                                "category": controller.selectedCategoryId.value,
+                                "animal_type":
+                                    controller.selectedAnimalTypeId.value,
+                                "color_id": controller.selectedColorId.value,
+                                "brand": controller.brand.text,
+                                "level": controller.level.text,
+                                "rack": controller.rack.text,
+                                "discount":
+                                    num.tryParse(controller.discount.text) ?? 0,
+                              }
+                              : {
+                                "name": controller.productName.text,
+                                "barcodes": controller.barcode.text,
+                                "quantity":
+                                    num.tryParse(controller.quantity.text) ?? 0,
+                                "selling_price":
+                                    num.tryParse(
+                                      controller.sellingPrice.text,
+                                    ) ??
+                                    0,
+                                "purchase_price":
+                                    num.tryParse(
+                                      controller.purchasePrice.text,
+                                    ) ??
+                                    0,
+                                "location": controller.location.text,
+                                "stock_type": "packet",
+                                "isloosed": controller.isLoose,
+                                "isflavorRequired":
+                                    !controller
+                                        .isFlavorAndWeightNotRequired
+                                        .value,
+                                "purchase_date": controller.purchaseDate.text,
+                                "expiry_date": controller.exprieDate.text,
+                                "category": controller.category.text,
+                                "animal_type": controller.animalType.text,
+                                "flavour": controller.flavor.text,
+                                "color_id": controller.selectedColorId.value,
+                                "brand": controller.brand.text,
+                                "level": controller.level.text,
+                                "rack": controller.rack.text,
+                                "weight": controller.weight.text,
+                                "discount":
+                                    num.tryParse(controller.discount.text) ?? 0,
+                              };
                       controller.updateProductQuantity(
                         body: body,
                         productId: controller.productId.value,

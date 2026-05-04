@@ -10,6 +10,7 @@ import 'package:inventory/module/inventory/model/product_model.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../common_widget/colors.dart';
 import '../../../helper/helper.dart';
+import '../../../helper/logger.dart';
 import '../../../helper/textstyle.dart';
 import '../../../keys/keys.dart';
 import '../../../routes/route_name.dart';
@@ -24,6 +25,9 @@ class InventoryView extends GetView<InventroyController> {
   Widget build(BuildContext context) {
     final bool isloosedInventory =
         controller.flag == false && controller.navigate == 'loose';
+    AppLogger.info(
+      'isloosedInventory: $isloosedInventory flag: ${controller.flag}',
+    );
 
     return PopScope(
       canPop: false,
@@ -33,7 +37,7 @@ class InventoryView extends GetView<InventroyController> {
             backgroundColor: Colors.white,
             appBarLabel:
                 isloosedInventory
-                    ? 'Loose Inventory'
+                    ? controller.shopTypeEnum.config.looseStockGridLabel
                     : (controller.flag == true ? 'Inventory' : 'Sell Product'),
             body: ListView(
               children: [
@@ -43,7 +47,7 @@ class InventoryView extends GetView<InventroyController> {
                     controller.flag == true
                         ? 'Scan product barcode to add the product.'
                         : isloosedInventory
-                        ? 'Scan product barcode to add the loose product.'
+                        ? 'Scan product barcode to add the ${controller.shopTypeEnum.config.looseStockGridLabel.toLowerCase()} product.'
                         : 'Scan product barcode to sell the product.',
                     style: CustomTextStyle.customRaleway(
                       fontSize: 19,
@@ -70,8 +74,13 @@ class InventoryView extends GetView<InventroyController> {
                           isloosedInventory,
                         );
                         return;
-                      } else if (isloosedInventory) {
+                      } else if (isloosedInventory &&
+                          !controller.shopTypeEnum.config.supportsGRStock) {
                         await _handleLooseInventory(barcodes);
+                        return;
+                      } else if (isloosedInventory &&
+                          controller.shopTypeEnum.config.supportsGRStock) {
+                        await _handleGRInventory(barcodes);
                         return;
                       } else {
                         await sellInventory(barcodes, inventoryScanKey);
@@ -107,13 +116,15 @@ class InventoryView extends GetView<InventroyController> {
     GlobalKey<FormState> inventoryScanKey,
   ) async {
     final scannedValue = controller.barcodeValue.value;
-    final isURL = Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
 
+    // ❌ Invalid barcode (URL check)
+    final isURL = Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
     if (isURL) {
       _showInvalidBarcodeDialog();
       return;
     }
 
+    // 🔍 Fetch product
     final (bool exists, BarcodeExistingData? product) = await controller
         .existingProductInfo(scannedValue, 'packet');
 
@@ -122,6 +133,7 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
+    // ❌ Location validation
     final productLocation = (product.location ?? '').trim().toLowerCase();
     if (productLocation != 'shop') {
       showSnackBar(error: 'Product should be in shop to sell.');
@@ -129,6 +141,33 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
+    // ❌ Quantity validation (NEW - important)
+    if ((product.quantity ?? 0) <= 0) {
+      productNotWithScannedAvailableDialog(
+        manualSellOnTap: () => Get.back(),
+        '${product.name ?? "Product"} is out of stock.',
+        scanAgainOnTap: () {
+          Get.back();
+          controller.mobileScannerController.start();
+        },
+        scanningDoneOnTap2: () {
+          if (controller.scannedProductDetails.isNotEmpty) {
+            Get.back();
+            AppRoutes.navigateRoutes(
+              routeName: AppRouteName.sellListAfterScan,
+              data: {'productList': controller.scannedProductDetails},
+            );
+          } else {
+            Get.back();
+            controller.mobileScannerController.start();
+            showSnackBar(error: 'Please scan the product first');
+          }
+        },
+      );
+      return;
+    }
+
+    // 🔁 Loose / Packet decision
     if (product.isloosed == true) {
       checkProductStatusDialog(
         label: 'Is this product sold in Packet or Loose?',
@@ -144,6 +183,7 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
 
+    // ✅ Default flow
     _handleSell(scannedValue, 'packet', inventoryScanKey);
   }
 
@@ -180,7 +220,6 @@ class InventoryView extends GetView<InventroyController> {
       );
       return;
     } else {
-      print('else else else product');
       controller.mobileScannerController.start();
       final res = await AppRoutes.futureNavigationToRoute(
         routeName: AppRouteName.productView,
@@ -239,6 +278,73 @@ class InventoryView extends GetView<InventroyController> {
     }
   }
 
+  Future<void> _handleGRInventory(BarcodeCapture barcodes) async {
+    final scannedValue = controller.barcodeValue.value;
+    final isURL = Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
+
+    if (isURL) {
+      _showInvalidBarcodeDialog();
+      return;
+    }
+
+    final (bool exists, BarcodeExistingData? product) = await controller
+        .existingProductInfo(scannedValue, 'clothing');
+
+    if (!exists || product == null) {
+      _showProductNotFoundDialog();
+      return;
+    }
+
+    if ((product.quantity ?? 0) <= 0) {
+      productNotWithScannedAvailableDialog(
+        manualSellOnTap: () => Get.back(),
+        '${product.name ?? "Product"} is out of stock.',
+        scanAgainOnTap: () {
+          Get.back();
+          controller.mobileScannerController.start();
+        },
+        scanningDoneOnTap2: () {
+          if (controller.scannedProductDetails.isNotEmpty) {
+            Get.back();
+            AppRoutes.navigateRoutes(
+              routeName: AppRouteName.sellListAfterScan,
+              data: {'productList': controller.scannedProductDetails},
+            );
+          } else {
+            Get.back();
+            controller.mobileScannerController.start();
+            showSnackBar(error: 'Please scan the product first');
+          }
+        },
+      );
+      return;
+    }
+
+    final productLocation = (product.location ?? '').trim().toLowerCase();
+    final canAddInGRInventory = productLocation == 'shop';
+
+    if (canAddInGRInventory == false) {
+      showMessage(
+        message:
+            '${product.name ?? 'This'} product can be added to gr only if product is in the shop.',
+      );
+      controller.mobileScannerController.start();
+      return;
+    } else {
+      final res = await AppRoutes.futureNavigationToRoute(
+        routeName: AppRouteName.productView,
+        data: {
+          'barcode': scannedValue,
+          'flag': true,
+          'productName': product.name,
+        },
+      );
+      if (res == true) {
+        controller.mobileScannerController.start();
+      }
+    }
+  }
+
   // ===============================
   // COMMON SELL HANDLER
   // ===============================
@@ -250,6 +356,8 @@ class InventoryView extends GetView<InventroyController> {
     controller.handleScan(
       barcode: barcode,
       sellType: sellType,
+
+      // ✅ Product added
       afterProductAdding: () {
         productSavingDialog(
           label: 'Scanning Done, product added',
@@ -263,6 +371,8 @@ class InventoryView extends GetView<InventroyController> {
           },
         );
       },
+
+      // ❌ Backend quantity fail fallback
       qtyIsNotEnough: _handleQtyNotEnough,
     );
   }

@@ -130,39 +130,70 @@ class InventroyList extends GetView<InventoryListController> {
                       width: 350,
                       color: Colors.grey.shade300,
                       radius: 10,
-                      child: TabBar(
-                        controller: controller.tabController,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        unselectedLabelStyle: CustomTextStyle.customPoppin(),
-                        labelStyle: CustomTextStyle.customPoppin(
-                          color: AppColors.whiteColor,
-                        ),
-                        indicatorPadding:
-                            SymmetricPadding(
-                              horizontal: 10,
-                              vertical: 5,
-                            ).getPadding(),
-                        dividerHeight: 0.0,
-                        indicator: BoxDecoration(
-                          color: AppColors.blackColor,
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        tabs: const [
-                          Tab(child: Text('Shop')),
-                          Tab(child: Text('Godown')),
-                        ],
+                      child: Obx(
+                        () {
+                          final showGodown = controller.isGodownEnabled.value;
+                          if (controller.tabController == null) {
+                            return const SizedBox.shrink();
+                          }
+                          return TabBar(
+                            controller: controller.tabController,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            unselectedLabelStyle:
+                                CustomTextStyle.customPoppin(),
+                            labelStyle: CustomTextStyle.customPoppin(
+                              color: AppColors.whiteColor,
+                            ),
+                            indicatorPadding:
+                                SymmetricPadding(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ).getPadding(),
+                            dividerHeight: 0.0,
+                            indicator: BoxDecoration(
+                              color: AppColors.blackColor,
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                            tabs:
+                                showGodown
+                                    ? const [
+                                      Tab(child: Text('Shop')),
+                                      Tab(child: Text('Godown')),
+                                    ]
+                                    : const [Tab(child: Text('Shop'))],
+                          );
+                        },
                       ),
                     ),
                     Expanded(
-                      child: TabBarView(
-                        controller: controller.tabController,
-                        children: [
-                          _ProductListTab(type: 'shop', controller: controller),
-                          _ProductListTab(
-                            type: 'godown',
-                            controller: controller,
-                          ),
-                        ],
+                      child: Obx(
+                        () {
+                          final showGodown = controller.isGodownEnabled.value;
+                          if (controller.tabController == null) {
+                            return const SizedBox.shrink();
+                          }
+                          return TabBarView(
+                            controller: controller.tabController,
+                            children:
+                                showGodown
+                                    ? [
+                                      _ProductListTab(
+                                        type: 'shop',
+                                        controller: controller,
+                                      ),
+                                      _ProductListTab(
+                                        type: 'godown',
+                                        controller: controller,
+                                      ),
+                                    ]
+                                    : [
+                                      _ProductListTab(
+                                        type: 'shop',
+                                        controller: controller,
+                                      ),
+                                    ],
+                          );
+                        },
                       ),
                     ),
                   ],

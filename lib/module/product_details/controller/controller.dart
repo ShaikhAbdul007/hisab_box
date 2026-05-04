@@ -64,6 +64,7 @@ class ProductController extends GetxController with CacheManager {
   RxString dayDate = ''.obs;
   RxString shopType = ''.obs;
   RxString brandType = ''.obs;
+  RxList<String> locationOptions = <String>['Shop'].obs;
   bool isLoose = false;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
@@ -74,9 +75,19 @@ class ProductController extends GetxController with CacheManager {
     dayDate.value = setFormateDate();
     purchaseDate.text = setFormateDate(); // default today
     setLoosedProduct();
+    await retrieveGodownValue();
     setBarcode();
     getCategoryData();
     super.onInit();
+  }
+
+  Future<void> retrieveGodownValue() async {
+    final isGodownEnabled = await retrieveGodown();
+    locationOptions.value =
+        isGodownEnabled ? <String>['Shop', 'Godown'] : <String>['Shop'];
+    if (!locationOptions.contains(location.text)) {
+      location.text = locationOptions.first;
+    }
   }
 
   void setLoosedProduct() {
@@ -186,6 +197,28 @@ class ProductController extends GetxController with CacheManager {
         clear();
         Get.back(result: true);
         showMessage(message: response.msg ?? somethingWentMessage);
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isLooseProductSave.value = false;
+    }
+  }
+
+  Future<void> saveNewGrProduct({required dynamic body}) async {
+    isLooseProductSave.value = true;
+    try {
+      var response = await productRepo.addGrProduct(body: body);
+      if (response.success == success) {
+        clear();
+        Get.back(result: true);
+        showMessage(
+          message: response.data?.message ?? response.msg ?? somethingWentMessage,
+        );
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);
       } else {

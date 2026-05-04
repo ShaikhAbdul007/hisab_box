@@ -25,9 +25,12 @@ class InvoicePrint extends GetView<InvoiceController> {
     final InvoiceData invoiceData = controller.data as InvoiceData;
     // Payment type — first payment mode from list
     final String paymentMethod =
-        invoiceData.payments?.isNotEmpty == true
-            ? invoiceData.payments!.first.mode ?? ''
-            : '';
+        (invoiceData.payments?.isNotEmpty == true &&
+                (invoiceData.payments?.length ?? 0) > 1)
+            ? 'Partial'
+            : (invoiceData.payments?.isNotEmpty == true
+                ? (invoiceData.payments!.first.mode ?? '')
+                : '');
 
     return CommonAppbar(
       appBarLabel: 'Invoice',

@@ -2,14 +2,16 @@ import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import '../../../common_widget/colors.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
 
-class SellingConfirmationListText extends StatelessWidget {
+class SellingConfirmationListText extends StatelessWidget with CacheManager {
   final InventoryItem inventoryModel;
   final void Function()? plusOnTap;
   final void Function()? minusOnTap;
@@ -17,7 +19,7 @@ class SellingConfirmationListText extends StatelessWidget {
   final Widget sellingPrices;
   final TextEditingController dicountController;
   final void Function(String)? onDiscountChanged;
-  const SellingConfirmationListText({
+  SellingConfirmationListText({
     super.key,
     required this.inventoryModel,
     this.plusOnTap,
@@ -31,6 +33,10 @@ class SellingConfirmationListText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool sellType = inventoryModel.stockType == 'packet';
+    final user = retrieveUserDetail();
+    final isClothingShop =
+        ShopType.fromString(user.data?.shopType ?? '') ==
+        ShopType.clothingShop;
     AppLogger.info(
       ('inventoryModel.sellType is ${inventoryModel.stockType}').toString(),
     );
@@ -182,7 +188,7 @@ class SellingConfirmationListText extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
-                      sellType ? 'PKT' : 'PC',
+                      isClothingShop ? 'PC' : (sellType ? 'PKT' : 'PC'),
                       style: CustomTextStyle.customRaleway(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,

@@ -44,113 +44,115 @@ class TabletScreen extends StatelessWidget {
     return CommonAppbar(
       appBarLabel: 'Home',
       isleadingButtonRequired: false,
-      body: Obx(
-        () =>
-            controller.isListLoading.value
-                ? CommonProgressBar(color: AppColors.blackColor, size: 50)
-                : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      setHeight(height: 10),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.redColor,
-                          border: Border.all(),
-                        ),
-                        child: GridView.builder(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 3,
-                                crossAxisSpacing: 3,
-                                mainAxisSpacing: 10,
-                              ),
+      body: Container(),
 
-                          itemCount: controller.lis.length,
-                          itemBuilder: (context, index) {
-                            return InkWell(
-                              onTap: () async {
-                                if (controller.lis[index].routeName == null) {
-                                } else {
-                                  var res =
-                                      await AppRoutes.futureNavigationToRoute(
-                                        routeName:
-                                            controller.lis[index].routeName!,
-                                      );
-                                  if (res == true) {
-                                    controller.loadDashboard();
-                                  }
-                                }
-                              },
-                              child: HomeGridContainer(
-                                customGridModel: controller.lis[index],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+      // Obx(
+      //   () =>
+      //       controller.isListLoading.value
+      //           ? CommonProgressBar(color: AppColors.blackColor, size: 50)
+      //           : SingleChildScrollView(
+      //             child: Column(
+      //               crossAxisAlignment: CrossAxisAlignment.start,
+      //               children: [
+      //                 setHeight(height: 10),
+      //                 Container(
+      //                   decoration: BoxDecoration(
+      //                     color: AppColors.redColor,
+      //                     border: Border.all(),
+      //                   ),
+      //                   child: GridView.builder(
+      //                     gridDelegate:
+      //                         SliverGridDelegateWithFixedCrossAxisCount(
+      //                           crossAxisCount: 3,
+      //                           childAspectRatio: 3,
+      //                           crossAxisSpacing: 3,
+      //                           mainAxisSpacing: 10,
+      //                         ),
 
-                      CustomPadding(
-                        paddingOption: SymmetricPadding(horizontal: 15),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Recent Activity',
-                              style: CustomTextStyle.customOpenSans(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            controller.sellsList.isNotEmpty
-                                ? InkWell(
-                                  onTap: () async {
-                                    var res =
-                                        await AppRoutes.futureNavigationToRoute(
-                                          routeName: AppRouteName.sell,
-                                        );
-                                    if (res == true) {
-                                      controller.loadDashboard();
-                                    }
-                                  },
-                                  child: Text(
-                                    'see more',
-                                    style: CustomTextStyle.customNato(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                  ),
-                                )
-                                : Container(),
-                          ],
-                        ),
-                      ),
-                      setHeight(height: 10),
-                      SizedBox(
-                        height: 400.h,
-                        child:
-                            controller.sellsList.isNotEmpty
-                                ? ListView.builder(
-                                  itemCount:
-                                      controller.sellsList.length > 6
-                                          ? 6
-                                          : controller.sellsList.length,
-                                  itemBuilder: (context, index) {
-                                    var product = controller.sellsList[index];
-                                    return RecentActivitySellingListText(
-                                      billModel: product,
-                                    );
-                                  },
-                                )
-                                : CommonNoDataFound(
-                                  message: 'No Recent Activity found',
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-      ),
+      //                     itemCount: controller.lis.length,
+      //                     itemBuilder: (context, index) {
+      //                       return InkWell(
+      //                         onTap: () async {
+      //                           if (controller.lis[index].routeName == null) {
+      //                           } else {
+      //                             var res =
+      //                                 await AppRoutes.futureNavigationToRoute(
+      //                                   routeName:
+      //                                       controller.lis[index].routeName!,
+      //                                 );
+      //                             if (res == true) {
+      //                               controller.loadDashboard();
+      //                             }
+      //                           }
+      //                         },
+      //                         child: HomeGridContainer(
+      //                           customGridModel: controller.lis[index],
+      //                         ),
+      //                       );
+      //                     },
+      //                   ),
+      //                 ),
+
+      //                 CustomPadding(
+      //                   paddingOption: SymmetricPadding(horizontal: 15),
+      //                   child: Row(
+      //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //                     children: [
+      //                       Text(
+      //                         'Recent Activity',
+      //                         style: CustomTextStyle.customOpenSans(
+      //                           fontSize: 18,
+      //                           fontWeight: FontWeight.w300,
+      //                         ),
+      //                       ),
+      //                       controller.sellsList.isNotEmpty
+      //                           ? InkWell(
+      //                             onTap: () async {
+      //                               var res =
+      //                                   await AppRoutes.futureNavigationToRoute(
+      //                                     routeName: AppRouteName.sell,
+      //                                   );
+      //                               if (res == true) {
+      //                                 controller.loadDashboard();
+      //                               }
+      //                             },
+      //                             child: Text(
+      //                               'see more',
+      //                               style: CustomTextStyle.customNato(
+      //                                 fontSize: 14,
+      //                                 color: Colors.grey.shade500,
+      //                               ),
+      //                             ),
+      //                           )
+      //                           : Container(),
+      //                     ],
+      //                   ),
+      //                 ),
+      //                 setHeight(height: 10),
+      //                 SizedBox(
+      //                   height: 400.h,
+      //                   child:
+      //                       controller.sellsList.isNotEmpty
+      //                           ? ListView.builder(
+      //                             itemCount:
+      //                                 controller.sellsList.length > 6
+      //                                     ? 6
+      //                                     : controller.sellsList.length,
+      //                             itemBuilder: (context, index) {
+      //                               var product = controller.sellsList[index];
+      //                               return RecentActivitySellingListText(
+      //                                 billModel: product,
+      //                               );
+      //                             },
+      //                           )
+      //                           : CommonNoDataFound(
+      //                             message: 'No Recent Activity found',
+      //                           ),
+      //                 ),
+      //               ],
+      //             ),
+      //           ),
+      // ),
     );
   }
 }
@@ -171,115 +173,117 @@ class DeskTopScreen extends StatelessWidget {
       //   child: Icon(Icons.notifications_none_outlined),
       // ),
       isleadingButtonRequired: false,
-      body: Obx(
-        () =>
-            controller.isListLoading.value
-                ? CommonProgressBar(color: AppColors.blackColor, size: 50)
-                : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      setHeight(height: 10),
-                      Container(
-                        margin: SymmetricPadding(horizontal: 10).getPadding(),
-                        height: 220,
-                        child: GridView.builder(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 5,
-                                childAspectRatio: 3,
-                                crossAxisSpacing: 5,
-                                mainAxisSpacing: 10,
-                              ),
-                          itemCount: controller.lis.length,
-                          itemBuilder: (context, index) {
-                            return InkWell(
-                              onTap: () async {
-                                if (controller.lis[index].routeName == null) {
-                                } else {
-                                  var res =
-                                      await AppRoutes.futureNavigationToRoute(
-                                        routeName:
-                                            controller.lis[index].routeName!,
-                                      );
-                                  if (res == true) {
-                                    AppLogger.info(('res is $res').toString());
-                                    controller.loadDashboard();
-                                  }
-                                }
-                              },
-                              child: HomeGridContainer(
-                                customGridModel: controller.lis[index],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      CommonDivider(
-                        color: AppColors.blackColor,
-                        endIndent: 25,
-                        indent: 25,
-                      ),
-                      CustomPadding(
-                        paddingOption: SymmetricPadding(horizontal: 15),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Recent Activity',
-                              style: CustomTextStyle.customOpenSans(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w300,
-                              ),
-                            ),
-                            controller.sellsList.isNotEmpty
-                                ? InkWell(
-                                  onTap: () async {
-                                    var res =
-                                        await AppRoutes.futureNavigationToRoute(
-                                          routeName: AppRouteName.sell,
-                                        );
-                                    if (res == true) {
-                                      controller.loadDashboard();
-                                    }
-                                  },
-                                  child: Text(
-                                    'see more',
-                                    style: CustomTextStyle.customNato(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                  ),
-                                )
-                                : Container(),
-                          ],
-                        ),
-                      ),
-                      setHeight(height: 10),
-                      SizedBox(
-                        height: 400.h,
-                        child:
-                            controller.sellsList.isNotEmpty
-                                ? ListView.builder(
-                                  itemCount:
-                                      controller.sellsList.length > 6
-                                          ? 6
-                                          : controller.sellsList.length,
-                                  itemBuilder: (context, index) {
-                                    var product = controller.sellsList[index];
-                                    return RecentActivitySellingListText(
-                                      billModel: product,
-                                    );
-                                  },
-                                )
-                                : CommonNoDataFound(
-                                  message: 'No Recent Activity found',
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-      ),
+      body: Container(),
+
+      // Obx(
+      //   () =>
+      //       controller.isListLoading.value
+      //           ? CommonProgressBar(color: AppColors.blackColor, size: 50)
+      //           : SingleChildScrollView(
+      //             child: Column(
+      //               crossAxisAlignment: CrossAxisAlignment.start,
+      //               children: [
+      //                 setHeight(height: 10),
+      //                 Container(
+      //                   margin: SymmetricPadding(horizontal: 10).getPadding(),
+      //                   height: 220,
+      //                   child: GridView.builder(
+      //                     gridDelegate:
+      //                         SliverGridDelegateWithFixedCrossAxisCount(
+      //                           crossAxisCount: 5,
+      //                           childAspectRatio: 3,
+      //                           crossAxisSpacing: 5,
+      //                           mainAxisSpacing: 10,
+      //                         ),
+      //                     itemCount: controller.lis.length,
+      //                     itemBuilder: (context, index) {
+      //                       return InkWell(
+      //                         onTap: () async {
+      //                           if (controller.lis[index].routeName == null) {
+      //                           } else {
+      //                             var res =
+      //                                 await AppRoutes.futureNavigationToRoute(
+      //                                   routeName:
+      //                                       controller.lis[index].routeName!,
+      //                                 );
+      //                             if (res == true) {
+      //                               AppLogger.info(('res is $res').toString());
+      //                               controller.loadDashboard();
+      //                             }
+      //                           }
+      //                         },
+      //                         child: HomeGridContainer(
+      //                           customGridModel: controller.lis[index],
+      //                         ),
+      //                       );
+      //                     },
+      //                   ),
+      //                 ),
+      //                 CommonDivider(
+      //                   color: AppColors.blackColor,
+      //                   endIndent: 25,
+      //                   indent: 25,
+      //                 ),
+      //                 CustomPadding(
+      //                   paddingOption: SymmetricPadding(horizontal: 15),
+      //                   child: Row(
+      //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //                     children: [
+      //                       Text(
+      //                         'Recent Activity',
+      //                         style: CustomTextStyle.customOpenSans(
+      //                           fontSize: 18,
+      //                           fontWeight: FontWeight.w300,
+      //                         ),
+      //                       ),
+      //                       controller.sellsList.isNotEmpty
+      //                           ? InkWell(
+      //                             onTap: () async {
+      //                               var res =
+      //                                   await AppRoutes.futureNavigationToRoute(
+      //                                     routeName: AppRouteName.sell,
+      //                                   );
+      //                               if (res == true) {
+      //                                 controller.loadDashboard();
+      //                               }
+      //                             },
+      //                             child: Text(
+      //                               'see more',
+      //                               style: CustomTextStyle.customNato(
+      //                                 fontSize: 14,
+      //                                 color: Colors.grey.shade500,
+      //                               ),
+      //                             ),
+      //                           )
+      //                           : Container(),
+      //                     ],
+      //                   ),
+      //                 ),
+      //                 setHeight(height: 10),
+      //                 SizedBox(
+      //                   height: 400.h,
+      //                   child:
+      //                       controller.sellsList.isNotEmpty
+      //                           ? ListView.builder(
+      //                             itemCount:
+      //                                 controller.sellsList.length > 6
+      //                                     ? 6
+      //                                     : controller.sellsList.length,
+      //                             itemBuilder: (context, index) {
+      //                               var product = controller.sellsList[index];
+      //                               return RecentActivitySellingListText(
+      //                                 billModel: product,
+      //                               );
+      //                             },
+      //                           )
+      //                           : CommonNoDataFound(
+      //                             message: 'No Recent Activity found',
+      //                           ),
+      //                 ),
+      //               ],
+      //             ),
+      //           ),
+      // ),
     );
   }
 }

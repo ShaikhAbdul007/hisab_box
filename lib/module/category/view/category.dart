@@ -46,10 +46,24 @@ class Category extends GetView<CategoryController> {
                 ? Stack(
                   children: [
                     ListView.builder(
-                      itemCount: controller.categoryList.length,
+                      controller: controller.scrollController,
+                      itemCount: controller.categoryList.length + 1,
                       itemBuilder: (context, index) {
+                        if (index == controller.categoryList.length) {
+                          return Obx(
+                            () =>
+                                controller.isLoadingMore.value
+                                    ? const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    )
+                                    : const SizedBox.shrink(),
+                          );
+                        }
                         var list = controller.categoryList[index];
-                       
+
                         return CustomPadding(
                           paddingOption: SymmetricPadding(
                             horizontal: 10,

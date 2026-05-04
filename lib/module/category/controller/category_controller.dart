@@ -9,15 +9,30 @@ import '../model/category_model.dart';
 class CategoryController extends GetxController with CacheManager {
   CategoryRepo categoryRepo = CategoryRepo();
   TextEditingController category = TextEditingController();
+  final ScrollController scrollController = ScrollController();
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteCategory = false.obs;
   RxBool isFetchCategory = false.obs;
+  RxBool isLoadingMore = false.obs;
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
+  int _page = 1;
+  int _totalPages = 1;
+  bool get hasMore => _page < _totalPages;
 
   @override
   void onInit() {
     getCategoryData();
+    scrollController.addListener(_onScroll);
     super.onInit();
+  }
+
+  void _onScroll() {
+    if (scrollController.position.pixels >=
+            scrollController.position.maxScrollExtent - 200 &&
+        !isLoadingMore.value &&
+        hasMore) {
+      _loadMore();
+    }
   }
 
   void getCategoryData() async {
@@ -50,12 +65,15 @@ class CategoryController extends GetxController with CacheManager {
   }
 
   Future<void> fetchCategories() async {
+    _page = 1;
+    categoryList.clear();
     isFetchCategory.value = true;
 
     try {
-      var response = await categoryRepo.getCategory();
+      var response = await categoryRepo.getCategory(page: _page);
       if (response.success == success) {
         categoryList.value = response.categorymodeldata?.data ?? [];
+        _totalPages = response.categorymodeldata?.pagination?.totalPages ?? 1;
         saveCategoryList(categoryList);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
@@ -66,6 +84,27 @@ class CategoryController extends GetxController with CacheManager {
       showSnackBar(error: e.toString());
     } finally {
       isFetchCategory.value = false;
+    }
+  }
+
+  Future<void> _loadMore() async {
+    _page++;
+    isLoadingMore.value = true;
+    try {
+      final response = await categoryRepo.getCategory(page: _page);
+      if (response.success == success) {
+        categoryList.addAll(response.categorymodeldata?.data ?? []);
+        _totalPages =
+            response.categorymodeldata?.pagination?.totalPages ?? _totalPages;
+        saveCategoryList(categoryList);
+      } else {
+        _page--;
+      }
+    } catch (e) {
+      _page--;
+      showSnackBar(error: e.toString());
+    } finally {
+      isLoadingMore.value = false;
     }
   }
 
@@ -92,5 +131,12 @@ class CategoryController extends GetxController with CacheManager {
 
   void clear() {
     category.clear();
+  }
+
+  @override
+  void onClose() {
+    category.dispose();
+    scrollController.dispose();
+    super.onClose();
   }
 }

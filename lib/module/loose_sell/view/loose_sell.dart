@@ -11,6 +11,8 @@ import '../../../common_widget/common_progressbar.dart';
 import '../../../common_widget/search.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
+import '../../../helper/shop_type.dart';
+import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../controller/loose_controller.dart';
@@ -20,6 +22,7 @@ class LooseSell extends GetView<LooseController> {
 
   @override
   Widget build(BuildContext context) {
+    final isClothing = controller.shopTypeEnum == ShopType.clothingShop;
     return CommonAppbar(
       secondActionChild: InkWell(
         onTap: () async {
@@ -42,93 +45,105 @@ class LooseSell extends GetView<LooseController> {
           ),
         ),
       ),
-      appBarLabel: 'Loose Inventory',
-      body: Obx(
-        () =>
-            controller.isDataLoading.value
-                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
-                : controller.looseCategoryModelList.isNotEmpty
-                ? Column(
-                  children: [
-                    setHeight(height: 10),
-                    Expanded(
-                      flex: 2,
-                      child: CustomPadding(
-                        paddingOption: SymmetricPadding(horizontal: 12),
-                        child: CommonSearch(
-                          icon: Obx(
-                            () => InkWell(
-                              onTap:
-                                  controller.searchText.value.isNotEmpty
-                                      ? () {
-                                        controller.clear();
-                                        unfocus();
-                                      }
-                                      : null,
-                              child: Icon(
-                                controller.searchText.value.isNotEmpty
-                                    ? CupertinoIcons.clear
-                                    : CupertinoIcons.search,
-                              ),
-                            ),
-                          ),
-                          label: 'Search',
-                          hintText: 'search product',
-                          controller: controller.searchController,
-                          onChanged: (val) => controller.searchProduct(val),
-                        ),
+      appBarLabel: isClothing ? 'Good Return (GR)' : 'Loose Inventory',
+      body: Obx(() {
+        if (controller.isDataLoading.value) {
+          return CommonProgressBar(size: 50, color: AppColors.blackColor);
+        }
+
+        if (isClothing) {
+          if (controller.grnList.isEmpty) {
+            return CommonNoDataFound(message: 'No GR found');
+          }
+          return ListView.builder(
+            itemCount: controller.grnList.length,
+            itemBuilder: (context, index) {
+              final grn = controller.grnList[index];
+              return GrListText(
+                inventoryModel: grn,
+                shopType: controller.shopTypeEnum,
+              );
+            },
+          );
+        }
+
+        if (controller.looseCategoryModelList.isEmpty) {
+          return CommonNoDataFound(message: 'No product found');
+        }
+
+        return Column(
+          children: [
+            setHeight(height: 10),
+            Expanded(
+              flex: 2,
+              child: CustomPadding(
+                paddingOption: SymmetricPadding(horizontal: 12),
+                child: CommonSearch(
+                  icon: Obx(
+                    () => InkWell(
+                      onTap:
+                          controller.searchText.value.isNotEmpty
+                              ? () {
+                                controller.clear();
+                                unfocus();
+                              }
+                              : null,
+                      child: Icon(
+                        controller.searchText.value.isNotEmpty
+                            ? CupertinoIcons.clear
+                            : CupertinoIcons.search,
                       ),
                     ),
-                    Expanded(
-                      flex: 19,
-                      child: ListView.builder(
-                        itemCount: controller.looseCategoryModelList.length,
-                        itemBuilder: (context, index) {
-                          var inventoryList =
-                              controller.looseCategoryModelList[index];
-                          String name = inventoryList.name?.toLowerCase() ?? '';
-                          String barcode =
-                              inventoryList.barcode?.toLowerCase() ?? '';
-                          return Obx(
-                            () =>
-                                name.toLowerCase().contains(
-                                          controller.searchText.value,
-                                        ) ||
-                                        barcode.toLowerCase().contains(
-                                          controller
-                                              .searchController
-                                              .value
-                                              .text,
-                                        )
-                                    ? LooseInventroyListText(
-                                      onTap: () async {
-                                        var res =
-                                            await AppRoutes.futureNavigationToRoute(
-                                              routeName:
-                                                  AppRouteName
-                                                      .productDetailView,
-                                              data: {
-                                                'product': inventoryList,
-                                                'isProductLoosed': true,
-                                              },
-                                            );
-                                        if (res == true) {
-                                          controller.fetchLooseList();
-                                        }
+                  ),
+                  label: 'Search',
+                  hintText: 'search product',
+                  controller: controller.searchController,
+                  onChanged: (val) => controller.searchProduct(val),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 19,
+              child: ListView.builder(
+                itemCount: controller.looseCategoryModelList.length,
+                itemBuilder: (context, index) {
+                  var inventoryList = controller.looseCategoryModelList[index];
+                  String name = inventoryList.name?.toLowerCase() ?? '';
+                  String barcode = inventoryList.barcode?.toLowerCase() ?? '';
+                  return Obx(
+                    () =>
+                        name.toLowerCase().contains(
+                                  controller.searchText.value,
+                                ) ||
+                                barcode.toLowerCase().contains(
+                                  controller.searchController.value.text,
+                                )
+                            ? LooseInventroyListText(
+                              onTap: () async {
+                                var res =
+                                    await AppRoutes.futureNavigationToRoute(
+                                      routeName: AppRouteName.productDetailView,
+                                      data: {
+                                        'product': inventoryList,
+                                        'isProductLoosed': true,
                                       },
-                                      isInventoryScanSelected: true,
-                                      inventoryModel: inventoryList,
-                                      shopType: controller.shopTypeEnum,
-                                    )
-                                    : Container(),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                )
-                : CommonNoDataFound(message: 'No product found'),
-      ),
+                                    );
+                                if (res == true) {
+                                  controller.fetchLooseList();
+                                }
+                              },
+                              isInventoryScanSelected: true,
+                              inventoryModel: inventoryList,
+                              shopType: controller.shopTypeEnum,
+                            )
+                            : Container(),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 }

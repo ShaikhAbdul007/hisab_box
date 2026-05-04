@@ -10,12 +10,17 @@ import 'package:inventory/helper/app_message.dart';
 class AnimalTypeController extends GetxController with CacheManager {
   AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
   TextEditingController animalCategory = TextEditingController();
+  final ScrollController scrollController = ScrollController();
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteAnimalCategory = false.obs;
   RxBool isFetchAnimalCategory = false.obs;
+  RxBool isLoadingMore = false.obs;
   RxString shopType = ''.obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
   var data = Get.arguments;
+  int _page = 1;
+  int _totalPages = 1;
+  bool get hasMore => _page < _totalPages;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
@@ -23,7 +28,17 @@ class AnimalTypeController extends GetxController with CacheManager {
   void onInit() {
     setShopType();
     getCategoryData();
+    scrollController.addListener(_onScroll);
     super.onInit();
+  }
+
+  void _onScroll() {
+    if (scrollController.position.pixels >=
+            scrollController.position.maxScrollExtent - 200 &&
+        !isLoadingMore.value &&
+        hasMore) {
+      _loadMore();
+    }
   }
 
   void getCategoryData() async {
@@ -71,11 +86,14 @@ class AnimalTypeController extends GetxController with CacheManager {
   // 🔥 FETCH ANIMAL CATEGORIES (FALLBACK FLOW)
   // ==========================================
   Future<void> fetchCategories() async {
+    _page = 1;
+    animalTypeList.clear();
     isFetchAnimalCategory.value = true;
     try {
-      var response = await animalCategoryRepo.getAnimalCategory();
+      var response = await animalCategoryRepo.getAnimalCategory(page: _page);
       if (response.success == success) {
         animalTypeList.value = response.categorymodeldata?.data ?? [];
+        _totalPages = response.categorymodeldata?.pagination?.totalPages ?? 1;
         saveAnimalList(animalTypeList);
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);
@@ -86,6 +104,27 @@ class AnimalTypeController extends GetxController with CacheManager {
       showSnackBar(error: e.toString());
     } finally {
       isFetchAnimalCategory.value = false;
+    }
+  }
+
+  Future<void> _loadMore() async {
+    _page++;
+    isLoadingMore.value = true;
+    try {
+      final response = await animalCategoryRepo.getAnimalCategory(page: _page);
+      if (response.success == success) {
+        animalTypeList.addAll(response.categorymodeldata?.data ?? []);
+        _totalPages =
+            response.categorymodeldata?.pagination?.totalPages ?? _totalPages;
+        saveAnimalList(animalTypeList);
+      } else {
+        _page--;
+      }
+    } catch (e) {
+      _page--;
+      showSnackBar(error: e.toString());
+    } finally {
+      isLoadingMore.value = false;
     }
   }
 
@@ -115,5 +154,12 @@ class AnimalTypeController extends GetxController with CacheManager {
 
   void clear() {
     animalCategory.clear();
+  }
+
+  @override
+  void onClose() {
+    animalCategory.dispose();
+    scrollController.dispose();
+    super.onClose();
   }
 }

@@ -53,6 +53,12 @@ class ApiEndPoint {
   static const String getBankDetails = "shop/bank-details";
   static const String createBankDetails = "shop/bank-details";
 
+  // ---------------- Create GR ----------------
+
+  static const String createGr = "create";
+  static const String baseGr = "grn/";
+  static const String deleteGr = "approve";
+  static const String getAllGrn = "grn";
   // ---------------- INVENTORY ----------------
   static const String transferGodownToShop = "shop/transfer-godown-to-shop";
 

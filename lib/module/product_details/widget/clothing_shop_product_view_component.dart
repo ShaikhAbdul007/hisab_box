@@ -255,10 +255,16 @@ class ClothingShopProductViewComponent extends StatelessWidget {
   }
 
   Widget _locationDropdown() {
-    return CustomStaticDropDown(
-      listItems: const ['Shop', 'Godown'],
-      hintText: 'Location',
-      notifyParent: (val) => controller.location.text = val?.toString() ?? '',
+    return Obx(
+      () => CustomStaticDropDown(
+        selectedDropDownItem:
+            controller.locationOptions.contains(controller.location.text)
+                ? controller.location.text
+                : null,
+        listItems: controller.locationOptions,
+        hintText: 'Location',
+        notifyParent: (val) => controller.location.text = val?.toString() ?? '',
+      ),
     );
   }
 

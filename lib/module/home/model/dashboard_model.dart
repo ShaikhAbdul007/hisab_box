@@ -54,6 +54,12 @@ class Stats {
   num? looseStock;
   num? todaySales;
   num? totalCustomers;
+  // new fields
+  num? nearExpiry;
+  num? totalGrns;
+  num? pendingGrns;
+  num? approvedGrns;
+  num? rejectedGrns;
 
   Stats({
     this.totalProducts,
@@ -61,6 +67,11 @@ class Stats {
     this.looseStock,
     this.todaySales,
     this.totalCustomers,
+    this.nearExpiry,
+    this.totalGrns,
+    this.pendingGrns,
+    this.approvedGrns,
+    this.rejectedGrns,
   });
 
   Stats.fromJson(Map<String, dynamic> json) {
@@ -69,6 +80,11 @@ class Stats {
     looseStock = json['loose_stock'];
     todaySales = json['today_sales'];
     totalCustomers = json['total_customers'];
+    nearExpiry = json['near_expiry'];
+    totalGrns = json['total_grns'];
+    pendingGrns = json['pending_grns'];
+    approvedGrns = json['approved_grns'];
+    rejectedGrns = json['rejected_grns'];
   }
 
   Map<String, dynamic> toJson() {
@@ -78,6 +94,11 @@ class Stats {
     data['loose_stock'] = looseStock;
     data['today_sales'] = todaySales;
     data['total_customers'] = totalCustomers;
+    data['near_expiry'] = nearExpiry;
+    data['total_grns'] = totalGrns;
+    data['pending_grns'] = pendingGrns;
+    data['approved_grns'] = approvedGrns;
+    data['rejected_grns'] = rejectedGrns;
     return data;
   }
 }
@@ -115,38 +136,52 @@ class RecentActivities {
 
 class RecentActivitiesData {
   String? id;
+  String? type;
+  String? referenceNo;
+  String? status;
+  String? createdAt;
+  String? description;
+  // kept for backward compat
   String? userId;
   String? userActivity;
   String? module;
-  String? type;
-  String? createdAt;
 
   RecentActivitiesData({
     this.id,
+    this.type,
+    this.referenceNo,
+    this.status,
+    this.createdAt,
+    this.description,
     this.userId,
     this.userActivity,
     this.module,
-    this.type,
-    this.createdAt,
   });
 
   RecentActivitiesData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+    type = json['type'];
+    referenceNo = json['reference_no'];
+    status = json['status'];
+    createdAt = json['created_at'];
+    description = json['description'];
+    // backward compat
     userId = json['user_id'];
     userActivity = json['user_activity'];
     module = json['module'];
-    type = json['type'];
-    createdAt = json['created_at'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
+    data['type'] = type;
+    data['reference_no'] = referenceNo;
+    data['status'] = status;
+    data['created_at'] = createdAt;
+    data['description'] = description;
     data['user_id'] = userId;
     data['user_activity'] = userActivity;
     data['module'] = module;
-    data['type'] = type;
-    data['created_at'] = createdAt;
     return data;
   }
 }

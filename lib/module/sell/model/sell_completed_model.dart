@@ -27,7 +27,7 @@ class SaleCompletedData {
   bool? success;
   String? saleId;
   String? invoiceNo;
-  int? totalAmount;
+  num? totalAmount;
   String? message;
 
   SaleCompletedData({

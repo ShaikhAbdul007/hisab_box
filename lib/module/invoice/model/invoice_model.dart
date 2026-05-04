@@ -176,6 +176,8 @@ class InvoiceDataItems {
   String? purchasePrice;
   String? categoryName;
   String? animalTypeName;
+  String? brand;
+  String? colorName;
 
   InvoiceDataItems({
     this.id,
@@ -200,6 +202,8 @@ class InvoiceDataItems {
     this.purchasePrice,
     this.categoryName,
     this.animalTypeName,
+    this.brand,
+    this.colorName,
   });
 
   InvoiceDataItems.fromJson(Map<String, dynamic> json) {
@@ -225,6 +229,8 @@ class InvoiceDataItems {
     purchasePrice = json['purchasePrice'];
     categoryName = json['categoryName'];
     animalTypeName = json['animalTypeName'];
+    brand = json['brand'];
+    colorName = json['colorName'];
   }
 
   Map<String, dynamic> toJson() {
@@ -251,6 +257,8 @@ class InvoiceDataItems {
     data['purchasePrice'] = purchasePrice;
     data['categoryName'] = categoryName;
     data['animalTypeName'] = animalTypeName;
+    data['brand'] = brand;
+    data['colorName'] = colorName;
     return data;
   }
 }

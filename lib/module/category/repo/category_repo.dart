@@ -5,10 +5,11 @@ import 'package:inventory/network/networking.dart';
 class CategoryRepo {
   Networking networking = Networking();
 
-  Future<CategoryModel> getCategory() async {
+  Future<CategoryModel> getCategory({int page = 1, int pageLimit = 20}) async {
     try {
       final response = await networking.getData(
-        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getCategories}',
+        url:
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getCategories}?page=$page&limit=$pageLimit',
       );
       return CategoryModel.fromJson(response);
     } catch (e) {

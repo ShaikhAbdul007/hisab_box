@@ -34,8 +34,16 @@ mixin class CacheManager {
     box.write(Key.printerAddress.toString(), value);
   }
 
+  void saveProfit(String value) {
+    box.write(Key.profit.toString(), value);
+  }
+
   void saveInventoryScanValue(bool value) {
     box.write(Key.inventoryScan.toString(), value);
+  }
+
+  void saveGodownValue(bool value) {
+    box.write(Key.godown.toString(), value);
   }
 
   void saveCartProductList(List<InventoryItem> product) {
@@ -46,6 +54,11 @@ mixin class CacheManager {
   void saveCategoryList(List<CategoryModelListData> categories) {
     final categoryList = categories.map((e) => e.toJson()).toList();
     box.write(Key.categoryValue.toString(), categoryList);
+  }
+
+  void saveColorCategoryList(List<CategoryModelListData> colorCategories) {
+    final categoryList = colorCategories.map((e) => e.toJson()).toList();
+    box.write(Key.colorCategoryValue.toString(), categoryList);
   }
 
   void saveAnimalList(List<CategoryModelListData> categories) {
@@ -63,22 +76,16 @@ mixin class CacheManager {
 
   //----------------- Retrieve all the value------------------------------------------------------------------------------
 
-  // String retrieveTenantValue() {
-  //   return box.read(Key.categoryValue.toString());
-  // }
-
-  // Tracking ke liye: Kaun kaam kar raha hai (Staff ki apni ID)
-  String get currentUserId {
-    final user = retrieveUserDetail();
-    return "";
-  }
-
   String? retrieveEmployeeId() {
     return box.read(Key.employeeIdKey.toString());
   }
 
   String? retrievePrinterAddress() {
     return box.read(Key.printerAddress.toString());
+  }
+
+  String? retrieveProfit() {
+    return box.read(Key.profit.toString());
   }
 
   int retrieveBillNo() {
@@ -94,6 +101,11 @@ mixin class CacheManager {
   Future<bool> retrieveInventoryScan() async {
     box.writeIfNull(Key.inventoryScan.toString(), false);
     return box.read(Key.inventoryScan.toString());
+  }
+
+  Future<bool> retrieveGodown() async {
+    box.writeIfNull(Key.godown.toString(), false);
+    return box.read(Key.godown.toString());
   }
 
   UserModel retrieveUserDetail() {
@@ -114,6 +126,14 @@ mixin class CacheManager {
 
   Future<List<CategoryModelListData>> retrieveAnimalCategory() async {
     final category = box.read(Key.animalCategoryValue.toString());
+    if (category != null && category is List) {
+      return category.map((e) => CategoryModelListData.fromJson(e)).toList();
+    }
+    return [];
+  }
+
+  Future<List<CategoryModelListData>> retrieveColorCategory() async {
+    final category = box.read(Key.colorCategoryValue.toString());
     if (category != null && category is List) {
       return category.map((e) => CategoryModelListData.fromJson(e)).toList();
     }
@@ -209,6 +229,7 @@ enum Key {
   userLoginIn,
   employeeIdKey,
   animalCategoryValue,
+  colorCategoryValue,
   otherEmployeeNoKey,
   otherEmployeeNameKey,
   shouldResetCacheModel,
@@ -216,6 +237,8 @@ enum Key {
   inventoryScan,
   printerAddress,
   billNo,
+  profit,
+  godown,
   userModels,
   bankModels,
   product,

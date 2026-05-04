@@ -79,7 +79,6 @@ class InventoryItem {
   String? createdAt;
   String? color;
   String? brand;
-  String? brandType;
 
   InventoryItem({
     this.id,
@@ -135,7 +134,6 @@ class InventoryItem {
     purchaseDate = json['purchase_date'];
     color = json['color_name'];
     brand = json['brand'];
-    brandType = json['brand_type'];
   }
 
   Map<String, dynamic> toJson() {
@@ -165,7 +163,7 @@ class InventoryItem {
     data['purchase_date'] = purchaseDate;
     data['color_name'] = color;
     data['brand'] = brand;
-    data['brand_type'] = brandType;
+
     return data;
   }
 }

@@ -169,7 +169,7 @@ class NearExpiryText extends StatelessWidget {
 
   String getText() {
     String? text;
-    int qty = inventoryModel.quantity ?? 0;
+    int qty = int.tryParse(inventoryModel.quantity ?? '0') ?? 0;
     if (qty > 0 && qty < 10) {
       text = 'Low Stock';
     } else if (qty == 0) {

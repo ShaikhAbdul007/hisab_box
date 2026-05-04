@@ -47,7 +47,7 @@ class OrderController extends GetxController with CacheManager {
   }
 
   Future<void> _fetchInvoice() async {
-    final billNo = data.billNo?.toString() ?? '';
+    final billNo = data.billNo;
     if (billNo.isEmpty) return;
     isInvoiceLoading.value = true;
     try {

@@ -167,12 +167,14 @@ class SellDetailsItems {
   String? purchasePrice;
   String? categoryName;
   String? animalTypeName;
+  String? colorName;
+  String? brand;
 
   SellDetailsItems({
     this.id,
     this.productId,
     this.productName,
-
+    this.brand,
     this.quantity,
     this.originalPrice,
     this.discountPercent,
@@ -217,6 +219,8 @@ class SellDetailsItems {
     purchasePrice = json['purchasePrice'];
     categoryName = json['categoryName'];
     animalTypeName = json['animalTypeName'];
+    brand = json['brand'];
+    colorName = json['colorName'];
     // backward compat
   }
 
@@ -244,6 +248,8 @@ class SellDetailsItems {
     data['purchasePrice'] = purchasePrice;
     data['categoryName'] = categoryName;
     data['animalTypeName'] = animalTypeName;
+    data['brand'] = brand;
+    data['colorName'] = colorName;
     return data;
   }
 }

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
+import 'package:inventory/module/loose_sell/model/grn_model.dart';
 import 'package:inventory/module/loose_sell/repo/loose_repo.dart';
 import 'package:inventory/helper/helper.dart';
 
@@ -26,6 +27,7 @@ class LooseController extends GetxController with CacheManager {
   RxBool isInventoryScanSelected = false.obs;
   String? id;
   RxList<InventoryItem> looseCategoryModelList = <InventoryItem>[].obs;
+  RxList<GrnItem> grnList = <GrnItem>[].obs;
   RxString searchText = ''.obs;
   RxString shopType = ''.obs;
 
@@ -46,13 +48,24 @@ class LooseController extends GetxController with CacheManager {
   Future<void> fetchLooseProduct() async {
     isDataLoading.value = true;
     try {
-      var response = await loosedProductRepo.getLoosedProductData();
-      if (response.success == success) {
-        looseCategoryModelList.value = response.data?.data ?? [];
-      } else if (response.success == failed) {
-        showSnackBar(error: response.msg ?? somethingWentMessage);
+      if (shopTypeEnum == ShopType.clothingShop) {
+        final response = await loosedProductRepo.getGrnData();
+        if (response.success == success) {
+          grnList.value = response.data?.data ?? [];
+        } else if (response.success == failed) {
+          showSnackBar(error: response.msg ?? somethingWentMessage);
+        } else {
+          showSnackBar(error: somethingWentMessage);
+        }
       } else {
-        showSnackBar(error: somethingWentMessage);
+        var response = await loosedProductRepo.getLoosedProductData();
+        if (response.success == success) {
+          looseCategoryModelList.value = response.data?.data ?? [];
+        } else if (response.success == failed) {
+          showSnackBar(error: response.msg ?? somethingWentMessage);
+        } else {
+          showSnackBar(error: somethingWentMessage);
+        }
       }
     } catch (e) {
       AppLogger.info(("🚨 Fetch Error: $e").toString());

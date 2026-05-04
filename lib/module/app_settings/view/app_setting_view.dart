@@ -8,6 +8,7 @@ import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/module/app_settings/controller/app_setting_controller.dart';
 import 'package:inventory/module/app_settings/widget/app_setting_text.dart';
 import 'package:inventory/module/invoice/widget/bluetooth_validate_widget.dart';
@@ -45,6 +46,23 @@ class AppSettingView extends GetView<AppSettingController> {
             ),
           ),
           setHeight(height: 10),
+          Obx(
+            () => AppSettingText(
+              child: CommonSwitch(
+                label: 'Godown',
+                value: controller.isGodownSelected.value,
+                onChanged: (v) {
+                  controller.isGodownSelected.value =
+                      !controller.isGodownSelected.value;
+                  customMessageOrErrorPrint(
+                    message: controller.isGodownSelected.value,
+                  );
+                  controller.saveGodownValue(controller.isGodownSelected.value);
+                },
+              ),
+            ),
+          ),
+          setHeight(height: 10),
           AppSettingText(
             child: CustomPadding(
               paddingOption: SymmetricPadding(horizontal: 5),
@@ -72,6 +90,24 @@ class AppSettingView extends GetView<AppSettingController> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+          setHeight(height: 10),
+          CommonTextField(
+            label: ' Margin',
+            hintText: 'Margin',
+            controller: controller.profitMargin.value,
+            suffixIcon: Obx(
+              () => IconButton(
+                onPressed:
+                    () => {
+                      controller.saveProfit(controller.profitMargin.value.text),
+                    },
+                icon:
+                    controller.profitMargin.value.text.isEmpty
+                        ? SizedBox.shrink()
+                        : const Icon(CupertinoIcons.checkmark_alt),
               ),
             ),
           ),
