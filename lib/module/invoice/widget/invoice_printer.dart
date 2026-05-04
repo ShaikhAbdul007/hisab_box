@@ -499,21 +499,28 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
   @override
   Widget build(BuildContext context) {
     var user = retrieveUserDetail();
+    final shopType = ShopType.fromString(user.data?.shopType ?? '');
+    final product = data['productData']['product'];
+
+    // Config-driven subtitle: Pet Shop → flavor | weight | price
+    //                         Clothing Shop → color | brand | price
+    final String subtitle =
+        shopType.config.supportsGRStock
+            ? '${product.color ?? ''} | ${product.brand ?? ''} | ₹${product.sellingPrice ?? ''}'
+            : '${product.flavor ?? ''} | ${product.weight ?? ''} | ₹${product.sellingPrice ?? ''}';
+
     return Receipt(
-      defaultTextStyle: const TextStyle(
-        fontSize: 12, // Even larger default font for maximum visibility
-      ),
+      defaultTextStyle: const TextStyle(fontSize: 12),
       builder: (context) {
         return SizedBox(
-          // 🔥 OPTIMIZED FOR 25mm x 50mm LABEL STICKER
-          height: 200, // Reduced height for 25mm label (was 155)
-          width: 189, // 50mm width in pixels (50mm ≈ 189px at 96dpi)
+          height: 200,
+          width: 189,
           child: Padding(
             padding: const EdgeInsets.only(
               right: 6,
               left: 6,
               top: 15,
-              bottom: 30, // Vertical padding for perfect centering
+              bottom: 30,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -526,19 +533,9 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
                   width: 175,
                 ),
                 const SizedBox(height: 2),
-                // Text(
-                //   user.name ?? 'Hisab Box',
-                //   style: CustomTextStyle.customMontserrat(
-                //     fontSize: 20, // Even larger for maximum visibility
-                //     fontWeight: FontWeight.w800, // Extra bold
-                //   ),
-                //   maxLines: 1,
-                //   overflow: TextOverflow.ellipsis,
-                //   textAlign: TextAlign.center,
-                // ),
                 const SizedBox(height: 1),
                 Text(
-                  data['productData']['product'].name ?? '',
+                  product.name ?? '',
                   style: CustomTextStyle.customMontserrat(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -549,7 +546,7 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  '${data['productData']['product'].flavor} | ${data['productData']['product'].weight} | ₹${data['productData']['product'].sellingPrice}',
+                  subtitle,
                   style: CustomTextStyle.customMontserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

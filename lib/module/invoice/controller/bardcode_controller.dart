@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:inventory/bluetooth/bluetooth.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 
 class BardcodeController extends GetxController
@@ -79,8 +80,13 @@ class BardcodeController extends GetxController
             : '${product.sellingPrice}';
     final String shopName = _toEscPosSafe(user.data?.name ?? 'Hisab Box');
     final String productName = _toEscPosSafe('${product.name}');
+
+    // Config-driven: Clothing → color | brand | price, Pet → flavor | weight | price
+    final shopType = ShopType.fromString(user.data?.shopType ?? '');
     final String detailLine = _toEscPosSafe(
-      '${product.flavor} | ${product.weight} | Rs.$priceText',
+      shopType.config.supportsGRStock
+          ? '${product.color ?? ''} | ${product.brand ?? ''} | Rs.$priceText'
+          : '${product.flavor ?? ''} | ${product.weight ?? ''} | Rs.$priceText',
     );
 
     for (int i = 0; i < quantity; i++) {

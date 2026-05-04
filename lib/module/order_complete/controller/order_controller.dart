@@ -76,6 +76,9 @@ class OrderController extends GetxController with CacheManager {
 
   Future<bool> saveCustomerWithInvoice({required InvoiceModel invoice}) async {
     saveCustomerWithInvoiceLoading.value = true;
+
+    //sale_id
+
     try {
       return true;
     } catch (e) {
