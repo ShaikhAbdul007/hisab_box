@@ -295,71 +295,74 @@ class MobileScreen extends StatelessWidget {
     return CommonAppbar(
       appBarLabel: 'Home',
       isleadingButtonRequired: false,
-      secondActionChild: Row(
-        children: [
-          InkWell(
-            onTap: () {
-              AppRoutes.navigateRoutes(
-                routeName: AppRouteName.nearExpireProduct,
-              );
-            },
-            child: Obx(
-              () =>
-                  controller.nearExpiryCount.value > 0
-                      ? Badge.count(
-                        count: int.parse(
-                          controller.nearExpiryCount.value.toString(),
-                        ),
-                        isLabelVisible: true,
-                        backgroundColor: AppColors.redColor,
+      secondActionChild:
+          controller.shopTypeEnum.config.supportsLooseStock
+              ? Row(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      AppRoutes.navigateRoutes(
+                        routeName: AppRouteName.nearExpireProduct,
+                      );
+                    },
+                    child: Obx(
+                      () =>
+                          controller.nearExpiryCount.value > 0
+                              ? Badge.count(
+                                count: int.parse(
+                                  controller.nearExpiryCount.value.toString(),
+                                ),
+                                isLabelVisible: true,
+                                backgroundColor: AppColors.redColor,
 
-                        child: Icon(CupertinoIcons.time_solid),
-                      )
-                      : Icon(CupertinoIcons.time_solid),
-            ),
-          ),
-          Obx(() {
-            final count = controller.pendingTransfers.length;
-            return Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(CupertinoIcons.bell_fill),
-                  onPressed: () {
-                    AppRoutes.navigateRoutes(
-                      routeName: AppRouteName.notificationView,
-                    );
-                  },
-                ),
-                if (count > 0)
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: Container(
-                      padding: AllPadding(all: 4).getPadding(),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: 18.w,
-                        minHeight: 18.h,
-                      ),
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                                child: Icon(CupertinoIcons.time_solid),
+                              )
+                              : Icon(CupertinoIcons.time_solid),
                     ),
                   ),
-              ],
-            );
-          }),
-        ],
-      ),
+                  Obx(() {
+                    final count = controller.pendingTransfers.length;
+                    return Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.bell_fill),
+                          onPressed: () {
+                            AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.notificationView,
+                            );
+                          },
+                        ),
+                        if (count > 0)
+                          Positioned(
+                            right: 6,
+                            top: 6,
+                            child: Container(
+                              padding: AllPadding(all: 4).getPadding(),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 18.w,
+                                minHeight: 18.h,
+                              ),
+                              child: Text(
+                                '$count',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  }),
+                ],
+              )
+              : SizedBox.shrink(),
       body: Obx(
         () =>
             controller.isListLoading.value
