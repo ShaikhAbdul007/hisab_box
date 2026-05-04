@@ -94,23 +94,23 @@ class AppSettingView extends GetView<AppSettingController> {
             ),
           ),
           setHeight(height: 10),
-          CommonTextField(
-            label: ' Margin',
-            hintText: 'Margin',
-            controller: controller.profitMargin.value,
-            suffixIcon: Obx(
-              () => IconButton(
-                onPressed:
-                    () => {
-                      controller.saveProfit(controller.profitMargin.value.text),
-                    },
-                icon:
-                    controller.profitMargin.value.text.isEmpty
-                        ? SizedBox.shrink()
-                        : const Icon(CupertinoIcons.checkmark_alt),
-              ),
-            ),
-          ),
+          // CommonTextField(
+          //   label: ' Margin',
+          //   hintText: 'Margin',
+          //   controller: controller.profitMargin.value,
+          //   suffixIcon: Obx(
+          //     () => IconButton(
+          //       onPressed:
+          //           () => {
+          //             controller.saveProfit(controller.profitMargin.value.text),
+          //           },
+          //       icon:
+          //           controller.profitMargin.value.text.isEmpty
+          //               ? SizedBox.shrink()
+          //               : const Icon(CupertinoIcons.checkmark_alt),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

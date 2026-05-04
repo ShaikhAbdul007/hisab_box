@@ -5,11 +5,10 @@ import 'package:inventory/network/networking.dart';
 class HomeRepo {
   Networking networking = Networking();
 
-  Future<DashboardModel> getDashBoardData() async {
+  Future<DashboardModel> getDashBoardData({int page = 1}) async {
     try {
       final response = await networking.getData(
-        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.dashboard}',
-    
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.dashboard}?page=$page',
       );
       return DashboardModel.fromJson(response);
     } catch (e) {

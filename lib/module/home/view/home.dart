@@ -1,4 +1,3 @@
-import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,17 +9,16 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/module/home/controller/home_controller.dart';
+import 'package:inventory/module/home/model/dashboard_model.dart';
 import 'package:inventory/module/home/widget/home_grid_container.dart';
 import 'package:inventory/module/home/widget/quick_action_component.dart';
-import 'package:inventory/module/revenue/widget/revenue_list_text.dart';
 import 'package:inventory/responsive_layout/responsive_tempate.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
-import '../../../common_widget/common_divider.dart';
+import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
 import '../../reports/widget/report_common_continer.dart';
-import '../../sell/widget/selling_list_text.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -373,37 +371,42 @@ class MobileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         setHeight(height: 5),
-                        SizedBox(
-                          height: 150.h,
-                          width: 500.w,
-                          child: GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  childAspectRatio: 2.5,
-                                  crossAxisSpacing: 0,
-                                  mainAxisSpacing: 5,
-                                ),
-                            itemCount: controller.lis.length,
-                            itemBuilder: (context, index) {
-                              return InkWell(
-                                onTap: () async {
-                                  if (controller.lis[index].routeName != null) {
-                                    var ress =
-                                        await AppRoutes.futureNavigationToRoute(
-                                          routeName:
-                                              controller.lis[index].routeName!,
-                                        );
-                                    if (ress == true) {
-                                      controller.loadDashboard();
+                        Obx(
+                          () => SizedBox(
+                            height: 150.h,
+                            width: 500.w,
+                            child: GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 2.5,
+                                    crossAxisSpacing: 0,
+                                    mainAxisSpacing: 5,
+                                  ),
+                              itemCount: controller.lis.length,
+                              itemBuilder: (context, index) {
+                                return InkWell(
+                                  onTap: () async {
+                                    if (controller.lis[index].routeName !=
+                                        null) {
+                                      var ress =
+                                          await AppRoutes.futureNavigationToRoute(
+                                            routeName:
+                                                controller
+                                                    .lis[index]
+                                                    .routeName!,
+                                          );
+                                      if (ress == true) {
+                                        controller.loadDashboard();
+                                      }
                                     }
-                                  }
-                                },
-                                child: HomeGridContainer(
-                                  customGridModel: controller.lis[index],
-                                ),
-                              );
-                            },
+                                  },
+                                  child: HomeGridContainer(
+                                    customGridModel: controller.lis[index],
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                         CustomPadding(
@@ -456,16 +459,50 @@ class MobileScreen extends StatelessWidget {
                             ? ReportCommonContainer(
                               height: 310,
                               width: 550,
-                              child: ListView.builder(
-                                itemCount: controller.sellsList.length,
-                                itemBuilder: (context, index) {
-                                  var product = controller.sellsList[index];
-                                  return InkWell(
-                                    child: RecentActivitiesListText(
-                                      billModel: product,
-                                    ),
-                                  );
+                              child: NotificationListener<ScrollNotification>(
+                                onNotification: (scroll) {
+                                  if (scroll.metrics.pixels >=
+                                      scroll.metrics.maxScrollExtent - 50) {
+                                    controller.loadMoreActivities();
+                                  }
+                                  return false;
                                 },
+                                child: ListView.builder(
+                                  itemCount: controller.sellsList.length + 1,
+                                  itemBuilder: (context, index) {
+                                    // Bottom loader
+                                    if (index == controller.sellsList.length) {
+                                      return Obx(
+                                        () =>
+                                            controller
+                                                    .isLoadingMoreActivities
+                                                    .value
+                                                ? const Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                    vertical: 8,
+                                                  ),
+                                                  child: Center(
+                                                    child: CommonProgressBar(
+                                                      size: 24,
+                                                      color:
+                                                          AppColors.blackColor,
+                                                    ),
+                                                  ),
+                                                )
+                                                : const SizedBox(height: 8),
+                                      );
+                                    }
+                                    final activity =
+                                        controller.sellsList[index];
+                                    return InkWell(
+                                      // onTap:
+                                      //     () => controller.navigateFromActivity(
+                                      //       activity,
+                                      //     ),
+                                      child: ActivityTile(activity: activity),
+                                    );
+                                  },
+                                ),
                               ),
                             )
                             : CommonNoDataFound(
@@ -478,84 +515,101 @@ class MobileScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  // Future<void> migrateProductsAddFields({required String uid}) async {
-  //   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+/// Activity tile — type icon, description, reference, time + navigation arrow
+class ActivityTile extends StatelessWidget {
+  final RecentActivitiesData activity;
+  const ActivityTile({super.key, required this.activity});
 
-  //   final CollectionReference<Map<String, dynamic>> productsRef = firestore
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('products');
+  IconData get _icon {
+    switch (activity.type) {
+      case 'sale':
+        return CupertinoIcons.cart_fill;
+      case 'grn':
+        return CupertinoIcons.arrow_2_circlepath;
+      case 'product':
+        return CupertinoIcons.cube_box_fill;
+      default:
+        return CupertinoIcons.clock_fill;
+    }
+  }
 
-  //   try {
-  //     final QuerySnapshot<Map<String, dynamic>> snapshot =
-  //         await productsRef.get();
+  Color get _color {
+    switch (activity.type) {
+      case 'sale':
+        return Colors.green;
+      case 'grn':
+        return Colors.orange;
+      case 'product':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
 
-  //     if (snapshot.docs.isEmpty) {
-  //       debugPrint("❌ No products found to migrate");
-  //       return;
-  //     }
-
-  //     const int batchLimit = 400; // Firestore hard limit = 500
-  //     final int totalDocs = snapshot.docs.length;
-  //     int migratedCount = 0;
-
-  //     debugPrint("🚀 Starting migration for $totalDocs products");
-
-  //     for (int i = 0; i < totalDocs; i += batchLimit) {
-  //       final WriteBatch batch = firestore.batch();
-  //       final docsChunk = snapshot.docs.skip(i).take(batchLimit);
-
-  //       int batchUpdates = 0;
-
-  //       for (final doc in docsChunk) {
-  //         final data = doc.data();
-  //         final Map<String, dynamic> updateData = {};
-
-  //         // Existing fields
-  //         if (!data.containsKey('isActive')) {
-  //           updateData['isActive'] = true;
-  //         }
-
-  //         if (!data.containsKey('sellType')) {
-  //           updateData['sellType'] = 'packet';
-  //         }
-
-  //         // 🔥 NEW FIELDS
-  //         if (!data.containsKey('location')) {
-  //           updateData['location'] = 'shop';
-  //         }
-
-  //         if (!data.containsKey('rack')) {
-  //           updateData['rack'] = '';
-  //         }
-
-  //         if (!data.containsKey('level')) {
-  //           updateData['level'] = '';
-  //         }
-
-  //         if (updateData.isNotEmpty) {
-  //           final date = setFormateDate();
-  //           final time = setFormateDate('hh:mm a');
-  //           updateData['updatedDate'] = date;
-  //           updateData['updatedTime'] = time;
-  //           batch.update(doc.reference, updateData);
-  //           batchUpdates++;
-  //           migratedCount++;
-  //         }
-  //       }
-
-  //       if (batchUpdates > 0) {
-  //         await batch.commit();
-  //         debugPrint("✅ Batch committed: $migratedCount / $totalDocs");
-  //       }
-  //     }
-
-  //     debugPrint("🎯 Migration completed. Total updated: $migratedCount");
-  //   } catch (e, stack) {
-  //     debugPrint("❌ Migration failed: $e");
-  //     debugPrint(stack.toString());
-  //     rethrow;
-  //   }
-  // }
+  @override
+  Widget build(BuildContext context) {
+    return CustomPadding(
+      paddingOption: SymmetricPadding(vertical: 4, horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Icon(_icon, color: _color, size: 20.sp),
+          ),
+          setWidth(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activity.description ?? activity.referenceNo ?? '',
+                  style: CustomTextStyle.customOpenSans(fontSize: 13),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                setHeight(height: 2),
+                Row(
+                  children: [
+                    if ((activity.referenceNo ?? '').isNotEmpty)
+                      Text(
+                        activity.referenceNo!,
+                        style: CustomTextStyle.customOpenSans(
+                          fontSize: 11,
+                          color: AppColors.greyColor,
+                        ),
+                      ),
+                    const Spacer(),
+                    Text(
+                      formatDateTime(
+                        activity.createdAt ?? '',
+                        showDate: true,
+                        showTime: false,
+                      ),
+                      style: CustomTextStyle.customOpenSans(
+                        fontSize: 11,
+                        color: AppColors.greyColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // if (activity.type == 'sale' || activity.type == 'grn')
+          //   Icon(
+          //     CupertinoIcons.chevron_right,
+          //     size: 14.sp,
+          //     color: AppColors.greyColor,
+          //   ),
+        ],
+      ),
+    );
+  }
 }
