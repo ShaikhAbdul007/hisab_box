@@ -7,7 +7,6 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/discount/model/discount_model.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_category/model/loose_category_model.dart';
-import 'package:inventory/module/sell/model/print_model.dart';
 import 'package:inventory/module/sell/repo/sell_repo.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
@@ -17,6 +16,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
   // ── Cart & product state ──────────────────────────────────────────────────
   RxList<InventoryItem> productList = <InventoryItem>[].obs;
   List<InventoryItem> scannedProductDetails = [];
+
   RxList<TextEditingController> perProductDiscount =
       <TextEditingController>[].obs;
   var sellingPriceList = <double>[].obs;
@@ -53,6 +53,8 @@ class SellListAfterScanController extends GetxController with CacheManager {
   RxDouble cashPaid = 0.0.obs;
   RxBool allEditable = false.obs;
   RxBool isAmountValidCheck = false.obs;
+  // ── Paid modes tracking (for UI: fade + cancel icon) ─────────────────────
+  RxSet<String> paidModes = <String>{}.obs;
 
   // ── Loading flags ─────────────────────────────────────────────────────────
   RxBool isCardLoading = false.obs;
@@ -112,21 +114,27 @@ class SellListAfterScanController extends GetxController with CacheManager {
   Future<void> updateQuantity(bool isIncrement, int index) async {
     isStockOver.value = false;
     final current = productList[index];
-    final currentQty = int.tryParse(current.quantity ?? '0') ?? 0;
 
-    final double availableQty = 0.0;
+    // cart qty — how many the user wants to buy
+    final double currentQty = double.tryParse(current.quantity ?? '0') ?? 0;
+
+    // available stock — stored in packetQuantity during scan, never changes
+    final double availableQty =
+        double.tryParse(current.packetQuantity ?? '0') ?? 0;
 
     if (isIncrement) {
       if (currentQty < availableQty) {
-        current.quantity = (currentQty + 1).toString();
+        current.quantity = (currentQty + 1).toStringAsFixed(1);
       } else {
         isStockOver.value = true;
-        showSnackBar(error: "Out of Stock! Only $availableQty available.");
+        showSnackBar(
+          error: 'Out of Stock! Only ${availableQty.toInt()} available.',
+        );
         return;
       }
     } else {
       if (currentQty > 1) {
-        current.quantity = (currentQty - 1).toString();
+        current.quantity = (currentQty - 1).toStringAsFixed(1);
       }
     }
 
@@ -209,6 +217,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     paymentMethodTotalAmount.value = amt;
     remainingAmount.value = amt;
     allEditable.value = false;
+    paidModes.clear();
   }
 
   void updateRemainingAmount() {
@@ -231,12 +240,45 @@ class SellListAfterScanController extends GetxController with CacheManager {
     return isAmountValidCheck.value;
   }
 
+  /// Validate amount ≤ remaining, then mark mode as paid and update remaining.
+  bool validateAndPay(String mode, TextEditingController ctrl) {
+    final double entered = double.tryParse(ctrl.text) ?? 0;
+    if (entered <= 0) {
+      showSnackBar(error: 'Enter an amount greater than 0');
+      return false;
+    }
+    // Validate against REMAINING amount (not total)
+    if (entered > remainingAmount.value) {
+      showSnackBar(
+        error:
+            "Amount can't be greater than remaining ₹${remainingAmount.value.toStringAsFixed(2)}",
+      );
+      return false;
+    }
+    paidModes.add(mode);
+    updateRemainingAmount();
+    return true;
+  }
+
+  /// Clear a specific mode's payment and remove from paidModes.
+  void clearModePayment(String mode, TextEditingController ctrl) {
+    ctrl.text = '0.0';
+    paidModes.remove(mode);
+    updateRemainingAmount();
+  }
+
+  // ── Confirm Sale enabled ONLY when remaining == 0 exactly ─────────────────
+  bool get isConfirmEnabled => remainingAmount.value == 0;
+
   // ── Cart operations ───────────────────────────────────────────────────────
 
   void deleteProductFromCart(int index) {
     productList.removeAt(index);
     if (sellingPriceList.length > index) sellingPriceList.removeAt(index);
     if (perProductDiscount.length > index) perProductDiscount.removeAt(index);
+    if (scannedProductDetails.length > index) {
+      scannedProductDetails.removeAt(index);
+    }
     saveCartProductList(productList);
     calculateTotalWithDiscount();
     productList.refresh();
@@ -259,6 +301,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 
   void calculateTotalWithDiscount() {
+    getTotalAmount(); // keeps totalAmount.value (MRP) in sync
     finalTotal.value = sellingPriceList.fold(0.0, (sum, p) => sum + p);
   }
 
@@ -300,6 +343,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     remainingAmount.value = 0.0;
     allEditable.value = false;
     isAmountValidCheck.value = true;
+    paidModes.clear();
   }
 
   void clearSellSessionData() {

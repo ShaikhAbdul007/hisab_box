@@ -6,6 +6,11 @@ String setFormateDate([String dateFormat = 'dd-MM-yyyy']) {
   return todayDate;
 }
 
+/// Returns today's date in yyyy-MM-dd format — ready for API query params.
+String todayApiDate() {
+  return DateFormat('yyyy-MM-dd').format(DateTime.now());
+}
+
 String getFormattedDate(String date) {
   final parsedDate = DateFormat('dd-MM-yyyy').parseStrict(date);
   return DateFormat('yyyy-MM-dd').format(parsedDate);

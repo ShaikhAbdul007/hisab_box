@@ -3,10 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/app_popup_menu.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
-import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_dialogue.dart';
 import 'package:inventory/common_widget/common_popup_appbar.dart';
+import 'package:inventory/common_widget/edit_mode_banner.dart';
 import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/helper/logger.dart';
@@ -40,63 +41,34 @@ class ProductDetailView extends GetView<ProductDetailsController> {
     return CommonAppbar(
       isleadingButtonRequired: true,
       backgroundColor: AppColors.whiteColor,
-      firstActionChild: PopupMenuButton<MenuOption>(
-        enabled: true,
-        color: AppColors.whiteColor,
-        position: PopupMenuPosition.under,
-        borderRadius: BorderRadius.circular(200.r),
-        itemBuilder:
-            (BuildContext context) => <PopupMenuEntry<MenuOption>>[
-              PopupMenuItem<MenuOption>(
-                value: MenuOption.editProductDetails,
-                child: Row(
-                  children: [
-                    Icon(
-                      CupertinoIcons.square_pencil_fill,
-                      color: AppColors.blackColor,
-                    ),
-                    setWidth(width: 8),
-                    Text('Edit', style: CustomTextStyle.customOpenSans()),
-                  ],
-                ),
-              ),
-              PopupMenuItem<MenuOption>(
-                value: MenuOption.barcode,
-                child: Row(
-                  children: [
-                    Icon(CupertinoIcons.barcode, color: AppColors.blackColor),
-                    setWidth(width: 8),
-                    Text(
-                      'Generate Barcode',
-                      style: CustomTextStyle.customOpenSans(),
-                    ),
-                  ],
-                ),
-              ),
-              godown
-                  ? PopupMenuItem<MenuOption>(
-                    value: MenuOption.moveToShop,
-                    child: Row(
-                      children: [
-                        Icon(
-                          CupertinoIcons.arrow_right_arrow_left,
-                          size: 20.sp,
-                          color: AppColors.blackColor,
-                        ),
-                        setWidth(width: 8),
-                        Text(
-                          'Move to SHOP',
-                          style: CustomTextStyle.customOpenSans(),
-                        ),
-                      ],
-                    ),
-                  )
-                  : PopupMenuItem<MenuOption>(child: SizedBox.shrink()),
-            ],
+      firstActionChild: AppPopupMenu<MenuOption>(
+        items: [
+          const AppPopupItem(
+            value: MenuOption.editProductDetails,
+            label: 'Edit',
+            icon: CupertinoIcons.pencil,
+            color: Color(0xFF1565C0),
+          ),
+          const AppPopupItem(
+            value: MenuOption.barcode,
+            label: 'Generate Barcode',
+            icon: CupertinoIcons.barcode,
+            color: Color(0xFF2E7D32),
+            isDividerAbove: true,
+          ),
+          if (godown)
+            const AppPopupItem(
+              value: MenuOption.moveToShop,
+              label: 'Move to Shop',
+              icon: CupertinoIcons.arrow_right_arrow_left,
+              color: Color(0xFF6A1B9A),
+              isDividerAbove: true,
+            ),
+        ],
         onSelected: (MenuOption result) {
-          if (result.name == 'barcode') {
+          if (result == MenuOption.barcode) {
             showBarcode(controller.barcodeQytController);
-          } else if (result.name == 'moveToShop') {
+          } else if (result == MenuOption.moveToShop) {
             commonDialogBox(
               context: context,
               child: Form(
@@ -154,7 +126,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                 ),
               ),
             );
-          } else if (result.name == 'editProductDetails') {
+          } else if (result == MenuOption.editProductDetails) {
             controller.readOnly.value = !controller.readOnly.value;
             controller.dropDownReadOnly.value =
                 !controller.dropDownReadOnly.value;
@@ -162,16 +134,6 @@ class ProductDetailView extends GetView<ProductDetailsController> {
             AppLogger.info(('result.name').toString());
           }
         },
-        child: CommonContainer(
-          height: 30,
-          width: 30,
-          radius: 10,
-          color: AppColors.whiteColor,
-          child: Icon(
-            CupertinoIcons.ellipsis_vertical,
-            color: AppColors.blackColor,
-          ),
-        ),
       ),
       appBarLabel: _appBarLabel(
         isProductLoosed: isProductLoosed,
@@ -182,73 +144,35 @@ class ProductDetailView extends GetView<ProductDetailsController> {
         child: Obx(
           () =>
               controller.isDataLoading.value
-                  ? CommonProgressBar()
+                  ? const CommonProgressBar()
                   : SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // ── Header ─────────────────────────────────────────
-                        Container(
-                          height: 170,
-                          decoration: BoxDecoration(
-                            color: AppColors.greyColorShade100,
-                            borderRadius: const BorderRadius.only(
-                              bottomRight: Radius.circular(50),
-                              bottomLeft: Radius.circular(50),
-                            ),
-                          ),
-                          child: ListView(
-                            children: [
-                              Hero(
-                                transitionOnUserGestures: true,
-                                tag: 'herotag_${UniqueKey()}',
-                                child: Obx(
-                                  () => Icon(
-                                    CupertinoIcons.cube_box_fill,
-                                    size: 70.sp,
-                                    color:
-                                        controller.readOnly.value
-                                            ? AppColors.blackColor
-                                            : AppColors.redColor,
-                                  ),
-                                ),
-                              ),
-                              setHeight(height: 8),
-                              Obx(
-                                () => Text(
-                                  textAlign: TextAlign.center,
-                                  controller.rxProductName.value,
-                                  style: CustomTextStyle.customMontserrat(
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ),
-                              Obx(
-                                () => RichText(
-                                  textAlign: TextAlign.center,
-                                  text: TextSpan(
-                                    text: controller.rxQuantity.value,
-                                    style: CustomTextStyle.customPoppin(
-                                      fontSize: 30,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: ' in stock',
-                                        style: CustomTextStyle.customPoppin(
-                                          fontSize: 20,
-                                          color: AppColors.greyColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                        // ── Hero Header ──────────────────────────────────────
+                        _ProductDetailHeader(controller: controller),
+                        // ── Edit mode banner ─────────────────────────────────
+                        Padding(
+                          padding:
+                              SymmetricPadding(
+                                horizontal: 14,
+                                vertical: 8,
+                              ).getPadding(),
+                          child: EditModeBanner(
+                            readOnly: controller.readOnly,
+                            readOnlyMessage:
+                                'Tap the ⋮ menu (top right) → Edit to make changes.',
+                            editingMessage:
+                                'You are in edit mode. Make changes and tap Save.',
                           ),
                         ),
-                        // ── Fields ──────────────────────────────────────────
-                        CustomPadding(
-                          paddingOption: SymmetricPadding(horizontal: 5.0),
+                        // ── Fields ───────────────────────────────────────────
+                        Padding(
+                          padding:
+                              SymmetricPadding(
+                                horizontal: 14,
+                                vertical: 12,
+                              ).getPadding(),
                           child: _buildDetailBody(
                             context: context,
                             isProductLoosed: isProductLoosed,
@@ -297,80 +221,116 @@ class ProductDetailView extends GetView<ProductDetailsController> {
     required bool isProductLoosed,
   }) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InventoryBottomsheetComponentText(
-          readOnly1: true,
-          readOnly2: controller.readOnly.value,
-          controller1: controller.barcode,
-          controller2: controller.productName,
-          label1: 'Barcode',
-          hintText1: 'Enter barcode',
-          hintText2: 'Enter product name',
-          label2: 'Product name',
-          validator2: (v) => v!.isEmpty ? emptyProductName : null,
-        ),
-        Row(
-          children: [
-            Flexible(child: _categoryDropdown()),
-            Flexible(child: _secondaryDropdown(hint: 'Animal Type')),
-          ],
-        ),
-        Obx(
-          () => Row(
+        _FieldCard(
+          icon: CupertinoIcons.barcode,
+          iconColor: const Color(0xFF1565C0),
+          title: 'Product Info',
+          child: Column(
             children: [
-              Flexible(child: _stockField()),
-              Flexible(child: _isLooseDropdown()),
+              InventoryBottomsheetComponentText(
+                readOnly1: true,
+                readOnly2: controller.readOnly.value,
+                controller1: controller.barcode,
+                controller2: controller.productName,
+                label1: 'Barcode',
+                hintText1: 'Enter barcode',
+                hintText2: 'Enter product name',
+                label2: 'Product name',
+                validator2: (v) => v!.isEmpty ? emptyProductName : null,
+              ),
+              Row(
+                children: [
+                  Flexible(child: _categoryDropdown()),
+                  Flexible(child: _secondaryDropdown(hint: 'Animal Type')),
+                ],
+              ),
+              Obx(
+                () => Row(
+                  children: [
+                    Flexible(child: _stockField()),
+                    Flexible(child: _isLooseDropdown()),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-        Obx(
-          () => InventoryBottomsheetComponentText(
-            readOnly1: controller.readOnly.value,
-            readOnly2: controller.readOnly.value,
-            inputLength1: 10,
-            keyboardType1: TextInputType.number,
-            hintText1: 'Selling Price (sp)',
-            label1: 'Selling Price (₹)',
-            controller1: controller.sellingPrice,
-            validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
-            inputLength2: 10,
-            keyboardType2: TextInputType.number,
-            hintText2: 'Purchase Price (mrp)',
-            label2: 'Purchase Price (₹)',
-            controller2: controller.purchasePrice,
-            validator2: (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
-          ),
-        ),
-        Obx(
-          () => Row(
+        setHeight(height: 12),
+        _FieldCard(
+          icon: CupertinoIcons.money_dollar_circle_fill,
+          iconColor: const Color(0xFF2E7D32),
+          title: 'Pricing',
+          child: Column(
             children: [
-              Flexible(child: _discountField()),
-              Flexible(child: _locationDropdown()),
+              Obx(
+                () => InventoryBottomsheetComponentText(
+                  readOnly1: controller.readOnly.value,
+                  readOnly2: controller.readOnly.value,
+                  inputLength1: 10,
+                  keyboardType1: TextInputType.number,
+                  hintText1: 'Selling Price (sp)',
+                  label1: 'Selling Price (₹)',
+                  controller1: controller.sellingPrice,
+                  validator1:
+                      (v) => v!.isEmpty ? emptyProductSellingPrice : null,
+                  inputLength2: 10,
+                  keyboardType2: TextInputType.number,
+                  hintText2: 'Purchase Price (mrp)',
+                  label2: 'Purchase Price (₹)',
+                  controller2: controller.purchasePrice,
+                  validator2:
+                      (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
+                ),
+              ),
+              Obx(
+                () => Row(
+                  children: [
+                    Flexible(child: _discountField()),
+                    Flexible(child: _locationDropdown()),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-        Row(
-          children: [
-            Flexible(child: _purchaseDateField(context, controller.dayDate)),
-            Flexible(child: _expiryDateField(context, controller.dayDate)),
-          ],
-        ),
-        Obx(
-          () =>
-              controller.isFlavorAndWeightNotRequired.value
-                  ? InventoryBottomsheetComponentText(
-                    readOnly1: controller.readOnly.value,
-                    readOnly2: controller.readOnly.value,
-                    hintText1: 'Flavor',
-                    label1: 'Flavor',
-                    controller1: controller.flavor,
-                    validator1: (v) => v!.isEmpty ? emptyflavor : null,
-                    hintText2: 'Weight',
-                    label2: 'Weight',
-                    controller2: controller.weight,
-                    validator2: (v) => v!.isEmpty ? emptyWeight : null,
-                  )
-                  : const SizedBox.shrink(),
+        setHeight(height: 12),
+        _FieldCard(
+          icon: CupertinoIcons.calendar,
+          iconColor: const Color(0xFFE65100),
+          title: 'Dates',
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: _purchaseDateField(context, controller.dayDate),
+                  ),
+                  Flexible(
+                    child: _expiryDateField(context, controller.dayDate),
+                  ),
+                ],
+              ),
+              Obx(
+                () =>
+                    controller.isFlavorAndWeightNotRequired.value
+                        ? InventoryBottomsheetComponentText(
+                          readOnly1: controller.readOnly.value,
+                          readOnly2: controller.readOnly.value,
+                          hintText1: 'Flavor',
+                          label1: 'Flavor',
+                          controller1: controller.flavor,
+                          validator1: (v) => v!.isEmpty ? emptyflavor : null,
+                          hintText2: 'Weight',
+                          label2: 'Weight',
+                          controller2: controller.weight,
+                          validator2: (v) => v!.isEmpty ? emptyWeight : null,
+                        )
+                        : const SizedBox.shrink(),
+              ),
+            ],
+          ),
         ),
         setHeight(height: 20),
         _saveButton(isProductLoosed: isProductLoosed),
@@ -385,73 +345,95 @@ class ProductDetailView extends GetView<ProductDetailsController> {
     required bool isProductLoosed,
   }) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Barcode + Product Name
-        InventoryBottomsheetComponentText(
-          readOnly1: true,
-          readOnly2: controller.readOnly.value,
-          controller1: controller.barcode,
-          controller2: controller.productName,
-          label1: 'Barcode',
-          hintText1: 'Enter barcode',
-          hintText2: 'Enter product name',
-          label2: 'Product name',
-          validator2: (v) => v!.isEmpty ? emptyProductName : null,
-        ),
-        // Category + Size
-        Row(
-          children: [
-            Flexible(child: _categoryDropdown()),
-            Flexible(child: _secondaryDropdown(hint: 'Size')),
-          ],
-        ),
-        // Color + Brand
-        Row(
-          children: [
-            Flexible(child: _colorDropdown()),
-            Flexible(child: _brandDropdown()),
-          ],
-        ),
-        Row(children: [Flexible(child: _stockField())]),
-        // Selling + Purchase price
-        Obx(
-          () => InventoryBottomsheetComponentText(
-            readOnly1: controller.readOnly.value,
-            readOnly2: controller.readOnly.value,
-            inputLength1: 10,
-            keyboardType1: TextInputType.number,
-            hintText1: 'Selling Price (sp)',
-            label1: 'Selling Price (₹)',
-            controller1: controller.sellingPrice,
-            validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
-            inputLength2: 10,
-            keyboardType2: TextInputType.number,
-            hintText2: 'Purchase Price (mrp)',
-            label2: 'Purchase Price (₹)',
-            controller2: controller.purchasePrice,
-            validator2: (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
-          ),
-        ),
-        // Discount + Location
-        Obx(
-          () => Row(
+        _FieldCard(
+          icon: CupertinoIcons.barcode,
+          iconColor: const Color(0xFF1565C0),
+          title: 'Product Info',
+          child: Column(
             children: [
-              Flexible(child: _discountField()),
-              Flexible(child: _locationDropdown()),
+              InventoryBottomsheetComponentText(
+                readOnly1: true,
+                readOnly2: controller.readOnly.value,
+                controller1: controller.barcode,
+                controller2: controller.productName,
+                label1: 'Barcode',
+                hintText1: 'Enter barcode',
+                hintText2: 'Enter product name',
+                label2: 'Product name',
+                validator2: (v) => v!.isEmpty ? emptyProductName : null,
+              ),
+              Row(
+                children: [
+                  Flexible(child: _categoryDropdown()),
+                  Flexible(child: _secondaryDropdown(hint: 'Size')),
+                ],
+              ),
+              Row(
+                children: [
+                  Flexible(child: _colorDropdown()),
+                  Flexible(child: _brandDropdown()),
+                ],
+              ),
+              Row(children: [Flexible(child: _stockField())]),
             ],
           ),
         ),
-        // Rack + Level
-        Obx(
-          () => InventoryBottomsheetComponentText(
-            readOnly1: controller.readOnly.value,
-            readOnly2: controller.readOnly.value,
-            hintText1: 'Rack',
-            label1: 'Rack',
-            controller1: controller.rack,
-            hintText2: 'Level',
-            label2: 'Level',
-            controller2: controller.level,
+        setHeight(height: 12),
+        _FieldCard(
+          icon: CupertinoIcons.money_dollar_circle_fill,
+          iconColor: const Color(0xFF2E7D32),
+          title: 'Pricing',
+          child: Column(
+            children: [
+              Obx(
+                () => InventoryBottomsheetComponentText(
+                  readOnly1: controller.readOnly.value,
+                  readOnly2: controller.readOnly.value,
+                  inputLength1: 10,
+                  keyboardType1: TextInputType.number,
+                  hintText1: 'Selling Price (sp)',
+                  label1: 'Selling Price (₹)',
+                  controller1: controller.sellingPrice,
+                  validator1:
+                      (v) => v!.isEmpty ? emptyProductSellingPrice : null,
+                  inputLength2: 10,
+                  keyboardType2: TextInputType.number,
+                  hintText2: 'Purchase Price (mrp)',
+                  label2: 'Purchase Price (₹)',
+                  controller2: controller.purchasePrice,
+                  validator2:
+                      (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
+                ),
+              ),
+              Obx(
+                () => Row(
+                  children: [
+                    Flexible(child: _discountField()),
+                    Flexible(child: _locationDropdown()),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        setHeight(height: 12),
+        _FieldCard(
+          icon: CupertinoIcons.map_pin,
+          iconColor: const Color(0xFF6A1B9A),
+          title: 'Location',
+          child: Obx(
+            () => InventoryBottomsheetComponentText(
+              readOnly1: controller.readOnly.value,
+              readOnly2: controller.readOnly.value,
+              hintText1: 'Rack',
+              label1: 'Rack',
+              controller1: controller.rack,
+              hintText2: 'Level',
+              label2: 'Level',
+              controller2: controller.level,
+            ),
           ),
         ),
         setHeight(height: 20),
@@ -746,42 +728,234 @@ class ProductDetailView extends GetView<ProductDetailsController> {
         Get.back();
         controller.setData();
       },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CustomPadding(
-            paddingOption: OnlyPadding(top: 20),
-            child: BarcodeWidget(
-              barcode: Barcode.code128(),
-              data: controller.barcode.text,
-              height: 80,
-              width: 200,
-              drawText: true,
+      child: Padding(
+        padding: SymmetricPadding(horizontal: 20, vertical: 8).getPadding(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Barcode card ─────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey.shade100),
+              ),
+              child: Column(
+                children: [
+                  BarcodeWidget(
+                    barcode: Barcode.code128(),
+                    data: controller.barcode.text,
+                    height: 80,
+                    width: double.infinity,
+                    drawText: true,
+                  ),
+                  setHeight(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.blackColor.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Text(
+                      controller.barcode.text,
+                      style: CustomTextStyle.customOpenSans(
+                        fontSize: 12,
+                        color: AppColors.greyColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(
-            width: 220,
-            child: CommonTextField(
+            setHeight(height: 20),
+            // ── Quantity field ───────────────────────────────────────
+            CommonTextField(
               label: 'Quantity',
               astraIsRequred: false,
-              hintText: 'Enter quantity',
+              hintText: 'How many labels to print?',
               controller: qtyController,
+              keyboardType: TextInputType.number,
+            ),
+            setHeight(height: 20),
+            // ── Generate button ──────────────────────────────────────
+            CommonButton(
+              label: 'Generate Barcode',
+              onTap: () {
+                AppRoutes.navigateRoutes(
+                  routeName: AppRouteName.barcodePrintView,
+                  data: {
+                    'productData': controller.data,
+                    'qyt': double.tryParse(qtyController.text)?.toInt() ?? 1,
+                  },
+                );
+              },
+            ),
+            setHeight(height: 50),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Product Detail Header ─────────────────────────────────────────────────────
+class _ProductDetailHeader extends StatelessWidget {
+  final ProductDetailsController controller;
+  const _ProductDetailHeader({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      decoration: BoxDecoration(
+        color: AppColors.blackColor,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28.r),
+          bottomRight: Radius.circular(28.r),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Icon
+          Obx(
+            () => Container(
+              width: 72.w,
+              height: 72.h,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18.r),
+              ),
+              child: Icon(
+                CupertinoIcons.cube_box_fill,
+                size: 36.sp,
+                color:
+                    controller.readOnly.value
+                        ? Colors.white
+                        : Colors.red.shade300,
+              ),
             ),
           ),
-          setHeight(height: 15),
-          CommonButton(
-            label: 'Generate Barcode',
-            onTap: () {
-              AppRoutes.navigateRoutes(
-                routeName: AppRouteName.barcodePrintView,
-                data: {
-                  'productData': controller.data,
-                  'qyt': double.tryParse(qtyController.text)?.toInt() ?? 1,
-                },
-              );
-            },
+          setHeight(height: 12),
+          // Product name
+          Obx(
+            () => Text(
+              controller.rxProductName.value,
+              style: CustomTextStyle.customPoppin(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          setHeight(height: 50),
+          setHeight(height: 6),
+          // Stock badge
+          Obx(
+            () => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+              ),
+              child: RichText(
+                text: TextSpan(
+                  text: controller.rxQuantity.value,
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: '  in stock',
+                      style: CustomTextStyle.customOpenSans(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Field Card ────────────────────────────────────────────────────────────────
+class _FieldCard extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final Widget child;
+
+  const _FieldCard({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34.w,
+                height: 34.h,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9.r),
+                ),
+                child: Icon(icon, color: iconColor, size: 17.sp),
+              ),
+              setWidth(width: 10),
+              Text(
+                title,
+                style: CustomTextStyle.customPoppin(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          setHeight(height: 12),
+          child,
         ],
       ),
     );

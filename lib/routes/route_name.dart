@@ -42,4 +42,5 @@ class AppRouteName {
   static const String nearExpireProduct = '/nearExpireProduct';
   static const String notificationView = '/notificationView';
   static const String colorCategory = '/colorCategory';
+  static const String paymentView = '/paymentView';
 }

@@ -8,8 +8,7 @@ import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/inventorylist/repo/inventory_repo.dart';
 
-class InventoryListController extends GetxController
-    with GetTickerProviderStateMixin, CacheManager {
+class InventoryListController extends GetxController with CacheManager {
   InventoryRepo inventoryRepo = InventoryRepo();
 
   var goDownProductList = <InventoryItem>[].obs;
@@ -22,6 +21,9 @@ class InventoryListController extends GetxController
   RxBool isFlavorAndWeightNotRequired = false.obs;
   RxString shopType = ''.obs;
   RxBool isGodownEnabled = false.obs;
+
+  // ── Pure GetX tab state — 0 = Shop, 1 = Godown ───────────────────────────
+  RxInt selectedTab = 0.obs;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
@@ -47,38 +49,14 @@ class InventoryListController extends GetxController
   final ScrollController shopScrollController = ScrollController();
   final ScrollController godownScrollController = ScrollController();
 
-  TabController? tabController;
-
   @override
   void onInit() {
     isInventoryScanSelectedValue();
-    retrieveGodownValue();
+    _loadGodownAndInit();
     _attachScrollListeners();
     final user = retrieveUserDetail();
     shopType.value = user.data?.shopType ?? '';
     super.onInit();
-  }
-
-  @override
-  void onReady() {
-    // fetchInventoryByTab is called inside _initTabController after godown value loads
-    super.onReady();
-  }
-
-  void _initTabController({required int length}) {
-    tabController?.dispose();
-    tabController = TabController(length: length, vsync: this);
-    tabController!.addListener(() {
-      if (tabController!.indexIsChanging) return;
-      if (tabController!.index == 0) {
-        fetchInventoryByTab('shop');
-      } else if (isGodownEnabled.value && tabController!.index == 1) {
-        fetchInventoryByTab('godown');
-      }
-    });
-    update();
-    // Initial load after tab controller is ready
-    fetchInventoryByTab('shop');
   }
 
   void _attachScrollListeners() {
@@ -118,11 +96,10 @@ class InventoryListController extends GetxController
     }
   }
 
-  Future<void> retrieveGodownValue() async {
+  Future<void> _loadGodownAndInit() async {
     try {
       final value = await retrieveGodown();
       isGodownEnabled.value = value;
-      _initTabController(length: value ? 2 : 1);
     } catch (e) {
       AppLogger.error(
         'Failed to load godown setting',
@@ -130,7 +107,22 @@ class InventoryListController extends GetxController
         'InventoryListController',
       );
       isGodownEnabled.value = false;
-      _initTabController(length: 1);
+    }
+    // Always start on Shop tab and load it
+    selectedTab.value = 0;
+    fetchInventoryByTab('shop');
+  }
+
+  /// Switch tab — called from the view's tab buttons
+  void switchTab(int index) {
+    if (selectedTab.value == index) return;
+    selectedTab.value = index;
+    searchText.value = '';
+    searchController.clear();
+    if (index == 0) {
+      fetchInventoryByTab('shop');
+    } else {
+      fetchInventoryByTab('godown');
     }
   }
 
@@ -203,20 +195,17 @@ class InventoryListController extends GetxController
           _godownTotalPages = pagination?.totalPages ?? _godownTotalPages;
         }
       } else {
-        // revert page increment on failure
-        if (type == 'shop') {
+        if (type == 'shop')
           _shopPage--;
-        } else {
+        else
           _godownPage--;
-        }
         showSnackBar(error: response.msg ?? somethingWentMessage);
       }
     } catch (e) {
-      if (type == 'shop') {
+      if (type == 'shop')
         _shopPage--;
-      } else {
+      else
         _godownPage--;
-      }
       showSnackBar(error: e.toString());
     } finally {
       isLoadingMore.value = false;
@@ -237,7 +226,6 @@ class InventoryListController extends GetxController
 
   @override
   void onClose() {
-    tabController?.dispose();
     shopScrollController.dispose();
     godownScrollController.dispose();
     updateQuantity.dispose();

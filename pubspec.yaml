@@ -74,6 +74,7 @@ dependencies:
   upgrader: ^11.3.1
   flutter_local_notifications: ^19.4.0
   pinput: ^6.0.2
+  package_info_plus: ^8.3.0
 
 dev_dependencies:
   flutter_test:

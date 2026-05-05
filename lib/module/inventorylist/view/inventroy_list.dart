@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/app_popup_menu.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
-import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
@@ -29,180 +29,195 @@ class InventroyList extends GetView<InventoryListController> {
       secondActionChild: Obx(
         () =>
             controller.isInventoryScanSelected.value
-                ? PopupMenuButton<_InventoryModeMenu>(
-                  color: AppColors.whiteColor,
-                  position: PopupMenuPosition.under,
-                  borderRadius: BorderRadius.circular(200.r),
+                ? AppPopupMenu<_InventoryModeMenu>(
+                  items: const [
+                    AppPopupItem(
+                      value: _InventoryModeMenu.scan,
+                      label: 'Scan',
+                      icon: CupertinoIcons.barcode_viewfinder,
+                      color: Color(0xFF1565C0),
+                    ),
+                    AppPopupItem(
+                      value: _InventoryModeMenu.manual,
+                      label: 'Manual',
+                      icon: CupertinoIcons.square_pencil_fill,
+                      color: Color(0xFF2E7D32),
+                      isDividerAbove: true,
+                    ),
+                  ],
                   onSelected: (_InventoryModeMenu value) async {
-                    if (value.name == 'scan') {
+                    if (value == _InventoryModeMenu.scan) {
                       var res = await AppRoutes.futureNavigationToRoute(
                         routeName: AppRouteName.inventoryView,
                         data: {'flag': true},
                       );
                       if (res == true) controller.fetchInventoryByTab('shop');
                     } else {
-                      await AppRoutes.futureNavigationToRoute(
+                      var res = await AppRoutes.futureNavigationToRoute(
                         routeName: AppRouteName.generateBarcode,
                         data: {'flag': true},
                       );
+                      if (res == true) controller.fetchInventoryByTab('shop');
                     }
                   },
-                  itemBuilder:
-                      (context) => [
-                        PopupMenuItem<_InventoryModeMenu>(
-                          value: _InventoryModeMenu.scan,
-                          child: Row(
-                            children: [
-                              Icon(CupertinoIcons.barcode_viewfinder),
-                              setWidth(width: 8),
-                              Text(
-                                'Scan',
-                                style: CustomTextStyle.customOpenSans(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem<_InventoryModeMenu>(
-                          value: _InventoryModeMenu.manual,
-                          child: Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.square_pencil_fill,
-                                color: AppColors.blackColor,
-                              ),
-                              setWidth(width: 8),
-                              Text(
-                                'Manual',
-                                style: CustomTextStyle.customOpenSans(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                  child: CommonContainer(
-                    height: 30,
-                    width: 30,
-                    radius: 10,
-                    color: AppColors.whiteColor,
-                    child: Icon(
-                      CupertinoIcons.ellipsis_vertical,
-                      color: AppColors.blackColor,
-                    ),
-                  ),
                 )
-                : Container(),
+                : const SizedBox.shrink(),
       ),
-      body: Obx(
-        () =>
-            controller.isDataLoading.value
-                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
-                : Column(
-                  children: [
-                    setHeight(height: 10),
-                    CustomPadding(
-                      paddingOption: SymmetricPadding(horizontal: 12),
-                      child: CommonSearch(
-                        icon: Obx(
-                          () => InkWell(
-                            onTap:
-                                controller.searchText.value.isNotEmpty
-                                    ? () {
-                                      controller.clear();
-                                      unfocus();
-                                    }
-                                    : null,
-                            child: Icon(
-                              controller.searchText.value.isNotEmpty
-                                  ? CupertinoIcons.clear
-                                  : CupertinoIcons.search,
-                            ),
+      body: Column(
+        children: [
+          setHeight(height: 10),
+
+          // ── Search bar ─────────────────────────────────────────────────
+          CustomPadding(
+            paddingOption: SymmetricPadding(horizontal: 12),
+            child: CommonSearch(
+              icon: Obx(
+                () =>
+                    controller.searchText.value.isNotEmpty
+                        ? InkWell(
+                          onTap: () {
+                            controller.clear();
+                            unfocus();
+                          },
+                          child: Icon(
+                            CupertinoIcons.clear_circled_solid,
+                            size: 20.sp,
+                            color: AppColors.blackColor,
                           ),
-                        ),
-                        label: 'Search',
-                        hintText: 'search product',
-                        controller: controller.searchController,
-                        onChanged: (val) => controller.searchProduct(val),
-                      ),
-                    ),
-                    setHeight(height: 10),
-                    CommonContainer(
-                      height: 40,
-                      width: 350,
-                      color: Colors.grey.shade300,
-                      radius: 10,
-                      child: Obx(
-                        () {
-                          final showGodown = controller.isGodownEnabled.value;
-                          if (controller.tabController == null) {
-                            return const SizedBox.shrink();
-                          }
-                          return TabBar(
-                            controller: controller.tabController,
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            unselectedLabelStyle:
-                                CustomTextStyle.customPoppin(),
-                            labelStyle: CustomTextStyle.customPoppin(
-                              color: AppColors.whiteColor,
-                            ),
-                            indicatorPadding:
-                                SymmetricPadding(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ).getPadding(),
-                            dividerHeight: 0.0,
-                            indicator: BoxDecoration(
-                              color: AppColors.blackColor,
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            tabs:
-                                showGodown
-                                    ? const [
-                                      Tab(child: Text('Shop')),
-                                      Tab(child: Text('Godown')),
-                                    ]
-                                    : const [Tab(child: Text('Shop'))],
-                          );
-                        },
-                      ),
-                    ),
-                    Expanded(
-                      child: Obx(
-                        () {
-                          final showGodown = controller.isGodownEnabled.value;
-                          if (controller.tabController == null) {
-                            return const SizedBox.shrink();
-                          }
-                          return TabBarView(
-                            controller: controller.tabController,
-                            children:
-                                showGodown
-                                    ? [
-                                      _ProductListTab(
-                                        type: 'shop',
-                                        controller: controller,
-                                      ),
-                                      _ProductListTab(
-                                        type: 'godown',
-                                        controller: controller,
-                                      ),
-                                    ]
-                                    : [
-                                      _ProductListTab(
-                                        type: 'shop',
-                                        controller: controller,
-                                      ),
-                                    ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                        )
+                        : const SizedBox.shrink(),
+              ),
+              label: 'Search',
+              hintText: 'search product',
+              controller: controller.searchController,
+              onChanged: (val) => controller.searchProduct(val),
+            ),
+          ),
+
+          setHeight(height: 10),
+
+          // ── Tab bar (pure Obx, no TabController) ───────────────────────
+          Obx(() {
+            if (!controller.isGodownEnabled.value) {
+              return const SizedBox.shrink();
+            }
+            return _ObxTabBar(controller: controller);
+          }),
+
+          // ── Content ────────────────────────────────────────────────────
+          Expanded(
+            child: Obx(() {
+              if (controller.isDataLoading.value) {
+                return const Center(
+                  child: CommonProgressBar(
+                    size: 50,
+                    color: AppColors.blackColor,
+                  ),
+                );
+              }
+              final isGodown =
+                  controller.isGodownEnabled.value &&
+                  controller.selectedTab.value == 1;
+              return _ProductListTab(
+                type: isGodown ? 'godown' : 'shop',
+                controller: controller,
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
 }
 
+// ── Pure Obx tab bar ─────────────────────────────────────────────────────────
+class _ObxTabBar extends StatelessWidget {
+  final InventoryListController controller;
+  const _ObxTabBar({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 10.h),
+      child: Obx(() {
+        final selected = controller.selectedTab.value;
+        return Container(
+          height: 42.h,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Row(
+            children: [
+              _TabButton(
+                label: 'Shop',
+                isSelected: selected == 0,
+                onTap: () => controller.switchTab(0),
+              ),
+              _TabButton(
+                label: 'Godown',
+                isSelected: selected == 1,
+                onTap: () => controller.switchTab(1),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TabButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+          margin: EdgeInsets.all(4.r),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.blackColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(9.r),
+            boxShadow:
+                isSelected
+                    ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                    : [],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: CustomTextStyle.customPoppin(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Product list tab ─────────────────────────────────────────────────────────
 class _ProductListTab extends StatelessWidget {
   final String type;
   final InventoryListController controller;
@@ -224,14 +239,15 @@ class _ProductListTab extends StatelessWidget {
     return Obx(() {
       if (list.isEmpty) return CommonNoDataFound(message: emptyMsg);
 
+      final q = controller.searchText.value.toLowerCase();
       final filtered =
-          list.where((item) {
-            final q = controller.searchText.value.toLowerCase();
-            if (q.isEmpty) return true;
-            return (item.name ?? '').toLowerCase().contains(q) ||
-                (item.barcode ?? '').toLowerCase().contains(q) ||
-                (item.weight ?? '').toLowerCase().contains(q);
-          }).toList();
+          q.isEmpty
+              ? list.toList()
+              : list.where((item) {
+                return (item.name ?? '').toLowerCase().contains(q) ||
+                    (item.barcode ?? '').toLowerCase().contains(q) ||
+                    (item.weight ?? '').toLowerCase().contains(q);
+              }).toList();
 
       if (filtered.isEmpty) {
         return CommonNoDataFound(
@@ -241,10 +257,8 @@ class _ProductListTab extends StatelessWidget {
 
       return ListView.builder(
         controller: scrollCtrl,
-        // +1 for the bottom loader row
         itemCount: filtered.length + 1,
         itemBuilder: (context, index) {
-          // Last item — pagination loader
           if (index == filtered.length) {
             return Obx(() {
               if (!controller.isLoadingMore.value) return setHeight(height: 16);

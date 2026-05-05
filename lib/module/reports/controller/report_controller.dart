@@ -83,7 +83,7 @@ class ReportController extends GetxController
         totalCash.value = (d?.cash ?? 0).toDouble();
         totalUpi.value = (d?.upi ?? 0).toDouble();
         totalCard.value = (d?.card ?? 0).toDouble();
-        totalCredit.value = (d?.creditUnpaid ?? 0).toDouble();
+        totalCredit.value = (d?.credit ?? 0).toDouble();
         totalRevenue.value = (d?.totalRevenue ?? 0).toDouble();
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);

@@ -3,11 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
-import 'package:inventory/common_widget/commom_aminatedtext.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
-import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_padding.dart';
-import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/routes/route_name.dart';
@@ -23,170 +20,305 @@ class LoginView extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Form(
-        key: loginkey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          //crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            CustomPadding(
-              paddingOption: OnlyPadding(left: 30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
+      backgroundColor: AppColors.blackColor,
+      body: SafeArea(
+        child: Form(
+          key: loginkey,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final topHeight = constraints.maxHeight * 0.42;
+              final bottomHeight = constraints.maxHeight * 0.58;
+              return Column(
                 children: [
-                  CommomAminatedtext(
-                    label: welcomeBack,
-                    fontSize: 25,
-                    color: AppColors.greyColor,
-                    fontWeight: FontWeight.w900,
-                  ),
-                  CommomAminatedtext(
-                    label: backtoAppName,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  setHeight(height: 10),
-                  Text(
-                    loginSubtitle,
-                    style: CustomTextStyle.customOpenSans(
-                      color: AppColors.greyColor,
-                    ),
-                  ),
+                  // ── Dark top section ───────────────────────────────
+                  SizedBox(height: topHeight, child: _buildTopSection()),
+                  // ── White bottom card ──────────────────────────────
+                  SizedBox(height: bottomHeight, child: _buildBottomCard()),
                 ],
-              ),
-            ),
-            setHeight(height: 10),
-            CustomPadding(
-              paddingOption: SymmetricPadding(horizontal: 20.0),
-              child: Column(
-                children: [
-                  CommonTextField(
-                    textCapitalization: TextCapitalization.none,
-                    hintText: 'Email',
-                    label: 'Email',
-                    controller: controller.email,
-                    suffixIcon: CustomPadding(
-                      paddingOption: OnlyPadding(right: 10),
-                      child: Icon(CupertinoIcons.mail, size: 18),
-                    ),
-                    validator: (emailValue) {
-                      if (emailValue!.isEmpty) {
-                        return emptyEmail;
-                      }
-                      if (!GetUtils.isEmail(emailValue)) {
-                        return invalidEmail;
-                      } else {
-                        return null;
-                      }
-                    },
-                  ),
-                  setHeight(height: 10),
-                ],
-              ),
-            ),
-            setHeight(height: 15),
-            Obx(
-              () => CommonButton(
-                isLoading: controller.loginLoading.value,
-                label: sendOTP,
-                onTap: () async {
-                  if (loginkey.currentState!.validate()) {
-                    bool otpRes = await controller.sendOtp();
-                    if (otpRes) {
-                      commonBottomSheet(
-                        label: 'OTP Verification',
-                        onPressed: () {
-                          Get.back();
-                        },
-                        child: Column(
-                          children: [
-                            setHeight(height: 20),
-                            otpVerificationBottomSheet(),
-                            setHeight(height: 20),
-                            Obx(
-                              () => CommonButton(
-                                isLoading: controller.verifyLoading.value,
-                                label: 'Verify Otp',
-                                onTap: () {
-                                  controller.verifyOtp(otp: '123456');
-                                },
-                              ),
-                            ),
-                            setHeight(height: 20),
-                          ],
-                        ),
-                      );
-                    }
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
 
-                    // commonBottomSheet(
-                    //   label: 'OTP Verification',
-                    //   onPressed: () {
-                    //     if (controller.verifyLoading.value == false) {
-                    //       Get.back();
-                    //     }
-                    //   },
-                    //   child: Column(
-                    //     crossAxisAlignment: CrossAxisAlignment.start,
-                    //     children: [
-                    //       setHeight(height: 20),
-                    //       otpVerificationBottomSheet(),
-                    //       // Row(
-                    //       //   children: [
-                    //       //     Text(
-                    //       //       'opt will be expire in 5 min',
-                    //       //       style: CustomTextStyle.customMontserrat(
-                    //       //         color: AppColors.greyColor,
-                    //       //       ),
-                    //       //     ),
-                    //       //   ],
-                    //       // ),
-                    //       setHeight(height: 20),
-                    //       Obx(
-                    //         () => CommonButton(
-                    //           isLoading: controller.verifyLoading.value,
-                    //           label: 'Verify Otp',
-                    //           onTap: () {
-                    //             controller.verifyOtp(otp: '123456');
-                    //           },
-                    //         ),
-                    //       ),
-                    //       setHeight(height: 20),
-                    //     ],
-                    //   ),
-                    // );
-                  }
+  // ── Top dark section ────────────────────────────────────────────────────────
+  Widget _buildTopSection() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(28.w, 20.h, 28.w, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Logo badge
+          Container(
+            width: 52.w,
+            height: 52.h,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Image.asset(
+                'assets/hisabboxlogo.png',
+                width: 30.w,
+                height: 30.h,
+                color: Colors.white,
+                errorBuilder:
+                    (_, _, _) => Icon(
+                      CupertinoIcons.cube_box_fill,
+                      color: Colors.white,
+                      size: 26.sp,
+                    ),
+              ),
+            ),
+          ),
+
+          const Spacer(),
+
+          Text(
+            welcomeBack,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              color: Colors.white.withValues(alpha: 0.55),
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            backtoAppName,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            loginSubtitle,
+            style: CustomTextStyle.customOpenSans(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.45),
+            ),
+          ),
+          SizedBox(height: 20.h),
+        ],
+      ),
+    );
+  }
+
+  // ── White bottom card ───────────────────────────────────────────────────────
+  Widget _buildBottomCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(36.r),
+          topRight: Radius.circular(36.r),
+        ),
+      ),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(28.w, 20.h, 28.w, 20.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 24.h),
+
+            // ── Email field ──────────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: CommonTextField(
+                textCapitalization: TextCapitalization.none,
+                hintText: 'your@email.com',
+                label: 'Email Address',
+                controller: controller.email,
+                marginPadding: EdgeInsets.zero,
+                suffixIcon: CustomPadding(
+                  paddingOption: OnlyPadding(right: 14),
+                  child: Icon(
+                    CupertinoIcons.mail_solid,
+                    size: 18.sp,
+                    color: Colors.grey.shade400,
+                  ),
+                ),
+                validator: (emailValue) {
+                  if (emailValue!.isEmpty) return emptyEmail;
+                  if (!GetUtils.isEmail(emailValue)) return invalidEmail;
+                  return null;
                 },
               ),
             ),
-            setHeight(height: 20),
-            InkWell(
-              onTap: () {
-                AppRoutes.navigateRoutes(routeName: AppRouteName.signup);
-              },
-              child: RichText(
-                text: TextSpan(
-                  text: dontHaveAccount,
-                  style: CustomTextStyle.customOpenSans(
-                    fontSize: 14,
-                    color: Colors.grey,
+
+            SizedBox(height: 22.h),
+
+            // ── Send OTP button ──────────────────────────────────────
+            Obx(
+              () => GestureDetector(
+                onTap:
+                    controller.loginLoading.value
+                        ? null
+                        : () async {
+                          if (loginkey.currentState!.validate()) {
+                            bool otpRes = await controller.sendOtp();
+                            if (otpRes) {
+                              controller.startResendTimer();
+                              _showOtpBottomSheet();
+                            }
+                          }
+                        },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: double.infinity,
+                  height: 54.h,
+                  decoration: BoxDecoration(
+                    color:
+                        controller.loginLoading.value
+                            ? Colors.grey.shade300
+                            : AppColors.blackColor,
+                    borderRadius: BorderRadius.circular(16.r),
+                    boxShadow:
+                        controller.loginLoading.value
+                            ? []
+                            : [
+                              BoxShadow(
+                                color: AppColors.blackColor.withValues(
+                                  alpha: 0.3,
+                                ),
+                                blurRadius: 14,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                   ),
-                  children: <TextSpan>[
-                    TextSpan(
-                      text: questionMark,
-                      style: CustomTextStyle.customOpenSans(
-                        fontSize: 16,
-                        color: AppColors.greyColor,
-                      ),
+                  child: Center(
+                    child:
+                        controller.loginLoading.value
+                            ? SizedBox(
+                              width: 22.w,
+                              height: 22.h,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                            : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  sendOTP,
+                                  style: CustomTextStyle.customRaleway(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 10.w),
+                                Container(
+                                  width: 28.w,
+                                  height: 28.h,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 16.sp,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 24.h),
+
+            // ── Divider ──────────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(color: Colors.grey.shade300, thickness: 1),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  child: Text(
+                    'or',
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 12,
+                      color: Colors.grey.shade400,
                     ),
-                    TextSpan(
-                      text: createAccount,
-                      style: CustomTextStyle.customOpenSans(
-                        fontSize: 18,
-                        color: AppColors.blackColor,
-                      ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(color: Colors.grey.shade300, thickness: 1),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 20.h),
+
+            // ── Sign up link ─────────────────────────────────────────
+            Center(
+              child: GestureDetector(
+                onTap:
+                    () => AppRoutes.navigateRoutes(
+                      routeName: AppRouteName.signup,
                     ),
-                  ],
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    text: dontHaveAccount,
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: questionMark,
+                        style: CustomTextStyle.customOpenSans(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      TextSpan(
+                        text: createAccount,
+                        style: CustomTextStyle.customOpenSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.blackColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -196,6 +328,215 @@ class LoginView extends GetView<LoginController> {
     );
   }
 
+  // ── OTP bottom sheet ────────────────────────────────────────────────────────
+  void _showOtpBottomSheet() {
+    // Use Get.find so Obx widgets inside the bottom sheet
+    // (which runs in a separate overlay route) can resolve the controller.
+    final LoginController c = Get.find<LoginController>();
+
+    final defaultPinTheme = PinTheme(
+      width: 46.w,
+      height: 52.h,
+      textStyle: CustomTextStyle.customPoppin(
+        fontSize: 18,
+        color: AppColors.blackColor,
+        fontWeight: FontWeight.w700,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyDecorationWith(
+      color: Colors.white,
+      border: Border.all(color: AppColors.blackColor, width: 2),
+      borderRadius: BorderRadius.circular(12.r),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyDecorationWith(
+      color: AppColors.blackColor,
+      border: Border.all(color: AppColors.blackColor, width: 1.5),
+      borderRadius: BorderRadius.circular(12.r),
+    );
+
+    commonBottomSheet(
+      label: 'OTP Verification',
+      onPressed: () => Get.back(),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24.w, 4.h, 24.w, 28.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Lock icon ────────────────────────────────────────────
+            Container(
+              width: 60.w,
+              height: 60.h,
+              decoration: const BoxDecoration(
+                color: AppColors.blackColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                CupertinoIcons.lock_shield_fill,
+                size: 26.sp,
+                color: Colors.white,
+              ),
+            ),
+
+            SizedBox(height: 14.h),
+
+            Text(
+              'Enter Verification Code',
+              style: CustomTextStyle.customPoppin(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppColors.blackColor,
+              ),
+            ),
+
+            SizedBox(height: 6.h),
+
+            Text(
+              'We sent a 6-digit OTP to\n${c.email.text}',
+              textAlign: TextAlign.center,
+              style: CustomTextStyle.customOpenSans(
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
+            ),
+
+            SizedBox(height: 24.h),
+
+            // ── PIN input ────────────────────────────────────────────
+            Pinput(
+              defaultPinTheme: defaultPinTheme,
+              focusedPinTheme: focusedPinTheme,
+              submittedPinTheme: submittedPinTheme.copyWith(
+                textStyle: CustomTextStyle.customPoppin(
+                  fontSize: 18,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              closeKeyboardWhenCompleted: true,
+              length: 6,
+              keyboardType: TextInputType.number,
+              pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+              showCursor: true,
+              onCompleted: (pin) => c.verifyOtp(otp: pin),
+            ),
+
+            SizedBox(height: 24.h),
+
+            // ── Verify button ────────────────────────────────────────
+            Obx(
+              () => GestureDetector(
+                onTap:
+                    c.verifyLoading.value
+                        ? null
+                        : () => c.verifyOtp(otp: '123456'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: double.infinity,
+                  height: 52.h,
+                  decoration: BoxDecoration(
+                    color:
+                        c.verifyLoading.value
+                            ? Colors.grey.shade300
+                            : AppColors.blackColor,
+                    borderRadius: BorderRadius.circular(14.r),
+                    boxShadow:
+                        c.verifyLoading.value
+                            ? []
+                            : [
+                              BoxShadow(
+                                color: AppColors.blackColor.withValues(
+                                  alpha: 0.25,
+                                ),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                  ),
+                  child: Center(
+                    child:
+                        c.verifyLoading.value
+                            ? SizedBox(
+                              width: 22.w,
+                              height: 22.h,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                            : Text(
+                              'Verify OTP',
+                              style: CustomTextStyle.customRaleway(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 18.h),
+
+            // ── Resend row ───────────────────────────────────────────
+            Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Didn't receive the code?  ",
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                  c.canResend.value
+                      ? GestureDetector(
+                        onTap: () async {
+                          await c.sendOtp();
+                          c.startResendTimer();
+                        },
+                        child: Text(
+                          'Resend',
+                          style: CustomTextStyle.customOpenSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.blackColor,
+                          ),
+                        ),
+                      )
+                      : Text(
+                        'Resend in ${_formatTimer(c.resendSeconds.value)}',
+                        style: CustomTextStyle.customOpenSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Timer formatter ─────────────────────────────────────────────────────────
+  String _formatTimer(int seconds) {
+    final m = (seconds ~/ 60).toString().padLeft(2, '0');
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  // kept for backward-compat
   Widget otpVerificationBottomSheet() {
     final defaultPinTheme = PinTheme(
       width: 56,
@@ -210,19 +551,17 @@ class LoginView extends GetView<LoginController> {
         borderRadius: BorderRadius.circular(15),
       ),
     );
-
     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
       border: Border.all(color: AppColors.greenColor),
       borderRadius: BorderRadius.circular(15),
     );
-
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
         color: AppColors.greenAccentColor,
       ),
     );
     return Container(
-      margin: EdgeInsets.all(10),
+      margin: const EdgeInsets.all(10),
       child: Pinput(
         defaultPinTheme: defaultPinTheme,
         focusedPinTheme: focusedPinTheme,
@@ -236,34 +575,4 @@ class LoginView extends GetView<LoginController> {
       ),
     );
   }
-
-  // Obx(
-  //   () => CommonTextField(
-  //     obscureText: controller.obscureTextValue.value,
-  //     hintText: 'Password',
-  //     label: 'Password',
-  //     controller: controller.password,
-  //     suffixIcon: InkWell(
-  //       onTap: () => controller.setobscureTextValue(),
-  //       child: CustomPadding(
-  //         paddingOption: OnlyPadding(right: 10),
-  //         child: Icon(
-  //           controller.obscureTextValue.value
-  //               ? CupertinoIcons.padlock
-  //               : CupertinoIcons.lock_open,
-  //           size: 18,
-  //         ),
-  //       ),
-  //     ),
-  //     validator: (passwordValue) {
-  //       if (passwordValue!.isEmpty) {
-  //         return emptyPassword;
-  //       } else if (passwordValue.length < 6) {
-  //         return shortPassword;
-  //       } else {
-  //         return null;
-  //       }
-  //     },
-  //   ),
-  // ),
 }

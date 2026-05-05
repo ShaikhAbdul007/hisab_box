@@ -1,3 +1,4 @@
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,6 +22,7 @@ class OrderController extends GetxController with CacheManager {
   RxBool saveCustomerWithInvoiceLoading = false.obs;
   RxBool homeButtonVisible = true.obs;
   RxBool isInvoiceLoading = false.obs;
+  RxBool isCreditSale = false.obs;
   Rx<InvoiceData?> invoiceData = Rx<InvoiceData?>(null);
 
   var data = Get.arguments;
@@ -29,7 +31,6 @@ class OrderController extends GetxController with CacheManager {
   void onInit() {
     if (data != null) {
       _fetchInvoice();
-      _checkCreditFromInvoice();
     }
     _loadCustomers();
     super.onInit();
@@ -43,13 +44,15 @@ class OrderController extends GetxController with CacheManager {
           (p.mode ?? '').toLowerCase() == 'credit' &&
           (double.tryParse(p.amount ?? '0') ?? 0) > 0,
     );
+    isCreditSale.value = hasCredit;
     homeButtonVisible.value = !hasCredit;
   }
 
   Future<void> _fetchInvoice() async {
-    final billNo = data.billNo;
-    if (billNo.isEmpty) return;
     isInvoiceLoading.value = true;
+    final billNo = data;
+    if (billNo.isEmpty) return;
+
     try {
       final response = await invoiceRepo.fetchInvoice(invoiceNo: billNo);
       if (response.success == true && response.data != null) {
@@ -57,6 +60,7 @@ class OrderController extends GetxController with CacheManager {
         _checkCreditFromInvoice();
       }
     } catch (e) {
+      showSnackBar(error: e.toString());
       AppLogger.info(("🚨 Invoice fetch error: $e").toString());
     } finally {
       isInvoiceLoading.value = false;
@@ -74,17 +78,27 @@ class OrderController extends GetxController with CacheManager {
     }
   }
 
-  Future<bool> saveCustomerWithInvoice({required InvoiceModel invoice}) async {
+  Future<void> saveCustomerWithInvoice({required dynamic body}) async {
     saveCustomerWithInvoiceLoading.value = true;
-
-    //sale_id
-
     try {
-      return true;
+      final response = await customerRepo.addCustomer(body: body);
+      if (response.success == success) {
+        Get.back();
+        clear();
+        isCreditSale.value = false;
+        homeButtonVisible.value = true;
+        showSnackBar(
+          error: response.msg ?? 'Customer Created Successfully',
+          isError: false,
+        );
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
+      }
     } catch (e) {
-      AppLogger.info(("🚨 Save Customer Error Details: $e").toString());
+      AppLogger.info((e).toString());
       showSnackBar(error: e.toString());
-      return false;
     } finally {
       saveCustomerWithInvoiceLoading.value = false;
     }

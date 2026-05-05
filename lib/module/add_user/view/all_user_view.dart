@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
+import 'package:inventory/common_widget/appbar_add_button.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
-import 'package:inventory/common_widget/common_container.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/module/add_user/controller/all_user_controller.dart';
@@ -18,22 +18,16 @@ class AllUserView extends GetView<AllUserController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: "Users",
-      firstActionChild: CommonContainer(
-        height: 30,
-        width: 40,
-        radius: 5,
-        color: AppColors.whiteLigthColor,
-        child: InkWell(
-          onTap: () async {
-            bool res = await AppRoutes.futureNavigationToRoute(
-              routeName: AppRouteName.addUser,
-            );
-            if (res == true) {
-              controller.getEmployees();
-            }
-          },
-          child: Icon(CupertinoIcons.add),
-        ),
+      firstActionChild: AppBarAddButton(
+        tooltip: 'Add User',
+        onTap: () async {
+          bool res = await AppRoutes.futureNavigationToRoute(
+            routeName: AppRouteName.addUser,
+          );
+          if (res == true) {
+            controller.getEmployees();
+          }
+        },
       ),
       body: Obx(
         () =>

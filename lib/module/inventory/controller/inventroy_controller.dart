@@ -62,8 +62,8 @@ class InventroyController extends GetxController with CacheManager {
   Future<(bool existProductOrNot, BarcodeExistingData barcodeExistingData)>
   existingProductInfo(String barcode, String stocktype) async {
     isExistingProductInfo.value = true;
-    var res = await fetchProductByBarcode(
-      scannedBarcode: barcode,
+    var res = await inventoryScanRepo.fetchProductByBarcode(
+      barcode: barcode,
       stocktype: stocktype,
     );
     try {
@@ -94,8 +94,8 @@ class InventroyController extends GetxController with CacheManager {
     required VoidCallback qtyIsNotEnough,
   }) async {
     try {
-      final res = await fetchProductByBarcode(
-        scannedBarcode: barcode,
+      final res = await inventoryScanRepo.fetchProductByBarcode(
+        barcode: barcode,
         stocktype: sellType,
       );
 
@@ -134,15 +134,19 @@ class InventroyController extends GetxController with CacheManager {
           return;
         }
         cartList[index].quantity = (currentQty + 1).toString();
+        // keep available stock in sync (packetQuantity carries the real stock)
+        cartList[index].packetQuantity = availableQty.toString();
       } else {
         cartList.add(
           InventoryItem(
             barcode: barcode,
             id: product.id,
             name: product.name,
-            sellingPrice: product.sellingPrice,
+            sellingPrice: product.sellingPrice.toString(),
             discount: product.discount,
             quantity: '1.0',
+            // packetQuantity stores the REAL available stock from inventory
+            packetQuantity: availableQty.toString(),
             stockType: sellType,
             location: product.location,
           ),
@@ -156,17 +160,6 @@ class InventroyController extends GetxController with CacheManager {
       AppLogger.info(("🚨 Scan Error: $e").toString());
       showSnackBar(error: e.toString());
     }
-  }
-
-  Future<BarcodeExistingModel> fetchProductByBarcode({
-    required String scannedBarcode,
-    required String stocktype,
-  }) async {
-    var res = await inventoryScanRepo.fetchProductByBarcode(
-      barcode: scannedBarcode,
-      stocktype: stocktype,
-    );
-    return res;
   }
 
   void cameraStart() {

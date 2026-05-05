@@ -5,23 +5,15 @@ class BarcodeExistingModel {
 
   BarcodeExistingModel({this.success, this.msg, this.data});
 
-  BarcodeExistingModel.fromJson(Map<String, dynamic> json) {
-    success = json['success'];
-    msg = json['msg'];
-    data =
-        json['data'] != null
-            ? BarcodeExistingData.fromJson(json['data'])
-            : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['success'] = success;
-    data['msg'] = msg;
-    if (this.data != null) {
-      data['data'] = this.data!.toJson();
-    }
-    return data;
+  factory BarcodeExistingModel.fromJson(Map<String, dynamic> json) {
+    return BarcodeExistingModel(
+      success: json['success'],
+      msg: json['msg'],
+      data:
+          json['data'] != null
+              ? BarcodeExistingData.fromJson(json['data'])
+              : null,
+    );
   }
 }
 
@@ -29,131 +21,149 @@ class BarcodeExistingData {
   String? id;
   String? userId;
   String? name;
-  String? barcodes;
-  int? quantity;
-  String? sellingPrice;
-  String? purchasePrice;
+
+  String? barcode;
+
+  double? sellingPrice;
+  double? purchasePrice;
+
   String? location;
   String? stockType;
-  bool? isloosed;
-  bool? isflavorrequired;
+
+  bool? isLoosed;
+  bool? isFlavorRequired;
+
   String? purchaseDate;
   String? expiryDate;
-  String? category;
-  String? animalType;
+
+  String? categoryId;
+  String? categoryName;
+
+  String? animalTypeId;
+  String? animalTypeName;
+
+  String? colorId;
+  String? colorName;
+
+  String? brand;
+
   dynamic flavour;
   String? level;
   String? rack;
   dynamic weight;
+
+  int? quantity;
+  int? packetQuantity;
+
+  double? packetPrice;
+  double? godownPacketPrice;
+
+  int? godownPacketQuantity;
+
   int? discount;
+
   String? createdAt;
   String? updatedAt;
-  String? barcode;
-  String? flag;
-  String? categoryName;
-  String? animalTypeName;
-  int? packetQuantity;
-  String? packetPrice;
 
-  bool? isflavorRequired;
+  bool? inStock;
+  String? message;
 
   BarcodeExistingData({
     this.id,
     this.userId,
     this.name,
-    this.barcodes,
-    this.quantity,
+    this.barcode,
+
     this.sellingPrice,
     this.purchasePrice,
     this.location,
     this.stockType,
-    this.isloosed,
-    this.isflavorrequired,
+    this.isLoosed,
+    this.isFlavorRequired,
     this.purchaseDate,
     this.expiryDate,
-    this.category,
-    this.animalType,
+    this.categoryId,
+    this.categoryName,
+    this.animalTypeId,
+    this.animalTypeName,
+    this.colorId,
+    this.colorName,
+    this.brand,
     this.flavour,
     this.level,
     this.rack,
     this.weight,
+    this.quantity,
+    this.packetQuantity,
+    this.packetPrice,
+    this.godownPacketPrice,
+    this.godownPacketQuantity,
     this.discount,
     this.createdAt,
     this.updatedAt,
-    this.barcode,
-    this.flag,
-    this.categoryName,
-    this.animalTypeName,
-    this.packetQuantity,
-    this.packetPrice,
-
-    this.isflavorRequired,
+    this.inStock,
+    this.message,
   });
 
-  BarcodeExistingData.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    userId = json['user_id'];
-    name = json['name'];
-    barcodes = json['barcodes'];
-    quantity = json['quantity'];
-    sellingPrice = json['selling_price'];
-    purchasePrice = json['purchase_price'];
-    location = json['location'];
-    stockType = json['stock_type'];
-    isloosed = json['isloosed'];
-    isflavorrequired = json['isflavorrequired'];
-    purchaseDate = json['purchase_date'];
-    expiryDate = json['expiry_date'];
-    category = json['category'];
-    animalType = json['animal_type'];
-    flavour = json['flavour'];
-    level = json['level'];
-    rack = json['rack'];
-    weight = json['weight'];
-    discount = json['discount'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    barcode = json['barcode'];
-    flag = json['flag'];
-    categoryName = json['category_name'];
-    animalTypeName = json['animal_type_name'];
-    packetQuantity = json['packet_quantity'];
-    packetPrice = json['packet_price'];
+  factory BarcodeExistingData.fromJson(Map<String, dynamic> json) {
+    return BarcodeExistingData(
+      id: json['id'],
+      userId: json['user_id'],
+      name: json['name'],
+      barcode: json['barcode'],
 
-    isflavorRequired = json['isflavorRequired'];
+      sellingPrice: _parseDouble(json['selling_price']),
+      purchasePrice: _parseDouble(json['purchase_price']),
+
+      location: json['location'],
+      stockType: json['stock_type'],
+
+      isLoosed: json['isloosed'],
+      isFlavorRequired: json['isflavorRequired'],
+
+      purchaseDate: json['purchase_date'],
+      expiryDate: json['expiry_date'],
+
+      categoryId: json['category_id'],
+      categoryName: json['category_name'],
+
+      animalTypeId: json['animal_type_id'],
+      animalTypeName: json['animal_type_name'],
+
+      colorId: json['color_id'],
+      colorName: json['color_name'],
+
+      brand: json['brand'],
+
+      flavour: json['flavour'],
+      level: json['level'],
+      rack: json['rack'],
+      weight: json['weight'],
+
+      quantity: json['quantity'],
+      packetQuantity: json['packet_quantity'],
+
+      packetPrice: _parseDouble(json['packet_price']),
+      godownPacketPrice: _parseDouble(json['godown_packet_price']),
+      godownPacketQuantity: json['godown_packet_quantity'],
+
+      discount: json['discount'],
+
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
+
+      inStock: json['in_stock'],
+      message: json['message'],
+    );
   }
 
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['user_id'] = userId;
-    data['name'] = name;
-    data['barcodes'] = barcodes;
-    data['quantity'] = quantity;
-    data['selling_price'] = sellingPrice;
-    data['purchase_price'] = purchasePrice;
-    data['location'] = location;
-    data['stock_type'] = stockType;
-    data['isloosed'] = isloosed;
-    data['isflavorrequired'] = isflavorrequired;
-    data['purchase_date'] = purchaseDate;
-    data['expiry_date'] = expiryDate;
-    data['category'] = category;
-    data['animal_type'] = animalType;
-    data['flavour'] = flavour;
-    data['level'] = level;
-    data['rack'] = rack;
-    data['weight'] = weight;
-    data['discount'] = discount;
-    data['created_at'] = createdAt;
-    data['updated_at'] = updatedAt;
-    data['barcode'] = barcode;
-    data['flag'] = flag;
-    data['category_name'] = categoryName;
-    data['animal_type_name'] = animalTypeName;
-    data['packet_quantity'] = packetQuantity;
-    data['packet_price'] = packetPrice;
-    data['isflavorRequired'] = isflavorRequired;
-    return data;
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+
+    if (value is int) return value.toDouble();
+    if (value is double) return value;
+    if (value is String) return double.tryParse(value);
+
+    return null;
   }
 }

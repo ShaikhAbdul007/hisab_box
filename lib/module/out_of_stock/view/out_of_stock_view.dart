@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_padding.dart';
@@ -33,20 +34,20 @@ class OutOfStockView extends GetView<OutOfStockController> {
                         paddingOption: SymmetricPadding(horizontal: 12),
                         child: CommonSearch(
                           icon: Obx(
-                            () => InkWell(
-                              onTap:
-                                  controller.searchText.value.isNotEmpty
-                                      ? () {
+                            () =>
+                                controller.searchText.value.isNotEmpty
+                                    ? InkWell(
+                                      onTap: () {
                                         controller.clear();
                                         unfocus();
-                                      }
-                                      : null,
-                              child: Icon(
-                                controller.searchText.value.isNotEmpty
-                                    ? CupertinoIcons.clear
-                                    : CupertinoIcons.search,
-                              ),
-                            ),
+                                      },
+                                      child: Icon(
+                                        CupertinoIcons.clear_circled_solid,
+                                        size: 20.sp,
+                                        color: AppColors.blackColor,
+                                      ),
+                                    )
+                                    : const SizedBox.shrink(),
                           ),
                           label: 'Search',
                           hintText: 'search product',

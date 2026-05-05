@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
-import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
@@ -30,43 +29,76 @@ class OutOfStockInventoryListText extends StatelessWidget {
   Widget build(BuildContext context) {
     final String rack = neaExpiryItemData.rack ?? '';
     final String level = neaExpiryItemData.level ?? '';
+
     return Container(
+      margin: SymmetricPadding(horizontal: 12, vertical: 5).getPadding(),
+      padding: SymmetricPadding(horizontal: 12, vertical: 10).getPadding(),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(5.r),
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      margin: SymmetricPadding(horizontal: 15, vertical: 5).getPadding(),
-      padding: SymmetricPadding(horizontal: 5, vertical: 4).getPadding(),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Icon
+          Container(
+            width: 44.w,
+            height: 44.h,
+            decoration: BoxDecoration(
+              color: AppColors.redColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(
+              CupertinoIcons.cube_box_fill,
+              color: AppColors.redColor,
+              size: 22.sp,
+            ),
+          ),
+          setWidth(width: 10),
+
+          // Info
           Expanded(
-            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   neaExpiryItemData.name ?? '',
-                  style: CustomTextStyle.customPoppin(fontSize: 17),
-                ),
-                Text(
-                  neaExpiryItemData.barcode!,
-                  style: CustomTextStyle.customOpenSans(
-                    color: AppColors.greyColor,
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                if ((neaExpiryItemData.barcode ?? '').isNotEmpty)
+                  Text(
+                    neaExpiryItemData.barcode!,
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 11,
+                      color: AppColors.greyColor,
+                    ),
+                  ),
+                setHeight(height: 3),
                 if (!_isClothing) ...[
-                  if ((neaExpiryItemData.flavour ?? '').isNotEmpty) ...[
-                    setHeight(height: 2),
+                  if ((neaExpiryItemData.flavour ?? '').isNotEmpty)
                     Text(
                       neaExpiryItemData.flavour!,
                       style: CustomTextStyle.customOpenSans(
+                        fontSize: 12,
                         color: AppColors.greyColor,
                       ),
                     ),
-                  ],
                   _infoRow([
                     neaExpiryItemData.weight,
                     neaExpiryItemData.categoryName,
+                    neaExpiryItemData.animalCategoryName,
                   ]),
                   if ((neaExpiryItemData.purchaseDate ?? '').isNotEmpty ||
                       (neaExpiryItemData.expiryDate ?? '').isNotEmpty)
@@ -75,21 +107,26 @@ class OutOfStockInventoryListText extends StatelessWidget {
                       neaExpiryItemData.expiryDate,
                     ),
                 ],
-                if (_isClothing) ...[
+                if (_isClothing)
                   _infoRow([
                     neaExpiryItemData.categoryName,
                     neaExpiryItemData.animalCategoryName,
                     neaExpiryItemData.color,
                     neaExpiryItemData.brand,
                   ]),
-                ],
-
+                setHeight(height: 4),
                 Row(
                   children: [
-                    Icon(CupertinoIcons.map_pin, size: 15.sp),
+                    Icon(
+                      CupertinoIcons.map_pin,
+                      size: 11.sp,
+                      color: AppColors.greyColor,
+                    ),
+                    setWidth(width: 3),
                     Text(
                       _locationText(level, rack),
                       style: CustomTextStyle.customOpenSans(
+                        fontSize: 11,
                         color: AppColors.greyColor,
                       ),
                     ),
@@ -98,52 +135,36 @@ class OutOfStockInventoryListText extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            child: Column(
-              children: [
-                Icon(
-                  CupertinoIcons.cube_box_fill,
-                  size: 27,
-                  color: AppColors.redColor,
+
+          // Price + Out of Stock badge
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '₹${neaExpiryItemData.sellingPrice ?? ''}',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
-                setHeight(height: 5),
-                Text(
-                  '\u{20B9} ${neaExpiryItemData.sellingPrice ?? ''}',
-                  style: CustomTextStyle.customPoppin(
-                    color: AppColors.blackColor,
-                    fontSize: 18,
+              ),
+              setHeight(height: 6),
+              Container(
+                padding:
+                    SymmetricPadding(horizontal: 8, vertical: 3).getPadding(),
+                decoration: BoxDecoration(
+                  color: AppColors.redColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  'Out of Stock',
+                  style: CustomTextStyle.customOpenSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.redColor,
                   ),
                 ),
-                FittedBox(
-                  child: RichText(
-                    text: TextSpan(
-                      text: neaExpiryItemData.quantity.toString(),
-                      style: CustomTextStyle.customOpenSans(
-                        color: AppColors.blackColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: ' in stock',
-                          style: CustomTextStyle.customOpenSans(
-                            color: AppColors.blackColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // CommonButton(
-                //   isLoading: isDeleteLoading,
-                //   height: 25,
-                //   radius: 5,
-                //   bgColor: AppColors.redColor,
-                //   onTap: deleteOnTap,
-                //   label: 'Delete',
-                // ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -154,8 +175,11 @@ class OutOfStockInventoryListText extends StatelessWidget {
     final parts = values.where((v) => v != null && v.isNotEmpty).toList();
     if (parts.isEmpty) return const SizedBox.shrink();
     return Text(
-      parts.join(' / '),
-      style: CustomTextStyle.customOpenSans(color: AppColors.greyColor),
+      parts.join('  ·  '),
+      style: CustomTextStyle.customOpenSans(
+        fontSize: 12,
+        color: AppColors.greyColor,
+      ),
     );
   }
 
@@ -165,26 +189,28 @@ class OutOfStockInventoryListText extends StatelessWidget {
     if (p.isEmpty && e.isEmpty) return const SizedBox.shrink();
     return Row(
       children: [
+        Icon(CupertinoIcons.calendar, size: 11.sp, color: AppColors.greyColor),
+        setWidth(width: 3),
         if (p.isNotEmpty)
           Text(
             p,
             style: CustomTextStyle.customOpenSans(
-              color: AppColors.greyColor,
               fontSize: 11,
+              color: AppColors.greyColor,
             ),
           ),
         if (p.isNotEmpty && e.isNotEmpty)
           Icon(
             CupertinoIcons.arrow_right,
-            size: 12.sp,
-            color: AppColors.blackColor,
+            size: 10.sp,
+            color: AppColors.greyColor,
           ),
         if (e.isNotEmpty)
           Text(
             e,
             style: CustomTextStyle.customOpenSans(
-              color: AppColors.redColor,
               fontSize: 11,
+              color: AppColors.redColor,
             ),
           ),
       ],
@@ -193,9 +219,9 @@ class OutOfStockInventoryListText extends StatelessWidget {
 
   String _locationText(String level, String rack) {
     final loc = neaExpiryItemData.location ?? '';
-    if (level.isNotEmpty && rack.isNotEmpty) return '$loc/$level/$rack';
-    if (rack.isNotEmpty) return '$loc/$rack';
-    if (level.isNotEmpty) return '$loc/$level';
+    if (level.isNotEmpty && rack.isNotEmpty) return '$loc / $level / $rack';
+    if (rack.isNotEmpty) return '$loc / $rack';
+    if (level.isNotEmpty) return '$loc / $level';
     return loc;
   }
 }

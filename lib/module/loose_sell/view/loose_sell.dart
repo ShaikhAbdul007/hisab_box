@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_padding.dart';
@@ -12,7 +13,6 @@ import '../../../common_widget/search.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/shop_type.dart';
-import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../controller/loose_controller.dart';
@@ -80,20 +80,20 @@ class LooseSell extends GetView<LooseController> {
                 paddingOption: SymmetricPadding(horizontal: 12),
                 child: CommonSearch(
                   icon: Obx(
-                    () => InkWell(
-                      onTap:
-                          controller.searchText.value.isNotEmpty
-                              ? () {
+                    () =>
+                        controller.searchText.value.isNotEmpty
+                            ? InkWell(
+                              onTap: () {
                                 controller.clear();
                                 unfocus();
-                              }
-                              : null,
-                      child: Icon(
-                        controller.searchText.value.isNotEmpty
-                            ? CupertinoIcons.clear
-                            : CupertinoIcons.search,
-                      ),
-                    ),
+                              },
+                              child: Icon(
+                                CupertinoIcons.clear_circled_solid,
+                                size: 20.sp,
+                                color: AppColors.blackColor,
+                              ),
+                            )
+                            : const SizedBox.shrink(),
                   ),
                   label: 'Search',
                   hintText: 'search product',

@@ -15,6 +15,7 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/product_details/controller/controller.dart';
 import 'package:inventory/module/product_details/widget/inventory_bottomsheep_component_text.dart';
+import 'package:inventory/module/product_details/widget/product_field_card.dart';
 
 class PetShopProductViewComponent extends StatelessWidget {
   final ProductController controller;
@@ -31,148 +32,216 @@ class PetShopProductViewComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Form(
       key: controller.inventoryScanKey,
-      child: CustomPadding(
-        paddingOption: SymmetricPadding(horizontal: 10.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 10,
-            children: [
-              InventoryBottomsheetComponentText(
-                readOnly1: true,
-                controller1: controller.barcode,
-                controller2: controller.productName,
-                label1: 'Barcode',
-                hintText1: 'Enter barcode',
-                hintText2: 'Enter product name',
-                label2: 'Product Name',
-                validator2: (v) => v!.isEmpty ? emptyProductName : null,
-              ),
-              Row(
-                children: [
-                  Flexible(child: _categoryDropdown()),
-                  Flexible(child: _animalTypeDropdown()),
-                ],
-              ),
-              Row(
-                children: [
-                  Flexible(child: _stockField()),
-                  Flexible(child: _isLooseDropdown()),
-                ],
-              ),
-              InventoryBottomsheetComponentText(
-                inputLength1: 10,
-                keyboardType1: TextInputType.number,
-                hintText1: 'Selling Price (sp)',
-                label1: 'Selling Price (₹)',
-                controller1: controller.sellingPrice,
-                validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
-                inputLength2: 10,
-                keyboardType2: TextInputType.number,
-                hintText2: 'Purchase Price (mrp)',
-                label2: 'Purchase Price (₹)',
-                controller2: controller.purchasePrice,
-                validator2:
-                    (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
-                onChanged1: (_) => controller.calculatePurchasePrice(),
-              ),
-              InventoryBottomsheetComponentText(
-                inputLength1: 2,
-                keyboardType1: TextInputType.number,
-                hintText1: 'Enter discount',
-                label1: 'Discount (%)',
-                controller1: controller.discount,
-                validator1: (v) => v!.isEmpty ? emptyDiscount : null,
-                hintText2: 'Level',
-                label2: 'Level',
-                controller2: controller.level,
-              ),
-              Row(
-                children: [
-                  Flexible(child: _rackField()),
-                  Flexible(child: _locationDropdown()),
-                ],
-              ),
-              Row(
-                children: [
-                  Flexible(child: _purchaseDateField(context)),
-                  Flexible(child: _expiryDateField(context)),
-                ],
-              ),
-              Obx(
-                () =>
-                    controller.isFlavorAndWeightNotRequired.value
-                        ? InventoryBottomsheetComponentText(
-                          hintText1: 'Enter flavor',
-                          label1: 'Flavor',
-                          controller1: controller.flavor,
-                          validator1: (v) => v!.isEmpty ? emptyflavor : null,
-                          hintText2: 'Enter weight',
-                          label2: 'Weight',
-                          controller2: controller.weight,
-                          validator2: (v) => v!.isEmpty ? emptyWeight : null,
-                        )
-                        : const SizedBox.shrink(),
-              ),
-              Obx(
-                () => CustomPadding(
-                  paddingOption: SymmetricPadding(horizontal: 15.0),
-                  child: CommonSwitch(
-                    labelSize: 12,
-                    label: 'Flavor & Weight Required',
-                    value: controller.isFlavorAndWeightNotRequired.value,
-                    onChanged: (_) {
-                      controller.isFlavorAndWeightNotRequired.value =
-                          !controller.isFlavorAndWeightNotRequired.value;
-                    },
-                  ),
-                ),
-              ),
-              setHeight(height: 5),
-              Obx(
-                () => CommonButton(
-                  isLoading: controller.isSaveLoading.value,
-                  label: saveButton,
-                  onTap: () async {
-                    if (controller.inventoryScanKey.currentState!.validate()) {
-                      unfocus();
-                      controller.saveNewProduct(
-                        body: {
-                          "name": controller.productName.text,
-                          "barcodes": controller.barcode.text,
-                          "quantity": controller.quantity.text,
-                          "selling_price": controller.sellingPrice.text,
-                          "purchase_price": controller.purchasePrice.text,
-                          "location": controller.location.text.toLowerCase(),
-                          "stock_type": "packet",
-                          "isloosed": controller.isLoose,
-                          "isflavorRequired":
-                              controller.isFlavorAndWeightNotRequired.value,
-                          "purchase_date": parseAppDate(
-                            controller.purchaseDate.text,
-                          ),
-                          "expiry_date": parseAppDate(
-                            controller.exprieDate.text,
-                          ),
-                          "category_id":
-                              controller.selectedCategoryId.value ?? '',
-                          "animal_type_id":
-                              controller.selectedAnimalTypeId.value ?? '',
-                          "flavour": controller.flavor.text,
-                          "level": controller.level.text,
-                          "rack": controller.rack.text,
-                          "weight": controller.weight.text,
-                          "discount": controller.discount.text,
-                        },
-                      );
-                    }
-                  },
-                ),
-              ),
-              setHeight(height: 50),
-            ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Header ──────────────────────────────────────────────────
+          const ProductFormHeader(
+            title: 'Add Product',
+            subtitle: 'Pet shop — fill in product details',
+            icon: CupertinoIcons.cube_box_fill,
           ),
-        ),
+          // ── Fields ──────────────────────────────────────────────────
+          Padding(
+            padding:
+                SymmetricPadding(horizontal: 14, vertical: 14).getPadding(),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Product Info
+                  ProductFieldCard(
+                    icon: CupertinoIcons.barcode,
+                    iconColor: const Color(0xFF1565C0),
+                    title: 'Product Info',
+                    child: Column(
+                      children: [
+                        InventoryBottomsheetComponentText(
+                          readOnly1: true,
+                          controller1: controller.barcode,
+                          controller2: controller.productName,
+                          label1: 'Barcode',
+                          hintText1: 'Enter barcode',
+                          hintText2: 'Enter product name',
+                          label2: 'Product Name',
+                          validator2:
+                              (v) => v!.isEmpty ? emptyProductName : null,
+                        ),
+                        setHeight(height: 8),
+                        Row(
+                          children: [
+                            Flexible(child: _categoryDropdown()),
+                            Flexible(child: _animalTypeDropdown()),
+                          ],
+                        ),
+                        setHeight(height: 8),
+                        Row(
+                          children: [
+                            Flexible(child: _stockField()),
+                            Flexible(child: _isLooseDropdown()),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  setHeight(height: 12),
+
+                  // Pricing
+                  ProductFieldCard(
+                    icon: CupertinoIcons.money_dollar_circle_fill,
+                    iconColor: const Color(0xFF2E7D32),
+                    title: 'Pricing',
+                    child: Column(
+                      children: [
+                        InventoryBottomsheetComponentText(
+                          inputLength1: 10,
+                          keyboardType1: TextInputType.number,
+                          hintText1: 'Selling Price (sp)',
+                          label1: 'Selling Price (₹)',
+                          controller1: controller.sellingPrice,
+                          validator1:
+                              (v) =>
+                                  v!.isEmpty ? emptyProductSellingPrice : null,
+                          inputLength2: 10,
+                          keyboardType2: TextInputType.number,
+                          hintText2: 'Purchase Price (mrp)',
+                          label2: 'Purchase Price (₹)',
+                          controller2: controller.purchasePrice,
+                          validator2:
+                              (v) =>
+                                  v!.isEmpty ? emptyProductPurchasePrice : null,
+                          onChanged1:
+                              (_) => controller.calculatePurchasePrice(),
+                        ),
+                        setHeight(height: 8),
+                        InventoryBottomsheetComponentText(
+                          inputLength1: 2,
+                          keyboardType1: TextInputType.number,
+                          hintText1: 'Enter discount',
+                          label1: 'Discount (%)',
+                          controller1: controller.discount,
+                          validator1: (v) => v!.isEmpty ? emptyDiscount : null,
+                          hintText2: 'Level',
+                          label2: 'Level',
+                          controller2: controller.level,
+                        ),
+                      ],
+                    ),
+                  ),
+                  setHeight(height: 12),
+
+                  // Dates & Flavor
+                  ProductFieldCard(
+                    icon: CupertinoIcons.calendar,
+                    iconColor: const Color(0xFFE65100),
+                    title: 'Location, Dates & Details',
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(child: _rackField()),
+                            Flexible(child: _locationDropdown()),
+                          ],
+                        ),
+                        setHeight(height: 8),
+                        Row(
+                          children: [
+                            Flexible(child: _purchaseDateField(context)),
+                            Flexible(child: _expiryDateField(context)),
+                          ],
+                        ),
+                        Obx(
+                          () =>
+                              controller.isFlavorAndWeightNotRequired.value
+                                  ? Column(
+                                    children: [
+                                      setHeight(height: 8),
+                                      InventoryBottomsheetComponentText(
+                                        hintText1: 'Enter flavor',
+                                        label1: 'Flavor',
+                                        controller1: controller.flavor,
+                                        validator1:
+                                            (v) =>
+                                                v!.isEmpty ? emptyflavor : null,
+                                        hintText2: 'Enter weight',
+                                        label2: 'Weight',
+                                        controller2: controller.weight,
+                                        validator2:
+                                            (v) =>
+                                                v!.isEmpty ? emptyWeight : null,
+                                      ),
+                                    ],
+                                  )
+                                  : const SizedBox.shrink(),
+                        ),
+                        setHeight(height: 8),
+                        Obx(
+                          () => CommonSwitch(
+                            labelSize: 12,
+                            label: 'Flavor & Weight Required',
+                            value:
+                                controller.isFlavorAndWeightNotRequired.value,
+                            onChanged: (_) {
+                              controller.isFlavorAndWeightNotRequired.value =
+                                  !controller
+                                      .isFlavorAndWeightNotRequired
+                                      .value;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  setHeight(height: 20),
+
+                  Obx(
+                    () => CommonButton(
+                      isLoading: controller.isSaveLoading.value,
+                      label: saveButton,
+                      onTap: () async {
+                        if (controller.inventoryScanKey.currentState!
+                            .validate()) {
+                          unfocus();
+                          controller.saveNewProduct(
+                            body: {
+                              "name": controller.productName.text,
+                              "barcodes": controller.barcode.text,
+                              "quantity": controller.quantity.text,
+                              "selling_price": controller.sellingPrice.text,
+                              "purchase_price": controller.purchasePrice.text,
+                              "location":
+                                  controller.location.text.toLowerCase(),
+                              "stock_type": "packet",
+                              "isloosed": controller.isLoose,
+                              "isflavorRequired":
+                                  controller.isFlavorAndWeightNotRequired.value,
+                              "purchase_date": parseAppDate(
+                                controller.purchaseDate.text,
+                              ),
+                              "expiry_date": parseAppDate(
+                                controller.exprieDate.text,
+                              ),
+                              "category_id":
+                                  controller.selectedCategoryId.value ?? '',
+                              "animal_type_id":
+                                  controller.selectedAnimalTypeId.value ?? '',
+                              "flavour": controller.flavor.text,
+                              "level": controller.level.text,
+                              "rack": controller.rack.text,
+                              "weight": controller.weight.text,
+                              "discount": controller.discount.text,
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  setHeight(height: 50),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

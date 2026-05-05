@@ -6,6 +6,7 @@ import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/module/product_details/widget/product_field_card.dart';
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_calender.dart';
@@ -23,16 +24,19 @@ class GenerateBarcodeComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPadding(
-      paddingOption: SymmetricPadding(horizontal: 10.0),
-      child: SingleChildScrollView(
-        child: Form(
-          key: controller.inventoryScanKey,
-          child: Obx(
-            () => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [_buildFormBody(context)],
-            ),
+    return SingleChildScrollView(
+      child: Form(
+        key: controller.inventoryScanKey,
+        child: Obx(
+          () => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding:
+                    SymmetricPadding(horizontal: 14, vertical: 14).getPadding(),
+                child: _buildFormBody(context),
+              ),
+            ],
           ),
         ),
       ),
@@ -54,105 +58,143 @@ class GenerateBarcodeComponent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        setHeight(height: 10),
-        // Barcode + Product Name
-        InventoryBottomsheetComponentText(
-          readOnly1: true,
-          controller1: controller.barcode,
-          controller2: controller.productName,
-          label1: 'Barcode',
-          hintText1: 'Enter barcode',
-          hintText2: 'Enter product name',
-          label2: 'Product Name',
-          validator2: (v) => v!.isEmpty ? emptyProductName : null,
-        ),
-        // Category + Animal Category
-        Row(
-          children: [
-            Flexible(child: _categoryDropdown()),
-            Flexible(child: _secondaryDropdown(hint: 'Animal Category')),
-          ],
-        ),
-        // Stock + isLoose
-        Row(
-          children: [
-            Flexible(child: _stockField()),
-            Flexible(child: _isLooseDropdown()),
-          ],
-        ),
-        // Selling + Purchase price
-        InventoryBottomsheetComponentText(
-          inputLength1: 10,
-          keyboardType1: TextInputType.number,
-          hintText1: 'Selling Price (sp)',
-          label1: 'Selling Price (₹)',
-          controller1: controller.sellingPrice,
-          validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
-          inputLength2: 10,
-          keyboardType2: TextInputType.number,
-          hintText2: 'Purchase Price (mrp)',
-          label2: 'Purchase Price (₹)',
-          controller2: controller.purchasePrice,
-          validator2: (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
-          onChanged1: (_) => controller.calculatePurchasePrice(),
-        ),
-        // Discount + Level
-        InventoryBottomsheetComponentText(
-          inputLength1: 2,
-          keyboardType1: TextInputType.number,
-          hintText1: 'Enter discount',
-          label1: 'Discount (%)',
-          controller1: controller.discount,
-          validator1: (v) => v!.isEmpty ? emptyDiscount : null,
-          hintText2: 'Level',
-          label2: 'Level',
-          controller2: controller.level,
-        ),
-        // Rack + Location
-        Row(
-          children: [
-            Flexible(child: _rackField()),
-            Flexible(child: _locationDropdown()),
-          ],
-        ),
-        // Purchase + Expiry dates
-        Row(
-          children: [
-            Flexible(child: _purchaseDateField(context)),
-            Flexible(child: _expiryDateField(context)),
-          ],
-        ),
-        // Flavor + Weight (conditional)
-        Obx(
-          () =>
-              controller.isFlavorAndWeightNotRequired.value
-                  ? InventoryBottomsheetComponentText(
-                    hintText1: 'Enter flavor',
-                    label1: 'Flavor',
-                    controller1: controller.flavor,
-                    validator1: (v) => v!.isEmpty ? emptyflavor : null,
-                    hintText2: 'Enter weight',
-                    label2: 'Weight',
-                    controller2: controller.weight,
-                    validator2: (v) => v!.isEmpty ? emptyWeight : null,
-                  )
-                  : const SizedBox.shrink(),
-        ),
-        Obx(
-          () => CustomPadding(
-            paddingOption: SymmetricPadding(horizontal: 15.0),
-            child: CommonSwitch(
-              labelSize: 12,
-              label: 'Flavor & Weight Required',
-              value: controller.isFlavorAndWeightNotRequired.value,
-              onChanged: (_) {
-                controller.isFlavorAndWeightNotRequired.value =
-                    !controller.isFlavorAndWeightNotRequired.value;
-              },
-            ),
+        // Product Info
+        ProductFieldCard(
+          icon: CupertinoIcons.barcode,
+          iconColor: const Color(0xFF1565C0),
+          title: 'Product Info',
+          child: Column(
+            children: [
+              InventoryBottomsheetComponentText(
+                readOnly1: true,
+                controller1: controller.barcode,
+                controller2: controller.productName,
+                label1: 'Barcode',
+                hintText1: 'Enter barcode',
+                hintText2: 'Enter product name',
+                label2: 'Product Name',
+                validator2: (v) => v!.isEmpty ? emptyProductName : null,
+              ),
+              setHeight(height: 8),
+              Row(
+                children: [
+                  Flexible(child: _categoryDropdown()),
+                  Flexible(child: _secondaryDropdown(hint: 'Animal Category')),
+                ],
+              ),
+              setHeight(height: 8),
+              Row(
+                children: [
+                  Flexible(child: _stockField()),
+                  Flexible(child: _isLooseDropdown()),
+                ],
+              ),
+            ],
           ),
         ),
-        setHeight(height: 5),
+        setHeight(height: 12),
+
+        // Pricing
+        ProductFieldCard(
+          icon: CupertinoIcons.money_dollar_circle_fill,
+          iconColor: const Color(0xFF2E7D32),
+          title: 'Pricing',
+          child: Column(
+            children: [
+              InventoryBottomsheetComponentText(
+                inputLength1: 10,
+                keyboardType1: TextInputType.number,
+                hintText1: 'Selling Price (sp)',
+                label1: 'Selling Price (₹)',
+                controller1: controller.sellingPrice,
+                validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
+                inputLength2: 10,
+                keyboardType2: TextInputType.number,
+                hintText2: 'Purchase Price (mrp)',
+                label2: 'Purchase Price (₹)',
+                controller2: controller.purchasePrice,
+                validator2:
+                    (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
+                onChanged1: (_) => controller.calculatePurchasePrice(),
+              ),
+              setHeight(height: 8),
+              InventoryBottomsheetComponentText(
+                inputLength1: 2,
+                keyboardType1: TextInputType.number,
+                hintText1: 'Enter discount',
+                label1: 'Discount (%)',
+                controller1: controller.discount,
+                validator1: (v) => v!.isEmpty ? emptyDiscount : null,
+                hintText2: 'Level',
+                label2: 'Level',
+                controller2: controller.level,
+              ),
+            ],
+          ),
+        ),
+        setHeight(height: 12),
+
+        // Dates & Flavor
+        ProductFieldCard(
+          icon: CupertinoIcons.calendar,
+          iconColor: const Color(0xFFE65100),
+          title: 'Location, Dates & Details',
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Flexible(child: _rackField()),
+                  Flexible(child: _locationDropdown()),
+                ],
+              ),
+              setHeight(height: 8),
+              Row(
+                children: [
+                  Flexible(child: _purchaseDateField(context)),
+                  Flexible(child: _expiryDateField(context)),
+                ],
+              ),
+              Obx(
+                () =>
+                    controller.isFlavorAndWeightNotRequired.value
+                        ? Column(
+                          children: [
+                            setHeight(height: 8),
+                            InventoryBottomsheetComponentText(
+                              hintText1: 'Enter flavor',
+                              label1: 'Flavor',
+                              controller1: controller.flavor,
+                              validator1:
+                                  (v) => v!.isEmpty ? emptyflavor : null,
+                              hintText2: 'Enter weight',
+                              label2: 'Weight',
+                              controller2: controller.weight,
+                              validator2:
+                                  (v) => v!.isEmpty ? emptyWeight : null,
+                            ),
+                          ],
+                        )
+                        : const SizedBox.shrink(),
+              ),
+              setHeight(height: 8),
+              Obx(
+                () => CustomPadding(
+                  paddingOption: SymmetricPadding(horizontal: 4.0),
+                  child: CommonSwitch(
+                    labelSize: 12,
+                    label: 'Flavor & Weight Required',
+                    value: controller.isFlavorAndWeightNotRequired.value,
+                    onChanged: (_) {
+                      controller.isFlavorAndWeightNotRequired.value =
+                          !controller.isFlavorAndWeightNotRequired.value;
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        setHeight(height: 20),
         _saveButton(body: _petShopBody()),
         setHeight(height: 50),
       ],
@@ -164,75 +206,103 @@ class GenerateBarcodeComponent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        setHeight(height: 10),
-        // Barcode + Product Name
-        InventoryBottomsheetComponentText(
-          readOnly1: true,
-          controller1: controller.barcode,
-          controller2: controller.productName,
-          label1: 'Barcode',
-          hintText1: 'Enter barcode',
-          hintText2: 'Enter product name',
-          label2: 'Product Name',
-          validator2: (v) => v!.isEmpty ? emptyProductName : null,
+        // Product Info
+        ProductFieldCard(
+          icon: CupertinoIcons.barcode,
+          iconColor: const Color(0xFF1565C0),
+          title: 'Product Info',
+          child: Column(
+            children: [
+              InventoryBottomsheetComponentText(
+                readOnly1: true,
+                controller1: controller.barcode,
+                controller2: controller.productName,
+                label1: 'Barcode',
+                hintText1: 'Enter barcode',
+                hintText2: 'Enter product name',
+                label2: 'Product Name',
+                validator2: (v) => v!.isEmpty ? emptyProductName : null,
+              ),
+              setHeight(height: 8),
+              Row(
+                children: [
+                  Flexible(child: _categoryDropdown()),
+                  Flexible(child: _secondaryDropdown(hint: 'Size')),
+                ],
+              ),
+              setHeight(height: 8),
+              Row(
+                children: [
+                  Flexible(child: _colorDropdown()),
+                  Flexible(child: _brandTypeDropdown()),
+                ],
+              ),
+              setHeight(height: 8),
+              Row(children: [Flexible(child: _stockField())]),
+            ],
+          ),
         ),
-        // Category + Size
-        Row(
-          children: [
-            Flexible(child: _categoryDropdown()),
-            Flexible(child: _secondaryDropdown(hint: 'Size')),
-          ],
+        setHeight(height: 12),
+
+        // Pricing
+        ProductFieldCard(
+          icon: CupertinoIcons.money_dollar_circle_fill,
+          iconColor: const Color(0xFF2E7D32),
+          title: 'Pricing',
+          child: Column(
+            children: [
+              InventoryBottomsheetComponentText(
+                inputLength1: 10,
+                keyboardType1: TextInputType.number,
+                hintText1: 'Selling Price (sp)',
+                label1: 'Selling Price (₹)',
+                controller1: controller.sellingPrice,
+                validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
+                inputLength2: 10,
+                keyboardType2: TextInputType.number,
+                hintText2: 'Purchase Price (mrp)',
+                label2: 'Purchase Price (₹)',
+                controller2: controller.purchasePrice,
+                validator2:
+                    (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
+                onChanged1: (_) => controller.calculatePurchasePrice(),
+              ),
+              setHeight(height: 8),
+              InventoryBottomsheetComponentText(
+                inputLength1: 2,
+                keyboardType1: TextInputType.number,
+                hintText1: 'Enter discount',
+                label1: 'Discount (%)',
+                controller1: controller.discount,
+                validator1: (v) => v!.isEmpty ? emptyDiscount : null,
+                hintText2: 'Level',
+                label2: 'Level',
+                controller2: controller.level,
+              ),
+            ],
+          ),
         ),
-        // Color + Brand Type
-        Row(
-          children: [
-            Flexible(child: _colorDropdown()),
-            Flexible(child: _brandTypeDropdown()),
-          ],
+        setHeight(height: 12),
+
+        // Location & Date
+        ProductFieldCard(
+          icon: CupertinoIcons.map_pin,
+          iconColor: const Color(0xFF6A1B9A),
+          title: 'Location & Date',
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Flexible(child: _locationDropdown()),
+                  Flexible(child: _rackField()),
+                ],
+              ),
+              setHeight(height: 8),
+              _purchaseDateField(context),
+            ],
+          ),
         ),
-        // Stock + Location
-        Row(
-          children: [
-            Flexible(child: _stockField()),
-            Flexible(child: _locationDropdown()),
-          ],
-        ),
-        // Selling + Purchase price
-        InventoryBottomsheetComponentText(
-          inputLength1: 10,
-          keyboardType1: TextInputType.number,
-          hintText1: 'Selling Price (sp)',
-          label1: 'Selling Price (₹)',
-          controller1: controller.sellingPrice,
-          validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
-          inputLength2: 10,
-          keyboardType2: TextInputType.number,
-          hintText2: 'Purchase Price (mrp)',
-          label2: 'Purchase Price (₹)',
-          controller2: controller.purchasePrice,
-          validator2: (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
-          onChanged1: (_) => controller.calculatePurchasePrice(),
-        ),
-        // Discount + Level
-        InventoryBottomsheetComponentText(
-          inputLength1: 2,
-          keyboardType1: TextInputType.number,
-          hintText1: 'Enter discount',
-          label1: 'Discount (%)',
-          controller1: controller.discount,
-          validator1: (v) => v!.isEmpty ? emptyDiscount : null,
-          hintText2: 'Level',
-          label2: 'Level',
-          controller2: controller.level,
-        ),
-        // Rack + Purchase Date
-        Row(
-          children: [
-            Flexible(child: _rackField()),
-            Flexible(child: _purchaseDateField(context)),
-          ],
-        ),
-        setHeight(height: 5),
+        setHeight(height: 20),
         _saveButton(body: _clothingBody()),
         setHeight(height: 50),
       ],

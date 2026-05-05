@@ -11,9 +11,11 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/product_details/controller/controller.dart';
 import 'package:inventory/module/product_details/widget/inventory_bottomsheep_component_text.dart';
+import 'package:inventory/module/product_details/widget/product_field_card.dart';
 
 class ClothingShopProductViewComponent extends StatelessWidget {
   final ProductController controller;
@@ -30,119 +32,175 @@ class ClothingShopProductViewComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Form(
       key: controller.inventoryScanKey,
-      child: CustomPadding(
-        paddingOption: SymmetricPadding(horizontal: 10.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 10,
-            children: [
-              // Barcode + Product Name
-              InventoryBottomsheetComponentText(
-                readOnly1: true,
-                controller1: controller.barcode,
-                controller2: controller.productName,
-                label1: 'Barcode',
-                hintText1: 'Enter barcode',
-                hintText2: 'Enter product name',
-                label2: 'Product Name',
-                validator2: (v) => v!.isEmpty ? emptyProductName : null,
-              ),
-              // Category + Size
-              Row(
-                children: [
-                  Flexible(child: _categoryDropdown()),
-                  Flexible(child: _sizeDropdown()),
-                ],
-              ),
-              // Color + Brand Type
-              Row(
-                children: [
-                  Flexible(child: _colorDropdown()),
-                  Flexible(child: _brandTypeDropdown()),
-                ],
-              ),
-              // Stock + Location
-              Row(
-                children: [
-                  Flexible(child: _stockField()),
-                  Flexible(child: _locationDropdown()),
-                ],
-              ),
-              // Selling + Purchase price
-              InventoryBottomsheetComponentText(
-                inputLength1: 10,
-                keyboardType1: TextInputType.number,
-                hintText1: 'Selling Price (sp)',
-                label1: 'Selling Price (₹)',
-                controller1: controller.sellingPrice,
-                validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
-                inputLength2: 10,
-                keyboardType2: TextInputType.number,
-                hintText2: 'Purchase Price (mrp)',
-                label2: 'Purchase Price (₹)',
-                controller2: controller.purchasePrice,
-                validator2:
-                    (v) => v!.isEmpty ? emptyProductPurchasePrice : null,
-                onChanged1: (_) => controller.calculatePurchasePrice(),
-              ),
-              // Discount + Level
-              InventoryBottomsheetComponentText(
-                inputLength1: 2,
-                keyboardType1: TextInputType.number,
-                hintText1: 'Enter discount',
-                label1: 'Discount (%)',
-                controller1: controller.discount,
-                validator1: (v) => v!.isEmpty ? emptyDiscount : null,
-                hintText2: 'Level',
-                label2: 'Level',
-                controller2: controller.level,
-              ),
-              // Rack + Purchase Date
-              Row(
-                children: [
-                  Flexible(child: _rackField()),
-                  Flexible(child: _purchaseDateField(context)),
-                ],
-              ),
-              setHeight(height: 5),
-              Obx(
-                () => CommonButton(
-                  isLoading: controller.isSaveLoading.value,
-                  label: saveButton,
-                  onTap: () async {
-                    if (controller.inventoryScanKey.currentState!.validate()) {
-                      unfocus();
-                      controller.saveNewProduct(
-                        body: {
-                          "name": controller.productName.text,
-                          "barcodes": controller.barcode.text,
-                          "quantity": controller.quantity.text,
-                          "selling_price": controller.sellingPrice.text,
-                          "purchase_price": controller.purchasePrice.text,
-                          "location": controller.location.text.toLowerCase(),
-                          "stock_type": "clothing",
-                          "category_id":
-                              controller.selectedCategoryId.value ?? '',
-                          "size_id":
-                              controller.selectedAnimalTypeId.value ?? '',
-                          "color_id": controller.selectedColorId.value ?? '',
-                          "brand": controller.brandType.value,
-                          "level": controller.level.text,
-                          "rack": controller.rack.text,
-                          "discount": controller.discount.text,
-                          "purchase_date": parseAppDate(
-                            controller.purchaseDate.text,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Header ──────────────────────────────────────────────────
+            // const ProductFormHeader(
+            //   title: 'Add Product',
+            //   subtitle: 'Clothing shop — fill in product details',
+            //   icon: Icons.checkroom_rounded,
+            // ),
+            // ── Fields ──────────────────────────────────────────────────
+            Padding(
+              padding:
+                  SymmetricPadding(horizontal: 14, vertical: 14).getPadding(),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Product Info
+                    ProductFieldCard(
+                      icon: CupertinoIcons.barcode,
+                      iconColor: const Color(0xFF1565C0),
+                      title: 'Product Info',
+                      child: Column(
+                        children: [
+                          InventoryBottomsheetComponentText(
+                            readOnly1: true,
+                            controller1: controller.barcode,
+                            controller2: controller.productName,
+                            label1: 'Barcode',
+                            hintText1: 'Enter barcode',
+                            hintText2: 'Enter product name',
+                            label2: 'Product Name',
+                            validator2:
+                                (v) => v!.isEmpty ? emptyProductName : null,
                           ),
+                          setHeight(height: 8),
+                          Row(
+                            children: [
+                              Flexible(child: _categoryDropdown()),
+                              Flexible(child: _sizeDropdown()),
+                            ],
+                          ),
+                          setHeight(height: 8),
+                          Row(
+                            children: [
+                              Flexible(child: _colorDropdown()),
+                              Flexible(child: _brandTypeDropdown()),
+                            ],
+                          ),
+                          setHeight(height: 8),
+                          Row(children: [Flexible(child: _stockField())]),
+                        ],
+                      ),
+                    ),
+                    setHeight(height: 12),
+
+                    // Pricing
+                    ProductFieldCard(
+                      icon: CupertinoIcons.money_dollar_circle_fill,
+                      iconColor: const Color(0xFF2E7D32),
+                      title: 'Pricing',
+                      child: Column(
+                        children: [
+                          InventoryBottomsheetComponentText(
+                            inputLength1: 10,
+                            keyboardType1: TextInputType.number,
+                            hintText1: 'Selling Price (sp)',
+                            label1: 'Selling Price (₹)',
+                            controller1: controller.sellingPrice,
+                            validator1:
+                                (v) =>
+                                    v!.isEmpty
+                                        ? emptyProductSellingPrice
+                                        : null,
+                            inputLength2: 10,
+                            keyboardType2: TextInputType.number,
+                            hintText2: 'Purchase Price (mrp)',
+                            label2: 'Purchase Price (₹)',
+                            controller2: controller.purchasePrice,
+                            validator2:
+                                (v) =>
+                                    v!.isEmpty
+                                        ? emptyProductPurchasePrice
+                                        : null,
+                            onChanged1:
+                                (_) => controller.calculatePurchasePrice(),
+                          ),
+                          setHeight(height: 8),
+                          InventoryBottomsheetComponentText(
+                            inputLength1: 2,
+                            keyboardType1: TextInputType.number,
+                            hintText1: 'Enter discount',
+                            label1: 'Discount (%)',
+                            controller1: controller.discount,
+                            validator1:
+                                (v) => v!.isEmpty ? emptyDiscount : null,
+                            hintText2: 'Level',
+                            label2: 'Level',
+                            controller2: controller.level,
+                          ),
+                        ],
+                      ),
+                    ),
+                    setHeight(height: 12),
+
+                    // Location & Date
+                    ProductFieldCard(
+                      icon: CupertinoIcons.map_pin,
+                      iconColor: const Color(0xFF6A1B9A),
+                      title: 'Location & Date',
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(child: _locationDropdown()),
+                              Flexible(child: _rackField()),
+                            ],
+                          ),
+                          setHeight(height: 8),
+                          _purchaseDateField(context),
+                        ],
+                      ),
+                    ),
+                    setHeight(height: 20),
+
+                    Obx(
+                      () => CommonButton(
+                        isLoading: controller.isSaveLoading.value,
+                        label: saveButton,
+                        onTap: () async {
+                          if (controller.inventoryScanKey.currentState!
+                              .validate()) {
+                            unfocus();
+                            var body = {
+                              "name": controller.productName.text,
+                              "barcodes": controller.barcode.text,
+                              "quantity": controller.quantity.text,
+                              "selling_price": controller.sellingPrice.text,
+                              "purchase_price": controller.purchasePrice.text,
+                              "location":
+                                  controller.location.text.toLowerCase(),
+                              "stock_type": "clothing",
+                              "category_id":
+                                  controller.selectedCategoryId.value ?? '',
+                              "size_id":
+                                  controller.selectedAnimalTypeId.value ?? '',
+                              "color_id":
+                                  controller.selectedColorId.value ?? '',
+                              "brand": controller.brandType.value,
+                              "level": controller.level.text,
+                              "rack": controller.rack.text,
+                              "discount": controller.discount.text,
+                              "purchase_date": parseAppDate(
+                                controller.purchaseDate.text,
+                              ),
+                            };
+                            AppLogger.error('$body');
+                            await controller.saveNewProduct(body: body);
+                          }
                         },
-                      );
-                    }
-                  },
+                      ),
+                    ),
+                    setHeight(height: 50),
+                  ],
                 ),
               ),
-              setHeight(height: 50),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

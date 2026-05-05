@@ -75,6 +75,7 @@ import '../module/home/view/home.dart';
 import '../module/loose_category/binding/loose_category_binding.dart';
 import '../module/loose_category/view/loose_category.dart';
 import '../module/sell/binding/sell_list_after_scan_binding.dart';
+import '../module/sell/view/payment_view.dart';
 import '../module/unknown/view/unknown_route.dart';
 import '../module/user_profile/view/user_profile_view.dart';
 import 'route_name.dart';
@@ -283,6 +284,11 @@ class AppRoutes {
       page: () => ColorCategoryView(),
       binding: ColorCategoryBinding(),
     ),
+    GetPage(
+      name: AppRouteName.paymentView,
+      page: () => const PaymentView(),
+      binding: SellListAfterScanBinding(),
+    ),
   ];
 
   static Future<dynamic> futureNavigationToRoute({
@@ -411,6 +417,9 @@ class AppRoutes {
         break;
       case AppRouteName.colorCategory:
         Get.toNamed(AppRouteName.colorCategory, arguments: data);
+        break;
+      case AppRouteName.paymentView:
+        Get.toNamed(AppRouteName.paymentView, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

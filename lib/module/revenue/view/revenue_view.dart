@@ -41,7 +41,8 @@ class RevenueView extends GetView<RevenueController> {
                           ),
                         ),
                         TextSpan(
-                          text: '${controller.sellTotalAmount.value}',
+                          text: controller.sellTotalAmount.value
+                              .toStringAsFixed(2),
                           style: CustomTextStyle.customMontserrat(
                             fontWeight: FontWeight.w400,
                             color: AppColors.greenColor,
