@@ -7,7 +7,7 @@ class GrnModel {
 
   GrnModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    msg = json['msg'];
+    msg = json['message'];
     data = json['data'] != null ? GrnData.fromJson(json['data']) : null;
   }
 }

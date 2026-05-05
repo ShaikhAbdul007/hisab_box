@@ -17,6 +17,7 @@ class LoginController extends GetxController with CacheManager {
   RxBool loginLoading = false.obs;
   RxBool verifyLoading = false.obs;
   RxBool obscureTextValue = true.obs;
+  RxString otp = ''.obs;
 
   // ── Resend OTP timer ──────────────────────────────────────────────────────
   RxInt resendSeconds = 30.obs;
@@ -98,7 +99,10 @@ class LoginController extends GetxController with CacheManager {
           AppLogger.info('Profile fetch failed (non-fatal): $e');
         }
 
-        showSnackBar(error: response.msg!, isError: false);
+        showSnackBar(
+          error: response.msg ?? somethingWentMessage,
+          isError: false,
+        );
         AppRoutes.navigateRoutes(routeName: AppRouteName.bottomNavigation);
         return true;
       } else if (response.success == failed) {

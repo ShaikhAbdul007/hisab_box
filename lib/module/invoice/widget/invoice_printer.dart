@@ -367,7 +367,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 setHeight(height: 3),
                 RichText(
                   text: TextSpan(
-                    text: '${item.quantity} x Rs.${item.originalPrice}',
+                    text: '${item.quantity} x ₹${item.originalPrice}',
                     style: CustomTextStyle.customMontserrat(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -392,7 +392,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
             ),
           ),
           Text(
-            'Rs. ${item.totalPrice ?? item.finalPrice ?? ''}',
+            '₹ ${item.totalPrice ?? item.finalPrice ?? ''}',
             style: CustomTextStyle.customMontserrat(
               fontSize: 17,
               fontWeight: FontWeight.w800,
@@ -427,7 +427,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
       children: [
         // Subtotal row + divider
         if (subtotal.isNotEmpty) ...[
-          _totalRow('Subtotal', 'Rs. $subtotal'),
+          _totalRow('Subtotal', '₹ $subtotal'),
           setHeight(height: 6),
           _dashedDivider(),
           setHeight(height: 6),
@@ -435,7 +435,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
 
         // Discount row + divider
         if (hasDiscount) ...[
-          _totalRow('Discount', '- Rs. $discount'),
+          _totalRow('Discount', '₹ ${summary?.customerSaved}'),
           setHeight(height: 6),
           _thinDivider(),
           setHeight(height: 6),
@@ -443,7 +443,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
 
         // Round off row + divider
         if (hasRoundOff) ...[
-          _totalRow('Round Off', 'Rs. $roundOff'),
+          _totalRow('Round Off', '₹ $roundOff'),
           setHeight(height: 6),
           _thinDivider(),
           setHeight(height: 6),
@@ -464,7 +464,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               ),
             ),
             Text(
-              'Rs. $finalAmt',
+              '₹ $finalAmt',
               style: CustomTextStyle.customMontserrat(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
@@ -509,7 +509,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
       children: [
         Center(
           child: Text(
-            '** You saved Rs. $savedAmount on this order! **',
+            '** You saved ₹$savedAmount on this order! **',
             textAlign: TextAlign.center,
             style: CustomTextStyle.customMontserrat(
               fontSize: 16,
@@ -617,7 +617,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         setHeight(height: 10),
         Center(
           child: Text(
-            'Rs. ${total.toStringAsFixed(2)} /-',
+            '₹ ${total.toStringAsFixed(2)} /-',
             style: CustomTextStyle.customMontserrat(
               fontSize: 28,
               fontWeight: FontWeight.w900,
@@ -763,8 +763,8 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
 
     final String subtitle =
         shopType.config.supportsGRStock
-            ? '${product.color ?? ''} | ${product.brand ?? ''} | Rs.${product.sellingPrice ?? ''}'
-            : '${product.flavor ?? ''} | ${product.weight ?? ''} | Rs.${product.sellingPrice ?? ''}';
+            ? '${product.color ?? ''} | ${product.brand ?? ''} |  ₹${product.sellingPrice ?? ''}'
+            : '${product.flavor ?? ''} | ${product.weight ?? ''} |  ₹${product.sellingPrice ?? ''}';
 
     return Receipt(
       defaultTextStyle: const TextStyle(fontSize: 12),

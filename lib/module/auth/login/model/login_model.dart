@@ -7,14 +7,14 @@ class LoginModel {
 
   LoginModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    msg = json['msg'];
+    msg = json['message'];
     data = json['data'] != null ? LoginModelData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
-    data['msg'] = msg;
+    data['message'] = msg;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }

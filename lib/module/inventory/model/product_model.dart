@@ -8,7 +8,7 @@ class BarcodeExistingModel {
   factory BarcodeExistingModel.fromJson(Map<String, dynamic> json) {
     return BarcodeExistingModel(
       success: json['success'],
-      msg: json['msg'],
+      msg: json['message'],
       data:
           json['data'] != null
               ? BarcodeExistingData.fromJson(json['data'])

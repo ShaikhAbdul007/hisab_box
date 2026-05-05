@@ -8,7 +8,7 @@ class ReportTopProductModel {
 
   ReportTopProductModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    msg = json['msg'];
+    msg = json['message'];
     if (json['data'] != null) {
       data = <ReportTopProductData>[];
       json['data'].forEach((v) {
@@ -22,7 +22,7 @@ class ReportTopProductModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
-    data['msg'] = msg;
+    data['message'] = msg;
     if (this.data != null) {
       data['data'] = this.data!.map((v) => v.toJson()).toList();
     }

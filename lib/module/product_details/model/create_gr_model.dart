@@ -7,7 +7,7 @@ class CreateGrModel {
 
   CreateGrModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    msg = json['msg'];
+    msg = json['message'];
     data = json['data'] != null ? CreateGrData.fromJson(json['data']) : null;
   }
 }

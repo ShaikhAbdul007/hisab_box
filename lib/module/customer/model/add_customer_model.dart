@@ -7,14 +7,14 @@ class AddCustomerModel {
 
   AddCustomerModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    msg = json['msg'];
+    msg = json['message'];
     data = json['data'] != null ? AddCustomerData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
-    data['msg'] = msg;
+    data['message'] = msg;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
@@ -31,14 +31,15 @@ class AddCustomerData {
   String? description;
   String? createdAt;
 
-  AddCustomerData(
-      {this.id,
-      this.userId,
-      this.mobileNo,
-      this.name,
-      this.address,
-      this.description,
-      this.createdAt});
+  AddCustomerData({
+    this.id,
+    this.userId,
+    this.mobileNo,
+    this.name,
+    this.address,
+    this.description,
+    this.createdAt,
+  });
 
   AddCustomerData.fromJson(Map<String, dynamic> json) {
     id = json['id'];

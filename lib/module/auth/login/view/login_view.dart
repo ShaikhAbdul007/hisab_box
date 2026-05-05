@@ -424,7 +424,10 @@ class LoginView extends GetView<LoginController> {
               keyboardType: TextInputType.number,
               pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
               showCursor: true,
-              onCompleted: (pin) => c.verifyOtp(otp: pin),
+              onCompleted: (pin) {
+                c.otp.value = pin;
+                c.verifyOtp(otp: pin);
+              },
             ),
 
             SizedBox(height: 24.h),
@@ -435,7 +438,7 @@ class LoginView extends GetView<LoginController> {
                 onTap:
                     c.verifyLoading.value
                         ? null
-                        : () => c.verifyOtp(otp: '123456'),
+                        : () => c.verifyOtp(otp: c.otp.value),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: double.infinity,

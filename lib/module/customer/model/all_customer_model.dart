@@ -3,26 +3,19 @@ class AllCustomerModel {
   String? msg;
   CustomerResponseData? data;
 
-  AllCustomerModel({
-    this.success,
-    this.msg,
-    this.data,
-  });
+  AllCustomerModel({this.success, this.msg, this.data});
 
   AllCustomerModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    msg = json['msg'];
-    data = json['data'] != null
-        ? CustomerResponseData.fromJson(json['data'])
-        : null;
+    msg = json['message'];
+    data =
+        json['data'] != null
+            ? CustomerResponseData.fromJson(json['data'])
+            : null;
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'success': success,
-      'msg': msg,
-      'data': data?.toJson(),
-    };
+    return {'success': success, 'msg': msg, 'data': data?.toJson()};
   }
 }
 
@@ -30,10 +23,7 @@ class CustomerResponseData {
   List<CustomerItem>? customers;
   PaginationModel? pagination;
 
-  CustomerResponseData({
-    this.customers,
-    this.pagination,
-  });
+  CustomerResponseData({this.customers, this.pagination});
 
   CustomerResponseData.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
@@ -43,9 +33,10 @@ class CustomerResponseData {
       });
     }
 
-    pagination = json['pagination'] != null
-        ? PaginationModel.fromJson(json['pagination'])
-        : null;
+    pagination =
+        json['pagination'] != null
+            ? PaginationModel.fromJson(json['pagination'])
+            : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -104,12 +95,7 @@ class PaginationModel {
   int? total;
   int? totalPages;
 
-  PaginationModel({
-    this.page,
-    this.limit,
-    this.total,
-    this.totalPages,
-  });
+  PaginationModel({this.page, this.limit, this.total, this.totalPages});
 
   PaginationModel.fromJson(Map<String, dynamic> json) {
     page = json['page'];

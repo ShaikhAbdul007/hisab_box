@@ -7,7 +7,7 @@ class CategoryModel {
 
   CategoryModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    msg = json['msg'];
+    msg = json['message'];
     categorymodeldata =
         json['data'] != null ? CategoryModelData.fromJson(json['data']) : null;
   }
@@ -15,7 +15,7 @@ class CategoryModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
-    data['msg'] = msg;
+    data['message'] = msg;
     if (categorymodeldata != null) {
       data['data'] = categorymodeldata!.toJson();
     }

@@ -13,7 +13,7 @@ String todayApiDate() {
 
 String getFormattedDate(String date) {
   final parsedDate = DateFormat('dd-MM-yyyy').parseStrict(date);
-  return DateFormat('yyyy-MM-dd').format(parsedDate);
+  return DateFormat('yyyy/MM/dd').format(parsedDate);
 }
 
 String formatDateTime(
@@ -91,4 +91,11 @@ num safeNum(dynamic value) {
   if (doubleVal != null) return doubleVal;
 
   return 0;
+}
+
+double parsePrice(String value) {
+  final cleaned = value.trim();
+  if (cleaned.isEmpty) return 0.0;
+
+  return double.tryParse(cleaned) ?? 0.0;
 }

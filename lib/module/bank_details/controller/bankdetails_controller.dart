@@ -30,12 +30,15 @@ class BankDetailsController extends GetxController with CacheManager {
 
   void getCacheHasData() {
     final bankData = retrieveBankModelDetail();
+
     if (bankData.data?.bankName != null) {
       bankNameController.text = bankData.data?.bankName ?? "";
       accountHolderNameController.text = bankData.data?.accountHolder ?? '';
       upiIdController.text = bankData.data?.upiId ?? '';
-      readOnly.value = true;
+
+      readOnly.value = true; // ✅ data hai
     } else {
+      readOnly.value = false; // ❌ data nahi
       getBankDetails();
     }
   }
@@ -48,6 +51,7 @@ class BankDetailsController extends GetxController with CacheManager {
         bankNameController.text = response.data?.bankName ?? "";
         accountHolderNameController.text = response.data?.accountHolder ?? '';
         upiIdController.text = response.data?.upiId ?? '';
+        readOnly.value = response.data != null;
         saveBankModelData(response);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
@@ -68,17 +72,19 @@ class BankDetailsController extends GetxController with CacheManager {
   Future<void> saveBankDetails() async {
     bankDetailsUpi.value = true;
     var body = {
-      "upi_id": "shop5@upi",
-      "bank_name": "State Bank of India",
-      "account_holder": "Shop Owner",
+      "upi_id": upiIdController.text,
+      "bank_name": bankNameController.text,
+      "account_holder": accountHolderNameController.text,
     };
     try {
       final response = await bankDetailsRepo.createBankDetails(body: body);
       if (response.success == success) {
         setBankData(response);
-        saveBankModelData(response);
-        getCacheHasData();
-        showSnackBar(error: response.msg!, isError: false);
+        getBankDetails();
+        showSnackBar(
+          error: response.msg ?? 'Bank Details Save Successfully ',
+          isError: false,
+        );
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {

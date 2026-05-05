@@ -7,14 +7,14 @@ class DashboardModel {
 
   DashboardModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
-    message = json['msg'];
+    message = json['message'];
     data = json['data'] != null ? DashboardData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['success'] = success;
-    data['msg'] = message;
+    data['message'] = message;
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
