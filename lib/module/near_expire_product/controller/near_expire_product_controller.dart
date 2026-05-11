@@ -19,6 +19,7 @@ class NearExpireProductController extends GetxController with CacheManager {
   }
 
   Future<void> getNearExpiryProducts() async {
+    isDataloading.value = true;
     try {
       var response = await nearExpiryRepo.fetchNearExpiryProducts();
       if (response.success == success) {
