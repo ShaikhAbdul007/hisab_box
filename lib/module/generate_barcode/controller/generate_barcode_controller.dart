@@ -189,7 +189,6 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     try {
       var response = await productRepo.addProduct(body: body);
       if (response.success == success) {
-        clear();
         Get.back(result: true);
         showMessage(message: response.msg ?? somethingWentMessage);
       } else if (response.success == failed) {

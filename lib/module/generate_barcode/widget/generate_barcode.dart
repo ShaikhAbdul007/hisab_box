@@ -195,7 +195,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
           ),
         ),
         setHeight(height: 20),
-        _saveButton(body: _petShopBody()),
+        _saveButton(bodyBuilder: _petShopBody),
         setHeight(height: 50),
       ],
     );
@@ -303,7 +303,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
           ),
         ),
         setHeight(height: 20),
-        _saveButton(body: _clothingBody()),
+        _saveButton(bodyBuilder: _clothingBody),
         setHeight(height: 50),
       ],
     );
@@ -499,7 +499,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
 
   // ── Save button ───────────────────────────────────────────────────────────
 
-  Widget _saveButton({required Map<String, dynamic> body}) {
+  Widget _saveButton({required Map<String, dynamic> Function() bodyBuilder}) {
     return Obx(
       () => CommonButton(
         isLoading: controller.isSaveLoading.value,
@@ -507,7 +507,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
         onTap: () async {
           if (controller.inventoryScanKey.currentState!.validate()) {
             unfocus();
-            await controller.saveNewProduct(body: body);
+            await controller.saveNewProduct(body: bodyBuilder());
           }
         },
       ),
