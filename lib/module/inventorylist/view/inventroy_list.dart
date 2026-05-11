@@ -280,10 +280,13 @@ class _ProductListTab extends StatelessWidget {
             child: InventroyListText(
               onTap: () async {
                 customMessageOrErrorPrint(message: "List id: ${item.id}");
-                await AppRoutes.futureNavigationToRoute(
+                var res = await AppRoutes.futureNavigationToRoute(
                   routeName: AppRouteName.productDetailView,
                   data: {'product': item, 'isProductLoosed': false},
                 );
+                if (res == true) {
+                  controller.fetchInventoryByTab(type);
+                }
               },
               isInventoryScanSelected: controller.isInventoryScanSelected.value,
               inventoryModel: item,

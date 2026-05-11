@@ -78,6 +78,12 @@ import '../module/sell/binding/sell_list_after_scan_binding.dart';
 import '../module/sell/view/payment_view.dart';
 import '../module/unknown/view/unknown_route.dart';
 import '../module/user_profile/view/user_profile_view.dart';
+import 'package:inventory/module/invoice_barcode_designer/binding/barcode_label_designer_binding.dart';
+import 'package:inventory/module/invoice_barcode_designer/binding/invoice_designer_binding.dart';
+import 'package:inventory/module/invoice_barcode_designer/binding/print_designer_hub_binding.dart';
+import 'package:inventory/module/invoice_barcode_designer/view/barcode_label_designer_view.dart';
+import 'package:inventory/module/invoice_barcode_designer/view/invoice_designer_view.dart';
+import 'package:inventory/module/invoice_barcode_designer/view/print_designer_hub_view.dart';
 import 'route_name.dart';
 
 class AppRoutes {
@@ -289,6 +295,22 @@ class AppRoutes {
       page: () => const PaymentView(),
       binding: SellListAfterScanBinding(),
     ),
+    // ── Invoice + Barcode Designer ──────────────────────────────────────────
+    GetPage(
+      name: AppRouteName.printDesignerHub,
+      page: () => const PrintDesignerHubView(),
+      binding: PrintDesignerHubBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.barcodeLabelDesigner,
+      page: () => const BarcodeLabelDesignerView(),
+      binding: BarcodeLabelDesignerBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.invoiceDesigner,
+      page: () => const InvoiceDesignerView(),
+      binding: InvoiceDesignerBinding(),
+    ),
   ];
 
   static Future<dynamic> futureNavigationToRoute({
@@ -420,6 +442,16 @@ class AppRoutes {
         break;
       case AppRouteName.paymentView:
         Get.toNamed(AppRouteName.paymentView, arguments: data);
+        break;
+      // ── Invoice + Barcode Designer ────────────────────────────────────────
+      case AppRouteName.printDesignerHub:
+        Get.toNamed(AppRouteName.printDesignerHub, arguments: data);
+        break;
+      case AppRouteName.barcodeLabelDesigner:
+        Get.toNamed(AppRouteName.barcodeLabelDesigner, arguments: data);
+        break;
+      case AppRouteName.invoiceDesigner:
+        Get.toNamed(AppRouteName.invoiceDesigner, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

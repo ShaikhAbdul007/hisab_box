@@ -7,7 +7,9 @@ import 'package:get/get.dart';
 import 'package:inventory/bluetooth/bluetooth.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/module/invoice_barcode_designer/model/barcode_layout_model.dart';
+import 'package:inventory/module/invoice_barcode_designer/repo/designer_repo.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 
 class BardcodeController extends GetxController
@@ -16,6 +18,8 @@ class BardcodeController extends GetxController
       Rx<printer.ReceiptController?>(null);
   RxBool isPrintingLoading = false.obs;
   RxBool isShareReceiptLoading = false.obs;
+  // Used to force BarcodePrinterView rebuild after designer changes
+  RxInt layoutRefreshKey = 0.obs;
   BluetoothCharacteristic? _writeChar;
   BluetoothDevice? _printer;
   var data = Get.arguments;
@@ -44,6 +48,64 @@ class BardcodeController extends GetxController
     return buffer.toString();
   }
 
+  /// Keep one-line text within 58mm printable width to avoid printer overflow.
+  String _fit58mmLine(String value, {int maxChars = 26}) {
+    final compact = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (compact.length <= maxChars) return compact;
+    return compact.substring(0, maxChars);
+  }
+
+  String _elementText({
+    required ElementType type,
+    required InventoryItem product,
+    required String priceSegment,
+  }) {
+    switch (type) {
+      case ElementType.productName:
+        return product.name ?? '';
+      case ElementType.price:
+        return priceSegment;
+      case ElementType.weight:
+        return product.weight ?? '';
+      case ElementType.shopName:
+        final user = retrieveUserDetail();
+        return user.data?.name ?? '';
+      case ElementType.flavour:
+        return product.flavour ?? '';
+      case ElementType.animalType:
+        return product.animalTypeName ?? '';
+      case ElementType.color:
+        return product.color ?? '';
+      case ElementType.brand:
+        return product.brand ?? '';
+      case ElementType.category:
+        return product.categoryName ?? '';
+      case ElementType.expiry:
+        return product.expireDate ?? '';
+      case ElementType.barcode:
+        return '';
+    }
+  }
+
+  PosTextSize _toPosSize(double? fontSize) {
+    final f = fontSize ?? 8;
+    if (f >= 12) return PosTextSize.size3;
+    if (f >= 9) return PosTextSize.size2;
+    return PosTextSize.size1;
+  }
+
+  PosFontType _toPosFontType(DesignerFontFamily family) {
+    switch (family) {
+      case DesignerFontFamily.montserrat:
+      case DesignerFontFamily.poppins:
+      case DesignerFontFamily.arOneSans:
+        return PosFontType.fontB;
+      case DesignerFontFamily.openSans:
+      case DesignerFontFamily.raleway:
+        return PosFontType.fontA;
+    }
+  }
+
   @override
   void onInit() {
     checkBluetoothConnectivitys();
@@ -66,28 +128,37 @@ class BardcodeController extends GetxController
     required String barcodeNo,
     required int quantity,
   }) async {
-    var user = retrieveUserDetail();
     final profile = await CapabilityProfile.load();
-    final gen = Generator(PaperSize.mm58, profile);
+
+    // NEW (additive): Load saved barcode layout — falls back to defaultLayout() if none saved
+    final layout = await DesignerRepo().getBarcodeLayout();
+    final paperSize = PaperSize.mm58;
+
+    final gen = Generator(paperSize, profile);
     List<int> bytes = [];
+    final posFont = _toPosFontType(layout.textFontFamily);
 
     // 1. Data Cleaning
     final barcodeData = barcodeNo.toUpperCase().trim();
-    final product = data['productData']['product'];
-    final String priceText =
-        (product.sellingPrice is num)
-            ? (product.sellingPrice as num).toStringAsFixed(0)
-            : '${product.sellingPrice}';
-    final String shopName = _toEscPosSafe(user.data?.name ?? 'Hisab Box');
-    final String productName = _toEscPosSafe('${product.name}');
+    final InventoryItem product =
+        data['productData']['product'] as InventoryItem;
+    final String priceText = product.sellingPrice ?? '0';
 
-    // Config-driven: Clothing → color | brand | price, Pet → flavor | weight | price
-    final shopType = ShopType.fromString(user.data?.shopType ?? '');
-    final String detailLine = _toEscPosSafe(
-      shopType.config.supportsGRStock
-          ? '${product.color ?? ''} | ${product.brand ?? ''} | Rs.$priceText'
-          : '${product.flavor ?? ''} | ${product.weight ?? ''} | Rs.$priceText',
-    );
+    final String priceSegment =
+        layout.fixedPriceLabel ? 'Fixed Price Rs.$priceText' : 'Rs.$priceText';
+    final sortedVisibleTextElements =
+        layout.elements
+            .where((e) => e.visible && e.type != ElementType.barcode)
+            .toList()
+          ..sort((a, b) {
+            final byY = a.y.compareTo(b.y);
+            if (byY != 0) return byY;
+            return a.x.compareTo(b.x);
+          });
+    final barcodeElement =
+        layout.elements
+            .where((e) => e.type == ElementType.barcode && e.visible)
+            .firstOrNull;
 
     for (int i = 0; i < quantity; i++) {
       bytes += gen.reset();
@@ -96,41 +167,37 @@ class BardcodeController extends GetxController
 
       bytes += gen.barcode(
         Barcode.code128(barcodeData.split('')),
-        height: 55,
-        width: 3,
+        height: ((barcodeElement?.height ?? 15) * 3.0).clamp(35.0, 80.0).toInt(),
+        width: 2,
         align: PosAlign.center,
         textPos: BarcodeText.none,
       );
 
-      // 3. Text Formatting
-      bytes += gen.text(
-        shopName,
-        styles: PosStyles(
-          align: PosAlign.center,
-          fontType: PosFontType.fontB,
-          height: PosTextSize.size5,
-          width: PosTextSize.size1,
-        ),
-      );
-      bytes += gen.text(
-        productName,
-        styles: PosStyles(
-          align: PosAlign.center,
-          fontType: PosFontType.fontB,
-          height: PosTextSize.size5,
-          width: PosTextSize.size1,
-        ),
-      );
+      // 3. Text Formatting (designer-driven)
+      for (final e in sortedVisibleTextElements) {
+        final raw = _elementText(
+          type: e.type,
+          product: product,
+          priceSegment: priceSegment,
+        );
+        if (raw.trim().isEmpty) continue;
 
-      bytes += gen.text(
-        detailLine,
-        styles: PosStyles(
-          align: PosAlign.center,
-          fontType: PosFontType.fontB,
-          height: PosTextSize.size5, // 1..8
-          width: PosTextSize.size1,
-        ),
-      );
+        final posSize = _toPosSize(e.fontSize);
+        int maxC = 28;
+        if (posSize == PosTextSize.size2) maxC = 14;
+        if (posSize == PosTextSize.size3) maxC = 9;
+
+        final safe = _fit58mmLine(_toEscPosSafe(raw), maxChars: maxC);
+        bytes += gen.text(
+          safe,
+          styles: PosStyles(
+            align: PosAlign.center,
+            fontType: posFont,
+            height: posSize,
+            width: posSize,
+          ),
+        );
+      }
 
       // 4. Critical: Label Gap Detection
       // Sirf feed(3) ke bajaye ye commands try karein:

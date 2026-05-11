@@ -43,4 +43,8 @@ class AppRouteName {
   static const String notificationView = '/notificationView';
   static const String colorCategory = '/colorCategory';
   static const String paymentView = '/paymentView';
+  // ── Invoice + Barcode Designer ──────────────────────────────────────────────
+  static const String printDesignerHub = '/printDesignerHub';
+  static const String barcodeLabelDesigner = '/barcodeLabelDesigner';
+  static const String invoiceDesigner = '/invoiceDesigner';
 }

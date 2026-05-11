@@ -249,4 +249,7 @@ enum Key {
   customerListKey,
   tranferRequestKey,
   tokenKey,
+  // ── Invoice + Barcode Designer ──────────────────────────────────────────────
+  barcodeLayout,
+  invoiceConfig,
 }

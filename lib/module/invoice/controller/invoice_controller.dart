@@ -15,6 +15,8 @@ class InvoiceController extends GetxController
   RxBool isPrintingLoading = false.obs;
   RxBool isShareReceiptLoading = false.obs;
   Rx<ReceiptController?> receiptController = Rx<ReceiptController?>(null);
+  // Used to force InvoicePrinterView rebuild after designer changes
+  RxInt designRefreshKey = 0.obs;
   var data = Get.arguments;
 
   @override

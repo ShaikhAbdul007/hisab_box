@@ -155,6 +155,26 @@ class SettingView extends GetView<SettingController> {
           ),
           setHeight(height: 20),
 
+          // ── Print Section ─────────────────────────────────────────────
+          _SectionLabel(label: 'Print'),
+          setHeight(height: 8),
+          _SettingsGroup(
+            items: [
+              _SettingTile(
+                icon: Icons.design_services_rounded,
+                iconColor: const Color(0xFF00838F),
+                label: 'Print Designer',
+                subtitle: 'Customize barcode labels & invoices',
+                onTap:
+                    () => AppRoutes.navigateRoutes(
+                      routeName: AppRouteName.printDesignerHub,
+                    ),
+                isLast: true,
+              ),
+            ],
+          ),
+          setHeight(height: 20),
+
           // ── Legal Section ─────────────────────────────────────────────
           _SectionLabel(label: 'Legal'),
           setHeight(height: 8),

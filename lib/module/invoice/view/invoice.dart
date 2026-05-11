@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -34,6 +35,18 @@ class InvoicePrint extends GetView<InvoiceController> {
 
     return CommonAppbar(
       appBarLabel: 'Invoice',
+      // ── Design button — opens Invoice Designer ────────────────────────────
+      firstActionChild: IconButton(
+        tooltip: 'Customize Invoice',
+        icon: const Icon(CupertinoIcons.slider_horizontal_3),
+        onPressed: () async {
+          await AppRoutes.futureNavigationToRoute(
+            routeName: AppRouteName.invoiceDesigner,
+          );
+          // Force InvoicePrinterView to rebuild with new config
+          controller.designRefreshKey.value++;
+        },
+      ),
       persistentFooterButtons: [
         Container(
           padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
@@ -209,11 +222,15 @@ class InvoicePrint extends GetView<InvoiceController> {
           ),
         ),
       ],
-      body: InvoicePrinterView(
-        printInvoiceModel: invoiceData,
-        paymentMethod: paymentMethod,
-        onInitialized: (p0) => controller.setReceiptController(p0),
-      ),
+      body: Obx(() {
+        // designRefreshKey read karne se Obx rebuild trigger hota hai
+        final _ = controller.designRefreshKey.value;
+        return InvoicePrinterView(
+          printInvoiceModel: invoiceData,
+          paymentMethod: paymentMethod,
+          onInitialized: (p0) => controller.setReceiptController(p0),
+        );
+      }),
     );
   }
 
