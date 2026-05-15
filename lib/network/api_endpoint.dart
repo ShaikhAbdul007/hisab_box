@@ -67,6 +67,7 @@ class ApiEndPoint {
       "shop/stock/near-expiry"; // ?days=&page=&limit=
 
   static const String outOfStock = "shop/stock/out-of-stock"; // ?page=&limit=
+  static const String getCreditAmountList = "credit/credits"; // ?page=&limit=
 
   static const String addEmployees = "employees/add"; //
   static const String getEmployees = "employees"; //
