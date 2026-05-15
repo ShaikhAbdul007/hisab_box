@@ -251,17 +251,17 @@ class RevenueListText extends StatelessWidget {
                       ),
                     ),
                     setWidth(width: 6),
-                    Text(
-                      formatDateTime(
-                        showDate: false,
-                        showTime: true,
-                        sellItemData.date ?? '',
-                      ),
-                      style: CustomTextStyle.customOpenSans(
-                        fontSize: 11,
-                        color: AppColors.greyColor,
-                      ),
-                    ),
+                    // Text(
+                    //   formatDateTime(
+                    //     showDate: false,
+                    //     showTime: true,
+                    //     sellItemData.date ?? '',
+                    //   ),
+                    //   style: CustomTextStyle.customOpenSans(
+                    //     fontSize: 11,
+                    //     color: AppColors.greyColor,
+                    //   ),
+                    // ),
                   ],
                 ),
               ],
