@@ -85,7 +85,7 @@ class BardcodeController extends GetxController
     final shopType = ShopType.fromString(user.data?.shopType ?? '');
     final String detailLine = _toEscPosSafe(
       shopType.config.supportsGRStock
-          ? '${product.color ?? ''} | ${product.brand ?? ''} | Rs.$priceText'
+          ? '${product.animalTypeName} | Fixed Price Rs.$priceText'
           : '${product.flavor ?? ''} | ${product.weight ?? ''} | Rs.$priceText',
     );
 
@@ -107,8 +107,8 @@ class BardcodeController extends GetxController
         shopName,
         styles: PosStyles(
           align: PosAlign.center,
-          fontType: PosFontType.fontB,
-          height: PosTextSize.size5,
+          fontType: PosFontType.fontA,
+          height: PosTextSize.size1,
           width: PosTextSize.size1,
         ),
       );
@@ -116,8 +116,8 @@ class BardcodeController extends GetxController
         productName,
         styles: PosStyles(
           align: PosAlign.center,
-          fontType: PosFontType.fontB,
-          height: PosTextSize.size5,
+          fontType: PosFontType.fontA,
+          height: PosTextSize.size1,
           width: PosTextSize.size1,
         ),
       );
@@ -126,15 +126,15 @@ class BardcodeController extends GetxController
         detailLine,
         styles: PosStyles(
           align: PosAlign.center,
-          fontType: PosFontType.fontB,
-          height: PosTextSize.size5, // 1..8
+          fontType: PosFontType.fontA,
+          height: PosTextSize.size1, // 1..8
           width: PosTextSize.size1,
         ),
       );
 
       // 4. Critical: Label Gap Detection
       // Sirf feed(3) ke bajaye ye commands try karein:
-      bytes += gen.feed(2);
+      bytes += gen.feed(1);
       // Kuch printers ko GS FF (0x1D 0x0C) command chahiye hoti hai next label pe jane ke liye
       bytes += [0x1D, 0x0C];
     }
