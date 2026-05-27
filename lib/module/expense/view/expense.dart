@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
@@ -35,7 +34,7 @@ class Expense extends GetView<ExpenseController> {
       body: Obx(
         () =>
             controller.isExpenseLoading.value
-                ? CommonProgressbar(color: AppColors.blackColor)
+                ? CommonProgressBar(color: AppColors.blackColor)
                 : controller.expenseList.isNotEmpty
                 ? ListView.builder(
                   itemCount: controller.expenseList.length,
@@ -45,7 +44,7 @@ class Expense extends GetView<ExpenseController> {
                     );
                   },
                 )
-                : CommonNodatafound(message: 'No expense found'),
+                : CommonNoDataFound(message: 'No expense found'),
       ),
     );
   }

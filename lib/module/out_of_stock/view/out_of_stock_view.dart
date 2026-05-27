@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_padding.dart';
@@ -22,7 +23,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
       body: Obx(
         () =>
             controller.isDataLoading.value
-                ? CommonProgressbar(size: 50, color: AppColors.blackColor)
+                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
                 : controller.productList.isNotEmpty
                 ? Column(
                   children: [
@@ -33,20 +34,20 @@ class OutOfStockView extends GetView<OutOfStockController> {
                         paddingOption: SymmetricPadding(horizontal: 12),
                         child: CommonSearch(
                           icon: Obx(
-                            () => InkWell(
-                              onTap:
-                                  controller.searchText.value.isNotEmpty
-                                      ? () {
+                            () =>
+                                controller.searchText.value.isNotEmpty
+                                    ? InkWell(
+                                      onTap: () {
                                         controller.clear();
                                         unfocus();
-                                      }
-                                      : null,
-                              child: Icon(
-                                controller.searchText.value.isNotEmpty
-                                    ? CupertinoIcons.clear
-                                    : CupertinoIcons.search,
-                              ),
-                            ),
+                                      },
+                                      child: Icon(
+                                        CupertinoIcons.clear_circled_solid,
+                                        size: 20.sp,
+                                        color: AppColors.blackColor,
+                                      ),
+                                    )
+                                    : const SizedBox.shrink(),
                           ),
                           label: 'Search',
                           hintText: 'search product',
@@ -82,7 +83,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                                   .value
                                                   .text,
                                             ) ||
-                                        inventoryList.category!
+                                        inventoryList.categoryName!
                                             .toLowerCase()
                                             .contains(
                                               controller
@@ -90,7 +91,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                                   .value
                                                   .text,
                                             ) ||
-                                        inventoryList.flavor!
+                                        inventoryList.flavour!
                                             .toLowerCase()
                                             .contains(
                                               controller
@@ -98,8 +99,22 @@ class OutOfStockView extends GetView<OutOfStockController> {
                                                   .value
                                                   .text,
                                             )
-                                    ? OutOfStockInventoryListText(
-                                      inventoryModel: inventoryList,
+                                    ? Obx(
+                                      () => OutOfStockInventoryListText(
+                                        isDeleteLoading:
+                                            controller.isDeleteLoading.value,
+                                        neaExpiryItemData: inventoryList,
+                                        shopType: controller.shopTypeEnum,
+                                        deleteOnTap: () {
+                                          // controller.deactivateSpecificProduct(
+                                          //   productId:
+                                          //       controller
+                                          //           .productList[index]
+                                          //           .stockId ??
+                                          //       '',
+                                          // );
+                                        },
+                                      ),
                                     )
                                     : Container(),
                           );
@@ -108,7 +123,7 @@ class OutOfStockView extends GetView<OutOfStockController> {
                     ),
                   ],
                 )
-                : CommonNodatafound(message: 'No product found'),
+                : CommonNoDataFound(message: 'No product found'),
       ),
     );
   }

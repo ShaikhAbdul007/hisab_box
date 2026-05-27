@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/state_manager.dart';
+import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
-
 import '../controller/generate_barcode_controller.dart';
 import '../widget/generate_barcode.dart';
 
@@ -11,7 +11,8 @@ class GenerateBarcode extends GetView<GenerateBarcodeController> {
   @override
   Widget build(BuildContext context) {
     return CommonAppbar(
-      appBarLabel: 'Generate Barcode',
+      backgroundColor: AppColors.whiteColor,
+      appBarLabel: 'Add Product',
       body: GenerateBarcodeComponent(controller: controller),
     );
   }

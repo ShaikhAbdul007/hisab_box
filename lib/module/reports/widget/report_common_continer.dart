@@ -5,13 +5,13 @@ import 'package:inventory/common_widget/common_padding.dart';
 
 import '../../../common_widget/colors.dart';
 
-class ReportCommonContiner extends StatelessWidget {
+class ReportCommonContainer extends StatelessWidget {
   final Widget child;
   final double height;
   final double width;
   final EdgeInsetsGeometry? margin;
   final EdgeInsetsGeometry? padding;
-  const ReportCommonContiner({
+  const ReportCommonContainer({
     super.key,
     required this.child,
     required this.height,

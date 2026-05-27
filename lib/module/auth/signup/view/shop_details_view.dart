@@ -20,7 +20,7 @@ class ShopDetailsView extends StatelessWidget {
         alternateMobileNo: controller!.alternateMobileNo,
         obscureText: controller!.obscureTextValue.value,
         onTap: () {
-          controller!.setobscureTextValue();
+          controller!.togglePasswordVisibility();
         },
       ),
     );

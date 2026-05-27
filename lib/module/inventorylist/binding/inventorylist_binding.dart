@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:inventory/module/inventorylist/controller/inventory_controller.dart';
+import 'package:inventory/module/inventorylist/controller/inventory_list_controller.dart';
 
 class InventorylistBinding extends Bindings {
   @override

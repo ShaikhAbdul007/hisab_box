@@ -4,18 +4,23 @@ class AppRouteName {
   static const String productDetailView = '/productDetailView';
   static const String inventoryViewFormSell = '/inventoryViewFormSell';
   static const String home = '/home';
+  static const String allUser = '/allUser';
   static const String barcodePrintView = '/barcodePrintView';
+  static const String reliableBarcodeView = '/reliableBarcodeView';
   static const String setting = '/setting';
   static const String inventroyList = '/inventroyList';
   static const String bankDetails = '/bankDetails';
   static const String reports = '/reports';
   static const String sell = '/sell';
   static const String login = '/login';
+  static const String addUser = '/addUser';
   static const String userProfile = '/userProfile';
   static const String productView = '/productView';
   static const String signup = '/signup';
   static const String splash = '/splash';
+  static const String allUserDetail = '/allUserDetail';
   static const String unknwonroute = '/unknwonroute';
+  static const String userRoleView = '/userRoleView';
   static const String privacypolicy = '/privacypolicy';
   static const String orderView = '/orderView';
   static const String termandcodition = '/termandcodition';
@@ -35,4 +40,7 @@ class AppRouteName {
   static const String invoicePrintView = '/invoicePrintView';
   static const String shopDetailView = '/shopDetailView';
   static const String nearExpireProduct = '/nearExpireProduct';
+  static const String notificationView = '/notificationView';
+  static const String colorCategory = '/colorCategory';
+  static const String paymentView = '/paymentView';
 }

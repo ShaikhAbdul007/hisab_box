@@ -21,6 +21,7 @@ class CommonTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final bool isEveryThingAllowed;
+  final TextCapitalization textCapitalization;
   const CommonTextField({
     super.key,
     required this.hintText,
@@ -38,6 +39,7 @@ class CommonTextField extends StatelessWidget {
     this.readOnly = false,
     this.onChanged,
     this.marginPadding,
+    this.textCapitalization = TextCapitalization.words,
   });
 
   @override
@@ -73,7 +75,7 @@ class CommonTextField extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: TextFormField(
-            textCapitalization: TextCapitalization.words,
+            textCapitalization: textCapitalization,
             onChanged: onChanged,
             readOnly: readOnly,
             obscureText: obscureText,

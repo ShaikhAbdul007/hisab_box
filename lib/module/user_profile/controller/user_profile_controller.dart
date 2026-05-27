@@ -1,34 +1,34 @@
 import 'dart:io';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/helper/set_format_date.dart';
-
+import 'package:inventory/module/user_profile/repo/user_repo.dart';
 import '../../setting/model/user_model.dart';
 
 class UserProfileController extends GetxController with CacheManager {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  UserProfileRepo userProfileRepo = UserProfileRepo();
+  // 🟢 Observables
   RxBool isLoading = false.obs;
   RxBool readOnly = true.obs;
   RxBool isDataLoading = false.obs;
-  TextEditingController emailController = TextEditingController();
-  TextEditingController shopNameController = TextEditingController();
-  TextEditingController mobileController = TextEditingController();
-  TextEditingController alternativeMobileController = TextEditingController();
-  TextEditingController addressController = TextEditingController();
-  TextEditingController cityController = TextEditingController();
-  TextEditingController pincodeController = TextEditingController();
-  TextEditingController stateController = TextEditingController();
-
-  final ImagePicker picker = ImagePicker();
-
   Rx<File?> profileImage = Rx<File?>(null);
+  RxString profileImageUrl = ''.obs;
+
+  final ImagePicker _picker = ImagePicker();
+
+  // 🟢 Text Controllers
+  final emailController = TextEditingController();
+  final shopNameController = TextEditingController();
+  final mobileController = TextEditingController();
+  final alternativeMobileController = TextEditingController();
+  final addressController = TextEditingController();
+  final cityController = TextEditingController();
+  final pincodeController = TextEditingController();
+  final stateController = TextEditingController();
+  final shopType = TextEditingController();
 
   @override
   void onInit() {
@@ -36,69 +36,102 @@ class UserProfileController extends GetxController with CacheManager {
     super.onInit();
   }
 
+  // 📸 Image Pick Logic (Directly use picked file)
   Future<void> pickImage() async {
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50,
+      );
 
-    if (image != null) {
-      profileImage.value = File(image.path);
+      if (image != null) {
+        profileImage.value = File(image.path);
+        profileImageUrl.value = ''; // Local file selected, clear network URL
+      }
+    } catch (e) {
+      debugPrint("Error picking image: $e");
     }
   }
 
+  // ---------------- UPDATE PROFILE (SUPABASE) ----------------
   Future<void> updateUserDetails() async {
     isLoading.value = true;
-    final uid = _auth.currentUser!.uid;
-    final String formatCreatedAt = setFormateDate();
-
+    unfocus();
     try {
-      var updatedData = {
-        "name": shopNameController.text,
-        "email": emailController.text,
-        'address': addressController.text,
-        'city': cityController.text,
-        'pincode': pincodeController.text,
-        'state': stateController.text,
-        'mobileNo': mobileController.text,
-        'alternateMobileNo': alternativeMobileController.text,
-        "createdAt": formatCreatedAt,
-        "profileImage":
-            profileImage.value != null ? profileImage.value!.path : '',
-      };
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set(updatedData, SetOptions(merge: true));
+      final updatedData = {
+        "name": shopNameController.text.trim(),
 
-      final newDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (newDoc.exists) {
-        final data = newDoc.data() as Map<String, dynamic>;
-        final userDatas = InventoryUserModel.fromJson(data);
-        saveUserData(userDatas);
+        "address": addressController.text.trim(),
+        "city": cityController.text.trim(),
+        "pincode": pincodeController.text.trim(),
+        "state": stateController.text.trim(),
+        "mobile_no": mobileController.text.trim(),
+        "profilepic": profileImage.value?.path ?? "",
+        "alternate_mobile_no": alternativeMobileController.text.trim(),
+      };
+      var response = await userProfileRepo.updateUserDetails(body: updatedData);
+      if (response.success == success) {
+        saveUserData(response);
         setUserDetails();
         readOnly.value = true;
-        showMessage(message: "Profile Updated Successfully ✅");
+        showSnackBar(
+          error: response.msg ?? updateProfileSuccessfull,
+          isError: false,
+        );
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
       }
-    } on FirebaseException catch (e) {
-      showMessage(message: e.message ?? 'Something went wrong');
+    } catch (e) {
+      showSnackBar(error: e.toString());
     } finally {
       isLoading.value = false;
     }
   }
 
+  // ---------------- LOAD USER DATA ----------------
   void setUserDetails() async {
     isDataLoading.value = true;
-    var user = retrieveUserDetail();
-    shopNameController.text = user.name ?? '';
-    mobileController.text = user.mobileNo ?? '';
-    alternativeMobileController.text = user.alternateMobileNo ?? '';
-    pincodeController.text = user.pincode ?? '';
-    stateController.text = user.state ?? '';
-    addressController.text = user.address ?? '';
-    cityController.text = user.city ?? '';
-    emailController.text = user.email ?? '';
-    profileImage.value = File(user.image ?? '');
-    Future.delayed(Duration(seconds: 2), () {
+    try {
+      final response = await userProfileRepo.getUserDetails();
+      if (response.success == success) {
+        saveUserData(response); // Cache update karo image ke saath
+        _fillControllers(response);
+      }
+    } catch (e) {
+      debugPrint("Error loading profile: $e");
+    } finally {
       isDataLoading.value = false;
-    });
+    }
+  }
+
+  void _fillControllers(UserModel user) {
+    shopNameController.text = user.data?.name ?? '';
+    mobileController.text = user.data?.mobileNo ?? '';
+    alternativeMobileController.text = user.data?.alternateMobileNo ?? '';
+    pincodeController.text = user.data?.pincode ?? '';
+    stateController.text = user.data?.state ?? '';
+    addressController.text = user.data?.address ?? '';
+    cityController.text = user.data?.city ?? '';
+    emailController.text = user.data?.email ?? '';
+    shopType.text = user.data?.shopType ?? '';
+    final image = user.data?.profilepic ?? '';
+    if (image.isNotEmpty) {
+      profileImageUrl.value = image;
+    }
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    shopNameController.dispose();
+    mobileController.dispose();
+    alternativeMobileController.dispose();
+    addressController.dispose();
+    cityController.dispose();
+    pincodeController.dispose();
+    stateController.dispose();
+    super.onClose();
   }
 }

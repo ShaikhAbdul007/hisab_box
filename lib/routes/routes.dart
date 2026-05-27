@@ -1,6 +1,16 @@
 import 'package:get/get.dart';
+import 'package:inventory/module/add_user/binding/add_user_binding.dart';
+import 'package:inventory/module/add_user/binding/all_user_bindings.dart';
+import 'package:inventory/module/add_user/binding/all_user_details_binding.dart';
+import 'package:inventory/module/add_user/binding/user_role_binding.dart';
+import 'package:inventory/module/add_user/view/add_user_view.dart';
+import 'package:inventory/module/add_user/view/all_user_detail_view.dart';
+import 'package:inventory/module/add_user/view/all_user_view.dart';
+import 'package:inventory/module/add_user/view/user_role_view.dart';
 import 'package:inventory/module/bank_details/binding/bankdetails_binding.dart';
 import 'package:inventory/module/bank_details/view/bankdetails_view.dart';
+import 'package:inventory/module/color_category/binding/color_category_binding.dart';
+import 'package:inventory/module/color_category/view/color_category_view.dart';
 import 'package:inventory/module/credits_amount/binding/credit_binding.dart';
 import 'package:inventory/module/invoice/binding/invoice_binding.dart';
 import 'package:inventory/module/invoice/view/barcode.dart';
@@ -9,11 +19,14 @@ import 'package:inventory/module/near_expire_product/binding/near_expire_product
 import 'package:inventory/module/near_expire_product/view/near_expire_product_view.dart';
 import 'package:inventory/module/order_complete/binding/order_binding.dart';
 import 'package:inventory/module/order_complete/view/order_view.dart';
+import 'package:inventory/module/revenue/binding/revenue_detail_binding.dart';
 import 'package:inventory/module/revenue/view/revenue_detail_view.dart';
 import 'package:inventory/module/security/privacy_policy.dart';
 import 'package:inventory/module/security/term_and_condition.dart';
 import 'package:inventory/module/product_details/binding/product_details_binding.dart';
 import 'package:inventory/module/product_details/view/product_detail_view.dart';
+import 'package:inventory/module/stock_transfer/binding/notification_binding.dart';
+import 'package:inventory/module/stock_transfer/view/notification_view.dart';
 import '../module/app_settings/binding/app_setting_binding.dart';
 import '../module/app_settings/view/app_setting_view.dart';
 import '../module/auth/login/binding/login_binding.dart';
@@ -62,6 +75,7 @@ import '../module/home/view/home.dart';
 import '../module/loose_category/binding/loose_category_binding.dart';
 import '../module/loose_category/view/loose_category.dart';
 import '../module/sell/binding/sell_list_after_scan_binding.dart';
+import '../module/sell/view/payment_view.dart';
 import '../module/unknown/view/unknown_route.dart';
 import '../module/user_profile/view/user_profile_view.dart';
 import 'route_name.dart';
@@ -75,6 +89,11 @@ class AppRoutes {
       binding: SplashBindings(),
     ),
     GetPage(name: AppRouteName.unknwonroute, page: () => UnknownRoute()),
+    GetPage(
+      name: AppRouteName.userRoleView,
+      page: () => UserRoleView(),
+      binding: UserRoleBinding(),
+    ),
     GetPage(name: AppRouteName.privacypolicy, page: () => PrivacyPolicy()),
     GetPage(name: AppRouteName.termandcodition, page: () => TermAndCondition()),
     GetPage(
@@ -104,6 +123,21 @@ class AppRoutes {
       name: AppRouteName.inventoryViewFormSell,
       page: () => InventoryView(),
       binding: InventoryBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.allUser,
+      page: () => AllUserView(),
+      binding: AllUserBindings(),
+    ),
+    GetPage(
+      name: AppRouteName.addUser,
+      page: () => AddUserView(),
+      binding: AddUserBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.allUserDetail,
+      page: () => AllUserDetailView(),
+      binding: AllUserDetailsBinding(),
     ),
     GetPage(
       name: AppRouteName.inventroyList,
@@ -166,6 +200,11 @@ class AppRoutes {
       binding: InvoiceBinding(),
     ),
     GetPage(
+      name: AppRouteName.notificationView,
+      page: () => NotificationView(),
+      binding: NotificationBinding(),
+    ),
+    GetPage(
       name: AppRouteName.barcodePrintView,
       page: () => BarcodeView(),
       binding: BarcodeBinding(),
@@ -208,7 +247,7 @@ class AppRoutes {
     GetPage(
       name: AppRouteName.revenueDetailView,
       page: () => RevenueDetailView(),
-      //binding: RevenueBinding(),
+      binding: RevenueDetailBinding(),
     ),
     GetPage(
       name: AppRouteName.looseCategory,
@@ -240,6 +279,16 @@ class AppRoutes {
       page: () => ProductDetailView(),
       binding: ProductDetailsBinding(),
     ),
+    GetPage(
+      name: AppRouteName.colorCategory,
+      page: () => ColorCategoryView(),
+      binding: ColorCategoryBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.paymentView,
+      page: () => const PaymentView(),
+      binding: SellListAfterScanBinding(),
+    ),
   ];
 
   static Future<dynamic> futureNavigationToRoute({
@@ -269,6 +318,15 @@ class AppRoutes {
       case AppRouteName.barcodePrintView:
         Get.toNamed(AppRouteName.barcodePrintView, arguments: data);
         break;
+      case AppRouteName.reliableBarcodeView:
+        Get.toNamed(AppRouteName.reliableBarcodeView, arguments: data);
+        break;
+      case AppRouteName.userRoleView:
+        Get.toNamed(AppRouteName.userRoleView, arguments: data);
+        break;
+      case AppRouteName.allUserDetail:
+        Get.toNamed(AppRouteName.allUserDetail, arguments: data);
+        break;
       case AppRouteName.splash:
         Get.toNamed(AppRouteName.splash, arguments: data);
         break;
@@ -292,6 +350,9 @@ class AppRoutes {
         break;
       case AppRouteName.nointernateConnection:
         Get.toNamed(AppRouteName.nointernateConnection, arguments: data);
+        break;
+      case AppRouteName.allUser:
+        Get.toNamed(AppRouteName.allUser, arguments: data);
         break;
       case AppRouteName.expense:
         Get.toNamed(AppRouteName.expense, arguments: data);
@@ -322,6 +383,9 @@ class AppRoutes {
       case AppRouteName.appsetting:
         Get.toNamed(AppRouteName.appsetting, arguments: data);
         break;
+      case AppRouteName.addUser:
+        Get.toNamed(AppRouteName.addUser, arguments: data);
+        break;
       case AppRouteName.outOfStock:
         Get.toNamed(AppRouteName.outOfStock, arguments: data);
       case AppRouteName.generateBarcode:
@@ -347,6 +411,15 @@ class AppRoutes {
         break;
       case AppRouteName.orderView:
         Get.offAllNamed(AppRouteName.orderView, arguments: data);
+        break;
+      case AppRouteName.notificationView:
+        Get.toNamed(AppRouteName.notificationView, arguments: data);
+        break;
+      case AppRouteName.colorCategory:
+        Get.toNamed(AppRouteName.colorCategory, arguments: data);
+        break;
+      case AppRouteName.paymentView:
+        Get.toNamed(AppRouteName.paymentView, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

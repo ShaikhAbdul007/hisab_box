@@ -43,7 +43,7 @@ class Discount extends GetView<DiscountController> {
         body: Obx(
           () =>
               controller.isFetchDiscount.value
-                  ? CommonProgressbar(color: AppColors.blackColor, size: 30)
+                  ? CommonProgressBar(color: AppColors.blackColor, size: 30)
                   : controller.discountList.isNotEmpty
                   ? Stack(
                     children: [
@@ -106,7 +106,7 @@ class Discount extends GetView<DiscountController> {
                                     sigmaX: 5,
                                     sigmaY: 5,
                                   ),
-                                  child: CommonProgressbar(
+                                  child: CommonProgressBar(
                                     color: AppColors.blackColor,
                                     size: 50,
                                   ),

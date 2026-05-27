@@ -1,27 +1,36 @@
 import 'dart:io';
 
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/helper/logger.dart';
+import 'package:inventory/helper/shop_type.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer_library.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
-import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
-import 'package:inventory/module/sell/model/print_model.dart';
+import 'package:inventory/module/invoice/model/invoice_model.dart';
 import 'package:upi_payment_qrcode_generator/upi_payment_qrcode_generator.dart';
 
-import '../../../common_widget/common_divider.dart';
+// ── Thermal-safe color — pure black, no grey ─────────────────────────────────
+const Color _k = Colors.black;
+
+/// Null-safe capitalize — no extension dependency
+String _cap(String? s) {
+  if (s == null || s.isEmpty) return '';
+  return s[0].toUpperCase() + s.substring(1);
+}
 
 class InvoicePrinterView extends StatelessWidget with CacheManager {
-  final List<SellItem> scannedProductDetails;
-  final PrintInvoiceModel printInvoiceModel;
+  final InvoiceData printInvoiceModel;
   final String paymentMethod;
   final void Function(ReceiptController) onInitialized;
+
   InvoicePrinterView({
     super.key,
-    required this.scannedProductDetails,
     required this.onInitialized,
     required this.paymentMethod,
     required this.printInvoiceModel,
@@ -29,396 +38,769 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
 
   @override
   Widget build(BuildContext context) {
-    var user = retrieveUserDetail();
-    var bankDetails = retrieveBankModelDetail();
+    final user = retrieveUserDetail();
+    final bankDetails = retrieveBankModelDetail();
+    final shopType = ShopType.fromString(user.data?.shopType ?? '');
+    final isClothing = shopType == ShopType.clothingShop;
 
-    String userName =
-        user.name?.isNotEmpty ?? false ? user.name!.substring(0, 1) : "HB";
-    double total = 0;
-    double savedAmount = 0;
-    int discountPercentage = 0;
+    final String initials =
+        user.data?.name?.isNotEmpty == true
+            ? user.data!.name!.substring(0, 1).toUpperCase()
+            : 'HB';
+
+    final (date, time) = splitDateTime(printInvoiceModel.dateTime ?? '');
+    final isCash = paymentMethod.trim().toLowerCase() == 'cash';
+    final total = safeNum(printInvoiceModel.orderSummary?.finalAmount);
+    final savedAmount = printInvoiceModel.orderSummary?.customerSaved ?? '0';
+    final hasSavings = (double.tryParse(savedAmount) ?? 0) > 0;
+
+    AppLogger.info('isCash is $isCash');
+
     return Receipt(
       backgroundColor: AppColors.whiteColor,
       builder:
           (context) => SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    user.image == null || user.image!.isEmpty
-                        ? CircleAvatar(
-                          radius: 50,
-                          backgroundColor: AppColors.blackColor,
-                          child: Text(
-                            userName,
-                            style: CustomTextStyle.customMontserrat(
-                              color: AppColors.whiteColor,
-                              fontSize: 40,
-                            ),
-                          ),
-                        )
-                        : CircleAvatar(
-                          radius: 50,
-                          backgroundColor: AppColors.blackColor,
-                          backgroundImage:
-                              user.image == null || user.image!.isEmpty
-                                  ? null
-                                  : FileImage(File(user.image ?? '')),
-                          child: Text(''),
-                        ),
-                    setWidth(width: 15),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${user.name}',
-                          style: CustomTextStyle.customMontserrat(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        setHeight(height: 8),
-                        if (user.alternateMobileNo?.isNotEmpty ?? false) ...{
-                          Text(
-                            '${user.mobileNo}/${user.alternateMobileNo}',
-                            style: CustomTextStyle.customMontserrat(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        } else ...{
-                          Text(
-                            '${user.mobileNo}',
-                            style: CustomTextStyle.customMontserrat(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        },
-                      ],
-                    ),
-                  ],
-                ),
-                setHeight(height: 10),
-                CommonDivider(endIndent: 0, indent: 0),
-                setHeight(height: 10),
-                Flexible(
-                  child: Text(
-                    "${user.address},${user.city},${user.pincode}",
-                    style: CustomTextStyle.customMontserrat(
-                      fontSize: 18,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-                setHeight(height: 20),
-                CommonDivider(endIndent: 0, indent: 0),
-                setHeight(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Bill No',
-                        style: CustomTextStyle.customMontserrat(fontSize: 18),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${printInvoiceModel.billNo}',
-                        style: CustomTextStyle.customMontserrat(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                setHeight(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Date',
-                        style: CustomTextStyle.customMontserrat(fontSize: 18),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        printInvoiceModel.soldAt ?? '',
-                        style: CustomTextStyle.customMontserrat(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                setHeight(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Time',
-                        style: CustomTextStyle.customMontserrat(fontSize: 18),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        printInvoiceModel.time ?? '',
-                        style: CustomTextStyle.customMontserrat(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                setHeight(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Payment Method',
-                        style: CustomTextStyle.customMontserrat(fontSize: 18),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        paymentMethod,
-                        style: CustomTextStyle.customMontserrat(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                setHeight(height: 10),
-                const CommonDivider(color: AppColors.blackColor),
-                setHeight(height: 10),
-                ...scannedProductDetails.map((item) {
-                  discountPercentage = item.discount ?? 0;
-                  total += (item.finalPrice ?? 0);
-                  savedAmount +=
-                      ((item.originalPrice ?? 0) * (item.quantity ?? 1)) -
-                      (item.finalPrice ?? 0);
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  setHeight(height: 16),
 
-                  return CustomPadding(
-                    paddingOption: OnlyPadding(bottom: 10.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 5,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.name ?? "No Name",
-                                style: CustomTextStyle.customMontserrat(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 24,
-                                ),
-                              ),
-                              if (item.flavours!.isNotEmpty) ...{
-                                setHeight(height: 5),
-                                Text(
-                                  item.flavours ?? "",
-                                  style: CustomTextStyle.customMontserrat(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              },
-                              setHeight(height: 5),
-                              RichText(
-                                text: TextSpan(
-                                  text:
-                                      "${item.quantity} x ${item.originalPrice}",
-                                  style: CustomTextStyle.customMontserrat(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 18,
-                                  ),
-                                  children:
-                                      item.discount! > 0
-                                          ? [
-                                            TextSpan(
-                                              text: " @ ",
-                                              style:
-                                                  CustomTextStyle.customMontserrat(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 15,
-                                                  ),
-                                            ),
-                                            TextSpan(
-                                              text: "${item.discount} %",
-                                              style:
-                                                  CustomTextStyle.customMontserrat(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 18,
-                                                  ),
-                                            ),
-                                          ]
-                                          : [],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            "₹ ${item.finalPrice}",
-                            textAlign: TextAlign.right,
-                            style: CustomTextStyle.customMontserrat(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-                const CommonDivider(color: AppColors.blackColor),
+                  // ── Shop header ────────────────────────────────────────────
+                  _buildShopHeader(user, initials),
 
-                setHeight(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: Text(
-                        "Grand Total",
-                        style: CustomTextStyle.customMontserrat(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                    const Expanded(child: SizedBox()),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        "₹ $total",
-                        textAlign: TextAlign.right,
-                        style: CustomTextStyle.customPoppin(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
+                  setHeight(height: 12),
+                  _dashedDivider(),
+                  setHeight(height: 12),
+
+                  // ── Bill meta ──────────────────────────────────────────────
+                  _buildMetaSection(date, time, user),
+
+                  setHeight(height: 12),
+                  _dashedDivider(),
+                  setHeight(height: 10),
+
+                  // ── Items ──────────────────────────────────────────────────
+                  _buildItemsSection(),
+
+                  setHeight(height: 4),
+                  _dashedDivider(),
+                  setHeight(height: 10),
+
+                  // ── Totals ─────────────────────────────────────────────────
+                  _buildTotalsSection(),
+
+                  setHeight(height: 12),
+                  _dashedDivider(),
+                  setHeight(height: 14),
+
+                  // ── Savings ────────────────────────────────────────────────
+                  if (hasSavings) ...[
+                    _buildSavingsSection(savedAmount),
+                    setHeight(height: 14),
                   ],
-                ),
-                setHeight(height: 10),
-                const CommonDivider(color: AppColors.blackColor),
-                setHeight(height: 20),
-                Column(
-                  children: [
-                    setHeight(height: 20),
-                    discountPercentage > 0
-                        ? Center(
-                          child: RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: CustomTextStyle.customNato(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.blackColor,
-                              ),
-                              children: [
-                                const TextSpan(text: "★ You saved "),
-                                TextSpan(
-                                  text: "₹ ${savedAmount.toStringAsFixed(2)}",
-                                  style: CustomTextStyle.customNato(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.blackColor,
-                                  ),
-                                ),
-                                const TextSpan(text: " on this order ★"),
-                              ],
-                            ),
-                          ),
-                        )
-                        : Center(
-                          child: Text(
-                            "★ Add more items to unlock exciting discounts! ★",
-                            textAlign: TextAlign.center,
-                            style: CustomTextStyle.customPoppin(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.blackColor,
-                            ),
-                          ),
-                        ),
-                    setHeight(height: 25),
-                    Center(
-                      child: Text(
-                        "✔ Keep shopping to save more !",
-                        style: CustomTextStyle.customPoppin(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.blackColor,
-                        ),
-                      ),
-                    ),
-                    setHeight(height: 25),
-                    Center(
-                      child: Text(
-                        "Visit again !",
-                        style: CustomTextStyle.customPoppin(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.blackColor,
-                        ),
-                      ),
-                    ),
+
+                  // ── Thank you ──────────────────────────────────────────────
+                  _buildThankYouSection(),
+
+                  setHeight(height: 16),
+                  _dashedDivider(),
+                  setHeight(height: 14),
+
+                  // ── UPI QR (non-cash only) ─────────────────────────────────
+                  if (bankDetails.data?.upiId?.isNotEmpty == true &&
+                      !isCash) ...[
+                    _buildUpiSection(bankDetails, total),
+                    setHeight(height: 14),
+                    _dashedDivider(),
+                    setHeight(height: 14),
                   ],
-                ),
-                setHeight(height: 30),
-                bankDetails.upiId != null &&
-                        paymentMethod.toLowerCase() != 'cash'
-                    ? CustomPadding(
-                      paddingOption: SymmetricPadding(horizontal: 80),
-                      child: Column(
-                        children: [
-                          UPIPaymentQRCode(
-                            upiDetails: UPIDetails(
-                              upiID: bankDetails.upiId ?? '',
-                              payeeName: bankDetails.accountName ?? '',
-                              amount: total,
-                            ),
-                            size: 200,
-                            embeddedImageSize: const Size(60, 60),
-                            loader: CommonProgressbar(
-                              color: AppColors.blackColor,
-                            ),
-                          ),
-                          setHeight(height: 15),
-                          Text(
-                            '₹ $total /-',
-                            style: CustomTextStyle.customPoppin(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 40,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                    : Container(),
-                setHeight(height: 150),
-              ],
+
+                  // ── Pet Shop ad ────────────────────────────────────────────
+                  if (!isClothing) ...[
+                    _buildAdSection(),
+                    setHeight(height: 14),
+                  ],
+
+                  // ── Powered by HisaabBox (Clothing Shop only) ──────────────
+                  if (isClothing) ...[_buildPoweredBy(), setHeight(height: 14)],
+
+                  // ── Terms & Conditions ─────────────────────────────────────
+                  _dashedDivider(),
+                  setHeight(height: 14),
+                  _buildTermsSection(),
+
+                  setHeight(height: 60),
+                ],
+              ),
             ),
           ),
-      onInitialized: (controller) {
-        onInitialized(controller);
+      onInitialized: (ctrl) {
+        AppLogger.info('Printer Controller Initialized!');
+        onInitialized(ctrl);
       },
     );
   }
+
+  // ── Shop header ──────────────────────────────────────────────────────────────
+  Widget _buildShopHeader(dynamic user, String initials) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Avatar
+        Container(
+          width: 64.w,
+          height: 64.h,
+          decoration: const BoxDecoration(color: _k, shape: BoxShape.circle),
+          child:
+              user.data?.profilepic?.isNotEmpty == true
+                  ? ClipOval(
+                    child:
+                        (user.data!.profilepic!.startsWith('http://') ||
+                                user.data!.profilepic!.startsWith('https://'))
+                            ? Image.network(
+                              user.data!.profilepic!,
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                              errorBuilder:
+                                  (_, _, _) => Center(
+                                    child: Text(
+                                      initials,
+                                      style: CustomTextStyle.customPoppin(
+                                        color: Colors.white,
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                            )
+                            : Image.file(
+                              File(user.data!.profilepic!),
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                              errorBuilder:
+                                  (_, _, _) => Center(
+                                    child: Text(
+                                      initials,
+                                      style: CustomTextStyle.customPoppin(
+                                        color: Colors.white,
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                            ),
+                  )
+                  : Center(
+                    child: Text(
+                      initials,
+                      style: CustomTextStyle.customPoppin(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+        ),
+
+        setWidth(width: 14),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.data?.name ?? '',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: _k,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              setHeight(height: 4),
+              Text(
+                _phoneText(user),
+                style: CustomTextStyle.customPoppin(
+                  fontWeight: FontWeight.w700,
+                  color: _k,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _phoneText(dynamic user) {
+    final mobile = user.data?.mobileNo ?? '';
+    final alt = user.data?.alternateMobileNo ?? '';
+    if (alt.toString().isNotEmpty) return '$mobile / $alt';
+    return mobile;
+  }
+
+  // ── Bill meta ────────────────────────────────────────────────────────────────
+  Widget _buildMetaSection(String date, String time, dynamic user) {
+    final addr = _cap(user.data?.address);
+    final city = _cap(user.data?.city);
+    final pin = user.data?.pincode ?? '';
+    final address = [addr, city, pin].where((s) => s.isNotEmpty).join(', ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (address.isNotEmpty) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.location_on, size: 14.sp, color: _k),
+              setWidth(width: 4),
+              Expanded(
+                child: Text(
+                  address,
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _k,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          setHeight(height: 10),
+          _dashedDivider(),
+        ],
+        setHeight(height: 10),
+        _metaRow('Bill No', printInvoiceModel.invoiceNo ?? ''),
+        setHeight(height: 6),
+        _metaRow('Date', date),
+        setHeight(height: 6),
+        _metaRow('Time', time),
+        setHeight(height: 6),
+        _metaRow('Payment', _cap(paymentMethod)),
+      ],
+    );
+  }
+
+  Widget _metaRow(String label, String value) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 110.w,
+          child: Text(
+            label,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: _k,
+            ),
+          ),
+        ),
+        Text(
+          ':  ',
+          style: CustomTextStyle.customPoppin(fontSize: 15, color: _k),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _k,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Items ────────────────────────────────────────────────────────────────────
+  Widget _buildItemsSection() {
+    final items = printInvoiceModel.items ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Column headers
+        Row(
+          children: [
+            Expanded(
+              flex: 5,
+              child: Text(
+                'ITEM',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: _k,
+                ),
+              ),
+            ),
+            Text(
+              'AMOUNT',
+              style: CustomTextStyle.customPoppin(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: _k,
+              ),
+            ),
+          ],
+        ),
+        setHeight(height: 8),
+        _thinDivider(),
+        setHeight(height: 8),
+
+        ...items.map((item) => _buildItemRow(item)),
+      ],
+    );
+  }
+
+  Widget _buildItemRow(InvoiceDataItems item) {
+    final discount = item.discountPercent ?? 0;
+    final hasDiscount = discount > 0;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.productName ?? 'No Name',
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: _k,
+                  ),
+                ),
+                setHeight(height: 3),
+                if (_itemSubtitle(item).isNotEmpty)
+                  Text(
+                    _itemSubtitle(item),
+                    style: CustomTextStyle.customPoppin(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _k,
+                    ),
+                  ),
+                setHeight(height: 3),
+                RichText(
+                  text: TextSpan(
+                    text: '${item.quantity} x ₹${item.originalPrice}',
+                    style: CustomTextStyle.customPoppin(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _k,
+                    ),
+                    children:
+                        hasDiscount
+                            ? [
+                              TextSpan(
+                                text: ' @ $discount%',
+                                style: CustomTextStyle.customPoppin(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: _k,
+                                ),
+                              ),
+                            ]
+                            : [],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '₹ ${item.totalPrice ?? item.finalPrice ?? ''}',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: _k,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _itemSubtitle(InvoiceDataItems item) {
+    final parts = <String>[];
+    if ((item.categoryName ?? '').isNotEmpty) parts.add(item.categoryName!);
+    if ((item.animalTypeName ?? '').isNotEmpty) parts.add(item.animalTypeName!);
+    if ((item.colorName ?? '').isNotEmpty) parts.add(item.colorName!);
+    if ((item.brand ?? '').isNotEmpty) parts.add(item.brand!);
+    return parts.join(' | ');
+  }
+
+  // ── Totals ───────────────────────────────────────────────────────────────────
+  Widget _buildTotalsSection() {
+    final summary = printInvoiceModel.orderSummary;
+    final subtotal = summary?.subtotal ?? '';
+    final discount = summary?.totalDiscount ?? '0';
+    final roundOff = summary?.roundOff ?? '0';
+    final finalAmt = summary?.finalAmount ?? '';
+    final hasDiscount = (double.tryParse(discount) ?? 0) > 0;
+    final hasRoundOff = (double.tryParse(roundOff) ?? 0) != 0;
+
+    return Column(
+      children: [
+        // Subtotal row + divider
+        if (subtotal.isNotEmpty) ...[
+          _totalRow('Subtotal', '₹ $subtotal'),
+          setHeight(height: 6),
+          _dashedDivider(),
+          setHeight(height: 6),
+        ],
+
+        // Discount row + divider
+        if (hasDiscount) ...[
+          _totalRow('Discount', '₹ ${summary?.customerSaved}'),
+          setHeight(height: 6),
+          _thinDivider(),
+          setHeight(height: 6),
+        ],
+
+        // Round off row + divider
+        if (hasRoundOff) ...[
+          _totalRow('Round Off', '₹ $roundOff'),
+          setHeight(height: 6),
+          _thinDivider(),
+          setHeight(height: 6),
+        ],
+
+        setHeight(height: 4),
+
+        // Grand Total — bold, larger
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'GRAND TOTAL',
+              style: CustomTextStyle.customPoppin(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: _k,
+              ),
+            ),
+            Text(
+              '₹ $finalAmt',
+              style: CustomTextStyle.customPoppin(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: _k,
+              ),
+            ),
+          ],
+        ),
+        setHeight(height: 6),
+        _thickDivider(),
+      ],
+    );
+  }
+
+  Widget _totalRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: CustomTextStyle.customPoppin(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: _k,
+          ),
+        ),
+        Text(
+          value,
+          style: CustomTextStyle.customPoppin(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: _k,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Savings ──────────────────────────────────────────────────────────────────
+  Widget _buildSavingsSection(String savedAmount) {
+    return Column(
+      children: [
+        Center(
+          child: Text(
+            '** You saved ₹$savedAmount on this order! **',
+            textAlign: TextAlign.center,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 4),
+        Center(
+          child: Text(
+            'Add more items to unlock bigger discounts',
+            textAlign: TextAlign.center,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _k,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Thank you ────────────────────────────────────────────────────────────────
+  Widget _buildThankYouSection() {
+    return Column(
+      children: [
+        Center(
+          child: Text(
+            '** Thank You for Shopping With Us **',
+            textAlign: TextAlign.center,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 8),
+        Center(
+          child: Text(
+            'Your satisfaction is our priority.\nWe look forward to serving you again!',
+            textAlign: TextAlign.center,
+            style: CustomTextStyle.customPoppin(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 12),
+        Center(
+          child: Text(
+            'Visit Again !',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 4),
+        Center(
+          child: Text(
+            'Keep shopping to save more!',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _k,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── UPI QR ───────────────────────────────────────────────────────────────────
+  Widget _buildUpiSection(dynamic bankDetails, num total) {
+    return Column(
+      children: [
+        Center(
+          child: Text(
+            'Scan to Pay',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 10),
+        Center(
+          child: UPIPaymentQRCode(
+            upiDetails: UPIDetails(
+              upiID: bankDetails.data?.upiId ?? '',
+              payeeName: bankDetails.data?.accountHolder ?? '',
+              amount: total.toDouble(),
+            ),
+            size: 180,
+            embeddedImageSize: const Size(50, 50),
+            loader: CommonProgressBar(color: AppColors.blackColor),
+          ),
+        ),
+        setHeight(height: 10),
+        Center(
+          child: Text(
+            '₹ ${total.toStringAsFixed(2)} /-',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: _k,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Pet Shop ad ──────────────────────────────────────────────────────────────
+  Widget _buildAdSection() {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: '#Add.\n',
+            style: CustomTextStyle.customPoppin(
+              color: _k,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextSpan(
+            text: 'Raah Constra\n',
+            style: CustomTextStyle.customPoppin(
+              color: _k,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          TextSpan(
+            text:
+                'Water Proofing | Interior Design | False Ceiling | Painting | All Renovation Work.\n',
+            style: CustomTextStyle.customPoppin(
+              color: _k,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          TextSpan(
+            text: 'www.raahconstra.com\n',
+            style: CustomTextStyle.customPoppin(
+              color: _k,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          TextSpan(
+            text: 'Contact: 9930024594',
+            style: CustomTextStyle.customPoppin(
+              color: _k,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Powered by HisaabBox (Clothing Shop) ─────────────────────────────────────
+  Widget _buildPoweredBy() {
+    return Column(
+      children: [
+        // _dashedDivider(),
+        setHeight(height: 10),
+        Center(
+          child: Text(
+            'Powered by',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 4),
+        Center(
+          child: Text(
+            'HisaabBox',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 2),
+        Center(
+          child: Text(
+            'Smart Billing & Inventory Management',
+            style: CustomTextStyle.customPoppin(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _k,
+            ),
+          ),
+        ),
+        setHeight(height: 8),
+        // _dashedDivider(),
+      ],
+    );
+  }
+
+  // ── Terms & Conditions ───────────────────────────────────────────────────────
+  Widget _buildTermsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Terms & Conditions',
+          style: CustomTextStyle.customPoppin(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: _k,
+          ),
+        ),
+        setHeight(height: 6),
+        Text(
+          '1. Goods once sold will not be taken back or exchanged.\n'
+          '2. No refund on sold items.\n'
+          '3. All disputes subject to local jurisdiction.',
+          style: CustomTextStyle.customPoppin(
+            fontWeight: FontWeight.w700,
+            color: _k,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Divider helpers ──────────────────────────────────────────────────────────
+
+  /// Solid thick line — used around items section
+  Widget _thickDivider() => Container(height: 2, color: _k);
+
+  /// Solid thin line — used between total rows
+  Widget _thinDivider() => Container(height: 1, color: _k);
+
+  /// Dashed line — used between major sections
+  Widget _dashedDivider() => Row(
+    children: List.generate(
+      50,
+      (i) => Expanded(
+        child: Container(
+          height: 1.5,
+          color: i.isEven ? _k : Colors.transparent,
+        ),
+      ),
+    ),
+  );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BARCODE PRINTER VIEW — unchanged logic
+// ─────────────────────────────────────────────────────────────────────────────
 class BarcodePrinterView extends StatelessWidget with CacheManager {
   final void Function(ReceiptController) onInitialized;
   final dynamic data;
@@ -428,64 +810,65 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
   @override
   Widget build(BuildContext context) {
     var user = retrieveUserDetail();
+    final shopType = ShopType.fromString(user.data?.shopType ?? '');
+    final product = data['productData']['product'];
+
+    final String subtitle =
+        shopType.config.supportsGRStock
+            ? '${product.animalTypeName} | Fixed Price Rs.${product.sellingPrice}'
+            : product.isflavorRequired
+            ? '${product.flavour ?? ''} | ${product.weight ?? ''} |  ₹${product.sellingPrice ?? ''}'
+            : '₹${product.sellingPrice ?? ''}';
+
     return Receipt(
-      defaultTextStyle: TextStyle(fontSize: 20),
+      defaultTextStyle: const TextStyle(fontSize: 12),
       builder: (context) {
         return SizedBox(
-          height: 140,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                data.name ?? "",
-                style: CustomTextStyle.customMontserrat(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
+          height: 200,
+          width: 189,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: 6,
+              left: 6,
+              top: 15,
+              bottom: 30,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                BarcodeWidget(
+                  barcode: Barcode.code128(),
+                  data: user.data?.name ?? '',
+                  height: 90,
+                  width: 175,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              setHeight(height: 3),
-              Text(
-                "Flr:${data.flavor}",
-                style: CustomTextStyle.customMontserrat(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 2),
+                Text(
+                  product.name ?? '',
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: _k,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-
-              setHeight(height: 3),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Wt:${data.weight}",
-                    style: CustomTextStyle.customMontserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _k,
                   ),
-                  setWidth(width: 10),
-                  Text(
-                    "MRP: ₹${data.sellingPrice}",
-                    style: CustomTextStyle.customMontserrat(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              setHeight(height: 3),
-              BarcodeWidget(
-                barcode: Barcode.ean13(),
-                data: data.barcode,
-                height: 60,
-                width: 300,
-                drawText: true,
-              ),
-            ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -508,45 +891,18 @@ class BarcodeRichText extends StatelessWidget {
     return RichText(
       text: TextSpan(
         text: '$label : ',
-        style: CustomTextStyle.customMontserrat(fontSize: 15),
+        style: CustomTextStyle.customPoppin(fontSize: 15, color: _k),
         children: [
           TextSpan(
             text: labelValue,
-            style: CustomTextStyle.customMontserrat(fontSize: 20),
+            style: CustomTextStyle.customPoppin(
+              fontSize: 20,
+              color: _k,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
     );
   }
 }
-
-
- // if (discountPercentage != 0.0) ...{
-                //   Row(
-                //     children: [
-                //       Expanded(
-                //         flex: 4,
-                //         child: Text(
-                //           "Discount",
-                //           style: CustomTextStyle.customMontserrat(
-                //             fontWeight: FontWeight.w500,
-                //             fontSize: 18,
-                //           ),
-                //         ),
-                //       ),
-                //       const Expanded(child: SizedBox()),
-                //       Expanded(
-                //         flex: 3,
-                //         child: Text(
-                //           '₹ $discountPercentage',
-                //           textAlign: TextAlign.right,
-                //           style: CustomTextStyle.customMontserrat(
-                //             fontWeight: FontWeight.bold,
-                //             fontSize: 20,
-                //           ),
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                //   setHeight(height: 10),
-                // },

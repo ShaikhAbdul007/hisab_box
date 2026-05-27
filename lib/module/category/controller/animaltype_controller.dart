@@ -1,106 +1,152 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/set_format_date.dart';
-
-import '../../../helper/app_message.dart';
-import '../../../helper/helper.dart';
-import '../model/category_model.dart';
+import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/module/category/model/category_model.dart';
+import 'package:inventory/module/category/repo/animal_category_repo.dart';
+import 'package:inventory/helper/app_message.dart';
 
 class AnimalTypeController extends GetxController with CacheManager {
-  final _auth = FirebaseAuth.instance;
+  AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
   TextEditingController animalCategory = TextEditingController();
+  final ScrollController scrollController = ScrollController();
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteAnimalCategory = false.obs;
   RxBool isFetchAnimalCategory = false.obs;
-  RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
+  RxBool isLoadingMore = false.obs;
+  RxString shopType = ''.obs;
+  RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
   var data = Get.arguments;
+  int _page = 1;
+  int _totalPages = 1;
+  bool get hasMore => _page < _totalPages;
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   @override
   void onInit() {
+    setShopType();
     getCategoryData();
+    scrollController.addListener(_onScroll);
     super.onInit();
+  }
+
+  void _onScroll() {
+    if (scrollController.position.pixels >=
+            scrollController.position.maxScrollExtent - 200 &&
+        !isLoadingMore.value &&
+        hasMore) {
+      _loadMore();
+    }
   }
 
   void getCategoryData() async {
     await fetchCategories();
   }
 
-  Future<void> addCategory(String categoryName) async {
+  void setShopType() async {
+    var user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? 'Pet Shop';
+  }
+
+  // ==========================================
+  // 🔥 ADD ANIMAL CATEGORY (SUPABASE + HIVE)
+  // ==========================================
+  Future<void> addAnimalCategory(String categoryName) async {
     isSaveLoading.value = true;
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
-
     try {
-      final docRef =
-          FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('animalCategories')
-              .doc();
-
-      final category = CategoryModel(
-        time: setFormateDate('hh:mm a'),
-        id: docRef.id,
-        name: categoryName,
-        createdAt: setFormateDate(),
+      var body = {"name": categoryName};
+      final response = await animalCategoryRepo.createAnimalCategory(
+        body: body,
       );
-
-      await docRef.set(category.toJson());
-      showMessage(message: animalTypeCategorySaveSuccessfull);
+      if (response.success == success) {
+        Get.back();
+        clear();
+        await fetchCategories();
+        showSnackBar(
+          error: shopTypeEnum.config.categoryAddSuccess,
+          isError: false,
+        );
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
+    } catch (e) {
       clear();
       Get.back();
-      await fetchCategories();
-    } on FirebaseException catch (e) {
-      showMessage(message: e.toString());
+      showSnackBar(error: e.toString());
     } finally {
       isSaveLoading.value = false;
     }
   }
 
+  // ==========================================
+  // 🔥 FETCH ANIMAL CATEGORIES (FALLBACK FLOW)
+  // ==========================================
   Future<void> fetchCategories() async {
+    _page = 1;
+    animalTypeList.clear();
     isFetchAnimalCategory.value = true;
     try {
-      final uid = _auth.currentUser?.uid;
-      if (uid == null) return;
-
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('animalCategories')
-              .get();
-      animalTypeList.value =
-          snapshot.docs
-              .map((doc) => CategoryModel.fromJson(doc.data()))
-              .toList();
-      saveAnimalCategoryModel(animalTypeList);
-    } on FirebaseException catch (e) {
-      showMessage(message: e.toString());
+      var response = await animalCategoryRepo.getAnimalCategory(page: _page);
+      if (response.success == success) {
+        animalTypeList.value = response.categorymodeldata?.data ?? [];
+        _totalPages = response.categorymodeldata?.pagination?.totalPages ?? 1;
+        saveAnimalList(animalTypeList);
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
     } finally {
       isFetchAnimalCategory.value = false;
     }
   }
 
-  Future<void> deleteAnimalCategory(String aminalCategoryId) async {
-    isDeleteAnimalCategory.value = true;
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
-
+  Future<void> _loadMore() async {
+    _page++;
+    isLoadingMore.value = true;
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('animalCategories')
-          .doc(aminalCategoryId)
-          .delete();
-      showMessage(message: animalcategorydeleteSuccessMessage);
-      await fetchCategories();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+      final response = await animalCategoryRepo.getAnimalCategory(page: _page);
+      if (response.success == success) {
+        animalTypeList.addAll(response.categorymodeldata?.data ?? []);
+        _totalPages =
+            response.categorymodeldata?.pagination?.totalPages ?? _totalPages;
+        saveAnimalList(animalTypeList);
+      } else {
+        _page--;
+      }
+    } catch (e) {
+      _page--;
+      showSnackBar(error: e.toString());
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  Future<void> deleteAnimalCategory(String animalCategoryId) async {
+    isDeleteAnimalCategory.value = true;
+    try {
+      var response = await animalCategoryRepo.deleteAnimalCategory(
+        id: animalCategoryId,
+      );
+      if (response.success == success) {
+        showSnackBar(
+          error: shopTypeEnum.config.categoryDeleteSuccess,
+          isError: false,
+        );
+        await fetchCategories();
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
     } finally {
       isDeleteAnimalCategory.value = false;
     }
@@ -108,5 +154,12 @@ class AnimalTypeController extends GetxController with CacheManager {
 
   void clear() {
     animalCategory.clear();
+  }
+
+  @override
+  void onClose() {
+    animalCategory.dispose();
+    scrollController.dispose();
+    super.onClose();
   }
 }

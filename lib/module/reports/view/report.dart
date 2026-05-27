@@ -7,7 +7,6 @@ import 'package:inventory/common_widget/common_bottom_sheet.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
-import 'package:inventory/module/reports/widget/report_option_label.dart';
 import '../controller/report_controller.dart';
 import '../widget/download_report_widget.dart';
 import '../widget/report_overview_widget.dart';
@@ -38,29 +37,35 @@ class ReportView extends GetView<ReportController> {
                           isLoading: controller.isExporting.value,
                           reportDownloadOnTap: () async {
                             controller.isExporting.value = true;
-                            (String, List<String>, Function(dynamic) mapper)
-                            getReportlabel = controller.getLabelValue(
-                              reportLabelIndex:
-                                  controller.reportDownloadGroupValue.value,
-                            );
-                            var resList = await controller.fetchProductReport(
-                              label: controller.reportLabels.value,
-                              reportType: getReportlabel.$1,
-                            );
-                            var date = controller.getDateRange(
-                              label: controller.reportLabels.value,
-                              customStartDate: '',
-                              customEndDate: '',
-                            );
+                            // (String, List<String>, Function(dynamic) mapper)
+                            // getReportlabel =( '',[],(){});
+                            
+                            // controller.getLabelValue(
+                            //   reportLabelIndex:
+                            //       controller.reportDownloadGroupValue.value,
+                            // );
+                            var resList = [];
+                            
+                            // await controller.fetchProductReport(
+                            //   label: controller.reportLabels.value,
+                            //   reportType: getReportlabel.$1,
+                            // );
+                            var date = '';
+                            
+                           // controller.getDateRange(
+                            //   label: controller.reportLabels.value,
+                            //   customStartDate: '',
+                            //   customEndDate: '',
+                            // );
 
-                            await controller.exportProductInReport(
-                              headers: getReportlabel.$2,
-                              mapper: (dynamic) => getReportlabel.$3(dynamic),
-                              date: date.$1,
-                              date2: date.$2,
-                              productReportModel: resList,
-                              fileName: getReportlabel.$1,
-                            );
+                            // await controller.exportProductInReport(
+                            //   headers: getReportlabel.$2,
+                            //   mapper: (dynamic) => getReportlabel.$3(dynamic),
+                            //   date: date.$1,
+                            //   date2: date.$2,
+                            //   productReportModel: resList,
+                            //   fileName: getReportlabel.$1,
+                            // );
                           },
                           reportLabel: controller.reportLabel,
                           groupValue: controller.reportDownloadGroupValue.value,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:inventory/common_widget/common_padding.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/textstyle.dart';
@@ -11,58 +12,61 @@ class BluetoothInfoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        RichText(
-          text: TextSpan(
-            style: CustomTextStyle.customMontserrat(),
-            children: [
-              TextSpan(
-                text:
-                    'Please connect your printer before printing the invoice.\nSteps to set up the printer:\n',
-              ),
-              TextSpan(
-                text: '1. ',
-                style: CustomTextStyle.customOpenSans(
-                  fontWeight: FontWeight.bold,
+    return CustomPadding(
+      paddingOption: SymmetricPadding(horizontal: 12.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RichText(
+            text: TextSpan(
+              style: CustomTextStyle.customMontserrat(),
+              children: [
+                TextSpan(
+                  text:
+                      'Please connect your printer before printing the invoice.\nSteps to set up the printer:\n',
                 ),
-              ),
-              TextSpan(text: 'Go to Settings\n'),
-              TextSpan(
-                text: '2. ',
-                style: CustomTextStyle.customOpenSans(
-                  fontWeight: FontWeight.bold,
+                TextSpan(
+                  text: '1. ',
+                  style: CustomTextStyle.customOpenSans(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              TextSpan(text: 'Click on App Settings\n'),
-              TextSpan(
-                text: '3. ',
-                style: CustomTextStyle.customOpenSans(
-                  fontWeight: FontWeight.bold,
+                TextSpan(text: 'Go to Settings\n'),
+                TextSpan(
+                  text: '2. ',
+                  style: CustomTextStyle.customOpenSans(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              TextSpan(text: 'Select Printer Option\n'),
-              TextSpan(
-                text: '4. ',
-                style: CustomTextStyle.customOpenSans(
-                  fontWeight: FontWeight.bold,
+                TextSpan(text: 'Click on App Settings\n'),
+                TextSpan(
+                  text: '3. ',
+                  style: CustomTextStyle.customOpenSans(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              TextSpan(text: 'Save your preferred printer'),
-            ],
+                TextSpan(text: 'Select Printer Option\n'),
+                TextSpan(
+                  text: '4. ',
+                  style: CustomTextStyle.customOpenSans(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(text: 'Save your preferred printer'),
+              ],
+            ),
           ),
-        ),
-        setHeight(height: 8),
-        CommonButton(
-          label: 'ok',
-          onTap: () {
-            Get.back();
-            AppRoutes.navigateRoutes(routeName: AppRouteName.appsetting);
-          },
-        ),
-        setHeight(height: 15),
-      ],
+          setHeight(height: 8),
+          CommonButton(
+            label: 'ok',
+            onTap: () {
+              Get.back();
+              AppRoutes.navigateRoutes(routeName: AppRouteName.appsetting);
+            },
+          ),
+          setHeight(height: 15),
+        ],
+      ),
     );
   }
 }

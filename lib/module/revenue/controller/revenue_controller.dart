@@ -1,14 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:get/get.dart';
 import 'package:inventory/helper/set_format_date.dart';
-import '../../../helper/helper.dart';
-import '../model/revenue_model.dart';
+import 'package:inventory/module/revenue/repo/revenue_repo.dart';
+import 'package:inventory/module/sell/model/sell_model.dart';
 
 class RevenueController extends GetxController {
-  final _auth = FirebaseAuth.instance;
+  RevenueRepo revenueRepo = RevenueRepo();
   RxBool isRevenueListLoading = false.obs;
-  var sellsList = <SellsModel>[].obs;
+  var sellsList = <SellItemData>[].obs;
   RxDouble sellTotalAmount = 0.0.obs;
   RxString dayDate = ''.obs;
 
@@ -20,48 +21,28 @@ class RevenueController extends GetxController {
   }
 
   void setSellList() async {
-    sellsList.value = await fetchRevenueList();
-
-    double total = 0.0;
-
-    for (var bill in sellsList) {
-      total += (bill.finalAmount ?? 0).toDouble();
-    }
-
-    sellTotalAmount.value = total;
+    await fetchSales();
   }
 
-  Future<List<SellsModel>> fetchRevenueList() async {
+  Future<void> fetchSales({String? todaysDate}) async {
+    isRevenueListLoading.value = true;
+
+    final selectedDate = getFormattedDate(todaysDate ?? dayDate.value);
+
     try {
-      isRevenueListLoading.value = true;
-      final uid = _auth.currentUser?.uid;
-      if (uid == null) return [];
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('sales')
-              .where('soldAt', isEqualTo: dayDate.value)
-              .get();
-      final List<SellsModel> bills =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            return SellsModel.fromJson(data);
-          }).toList();
-      customMessageOrErrorPrint(
-        message: '✅ Total Bills Fetched: ${bills.length}',
-      );
-      if (bills.isNotEmpty) {
-        customMessageOrErrorPrint(
-          message:
-              'First Bill: ${bills.first.billNo} — ₹${bills.first.finalAmount}',
-        );
+      var response = await revenueRepo.fetchSell(date: selectedDate);
+
+      if (response.success == success) {
+        sellsList.value = response.data?.data ?? [];
+        sellTotalAmount.value = response.data?.grandTotal?.toDouble() ?? 0.0;
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
       }
-      customMessageOrErrorPrint(message: bills);
-      return bills;
     } catch (e) {
-      showMessage(message: "❌ Error fetching revenue: ${e.toString()}");
-      return [];
+      AppLogger.info("🚨 Fetch Sales Error: $e");
+      showSnackBar(error: e.toString());
     } finally {
       isRevenueListLoading.value = false;
     }

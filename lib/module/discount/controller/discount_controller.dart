@@ -24,7 +24,11 @@ class DiscountController extends GetxController {
   Future<void> fetchDiscounts() async {
     isFetchDiscount.value = true;
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) {
+      isFetchDiscount.value = false;
+    showSnackBar(error: 'Please login again.');
+      return;
+    }
 
     try {
       final snapshot =
@@ -41,7 +45,7 @@ class DiscountController extends GetxController {
             return DiscountModel.fromJson(data);
           }).toList();
     } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+    showSnackBar(error: e.toString());
     } finally {
       isFetchDiscount.value = false;
     }
@@ -50,13 +54,21 @@ class DiscountController extends GetxController {
   Future<void> addDiscount() async {
     isSaveLoading.value = true;
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) {
+      isSaveLoading.value = false;
+    showSnackBar(error: 'Please login again.');
+      return;
+    }
 
     try {
       final now = DateTime.now();
       final date = DateFormat('dd-MM-yyyy').format(now);
       final time = DateFormat('hh:mm a').format(now);
-      final label = int.parse(discountPercentage.text);
+      final label = int.tryParse(discountPercentage.text);
+      if (label == null) {
+      showSnackBar(error: 'Please enter a valid discount value.');
+        return;
+      }
 
       await FirebaseFirestore.instance
           .collection('users')
@@ -64,11 +76,13 @@ class DiscountController extends GetxController {
           .collection('discounts')
           .add({'label': label, 'createdAt': date, 'time': time});
       Get.back();
-      showMessage(message: discountSaveSuccessMessage);
+    showSnackBar(error: discountSaveSuccessMessage);
       clear();
       fetchDiscounts();
     } on FirebaseException catch (e) {
-      showMessage(message: e.toString());
+    showSnackBar(error: e.toString());
+    } catch (e) {
+    showSnackBar(error: 'Failed to add discount. Please try again.');
     } finally {
       isSaveLoading.value = false;
     }
@@ -77,7 +91,11 @@ class DiscountController extends GetxController {
   Future<void> deleteDiscount(String discountId) async {
     isDeleteDiscount.value = true;
     final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) {
+      isDeleteDiscount.value = false;
+    showSnackBar(error: 'Please login again.');
+      return;
+    }
 
     try {
       await FirebaseFirestore.instance
@@ -86,10 +104,10 @@ class DiscountController extends GetxController {
           .collection('discounts')
           .doc(discountId)
           .delete();
-      showMessage(message: discountdeleteSuccessMessage);
+    showSnackBar(error: discountdeleteSuccessMessage);
       fetchDiscounts();
     } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+    showSnackBar(error: e.toString());
     } finally {
       isDeleteDiscount.value = false;
     }

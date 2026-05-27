@@ -41,7 +41,8 @@ class RevenueView extends GetView<RevenueController> {
                           ),
                         ),
                         TextSpan(
-                          text: '${controller.sellTotalAmount.value}',
+                          text: controller.sellTotalAmount.value
+                              .toStringAsFixed(2),
                           style: CustomTextStyle.customMontserrat(
                             fontWeight: FontWeight.w400,
                             color: AppColors.greenColor,
@@ -81,13 +82,13 @@ class RevenueView extends GetView<RevenueController> {
           ),
         ),
       ),
-      body: ReportCommonContiner(
-        height: MediaQuery.sizeOf(context).height,
-        width: MediaQuery.sizeOf(context).width,
+      body: ReportCommonContainer(
+        height: double.infinity,
+        width: 500,
         child: Obx(
           () =>
               controller.isRevenueListLoading.value
-                  ? CommonProgressbar(size: 50, color: AppColors.blackColor)
+                  ? CommonProgressBar(size: 50, color: AppColors.blackColor)
                   : controller.sellsList.isNotEmpty
                   ? ListView.builder(
                     itemCount: controller.sellsList.length,
@@ -100,14 +101,11 @@ class RevenueView extends GetView<RevenueController> {
                             data: data,
                           );
                         },
-                        child: RevenueListText(
-                          billModel: data,
-                          // index: index
-                        ),
+                        child: RevenueListText(sellItemData: data),
                       );
                     },
                   )
-                  : CommonNodatafound(message: 'No sell data found'),
+                  : CommonNoDataFound(message: 'No sell data found'),
         ),
       ),
     );

@@ -40,7 +40,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
       body: Obx(
         () =>
             controller.isFetchDiscount.value
-                ? CommonProgressbar(color: AppColors.blackColor, size: 30)
+                ? CommonProgressBar(color: AppColors.blackColor, size: 30)
                 : controller.looseCategoryModelList.isNotEmpty
                 ? Stack(
                   children: [
@@ -66,7 +66,7 @@ class LooseCategory extends GetView<LooseCategoryController> {
                           controller.isDeleteDiscount.value
                               ? BackdropFilter(
                                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                                child: CommonProgressbar(
+                                child: CommonProgressBar(
                                   color: AppColors.blackColor,
                                   size: 50,
                                 ),

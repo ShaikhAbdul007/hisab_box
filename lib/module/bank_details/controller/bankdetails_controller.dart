@@ -1,24 +1,25 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/bank_details/model/bank_model.dart';
+import 'package:inventory/module/bank_details/repo/bank_repo.dart';
 
+import '../../../helper/app_message.dart';
 import '../../../helper/helper.dart';
 
-class BankdetailsController extends GetxController with CacheManager {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
+class BankDetailsController extends GetxController with CacheManager {
+  BankRepo bankDetailsRepo = BankRepo();
   TextEditingController upiIdController = TextEditingController();
   TextEditingController bankNameController = TextEditingController();
   TextEditingController accountHolderNameController = TextEditingController();
   RxBool bankDetailsUpi = false.obs;
   RxBool setBankDetailsUpi = false.obs;
+  RxBool readOnly = false.obs;
 
   @override
   void onInit() {
-    getSaveBankDetails();
+    getCacheHasData();
     super.onInit();
   }
 
@@ -27,77 +28,78 @@ class BankdetailsController extends GetxController with CacheManager {
     return reg.hasMatch(upi.trim());
   }
 
-  void getSaveBankDetails() async {
-    BankModel bankdata = retrieveBankModelDetail();
-    if (bankdata.upiId == null) {
-      customMessageOrErrorPrint(message: "isBlank: false");
-      await getBankDetails();
+  void getCacheHasData() {
+    final bankData = retrieveBankModelDetail();
+
+    if (bankData.data?.bankName != null) {
+      bankNameController.text = bankData.data?.bankName ?? "";
+      accountHolderNameController.text = bankData.data?.accountHolder ?? '';
+      upiIdController.text = bankData.data?.upiId ?? '';
+      readOnly.value = true; // ✅ data hai
     } else {
-      bankNameController.text = bankdata.bankName ?? "";
-      accountHolderNameController.text = bankdata.accountName ?? '';
-      upiIdController.text = bankdata.upiId ?? '';
-      customMessageOrErrorPrint(message: "isBlank: true");
+      readOnly.value = false; // ❌ data nahi
+      getBankDetails();
     }
   }
 
   Future<void> getBankDetails() async {
     setBankDetailsUpi.value = true;
     try {
-      final ref = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('bankDetails')
-          .doc('details');
-      final doc = await ref.get();
-      if (doc.exists) {
-        BankModel details = BankModel.formJson(doc.data()!);
-        bankNameController.text = details.bankName ?? "";
-        accountHolderNameController.text = details.accountName ?? '';
-        upiIdController.text = details.upiId ?? '';
-        saveBankModelData(details);
-        customMessageOrErrorPrint(message: "Bank Details: $details");
+      final response = await bankDetailsRepo.getBankDetails();
+      if (response.success == success) {
+        bankNameController.text = response.data?.bankName ?? "";
+        accountHolderNameController.text = response.data?.accountHolder ?? '';
+        upiIdController.text = response.data?.upiId ?? '';
+        readOnly.value = response.data != null;
+        saveBankModelData(response);
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
       }
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.message ?? '');
     } catch (e) {
-      customMessageOrErrorPrint(message: "Fetch customers error: $e");
-      showMessage(message: '$e');
-      return;
+      AppLogger.info((e).toString());
+      showSnackBar(error: e.toString());
     } finally {
       setBankDetailsUpi.value = false;
     }
   }
 
+  // ================================
+  // INSERT / UPDATE (UPSERT)
+  // ================================
   Future<void> saveBankDetails() async {
     bankDetailsUpi.value = true;
-    String date = setFormateDate();
-    String time = setFormateDate('hh:mm a');
-    customMessageOrErrorPrint(message: "Fetch customers error: $date");
-    customMessageOrErrorPrint(message: "Fetch customers error: $time");
-
+    var body = {
+      "upi_id": upiIdController.text,
+      "bank_name": bankNameController.text,
+      "account_holder": accountHolderNameController.text,
+    };
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) throw "User not logged in";
-
-      final bankRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('bankDetails')
-          .doc('details');
-
-      await bankRef.set({
-        'upiId': upiIdController.text.trim(),
-        'accountHolder': accountHolderNameController.text.trim(),
-        'bankName': bankNameController.text.trim(),
-        'createdAt': '$date$time',
-        'updatedAt': '$date$time',
-      }, SetOptions(merge: true));
-      getBankDetails();
-      showMessage(message: 'Bank Details Save Successfully');
+      final response = await bankDetailsRepo.createBankDetails(body: body);
+      if (response.success == success) {
+        setBankData(response);
+        getBankDetails();
+        showSnackBar(
+          error: response.msg ?? 'Bank Details Save Successfully ',
+          isError: false,
+        );
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
+      }
     } catch (e) {
-      showMessage(message: e.toString());
+      AppLogger.info(("🚨 Bank Save Error: $e").toString());
+      showSnackBar(error: e.toString());
     } finally {
       bankDetailsUpi.value = false;
     }
+  }
+
+  void setBankData(BankDetailsModel response) {
+    bankNameController.text = response.data?.bankName ?? "";
+    accountHolderNameController.text = response.data?.accountHolder ?? '';
+    upiIdController.text = response.data?.upiId ?? '';
   }
 }

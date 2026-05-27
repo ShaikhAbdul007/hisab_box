@@ -30,7 +30,7 @@ class LooseCategoryModel {
     return LooseCategoryModel(
       id: json['id'] ?? '',
       name: json['name'] ?? "",
-      createdAt: json['createdAt'] ?? "",
+      createdAt: json['created_at'] ?? "",
       time: json['time'] ?? "",
       unit: json['unit'] ?? "",
       price: json['price'] ?? "",

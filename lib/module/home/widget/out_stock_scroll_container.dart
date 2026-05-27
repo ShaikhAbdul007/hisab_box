@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/common_padding.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 
 import '../../../common_widget/colors.dart';
 import '../../../common_widget/size.dart';
@@ -9,7 +9,7 @@ import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
 
 class OutStockScrollContainer extends StatelessWidget {
-  final ProductModel product;
+  final InventoryItem product;
   const OutStockScrollContainer({super.key, required this.product});
 
   @override
@@ -37,7 +37,7 @@ class OutStockScrollContainer extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    product.category ?? '',
+                    product.categoryName ?? '',
                     style: CustomTextStyle.customPoppin(
                       color: AppColors.blackColor,
                     ),
@@ -51,7 +51,7 @@ class OutStockScrollContainer extends StatelessWidget {
                   ),
                   setWidth(width: 10),
                   Text(
-                    product.animalType ?? '',
+                    product.animalTypeName ?? '',
                     style: CustomTextStyle.customPoppin(
                       color: AppColors.blackColor,
                     ),
@@ -65,7 +65,7 @@ class OutStockScrollContainer extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      product.flavor ?? '',
+                      product.flavour ?? '',
                       style: CustomTextStyle.customPoppin(
                         color: AppColors.blackColor,
                       ),

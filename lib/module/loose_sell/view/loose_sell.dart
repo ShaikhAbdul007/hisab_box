@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_padding.dart';
@@ -11,31 +12,18 @@ import '../../../common_widget/common_progressbar.dart';
 import '../../../common_widget/search.dart';
 import '../../../common_widget/size.dart';
 import '../../../helper/helper.dart';
-import '../../../helper/textstyle.dart';
+import '../../../helper/shop_type.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
 import '../controller/loose_controller.dart';
-import '../widget/loose_inventroy_update_popup_component.dart';
 
 class LooseSell extends GetView<LooseController> {
   const LooseSell({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isClothing = controller.shopTypeEnum == ShopType.clothingShop;
     return CommonAppbar(
-      // firstActionChild: AddExpensesButton(
-      //   onTap: () {
-      //     Get.bottomSheet(
-      //       backgroundColor: AppColors.whiteColor,
-      //       enableDrag: false,
-      //       isDismissible: false,
-      //       LooseSellBottomsheetComponent(
-      //         controller: controller,
-      //         formkeys: inventoryScanKey,
-      //       ),
-      //     );
-      //   },
-      // ),
       secondActionChild: InkWell(
         onTap: () async {
           var res = await AppRoutes.futureNavigationToRoute(
@@ -57,106 +45,105 @@ class LooseSell extends GetView<LooseController> {
           ),
         ),
       ),
-      appBarLabel: 'Loose Inventory',
-      body: Obx(
-        () =>
-            controller.isDataLoading.value
-                ? CommonProgressbar(size: 50, color: AppColors.blackColor)
-                : controller.productList.isNotEmpty
-                ? Column(
-                  children: [
-                    setHeight(height: 10),
-                    Expanded(
-                      flex: 2,
-                      child: CustomPadding(
-                        paddingOption: SymmetricPadding(horizontal: 12),
-                        child: CommonSearch(
-                          icon: Obx(
-                            () => InkWell(
-                              onTap:
-                                  controller.searchText.value.isNotEmpty
-                                      ? () {
-                                        controller.clear();
-                                        unfocus();
-                                      }
-                                      : null,
+      appBarLabel: isClothing ? 'Good Return (GR)' : 'Loose Inventory',
+      body: Obx(() {
+        if (controller.isDataLoading.value) {
+          return CommonProgressBar(size: 50, color: AppColors.blackColor);
+        }
+
+        if (isClothing) {
+          if (controller.grnList.isEmpty) {
+            return CommonNoDataFound(message: 'No GR found');
+          }
+          return ListView.builder(
+            itemCount: controller.grnList.length,
+            itemBuilder: (context, index) {
+              final grn = controller.grnList[index];
+              return GrListText(
+                inventoryModel: grn,
+                shopType: controller.shopTypeEnum,
+              );
+            },
+          );
+        }
+
+        if (controller.looseCategoryModelList.isEmpty) {
+          return CommonNoDataFound(message: 'No product found');
+        }
+
+        return Column(
+          children: [
+            setHeight(height: 10),
+            Expanded(
+              flex: 2,
+              child: CustomPadding(
+                paddingOption: SymmetricPadding(horizontal: 12),
+                child: CommonSearch(
+                  icon: Obx(
+                    () =>
+                        controller.searchText.value.isNotEmpty
+                            ? InkWell(
+                              onTap: () {
+                                controller.clear();
+                                unfocus();
+                              },
                               child: Icon(
-                                controller.searchText.value.isNotEmpty
-                                    ? CupertinoIcons.clear
-                                    : CupertinoIcons.search,
+                                CupertinoIcons.clear_circled_solid,
+                                size: 20.sp,
+                                color: AppColors.blackColor,
                               ),
-                            ),
-                          ),
-                          label: 'Search',
-                          hintText: 'search product',
-                          controller: controller.searchController,
-                          onChanged: (val) => controller.searchProduct(val),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 19,
-                      child: ListView.builder(
-                        itemCount: controller.productList.length,
-                        itemBuilder: (context, index) {
-                          var inventoryList = controller.productList[index];
-                          return Obx(
-                            () =>
-                                inventoryList.name!.toLowerCase().contains(
-                                          controller.searchText.value,
-                                        ) ||
-                                        inventoryList.barcode!
-                                            .toLowerCase()
-                                            .contains(
-                                              controller
-                                                  .searchController
-                                                  .value
-                                                  .text,
-                                            )
-                                    ? LooseInventroyListText(
-                                      onTap: () async {
-                                        // controller.setQuantitydata(index);
-                                        // updateDataDialog(index);
-
-                                        var res =
-                                            await AppRoutes.futureNavigationToRoute(
-                                              routeName:
-                                                  AppRouteName
-                                                      .productDetailView,
-                                              data: {
-                                                'product': inventoryList,
-                                                'isProductLoosed': true,
-                                              },
-                                            );
-                                        if (res == true) {
-                                          controller.fetchLosseList();
-                                        }
-                                      },
-                                      isInventoryScanSelected: true,
-                                      inventoryModel: inventoryList,
-                                    )
-                                    : Container(),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                )
-                : CommonNodatafound(message: 'No product found'),
-      ),
-    );
-  }
-
-  void updateDataDialog(int index) {
-    Get.defaultDialog(
-      title: '',
-      titleStyle: CustomTextStyle.customNato(fontSize: 0),
-      titlePadding: EdgeInsets.zero,
-      barrierDismissible: false,
-      content: LooseInventoryUpdatePopupComponent(
-        controller: controller,
-        index: index,
-      ),
+                            )
+                            : const SizedBox.shrink(),
+                  ),
+                  label: 'Search',
+                  hintText: 'search product',
+                  controller: controller.searchController,
+                  onChanged: (val) => controller.searchProduct(val),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 19,
+              child: ListView.builder(
+                itemCount: controller.looseCategoryModelList.length,
+                itemBuilder: (context, index) {
+                  var inventoryList = controller.looseCategoryModelList[index];
+                  String name = inventoryList.name?.toLowerCase() ?? '';
+                  String barcode = inventoryList.barcode?.toLowerCase() ?? '';
+                  return Obx(
+                    () =>
+                        name.toLowerCase().contains(
+                                  controller.searchText.value,
+                                ) ||
+                                barcode.toLowerCase().contains(
+                                  controller.searchController.value.text,
+                                )
+                            ? LooseInventroyListText(
+                              onTap: () async {
+                                // var res =
+                                //     await AppRoutes.futureNavigationToRoute(
+                                //       routeName: AppRouteName.productDetailView,
+                                //       data: {
+                                //         'product': inventoryList,
+                                //         'isProductLoosed': true,
+                                //       },
+                                //     );
+                                // if (res == true) {
+                                //   controller.fetchLooseList();
+                                // }
+                              },
+                              isInventoryScanSelected: true,
+                              inventoryModel: inventoryList,
+                              shopType: controller.shopTypeEnum,
+                            )
+                            : Container(),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 }

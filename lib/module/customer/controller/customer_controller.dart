@@ -1,19 +1,28 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
-import 'package:inventory/module/order_complete/controller/order_controller.dart';
-
+import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/logger.dart';
+import 'package:inventory/module/customer/model/all_customer_model.dart';
+import 'package:inventory/module/customer/repo/customer_repo.dart';
 import '../../order_complete/model/customer_details_model.dart';
 
 class CustomerController extends GetxController with CacheManager {
-  final _auth = FirebaseAuth.instance;
-  var orderController = Get.put(OrderController());
+  CustomerRepo customerRepo = CustomerRepo();
+
   RxBool customDataLoading = false.obs;
+  RxBool isAddCustomerLoading = false.obs;
+  RxBool isCustomerFetchingByMobileNumberLoading = false.obs;
   RxString searchText = ''.obs;
-  RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
+
+  RxList<CustomerItem> customerList = <CustomerItem>[].obs;
+
   TextEditingController searchController = TextEditingController();
+  TextEditingController mobileController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
+  TextEditingController addressController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
 
   @override
   void onInit() {
@@ -29,40 +38,87 @@ class CustomerController extends GetxController with CacheManager {
   void clear() {
     searchController.clear();
     searchText.value = '';
+    mobileController.clear();
+    addressController.clear();
+    descriptionController.clear();
+    nameController.clear();
   }
 
   double calculateTotalCredit(CustomerDetails customer) {
     return customer.totalCredit;
   }
 
+  void setDataAsPerOptionSelected(CustomerItem? option) {
+    addressController.text = option?.address ?? '';
+    nameController.text = option?.name ?? '';
+    mobileController.text = option?.mobileNo ?? '';
+    descriptionController.text = option?.description ?? '';
+  }
+
+  // ================= CACHE FIRST =================
   Future<void> fetchAllCustomers() async {
     customDataLoading.value = true;
-
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) {
-      customDataLoading.value = false;
-      return;
-    }
-
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('customers')
-              .orderBy('lastInvoiceAt', descending: true)
-              .get();
-
-      final customers =
-          snapshot.docs
-              .map((doc) => CustomerDetails.fromJson(doc.data()))
-              .toList();
-
-      customerDetailList.value = customers;
+      final response = await customerRepo.getAllCustomer();
+      if (response.success == success) {
+        customerList.value = response.data?.customers ?? [];
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
+      }
     } catch (e) {
-      print("Fetch customers error: $e");
+      AppLogger.info((e).toString());
+      showSnackBar(error: e.toString());
     } finally {
       customDataLoading.value = false;
+    }
+  }
+
+  Future<void> addCustomers({required dynamic body}) async {
+    isAddCustomerLoading.value = true;
+    try {
+      final response = await customerRepo.addCustomer(body: body);
+      if (response.success == success) {
+        Get.back();
+        clear();
+        showSnackBar(
+          error: response.msg ?? 'Customer Created Successfully',
+          isError: false,
+        );
+        fetchAllCustomers();
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
+      }
+    } catch (e) {
+      AppLogger.info((e).toString());
+      showSnackBar(error: e.toString());
+    } finally {
+      isAddCustomerLoading.value = false;
+    }
+  }
+
+  Future<void> fetchCustomersByMobileNumber({required dynamic body}) async {
+    isCustomerFetchingByMobileNumberLoading.value = true;
+    int mobileNumber = int.parse(body);
+    try {
+      final response = await customerRepo.getCustomerByMobileNumber(
+        mobileNumber: mobileNumber,
+      );
+      if (response.success == success) {
+        // setDataAsPerOptionSelected(response.data);
+      } else if (response.success == failed) {
+        // showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        // showSnackBar(error: somethingWentMessage);
+      }
+    } catch (e) {
+      AppLogger.info((e).toString());
+      showSnackBar(error: e.toString());
+    } finally {
+      isCustomerFetchingByMobileNumberLoading.value = false;
     }
   }
 }

@@ -3,11 +3,8 @@ import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
-import 'package:inventory/module/inventorylist/model/inventory_model.dart';
-
+import 'package:inventory/module/near_expire_product/widgets/near_expiry_text.dart';
 import '../../../common_widget/common_nodatafound.dart';
-import '../../inventorylist/widget/inventory_list_text.dart';
 import '../controller/near_expire_product_controller.dart';
 
 class NearExpireProductView extends GetView<NearExpireProductController> {
@@ -20,18 +17,17 @@ class NearExpireProductView extends GetView<NearExpireProductController> {
       body: Obx(
         () =>
             controller.isDataloading.value
-                ? CommonProgressbar(color: AppColors.blackColor)
+                ? CommonProgressBar(color: AppColors.blackColor)
                 : controller.nearExpProductList.isNotEmpty
                 ? ListView.builder(
                   itemCount: controller.nearExpProductList.length,
                   itemBuilder: (context, index) {
-                    return InventroyListText(
+                    return NearExpiryText(
                       inventoryModel: controller.nearExpProductList[index],
-                      isInventoryScanSelected: true,
                     );
                   },
                 )
-                : CommonNodatafound(message: 'No product found'),
+                : CommonNoDataFound(message: 'No near expiry product found'),
       ),
     );
   }

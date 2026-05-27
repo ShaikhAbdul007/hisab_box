@@ -6,6 +6,51 @@ String setFormateDate([String dateFormat = 'dd-MM-yyyy']) {
   return todayDate;
 }
 
+/// Returns today's date in yyyy-MM-dd format — ready for API query params.
+String todayApiDate() {
+  return DateFormat('yyyy-MM-dd').format(DateTime.now());
+}
+
+String getFormattedDate(String date) {
+  final parsedDate = DateFormat('dd-MM-yyyy').parseStrict(date);
+  return DateFormat('yyyy/MM/dd').format(parsedDate);
+}
+
+String formatDateTime(
+  String dateString, {
+  bool showDate = true,
+  bool showTime = false,
+  String dateFormat = 'dd-MM-yyyy',
+  String timeFormat = 'hh:mm:ss a',
+}) {
+  try {
+    final DateTime parsedDate = DateTime.parse(dateString).toLocal(); // 🔥 FIX
+
+    final List<String> parts = [];
+
+    if (showDate) {
+      parts.add(DateFormat(dateFormat).format(parsedDate));
+    }
+
+    if (showTime) {
+      parts.add(DateFormat(timeFormat).format(parsedDate));
+    }
+
+    return parts.join(' ');
+  } catch (e) {
+    return dateString;
+  }
+}
+
+(String date, String time) splitDateTime(String input) {
+  final parts = input.split(',');
+
+  final date = parts.isNotEmpty ? parts[0].trim() : '';
+  final time = parts.length > 1 ? parts[1].trim() : '';
+
+  return (date, time);
+}
+
 String getStringLengthText(String value) {
   String? substring;
   if (value.isNotEmpty) {
@@ -18,14 +63,39 @@ String getStringLengthText(String value) {
   return substring ?? '';
 }
 
-String getshortStringLengthText({required String value, int size = 15}) {
-  String? substring;
-  if (value.isNotEmpty) {
-    if (value.length > size) {
-      substring = value.substring(0, size);
-    } else {
-      substring = value;
-    }
-  }
-  return substring ?? '';
+String? parseAppDate(String? value) {
+  if (value == null) return null;
+
+  final input = value.trim();
+
+  if (input.isEmpty) return null;
+
+  final parsedDate = DateFormat('dd-MM-yyyy').parseStrict(input);
+
+  return DateFormat('yyyy-MM-dd').format(parsedDate);
+}
+
+num safeNum(dynamic value) {
+  if (value == null) return 0;
+
+  if (value is num) return value;
+
+  final str = value.toString().trim();
+
+  if (str.isEmpty) return 0;
+
+  final intVal = int.tryParse(str);
+  if (intVal != null) return intVal;
+
+  final doubleVal = double.tryParse(str);
+  if (doubleVal != null) return doubleVal;
+
+  return 0;
+}
+
+double parsePrice(String value) {
+  final cleaned = value.trim();
+  if (cleaned.isEmpty) return 0.0;
+
+  return double.tryParse(cleaned) ?? 0.0;
 }

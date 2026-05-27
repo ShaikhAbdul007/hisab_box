@@ -1,22 +1,25 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:inventory/module/order_complete/model/customer_details_model.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
+import 'package:inventory/helper/helper.dart';
+import 'package:inventory/module/credits_amount/model/credit_model.dart';
+import 'package:inventory/module/credits_amount/repo/credit_repo.dart';
 
-import '../../../helper/helper.dart';
+class CredtiController extends GetxController with CacheManager {
+  // 🔥 GlobalStore Reference
 
-class CredtiController extends GetxController {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-
+  CreditRepo creditRepo = CreditRepo();
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
-  RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
+  RxList<CreditDataItem> customerDetailList = <CreditDataItem>[].obs;
   TextEditingController searchController = TextEditingController();
 
   @override
   void onInit() {
-    fetchAllCustomers();
+    fetchCreditReports();
+
     super.onInit();
   }
 
@@ -31,30 +34,29 @@ class CredtiController extends GetxController {
   }
 
   /// ⚡ INSTANT – no invoice scan
-  double calculateTotalCredit(CustomerDetails customer) {
-    return customer.totalCredit; // 🔥 already pre-calculated in Firestore
+  double calculateTotalCredit(CreditDataItem customer) {
+    return customer.remainingAmount != null
+        ? double.tryParse(customer.remainingAmount!) ?? 0.0
+        : 0.0;
   }
 
-  Future<void> fetchAllCustomers() async {
+  // ===================================================
+  // 🔥 OPTIMIZED: Ab ye RAM (GlobalStore) se data leta hai
+  // ===================================================
+  Future<void> fetchCreditReports() async {
     try {
       customDataLoading.value = true;
-
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('customers')
-              .where('totalCredit', isGreaterThan: 0) // 🔥 only dues customers
-              .orderBy('totalCredit', descending: true)
-              .get();
-
-      customerDetailList.value =
-          snapshot.docs
-              .map((doc) => CustomerDetails.fromJson(doc.data()))
-              .toList();
+      final response = await creditRepo.fetchCreditAmountData();
+      if (response.success == success) {
+        customerDetailList.value = response.data?.data ?? [];
+      } else if (response.success == failed) {
+        showSnackBar(error: response.message ?? "Update Failed!");
+      } else {
+        showSnackBar(error: response.message ?? "Update Failed!");
+      }
     } catch (e) {
-      customMessageOrErrorPrint(message: "Fetch customers error: $e");
-      customerDetailList.clear();
+      AppLogger.error('Credit report build failed', e, 'CredtiController');
+      showSnackBar(error: e.toString());
     } finally {
       customDataLoading.value = false;
     }

@@ -1,8 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/helper/textstyle.dart';
-
 import 'colors.dart';
 
 class CommonSearch extends StatelessWidget {
@@ -12,14 +11,17 @@ class CommonSearch extends StatelessWidget {
   final void Function(String)? onChanged;
   final TextEditingController controller;
   final bool isPaddingRequired;
-  final Widget icon;
+
+  /// Optional suffix icon — if null, a plain search icon is shown.
+  /// Pass an [Obx] widget here to get the reactive clear/search toggle.
+  final Widget? icon;
 
   const CommonSearch({
     super.key,
     required this.label,
     required this.hintText,
-    required this.icon,
     required this.controller,
+    this.icon,
     this.onChanged,
     this.focusNode,
     this.isPaddingRequired = false,
@@ -27,45 +29,66 @@ class CommonSearch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      focusNode: focusNode,
-      controller: controller,
-      style: CustomTextStyle.customPoppin(
-        fontSize: 14,
-        color: AppColors.blackColor,
-      ),
-      decoration: InputDecoration(
-        suffixIcon: icon,
-        isDense: true,
-        contentPadding: AllPadding(all: 10).getPadding(),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8.r)),
-          borderSide: BorderSide(color: AppColors.blackColor, width: 1.w),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8.r)),
-          borderSide: BorderSide(color: AppColors.blackColor, width: 1.w),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8.r)),
-          borderSide: BorderSide(color: AppColors.blackColor, width: 1),
-        ),
-        label: Text(
-          label,
-          style: CustomTextStyle.customOpenSans(
-            fontWeight: FontWeight.w400,
-            fontSize: 14,
-            color: AppColors.blackColor,
+    return Container(
+      height: 48.h,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-        ),
-        hintText: hintText,
-        hintStyle: CustomTextStyle.customOpenSans(
-          fontWeight: FontWeight.w200,
-          fontSize: 11,
+        ],
+      ),
+      child: TextField(
+        focusNode: focusNode,
+        controller: controller,
+        style: CustomTextStyle.customPoppin(
+          fontSize: 14,
           color: AppColors.blackColor,
         ),
+        decoration: InputDecoration(
+          // ── Leading search icon ──────────────────────────────────
+          prefixIcon: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            child: Icon(
+              CupertinoIcons.search,
+              size: 18.sp,
+              color: AppColors.greyColor,
+            ),
+          ),
+          prefixIconConstraints: BoxConstraints(
+            minWidth: 44.w,
+            minHeight: 44.h,
+          ),
+
+          // ── Trailing icon (clear / custom) ───────────────────────
+          suffixIcon:
+              icon != null
+                  ? Padding(padding: EdgeInsets.only(right: 8.w), child: icon)
+                  : null,
+          suffixIconConstraints: BoxConstraints(
+            minWidth: 40.w,
+            minHeight: 40.h,
+          ),
+
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(vertical: 14.h),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+
+          hintText: hintText,
+          hintStyle: CustomTextStyle.customOpenSans(
+            fontWeight: FontWeight.w400,
+            fontSize: 13,
+            color: Colors.grey.shade400,
+          ),
+        ),
+        onChanged: onChanged,
       ),
-      onChanged: onChanged,
     );
   }
 }

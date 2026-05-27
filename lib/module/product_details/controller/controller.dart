@@ -1,34 +1,44 @@
-import 'dart:math';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/set_format_date.dart';
-
-import '../../../helper/app_message.dart';
+import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/module/category/repo/animal_category_repo.dart';
+import 'package:inventory/module/category/repo/category_repo.dart';
+import 'package:inventory/module/color_category/repo/color_category_repo.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
+import 'package:inventory/module/loose_sell/model/loose_model.dart';
+import 'package:inventory/module/product_details/repo/product_repo.dart';
 import '../../../helper/helper.dart';
 import '../../category/model/category_model.dart';
-import '../../inventory/model/product_model.dart';
 
 class ProductController extends GetxController with CacheManager {
-  final FirebaseAuth auth = FirebaseAuth.instance;
-  final box = GetStorage();
   final inventoryScanKey = GlobalKey<FormState>();
-  RxList<CategoryModel> categoryList = <CategoryModel>[].obs;
-  var productList = <ProductModel>[].obs;
-  RxList<CategoryModel> animalTypeList = <CategoryModel>[].obs;
-  RxList<ProductModel> looseCatogorieList = <ProductModel>[].obs;
-  RxList<ProductModel> looseInventoryLis = <ProductModel>[].obs;
-  RxList<ProductModel> fullLooseSellingList = <ProductModel>[].obs;
+  ProductRepo productRepo = ProductRepo();
+  CategoryRepo categoryRepo = CategoryRepo();
+  AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
+  ColorCategoryRepo colorCategoryRepo = ColorCategoryRepo();
+
+  RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
+  RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
+  RxList<CategoryModelListData> colorList = <CategoryModelListData>[].obs;
+  RxList<InventoryItem> looseCatogorieList = <InventoryItem>[].obs;
+  RxList<LooseInvetoryModel> looseInventoryLis = <LooseInvetoryModel>[].obs;
+
+  // Selected IDs
+  RxnString selectedCategoryId = RxnString(null);
+  RxnString selectedAnimalTypeId = RxnString(null);
+  RxnString selectedColorId = RxnString(null);
+
+  // Controllers
   TextEditingController productName = TextEditingController();
   TextEditingController looseQuantity = TextEditingController();
   TextEditingController looseSellingPrice = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController animalType = TextEditingController();
+  TextEditingController color = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController location = TextEditingController();
   TextEditingController discount = TextEditingController(text: '0');
@@ -42,37 +52,60 @@ class ProductController extends GetxController with CacheManager {
   TextEditingController purchaseDate = TextEditingController();
   TextEditingController exprieDate = TextEditingController();
   TextEditingController loooseProductName = TextEditingController();
+
   RxBool isFlavorAndWeightNotRequired = true.obs;
   RxBool isLooseProductSave = false.obs;
   RxBool isSaveLoading = false.obs;
-  RxString barcodeValue = ''.obs;
+  RxString scannedBarcodeValue = ''.obs;
   RxBool loosedProduct = false.obs;
+  RxBool categoryListLoading = false.obs;
+  RxBool animalCategoryListLoading = false.obs;
+  RxBool colorListLoading = false.obs;
   RxString dayDate = ''.obs;
+  RxString shopType = ''.obs;
+  RxString brandType = ''.obs;
+  RxList<String> locationOptions = <String>['Shop'].obs;
   bool isLoose = false;
+
+  ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
   var data = Get.arguments;
+
   @override
   void onInit() async {
     dayDate.value = setFormateDate();
+    purchaseDate.text = setFormateDate(); // default today
     setLoosedProduct();
+    await retrieveGodownValue();
     setBarcode();
     getCategoryData();
     super.onInit();
   }
 
+  Future<void> retrieveGodownValue() async {
+    final isGodownEnabled = await retrieveGodown();
+    locationOptions.value =
+        isGodownEnabled ? <String>['Shop', 'Godown'] : <String>['Shop'];
+    if (!locationOptions.contains(location.text)) {
+      location.text = locationOptions.first;
+    }
+  }
+
   void setLoosedProduct() {
+    var user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
     loosedProduct.value = data['flag'];
     if (loosedProduct.value) {
       loooseProductName.text = data['productName'];
-      print('your product name is ${data['productName']}');
     }
   }
 
   void setBarcode() {
-    barcode.text = data['barcode'];
-    barcodeValue.value = barcode.text;
+    barcode.text = data['barcode'] ?? '';
+    scannedBarcodeValue.value = barcode.text;
   }
 
   void calculatePurchasePrice() {
+    double margin = double.tryParse(retrieveMarginValue() ?? '0') ?? 0;
     if (sellingPrice.text.isNotEmpty) {
       double sellingPrices = double.tryParse(sellingPrice.text) ?? 0;
       double purchasePrices = sellingPrices - (sellingPrices * 0.20);
@@ -83,274 +116,121 @@ class ProductController extends GetxController with CacheManager {
   void getCategoryData() async {
     await fetchCategories();
     await fetchAnimalCategories();
+    if (shopTypeEnum == ShopType.clothingShop) {
+      await fetchColorCategories();
+    }
   }
 
   Future<void> fetchCategories() async {
-    var categorList = await retrieveCategoryModel();
-    if (categorList.isNotEmpty) {
-      categoryList.value = categorList;
-    } else {
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
-
-      try {
-        final snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .collection('categories')
-                .get();
-
-        categoryList.value =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return CategoryModel.fromJson(data);
-            }).toList();
-        saveCategoryModel(categoryList);
-      } on FirebaseAuthException catch (e) {
-        showMessage(message: e.toString());
+    categoryListLoading.value = true;
+    try {
+      final cached = await retrieveCategory();
+      if (cached.isNotEmpty) categoryList.value = cached;
+      final response = await categoryRepo.getCategory();
+      if (response.success == success) {
+        categoryList.value = response.categorymodeldata?.data ?? [];
+        saveCategoryList(categoryList);
       }
+    } catch (e) {
+      AppLogger.info(("🚨 Category Error: $e").toString());
+    } finally {
+      categoryListLoading.value = false;
     }
   }
 
   Future<void> fetchAnimalCategories() async {
-    var animalCategorList = await retrieveAnimalCategoryModel();
-    if (animalCategorList.isNotEmpty) {
-      animalTypeList.value = animalCategorList;
-    } else {
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
-      try {
-        final snapshot =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .collection('animalCategories')
-                .get();
-        animalTypeList.value =
-            snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return CategoryModel.fromJson(data);
-            }).toList();
-        saveAnimalCategoryModel(animalTypeList);
-      } on FirebaseAuthException catch (e) {
-        showMessage(message: e.toString());
+    animalCategoryListLoading.value = true;
+    try {
+      final cached = await retrieveAnimalCategory();
+      if (cached.isNotEmpty) animalTypeList.value = cached;
+      final response = await animalCategoryRepo.getAnimalCategory();
+      if (response.success == success) {
+        animalTypeList.value = response.categorymodeldata?.data ?? [];
+        saveAnimalList(animalTypeList);
       }
+    } catch (e) {
+      AppLogger.info(("🚨 Animal Error: $e").toString());
+    } finally {
+      animalCategoryListLoading.value = false;
     }
   }
 
-  String getRandomHexColor() {
-    final random = Random();
-    final color = (random.nextDouble() * 0xFFFFFF).toInt();
-    return '0xff${color.toRadixString(16).padLeft(6, '0')}';
+  Future<void> fetchColorCategories() async {
+    colorListLoading.value = true;
+    try {
+      final response = await colorCategoryRepo.getColorCategories();
+      if (response.success == success) {
+        colorList.value = response.categorymodeldata?.data ?? [];
+      }
+    } catch (e) {
+      AppLogger.info(("🚨 Color Error: $e").toString());
+    } finally {
+      colorListLoading.value = false;
+    }
   }
 
-  Future<void> saveNewProduct({required String barcode}) async {
+  Future<void> saveNewProduct({required dynamic body}) async {
     isSaveLoading.value = true;
-
     try {
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
-
-      final String formatDate = setFormateDate();
-
-      final String formaTime = setFormateDate('hh:mm a');
-
-      final productRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('products')
-          .doc(barcode);
-      final aminalTypeData =
-          animalTypeList.firstWhere((e) => e.id == animalType.text).name;
-      final categoriesData =
-          categoryList.firstWhere((e) => e.id == category.text).name;
-      int quantityOnly = int.tryParse(quantity.text) ?? 0;
-      int discounts = int.tryParse(discount.text) ?? 0;
-      double purchasePrices = double.tryParse(purchasePrice.text) ?? 0.0;
-      double sellingPrices = double.tryParse(sellingPrice.text) ?? 0.0;
-      await productRef.set({
-        'barcode': barcode,
-        'name': productName.text,
-        'category': categoriesData,
-        'animalType': aminalTypeData,
-        'isLoose': loosedProduct.value,
-        'quantity': quantityOnly,
-        'purchasePrice': purchasePrices,
-        'sellingPrice': sellingPrices,
-        'flavours': flavor.text,
-        'weight': weight.text,
-        'level': level.text,
-        'rack': rack.text,
-        'createdDate': formatDate,
-        'updatedDate': formatDate,
-        'createdTime': formaTime,
-        'updatedTime': formaTime,
-        'color': getRandomHexColor(),
-        'isFlavorAndWeightNotRequired': isFlavorAndWeightNotRequired.value,
-        'location': location.text,
-        'discount': discounts,
-        'purchaseDate': purchaseDate.text,
-        'exprieDate': exprieDate.text,
-        'isActive': true,
-        'sellType': 'packet',
-      });
-      fetchAllProducts();
-
-      showMessage(message: scannerDataSave);
-      Future.delayed(Duration(milliseconds: 500), () {
+      var response = await productRepo.addProduct(body: body);
+      if (response.success == success) {
         clear();
-      });
-      Get.back(result: true);
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.message ?? '');
+        Get.back(result: true);
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
     } catch (e) {
-      print('');
-      showMessage(message: somethingWentMessage);
+      AppLogger.info(("Database Error: $e").toString());
+      showSnackBar(error: e.toString());
     } finally {
       isSaveLoading.value = false;
     }
   }
 
-  Future<void> saveNewLooseProduct({required String barcode}) async {
+  Future<void> saveNewLooseProduct({required dynamic body}) async {
     isLooseProductSave.value = true;
-
-    final uid = auth.currentUser?.uid;
-    if (uid == null) return;
-
-    final now = DateTime.now();
-    final String formatDate = DateFormat('dd-MM-yyyy').format(now);
-    final String formatTime = DateFormat('hh:mm a').format(now);
-
-    final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
-    final double looseSellingPrice = double.tryParse(sellingPrice.text) ?? 0.0;
-
-    if (looseQty <= 0) {
-      showMessage(message: "❌ Invalid loose quantity");
-      isLooseProductSave.value = false;
-      return;
-    }
-
-    final productRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('products')
-        .doc(barcode);
-
-    final looseRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('looseProducts')
-        .doc(barcode);
-
     try {
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        /// ===============================
-        /// 1️⃣ READS FIRST (MANDATORY)
-        /// ===============================
-        final productSnap = await tx.get(productRef);
-        final looseSnap = await tx.get(looseRef);
-
-        if (!productSnap.exists) {
-          throw Exception("Product not found");
-        }
-
-        final data = productSnap.data() as Map<String, dynamic>;
-
-        final bool allowLoose = data['isLoose'] == true;
-
-        if (!allowLoose) {
-          throw Exception("Product not allowed for loose selling");
-        }
-
-        final int mainStock = (data['quantity'] ?? 0).toInt();
-        if (mainStock <= 0) {
-          throw Exception("No sealed pack left");
-        }
-
-        final int looseQty = int.tryParse(looseQuantity.text) ?? 0;
-        if (looseQty <= 0) {
-          throw Exception("Invalid loose quantity");
-        }
-
-        /// ===============================
-        /// 2️⃣ WRITES AFTER ALL READS
-        /// ===============================
-
-        // 🔻 Deduct packet stock
-        tx.update(productRef, {
-          'quantity': mainStock - 1,
-          'updatedDate': formatDate,
-          'updatedTime': formatTime,
-        });
-
-        if (looseSnap.exists) {
-          final looseData = looseSnap.data() as Map<String, dynamic>;
-          final int oldQty = (looseData['quantity'] ?? 0).toInt();
-          tx.update(looseRef, {
-            'quantity': oldQty + looseQty,
-            'sellingPrice': looseSellingPrice,
-            'updatedDate': formatDate,
-            'updatedTime': formatTime,
-          });
-        } else {
-          tx.set(looseRef, {
-            'barcode': barcode,
-            'name': data['name'],
-            'category': data['category'],
-            'animalType': data['animalType'],
-            'quantity': looseQty,
-            'purchasePrice': data['purchasePrice'],
-            'sellingPrice': looseSellingPrice,
-            'weight': data['weight'],
-            'color': data['color'],
-            'level': data['level'],
-            'rack': data['rack'],
-            'location': data['location'],
-            'discount': data['discount'],
-            'isFlavorAndWeightNotRequired':
-                data['isFlavorAndWeightNotRequired'],
-            'createdDate': formatDate,
-            'createdTime': formatTime,
-            'updatedDate': formatDate,
-            'updatedTime': formatTime,
-            'exprieDate': data['exprieDate'],
-            'purchaseDate': data['purchaseDate'],
-            'isActive': true,
-            'sellType': 'loose',
-          });
-        }
-      });
-      clear();
-      Get.back(result: true);
-      showMessage(message: "✅ Loose stock created successfully");
-    } on FirebaseException catch (e) {
-      print(e.toString());
-      showMessage(message: "❌ ${e.toString()}");
+      var response = await productRepo.addLoosedProduct(body: body);
+      if (response.success == success) {
+        clear();
+        Get.back(result: true);
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
     } catch (e) {
-      print(e.toString());
-      showMessage(message: "❌ ${e.toString()}");
+      showSnackBar(error: e.toString());
     } finally {
       isLooseProductSave.value = false;
     }
   }
 
-  Future<void> fetchAllProducts() async {
-    final uid = auth.currentUser?.uid;
-    final productSnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('products')
-            .where('quantity')
-            .get();
-    productList.value =
-        productSnapshot.docs
-            .map((doc) => ProductModel.fromJson(doc.data()))
-            .toList();
-    saveProductList(productList);
+  Future<void> saveNewGrProduct({required dynamic body}) async {
+    isLooseProductSave.value = true;
+    try {
+      var response = await productRepo.addGrProduct(body: body);
+      if (response.success == success) {
+        clear();
+        Get.back(result: true);
+        showMessage(
+          message:
+              response.data?.message ?? response.msg ?? somethingWentMessage,
+        );
+      } else if (response.success == failed) {
+        showMessage(message: response.msg ?? somethingWentMessage);
+      } else {
+        showMessage(message: somethingWentMessage);
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isLooseProductSave.value = false;
+    }
   }
 
   void clear() {
@@ -359,25 +239,39 @@ class ProductController extends GetxController with CacheManager {
     looseQuantity.clear();
     looseSellingPrice.clear();
     category.clear();
+    color.clear();
     sellingPrice.clear();
     purchasePrice.clear();
     flavor.clear();
     weight.clear();
     quantity.clear();
+    selectedCategoryId.value = null;
+    selectedAnimalTypeId.value = null;
+    selectedColorId.value = null;
+    brandType.value = '';
   }
 
   @override
   void dispose() {
-    barcode.dispose();
     productName.dispose();
     looseQuantity.dispose();
     looseSellingPrice.dispose();
     category.dispose();
+    animalType.dispose();
+    color.dispose();
     sellingPrice.dispose();
+    location.dispose();
+    discount.dispose();
     purchasePrice.dispose();
+    level.dispose();
+    rack.dispose();
     flavor.dispose();
     weight.dispose();
     quantity.dispose();
+    barcode.dispose();
+    purchaseDate.dispose();
+    exprieDate.dispose();
+    loooseProductName.dispose();
     super.dispose();
   }
 }

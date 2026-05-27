@@ -1,25 +1,21 @@
-import 'dart:math';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/module/inventory/model/product_model.dart';
-import '../../../helper/app_message.dart';
+import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 
-class LooseCategoryController extends GetxController {
+class LooseCategoryController extends GetxController with CacheManager {
   TextEditingController name = TextEditingController();
   TextEditingController weight = TextEditingController();
   TextEditingController price = TextEditingController();
   TextEditingController flavor = TextEditingController();
   TextEditingController quantity = TextEditingController();
-  final _auth = FirebaseAuth.instance;
+
   final isSaveLoading = false.obs;
   final isFetchDiscount = false.obs;
   final isDeleteDiscount = false.obs;
-  RxList<ProductModel> looseCategoryModelList = <ProductModel>[].obs;
+  RxList<InventoryItem> looseCategoryModelList = <InventoryItem>[].obs;
 
   @override
   void onInit() {
@@ -27,173 +23,162 @@ class LooseCategoryController extends GetxController {
     super.onInit();
   }
 
+  // ==========================================
+  // 🔥 FETCH LOGIC (HIVE + SUPABASE FALLBACK)
+  // ==========================================
   Future<void> fetchLooseCategory() async {
+    final userId = resolveUserId(isFetchDiscount.value);
+    if (userId == null) return;
     isFetchDiscount.value = true;
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+
+    // 1. Pehle Hive (Local) se uthao
+    // final localData =
+    //     LocalService.getCachedProducts()
+    //         .where((p) => p.isLoosed == true || p == 'loose')
+    //         .toList();
+
+    // if (localData.isNotEmpty) {
+    //   looseCategoryModelList.value = localData;
+    //   AppLogger.info(
+    //     ("📦 Loose Data from Hive: ${localData.length}").toString(),
+    //   );
+    // }
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .collection('looseSellCategory')
-              .get();
+      // 2. Supabase Sync (Airtel Handshake handle karne ke liye try-catch)
+      // final response = await SupabaseConfig.from('product_stock')
+      //     .select('''
+      //       quantity, selling_price, stock_type,
+      //       products!fk_product_stock_products (
+      //         id, name, flavour, weight, is_loose_category,
+      //         product_barcodes(barcode)
+      //       )
+      //     ''')
+      //     .eq('user_id', userId)
+      //     .eq('stock_type', 'loose')
+      //     .eq('is_active', true);
 
-      looseCategoryModelList.value =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return ProductModel.fromJson(data);
-          }).toList();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
+      // final List dataList = response as List;
+
+      // final List<ProductModel> freshList =
+      //     dataList.map((e) {
+      //       final productMap = Map<String, dynamic>.from(e['products']);
+      //       productMap['quantity'] = e['quantity'];
+      //       productMap['selling_price'] = e['selling_price'];
+      //       productMap['sell_type'] = e['stock_type'];
+      //       productMap['is_loose'] = true;
+
+      //       final List? barcodes = productMap['product_barcodes'] as List?;
+      //       productMap['barcode'] =
+      //           (barcodes != null && barcodes.isNotEmpty)
+      //               ? barcodes[0]['barcode']
+      //               : '';
+
+      //       return ProductModel.fromJson(productMap);
+      //     }).toList();
+
+      // looseCategoryModelList.value = freshList;
+
+      // // Hive ko refresh karo fresh data se
+      // LocalService.saveProducts(freshList);
+    } catch (e) {
+      AppLogger.info(("🚨 Fetch Fallback: $e").toString());
+      showSnackBar(error: e.toString());
     } finally {
       isFetchDiscount.value = false;
     }
   }
 
-  String getRandomHexColor() {
-    final random = Random();
-    final color = (random.nextDouble() * 0xFFFFFF).toInt();
-    return '0xff${color.toRadixString(16).padLeft(6, '0')}';
-  }
-
+  // ==========================================
+  // 🔥 ADD LOOSE PRODUCT (SUPABASE INSERT LOGIC)
+  // ==========================================
   Future<void> addLooseProduct() async {
-    isSaveLoading.value = true;
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    // final userId = resolveUserId(isSaveLoading.value);
+    // if (userId == null) return;
+    // if (name.text.isEmpty || price.text.isEmpty) {
+    // showSnackBar(error: "Name and Price are required");
+    //   return;
+    // }
 
-    final looseCollectionRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('looseSellCategory');
-    try {
-      final now = DateTime.now();
-      final date = DateFormat('dd-MM-yyyy').format(now);
-      final time = DateFormat('hh:mm a').format(now);
+    // isSaveLoading.value = true;
+    // try {
+    //   // 1. Insert into 'products' table first
+    //   final productRes =
+    //       await SupabaseConfig.from('products')
+    //           .insert({
+    //             'user_id': userId,
+    //             'name': name.text,
+    //             'flavour': flavor.text,
+    //             'weight': weight.text,
+    //             'is_loose_category': true,
+    //           })
+    //           .select()
+    //           .single();
 
-      String names = name.text;
-      String weights = weight.text;
-      double prices = double.parse(price.text);
-      String generatedBarcode =
-          "${names.replaceAll(" ", "")}-$weights-${now.millisecondsSinceEpoch}";
+    //   final productId = productRes['id'];
 
-      await looseCollectionRef.add({
-        'barcode': generatedBarcode,
-        'name': names,
-        'category': 'dry',
-        'animalType': 'cat',
-        'isLoose': true,
-        'purchasePrice': 0.0,
-        'sellingPrice': prices,
-        'flavours': flavor.text,
-        'weight': weights,
-        'color': getRandomHexColor(),
-        'createdDate': date,
-        'updatedDate': date,
-        'createdTime': time,
-        'updatedTime': time,
-        'isLooseCategory': true,
-      });
-      Get.back();
-      showMessage(message: "Loose product saved successfully ✅");
-      clear();
-      fetchLooseCategory();
-    } on FirebaseException catch (e) {
-      showMessage(message: e.toString());
-    } finally {
-      isSaveLoading.value = false;
-    }
+    //   // 2. Insert into 'product_stock' table
+    //   await SupabaseConfig.from('product_stock').insert({
+    //     'user_id': userId,
+    //     'product_id': productId,
+    //     'quantity': double.tryParse(quantity.text) ?? 0.0,
+    //     'selling_price': double.tryParse(price.text) ?? 0.0,
+    //     'stock_type': 'loose',
+    //     'location': 'shop',
+    //     'is_active': true,
+    //   });
+
+    //   // 3. Generate a dummy barcode for loose items (if needed for internal tracking)
+    //   String generatedBarcode =
+    //       "LOOSE-${DateTime.now().millisecondsSinceEpoch}";
+    //   await SupabaseConfig.from('product_barcodes').insert({
+    //     'product_id': productId,
+    //     'barcode': generatedBarcode,
+    //     'user_id': userId,
+    //   });
+
+    //   Get.back();
+    // showSnackBar(error: "Loose product saved successfully ✅");
+    //   clear();
+    //   fetchLooseCategory(); // Refresh list to update Hive & UI
+    // } catch (e) {
+    //   AppLogger.info(("🚨 Add Product Error: $e").toString());
+    // showSnackBar(error: e.toString());
+    // } finally {
+    //   isSaveLoading.value = false;
+    // }
   }
 
-  // Future<void> addDiscount() async {
-  //   isSaveLoading.value = true;
-  //   final uid = _auth.currentUser?.uid;
-  //   if (uid == null) return;
-  //   // final productRef = FirebaseFirestore.instance
-  //   //     .collection('users')
-  //   //     .doc(uid)
-  //   //     .collection('products')
-  //   //     .doc(barcode);
-
-  //   final looseCollectionRef = FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uid)
-  //       .collection('looseProducts');
-
-  //   try {
-  //     final now = DateTime.now();
-  //     final date = DateFormat('dd-MM-yyyy').format(now);
-  //     final time = DateFormat('hh:mm a').format(now);
-  //     String names = name.text;
-  //     String units = unit.text;
-  //     double prices = double.parse(price.text);
-
-  //     await looseCollectionRef.set({
-  //       'barcode': barcode,
-  //       'name': names,
-  //       'category': productData['category'],
-  //       'animalType': productData['animalType'],
-  //       'isLoose': true,
-  //       'quantity': units,
-  //       'purchasePrice': '',
-  //       'sellingPrice': prices,
-  //       'flavours': flavor.text,
-  //       'weight': units,
-  //       'createdDate': date,
-  //       'updatedDate': date,
-  //       'createdTime': time,
-  //       'updatedTime': time,
-  //       // 'color': productData['color'],
-  //     });
-
-  //     // await FirebaseFirestore.instance
-  //     //     .collection('users')
-  //     //     .doc(uid)
-  //     //     .collection('looseSellCategory')
-  //     //     .add({
-  //     //       'name': names,
-  //     //       'unit': units,
-  //     //       'price': prices,
-  //     //       'createdAt': date,
-  //     //       'time': time,
-  //     //     });
-  //     Get.back();
-  //     showMessage(message: discountSaveSuccessMessage);
-  //     clear();
-  //     fetchLooseCategory();
-  //   } on FirebaseException catch (e) {
-  //     showMessage(message: e.toString());
-  //   } finally {
-  //     isSaveLoading.value = false;
-  //   }
-  // }
-
+  // ==========================================
+  // 🔥 DELETE LOGIC (SUPABASE)
+  // ==========================================
   Future<void> deleteLooseCategory(String looseCategoryId) async {
-    isDeleteDiscount.value = true;
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    // final userId = resolveUserId(isDeleteDiscount.value);
+    // if (userId == null) return;
+    // isDeleteDiscount.value = true;
 
-    try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('looseSellCategory')
-          .doc(looseCategoryId)
-          .delete();
-      showMessage(message: discountdeleteSuccessMessage);
-      fetchLooseCategory();
-    } on FirebaseAuthException catch (e) {
-      showMessage(message: e.toString());
-    } finally {
-      isDeleteDiscount.value = false;
-    }
+    // try {
+    //   // Soft delete: is_active ko false kar do
+    //   await SupabaseConfig.from('product_stock')
+    //       .update({'is_active': false})
+    //       .eq('product_id', looseCategoryId)
+    //       .eq('user_id', userId);
+
+    //   showSnackBar(error: "Category deleted successfully");
+    //   fetchLooseCategory();
+    // } catch (e) {
+    //   AppLogger.info(("🚨 Delete Error: $e").toString());
+    //   showSnackBar(error: e.toString());
+    // } finally {
+    //   isDeleteDiscount.value = false;
+    // }
   }
 
   void clear() {
     name.clear();
     weight.clear();
     price.clear();
+    flavor.clear();
+    quantity.clear();
   }
 }
