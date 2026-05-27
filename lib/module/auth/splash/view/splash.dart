@@ -32,7 +32,7 @@ class SplashView extends GetView<SplashController> {
                     height: 120.h,
                     fit: BoxFit.contain,
                     errorBuilder:
-                        (_, __, ___) =>
+                        (_, _, _) =>
                             Icon(Icons.inventory_2_rounded, size: 80.sp),
                   ),
 

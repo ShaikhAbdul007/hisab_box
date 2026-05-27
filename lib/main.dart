@@ -7,6 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/push_notification/local_notification_service.dart';
 import 'package:inventory/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -15,10 +16,16 @@ import 'firebase_options.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background body message: ${message.notification?.body}");
-  print("Handling a background title message: ${message.notification?.title}");
-  print("Handling a background topic message: ${message.data['topic']}");
-  print(
+  AppLogger.info(
+    "Handling a background body message: ${message.notification?.body}",
+  );
+  AppLogger.info(
+    "Handling a background title message: ${message.notification?.title}",
+  );
+  AppLogger.info(
+    "Handling a background topic message: ${message.data['topic']}",
+  );
+  AppLogger.info(
     "Handling a background id coming from data message: ${message.data['id']}",
   );
   String payload = message.data['topic'];
@@ -100,10 +107,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   void handlePayload(String? payload, String id) async {
-    print('Payload: $payload, ID: $id');
+    AppLogger.info('Payload: $payload, ID: $id');
     Future.delayed(const Duration(seconds: 4), () {
       if (payload == null || payload.isEmpty) {
-        print('Payload is null');
+        AppLogger.info('Payload is null');
         // MyRoutes.navigateToRoute(routeName: MyRoutes.dashBoardView);
       } else if (payload == 'tracker') {
         // MyRoutes.navigateToRoute(

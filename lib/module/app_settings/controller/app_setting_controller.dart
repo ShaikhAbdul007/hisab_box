@@ -6,12 +6,13 @@ import 'package:inventory/helper/logger.dart';
 class AppSettingController extends GetxController with CacheManager {
   RxBool isInventoryScanSelected = false.obs;
   RxBool isGodownSelected = false.obs;
-  final profitMargin = TextEditingController().obs;
+  final profitMarginController = TextEditingController().obs;
 
   @override
   void onInit() {
     isInventoryScanSelectedValue();
     isGodownSelectedValue();
+
     super.onInit();
   }
 

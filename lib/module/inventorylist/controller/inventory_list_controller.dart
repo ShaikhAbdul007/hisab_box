@@ -195,17 +195,19 @@ class InventoryListController extends GetxController with CacheManager {
           _godownTotalPages = pagination?.totalPages ?? _godownTotalPages;
         }
       } else {
-        if (type == 'shop')
+        if (type == 'shop') {
           _shopPage--;
-        else
+        } else {
           _godownPage--;
+        }
         showSnackBar(error: response.msg ?? somethingWentMessage);
       }
     } catch (e) {
-      if (type == 'shop')
+      if (type == 'shop') {
         _shopPage--;
-      else
+      } else {
         _godownPage--;
+      }
       showSnackBar(error: e.toString());
     } finally {
       isLoadingMore.value = false;

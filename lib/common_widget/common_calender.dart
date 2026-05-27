@@ -134,12 +134,17 @@ class _CalendarSheetState extends State<_CalendarSheet> {
     final daysInMonth = DateTime(_viewing.year, _viewing.month + 1, 0).day;
 
     final cells = <DateTime?>[];
-    for (int i = 0; i < startOffset; i++) cells.add(null);
+    for (int i = 0; i < startOffset; i++) {
+      cells.add(null);
+    }
+
     for (int d = 1; d <= daysInMonth; d++) {
       cells.add(DateTime(_viewing.year, _viewing.month, d));
     }
     // Pad to full rows
-    while (cells.length % 7 != 0) cells.add(null);
+    while (cells.length % 7 != 0) {
+      cells.add(null);
+    }
     return cells;
   }
 

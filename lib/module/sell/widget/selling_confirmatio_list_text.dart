@@ -19,6 +19,7 @@ class SellingConfirmationListText extends StatelessWidget with CacheManager {
   final Widget sellingPrices;
   final TextEditingController dicountController;
   final void Function(String)? onDiscountChanged;
+  final bool isLooseDiscountEnable;
 
   SellingConfirmationListText({
     super.key,
@@ -29,6 +30,7 @@ class SellingConfirmationListText extends StatelessWidget with CacheManager {
     this.removeOnTap,
     required this.dicountController,
     this.onDiscountChanged,
+    required this.isLooseDiscountEnable,
   });
 
   @override
@@ -170,6 +172,7 @@ class SellingConfirmationListText extends StatelessWidget with CacheManager {
                 height: 40.h,
                 width: 60.w,
                 child: TextFormField(
+                  readOnly: isLooseDiscountEnable,
                   keyboardType: TextInputType.number,
                   controller: dicountController,
                   onChanged: onDiscountChanged,
@@ -180,10 +183,8 @@ class SellingConfirmationListText extends StatelessWidget with CacheManager {
                     fontWeight: FontWeight.w500,
                   ),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'[a-zA-Z0-9@./&\s]'),
-                    ),
-                    LengthLimitingTextInputFormatter(4),
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
                   ],
                   decoration: InputDecoration(
                     contentPadding: EdgeInsets.fromLTRB(8.w, 0, 4.w, 12.h),

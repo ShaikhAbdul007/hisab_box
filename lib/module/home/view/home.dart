@@ -285,7 +285,7 @@ class _GreetingHeader extends StatelessWidget {
                 fit: BoxFit.contain,
                 color: Colors.white,
                 errorBuilder:
-                    (_, __, ___) => Icon(
+                    (_, _, _) => Icon(
                       CupertinoIcons.cube_box_fill,
                       color: Colors.white,
                       size: 26.sp,
@@ -652,7 +652,7 @@ class _ActivitiesCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: controller.sellsList.length + 1,
                 separatorBuilder:
-                    (_, __) => Divider(
+                    (_, _) => Divider(
                       height: 1,
                       indent: 62,
                       color: Colors.grey.shade100,

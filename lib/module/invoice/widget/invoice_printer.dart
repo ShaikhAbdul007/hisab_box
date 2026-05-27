@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/helper/shop_type.dart';
@@ -125,6 +127,11 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                   // ── Powered by HisaabBox (Clothing Shop only) ──────────────
                   if (isClothing) ...[_buildPoweredBy(), setHeight(height: 14)],
 
+                  // ── Terms & Conditions ─────────────────────────────────────
+                  _dashedDivider(),
+                  setHeight(height: 14),
+                  _buildTermsSection(),
+
                   setHeight(height: 60),
                 ],
               ),
@@ -150,27 +157,46 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           child:
               user.data?.profilepic?.isNotEmpty == true
                   ? ClipOval(
-                    child: Image.network(
-                      user.data!.profilepic!,
-                      fit: BoxFit.cover,
-                      filterQuality: FilterQuality.high,
-                      errorBuilder:
-                          (_, __, ___) => Center(
-                            child: Text(
-                              initials,
-                              style: CustomTextStyle.customMontserrat(
-                                color: Colors.white,
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    child:
+                        (user.data!.profilepic!.startsWith('http://') ||
+                                user.data!.profilepic!.startsWith('https://'))
+                            ? Image.network(
+                              user.data!.profilepic!,
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                              errorBuilder:
+                                  (_, _, _) => Center(
+                                    child: Text(
+                                      initials,
+                                      style: CustomTextStyle.customPoppin(
+                                        color: Colors.white,
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                            )
+                            : Image.file(
+                              File(user.data!.profilepic!),
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                              errorBuilder:
+                                  (_, _, _) => Center(
+                                    child: Text(
+                                      initials,
+                                      style: CustomTextStyle.customPoppin(
+                                        color: Colors.white,
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                             ),
-                          ),
-                    ),
                   )
                   : Center(
                     child: Text(
                       initials,
-                      style: CustomTextStyle.customMontserrat(
+                      style: CustomTextStyle.customPoppin(
                         color: Colors.white,
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
@@ -187,7 +213,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
             children: [
               Text(
                 user.data?.name ?? '',
-                style: CustomTextStyle.customMontserrat(
+                style: CustomTextStyle.customPoppin(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: _k,
@@ -198,9 +224,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               setHeight(height: 4),
               Text(
                 _phoneText(user),
-                style: CustomTextStyle.customMontserrat(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                style: CustomTextStyle.customPoppin(
+                  fontWeight: FontWeight.w700,
                   color: _k,
                 ),
               ),
@@ -237,7 +262,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               Expanded(
                 child: Text(
                   address,
-                  style: CustomTextStyle.customMontserrat(
+                  style: CustomTextStyle.customPoppin(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: _k,
@@ -268,21 +293,21 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           width: 110.w,
           child: Text(
             label,
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 15,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: _k,
             ),
           ),
         ),
         Text(
           ':  ',
-          style: CustomTextStyle.customMontserrat(fontSize: 15, color: _k),
+          style: CustomTextStyle.customPoppin(fontSize: 15, color: _k),
         ),
         Expanded(
           child: Text(
             value,
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: _k,
@@ -306,7 +331,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               flex: 5,
               child: Text(
                 'ITEM',
-                style: CustomTextStyle.customMontserrat(
+                style: CustomTextStyle.customPoppin(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: _k,
@@ -315,7 +340,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
             ),
             Text(
               'AMOUNT',
-              style: CustomTextStyle.customMontserrat(
+              style: CustomTextStyle.customPoppin(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
                 color: _k,
@@ -348,7 +373,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
               children: [
                 Text(
                   item.productName ?? 'No Name',
-                  style: CustomTextStyle.customMontserrat(
+                  style: CustomTextStyle.customPoppin(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: _k,
@@ -358,7 +383,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 if (_itemSubtitle(item).isNotEmpty)
                   Text(
                     _itemSubtitle(item),
-                    style: CustomTextStyle.customMontserrat(
+                    style: CustomTextStyle.customPoppin(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: _k,
@@ -368,7 +393,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                 RichText(
                   text: TextSpan(
                     text: '${item.quantity} x ₹${item.originalPrice}',
-                    style: CustomTextStyle.customMontserrat(
+                    style: CustomTextStyle.customPoppin(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: _k,
@@ -378,7 +403,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                             ? [
                               TextSpan(
                                 text: ' @ $discount%',
-                                style: CustomTextStyle.customMontserrat(
+                                style: CustomTextStyle.customPoppin(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: _k,
@@ -393,7 +418,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           ),
           Text(
             '₹ ${item.totalPrice ?? item.finalPrice ?? ''}',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 17,
               fontWeight: FontWeight.w800,
               color: _k,
@@ -457,7 +482,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           children: [
             Text(
               'GRAND TOTAL',
-              style: CustomTextStyle.customMontserrat(
+              style: CustomTextStyle.customPoppin(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
                 color: _k,
@@ -465,7 +490,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
             ),
             Text(
               '₹ $finalAmt',
-              style: CustomTextStyle.customMontserrat(
+              style: CustomTextStyle.customPoppin(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: _k,
@@ -485,7 +510,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
       children: [
         Text(
           label,
-          style: CustomTextStyle.customMontserrat(
+          style: CustomTextStyle.customPoppin(
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: _k,
@@ -493,7 +518,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         ),
         Text(
           value,
-          style: CustomTextStyle.customMontserrat(
+          style: CustomTextStyle.customPoppin(
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: _k,
@@ -511,7 +536,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           child: Text(
             '** You saved ₹$savedAmount on this order! **',
             textAlign: TextAlign.center,
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: _k,
@@ -523,7 +548,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           child: Text(
             'Add more items to unlock bigger discounts',
             textAlign: TextAlign.center,
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _k,
@@ -542,7 +567,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           child: Text(
             '** Thank You for Shopping With Us **',
             textAlign: TextAlign.center,
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: _k,
@@ -554,7 +579,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           child: Text(
             'Your satisfaction is our priority.\nWe look forward to serving you again!',
             textAlign: TextAlign.center,
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _k,
@@ -565,7 +590,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         Center(
           child: Text(
             'Visit Again !',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 22,
               fontWeight: FontWeight.w900,
               color: _k,
@@ -576,7 +601,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         Center(
           child: Text(
             'Keep shopping to save more!',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _k,
@@ -594,7 +619,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         Center(
           child: Text(
             'Scan to Pay',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: _k,
@@ -618,7 +643,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         Center(
           child: Text(
             '₹ ${total.toStringAsFixed(2)} /-',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 28,
               fontWeight: FontWeight.w900,
               color: _k,
@@ -636,7 +661,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         children: [
           TextSpan(
             text: '#Add.\n',
-            style: CustomTextStyle.customOpenSans(
+            style: CustomTextStyle.customPoppin(
               color: _k,
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -644,7 +669,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           ),
           TextSpan(
             text: 'Raah Constra\n',
-            style: CustomTextStyle.customOpenSans(
+            style: CustomTextStyle.customPoppin(
               color: _k,
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -653,7 +678,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           TextSpan(
             text:
                 'Water Proofing | Interior Design | False Ceiling | Painting | All Renovation Work.\n',
-            style: CustomTextStyle.customOpenSans(
+            style: CustomTextStyle.customPoppin(
               color: _k,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -661,7 +686,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           ),
           TextSpan(
             text: 'www.raahconstra.com\n',
-            style: CustomTextStyle.customOpenSans(
+            style: CustomTextStyle.customPoppin(
               color: _k,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -669,7 +694,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
           ),
           TextSpan(
             text: 'Contact: 9930024594',
-            style: CustomTextStyle.customOpenSans(
+            style: CustomTextStyle.customPoppin(
               color: _k,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -689,7 +714,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         Center(
           child: Text(
             'Powered by',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _k,
@@ -700,7 +725,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         Center(
           child: Text(
             'HisaabBox',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 22,
               fontWeight: FontWeight.w900,
               color: _k,
@@ -711,7 +736,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         Center(
           child: Text(
             'Smart Billing & Inventory Management',
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: _k,
@@ -720,6 +745,33 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
         ),
         setHeight(height: 8),
         // _dashedDivider(),
+      ],
+    );
+  }
+
+  // ── Terms & Conditions ───────────────────────────────────────────────────────
+  Widget _buildTermsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Terms & Conditions',
+          style: CustomTextStyle.customPoppin(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: _k,
+          ),
+        ),
+        setHeight(height: 6),
+        Text(
+          '1. Goods once sold will not be taken back or exchanged.\n'
+          '2. No refund on sold items.\n'
+          '3. All disputes subject to local jurisdiction.',
+          style: CustomTextStyle.customPoppin(
+            fontWeight: FontWeight.w700,
+            color: _k,
+          ),
+        ),
       ],
     );
   }
@@ -763,8 +815,10 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
 
     final String subtitle =
         shopType.config.supportsGRStock
-            ? '${product.color ?? ''} | ${product.brand ?? ''} |  ₹${product.sellingPrice ?? ''}'
-            : '${product.flavor ?? ''} | ${product.weight ?? ''} |  ₹${product.sellingPrice ?? ''}';
+            ? '${product.animalTypeName} | Fixed Price Rs.${product.sellingPrice}'
+            : product.isflavorRequired
+            ? '${product.flavour ?? ''} | ${product.weight ?? ''} |  ₹${product.sellingPrice ?? ''}'
+            : '₹${product.sellingPrice ?? ''}';
 
     return Receipt(
       defaultTextStyle: const TextStyle(fontSize: 12),
@@ -792,7 +846,7 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
                 const SizedBox(height: 2),
                 Text(
                   product.name ?? '',
-                  style: CustomTextStyle.customMontserrat(
+                  style: CustomTextStyle.customPoppin(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: _k,
@@ -804,7 +858,7 @@ class BarcodePrinterView extends StatelessWidget with CacheManager {
                 const SizedBox(height: 1),
                 Text(
                   subtitle,
-                  style: CustomTextStyle.customMontserrat(
+                  style: CustomTextStyle.customPoppin(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: _k,
@@ -837,11 +891,11 @@ class BarcodeRichText extends StatelessWidget {
     return RichText(
       text: TextSpan(
         text: '$label : ',
-        style: CustomTextStyle.customMontserrat(fontSize: 15, color: _k),
+        style: CustomTextStyle.customPoppin(fontSize: 15, color: _k),
         children: [
           TextSpan(
             text: labelValue,
-            style: CustomTextStyle.customMontserrat(
+            style: CustomTextStyle.customPoppin(
               fontSize: 20,
               color: _k,
               fontWeight: FontWeight.w700,

@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:inventory/module/product_details/model/add_product_model.dart';
 import 'package:inventory/module/product_details/model/create_gr_model.dart';
-import 'package:inventory/module/inventorylist/model/inventory_model.dart';
+import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
-import 'package:inventory/network/networking.dart' show Networking;
+import 'package:inventory/network/networking.dart';
 
 class ProductRepo {
   Networking networking = Networking();
@@ -73,19 +75,17 @@ class ProductRepo {
     }
   }
 
-  Future<InventoryModel> getProductListForBrand({
-    int page = 1,
-    int limit = 100,
-    String location = 'shop',
+  Future<TransferToShopModel> requestStockTransfer({
+    required dynamic body,
   }) async {
     try {
-      final response = await networking.getData(
-        url:
-            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getProducts}?page=$page&limit=$limit&location=$location',
+      final response = await networking.postData(
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.transferGodownToShop}',
+        body: body,
       );
-      return InventoryModel.fromJson(response);
+      return TransferToShopModel.fromJson(jsonDecode(response));
     } catch (e) {
-      return InventoryModel(success: false, msg: e.toString());
+      return TransferToShopModel(success: false, message: e.toString());
     }
   }
 }

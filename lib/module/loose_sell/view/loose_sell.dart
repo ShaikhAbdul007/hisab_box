@@ -120,17 +120,17 @@ class LooseSell extends GetView<LooseController> {
                                 )
                             ? LooseInventroyListText(
                               onTap: () async {
-                                var res =
-                                    await AppRoutes.futureNavigationToRoute(
-                                      routeName: AppRouteName.productDetailView,
-                                      data: {
-                                        'product': inventoryList,
-                                        'isProductLoosed': true,
-                                      },
-                                    );
-                                if (res == true) {
-                                  controller.fetchLooseList();
-                                }
+                                // var res =
+                                //     await AppRoutes.futureNavigationToRoute(
+                                //       routeName: AppRouteName.productDetailView,
+                                //       data: {
+                                //         'product': inventoryList,
+                                //         'isProductLoosed': true,
+                                //       },
+                                //     );
+                                // if (res == true) {
+                                //   controller.fetchLooseList();
+                                // }
                               },
                               isInventoryScanSelected: true,
                               inventoryModel: inventoryList,

@@ -191,11 +191,11 @@ class InventoryView extends GetView<InventroyController> {
         label: 'Is this product sold in Packet or Loose?',
         packetOnTap: () {
           Get.back();
-          _handleSell(scannedValue, stocktype, inventoryScanKey);
+          _handleSell(scannedValue, 'packet', inventoryScanKey);
         },
         looseDoneOnTap: () {
           Get.back();
-          _handleSell(scannedValue, stocktype, inventoryScanKey);
+          _handleSell(scannedValue, 'loose', inventoryScanKey);
         },
       );
       return;

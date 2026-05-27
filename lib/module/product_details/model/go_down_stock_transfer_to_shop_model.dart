@@ -1,39 +1,43 @@
-class GoDownStockTransferToShopModel {
-  final String id;
-  final String barcode;
-  final String productName;
-  final int requestedQty;
-  final String status;
+class TransferToShopModel {
+  bool? success;
+  String? message;
+  TransferToShopData? data;
 
-  GoDownStockTransferToShopModel({
-    required this.id,
-    required this.barcode,
-    required this.productName,
-    required this.requestedQty,
-    required this.status,
-  });
+  TransferToShopModel({this.success, this.message, this.data});
 
-  factory GoDownStockTransferToShopModel.fromJson(
-    Map<String, dynamic> json,
-    String id,
-  ) {
-    return GoDownStockTransferToShopModel(
-      id: id,
-      barcode: json['barcode'] ?? '',
-      productName: json['productName'] ?? '',
-      requestedQty: json['requestedQty'] ?? 0,
-      status: json['status'] ?? 'pending',
-    );
+  TransferToShopModel.fromJson(Map<String, dynamic> json) {
+    success = json['success'];
+    message = json['message'];
+    data =
+        json['data'] != null ? TransferToShopData.fromJson(json['data']) : null;
   }
 
-  // 🔥 Map return karega taaki Hive aur Supabase ise samajh sakein
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'barcode': barcode,
-      'productName': productName,
-      'requestedQty': requestedQty,
-      'status': status,
-    };
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['success'] = success;
+    data['message'] = message;
+    if (this.data != null) {
+      data['data'] = this.data!.toJson();
+    }
+    return data;
+  }
+}
+
+class TransferToShopData {
+  bool? success;
+  int? transferredQuantity;
+
+  TransferToShopData({this.success, this.transferredQuantity});
+
+  TransferToShopData.fromJson(Map<String, dynamic> json) {
+    success = json['success'];
+    transferredQuantity = json['transferredQuantity'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['success'] = success;
+    data['transferredQuantity'] = transferredQuantity;
+    return data;
   }
 }

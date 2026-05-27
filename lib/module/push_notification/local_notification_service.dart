@@ -106,7 +106,7 @@ class NotificationServices {
         >()
         ?.createNotificationChannel(androidNotificationChannel);
 
-    await flutterLocalNotificationsPlugin
+    flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
           MacOSFlutterLocalNotificationsPlugin
         >();

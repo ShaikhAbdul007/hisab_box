@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -289,21 +290,43 @@ class _ProfileCard extends StatelessWidget {
       if (file != null && file.existsSync()) {
         avatar = CircleAvatar(radius: 32.r, backgroundImage: FileImage(file));
       } else if (url.isNotEmpty) {
+        final bool isNetwork =
+            url.startsWith('http://') || url.startsWith('https://');
+
         avatar = CircleAvatar(
           radius: 32.r,
           backgroundColor: AppColors.blackColor,
           child: ClipOval(
-            child: Image.network(
-              url,
-              width: 64.w,
-              height: 64.h,
-              fit: BoxFit.cover,
-              errorBuilder:
-                  (_, __, ___) => Text(
-                    'HB',
-                    style: TextStyle(fontSize: 20.sp, color: Colors.white),
-                  ),
-            ),
+            child:
+                isNetwork
+                    ? Image.network(
+                      url,
+                      width: 64.w,
+                      height: 64.h,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, _, _) => Text(
+                            'HB',
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                    )
+                    : Image.file(
+                      File(url),
+                      width: 64.w,
+                      height: 64.h,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, _, _) => Text(
+                            'HB',
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              color: Colors.white,
+                            ),
+                          ),
+                    ),
           ),
         );
       } else {
@@ -549,7 +572,7 @@ class _AppVersionCard extends StatelessWidget {
                 color: AppColors.blackColor,
                 fit: BoxFit.contain,
                 errorBuilder:
-                    (_, __, ___) => Icon(
+                    (_, _, _) => Icon(
                       Icons.inventory_2_rounded,
                       color: AppColors.blackColor,
                       size: 18.sp,

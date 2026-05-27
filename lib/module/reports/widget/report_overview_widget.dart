@@ -82,6 +82,23 @@ class ReportOverviewWidget extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (controller.totalRoundOff.value != 0.0) ...[
+                          setHeight(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _PaymentStatCard(
+                                  label: 'Round Off',
+                                  value: controller.totalRoundOff.value,
+                                  icon: CupertinoIcons.arrow_2_circlepath,
+                                  color: const Color(0xFFE65100),
+                                ),
+                              ),
+                              setWidth(width: 10),
+                              const Expanded(child: SizedBox.shrink()),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
           ),

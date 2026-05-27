@@ -4,7 +4,6 @@ import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/logger.dart';
-import 'package:inventory/module/customer/model/add_customer_model.dart';
 import 'package:inventory/module/customer/model/all_customer_model.dart';
 import 'package:inventory/module/customer/repo/customer_repo.dart';
 import '../../order_complete/model/customer_details_model.dart';

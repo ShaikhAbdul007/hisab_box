@@ -1,6 +1,7 @@
 class ApiEndPoint {
   // ---------------- BASE URL ----------------
-  static const String baseUrl = "https://hisab-box.softwaresnip.com/";
+  static const String baseUrlFromEnv = String.fromEnvironment('baseUrl');
+  static const String baseUrl = "$baseUrlFromEnv/";
   static const String servicePath = "api/v1/";
   static const String fullBaseUrl = baseUrl + servicePath;
 

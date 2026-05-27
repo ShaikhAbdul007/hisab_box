@@ -175,9 +175,9 @@ class ClothingShopProductViewComponent extends StatelessWidget {
                               "location":
                                   controller.location.text.toLowerCase(),
                               "stock_type": "clothing",
-                              "category_id":
+                              "category":
                                   controller.selectedCategoryId.value ?? '',
-                              "size_id":
+                              "animal_type":
                                   controller.selectedAnimalTypeId.value ?? '',
                               "color_id":
                                   controller.selectedColorId.value ?? '',
@@ -189,7 +189,7 @@ class ClothingShopProductViewComponent extends StatelessWidget {
                                 controller.purchaseDate.text,
                               ),
                             };
-                            AppLogger.error('$body');
+                            AppLogger.error('clotinng scan body $body');
                             await controller.saveNewProduct(body: body);
                           }
                         },

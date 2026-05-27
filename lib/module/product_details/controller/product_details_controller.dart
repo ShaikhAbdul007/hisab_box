@@ -74,7 +74,7 @@ class ProductDetailsController extends GetxController with CacheManager {
     dayDate.value = setFormateDate();
     getCategoryData();
     retrieveGodownValue();
-    print('setdata');
+    AppLogger.info('setdata');
     super.onInit();
   }
 
@@ -84,50 +84,6 @@ class ProductDetailsController extends GetxController with CacheManager {
         isGodownEnabled ? <String>['shop', 'godown'] : <String>['shop'];
     if (!locationOptions.contains(location.text)) {
       location.text = locationOptions.first;
-    }
-  }
-
-  // ==========================================
-  // 🔥 STOCK TRANSFER (SUPABASE + SYNC)
-  // ==========================================
-  Future<void> requestStockTransfer({
-    required InventoryItem product,
-    required double requestedQty,
-  }) async {
-    isTransferLoading.value = true;
-    try {
-      // 🔥 Sirf ek call aur SQL function saara logic handle karega
-      // await SupabaseConfig.client.rpc(
-      //   'process_stock_transfer',
-      //   params: {
-      //     'p_user_id': '',
-      //     'p_product_id': product.id,
-      //     'p_qty': requestedQty,
-      //     'p_ref_id': refId,
-      //     'p_stock_type': product.stockType ?? 'packet',
-      //     'p_price': product.sellingPrice ?? 0.0,
-      //     'p_title': "📦 New Stock Incoming!",
-      //     'p_body':
-      //         "${product.name} ke $requestedQty units Godown se bheje gaye hain.",
-      //   },
-      // );
-
-      showSnackBar(error: "📤 Transfer Successful & Notification Sent!");
-
-      // UI Update/Refresh logic yahan dal sakte ho (e.g., Get.back())
-      Get.back();
-    } catch (e) {
-      // Agar SQL mein 'RAISE EXCEPTION' hoga toh wo yahan catch hoga
-      AppLogger.error("Transfer Error", e, "StockTransfer");
-
-      String errorMsg = "Transfer failed!";
-      if (e.toString().contains('Godown mein stock kam hai')) {
-        errorMsg = "Godown mein stock kam hai!";
-      }
-
-      showSnackBar(error: errorMsg);
-    } finally {
-      isTransferLoading.value = false;
     }
   }
 
@@ -164,6 +120,10 @@ class ProductDetailsController extends GetxController with CacheManager {
     } catch (e) {
       return null;
     }
+  }
+
+  void setQuantity(int value) {
+    barcodeQytController.text = value.toString();
   }
 
   dynamic getAnimalSelectedItem(String value) {
@@ -240,9 +200,6 @@ class ProductDetailsController extends GetxController with CacheManager {
     }
   }
 
-  // ==========================================
-  // 🔥 UPDATE: Supabase RPC -> Global Sync -> Hive Update
-  // ==========================================
   void updateProductQuantity({
     required dynamic body,
 
@@ -256,11 +213,11 @@ class ProductDetailsController extends GetxController with CacheManager {
         productId: productId,
       );
       if (response.success == success) {
-        Get.back(result: true);
         showSnackBar(
           error: response.msg ?? "Update SuccessFully!",
           isError: false,
         );
+        Get.back(result: true);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? "Update Failed!");
       } else {
@@ -271,6 +228,29 @@ class ProductDetailsController extends GetxController with CacheManager {
       showSnackBar(error: e.toString());
     } finally {
       isSaveLoading.value = false;
+    }
+  }
+
+  Future<void> requestStockTransfer({dynamic body}) async {
+    isTransferLoading.value = true;
+
+    try {
+      var response = await productRepo.requestStockTransfer(body: body);
+      if (response.success == success) {
+        showSnackBar(
+          error: response.message ?? "Transfer to Shop SuccessFully!",
+          isError: false,
+        );
+      } else if (response.success == failed) {
+        showSnackBar(error: response.message ?? "Transfer to Shop Failed!");
+      } else {
+        showSnackBar(error: response.message ?? "Transfer to Shop Failed!");
+      }
+    } catch (e) {
+      AppLogger.info(("🚨 Transfer Error: $e").toString());
+      showSnackBar(error: e.toString());
+    } finally {
+      isTransferLoading.value = false;
     }
   }
 

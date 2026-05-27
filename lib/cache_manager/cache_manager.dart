@@ -42,6 +42,10 @@ mixin class CacheManager {
     box.write(Key.inventoryScan.toString(), value);
   }
 
+  void saveMarginValue(String value) {
+    box.write(Key.marginKey.toString(), value);
+  }
+
   void saveGodownValue(bool value) {
     box.write(Key.godown.toString(), value);
   }
@@ -78,6 +82,10 @@ mixin class CacheManager {
 
   String? retrieveEmployeeId() {
     return box.read(Key.employeeIdKey.toString());
+  }
+
+  String? retrieveMarginValue() {
+    return box.read(Key.marginKey.toString());
   }
 
   String? retrievePrinterAddress() {
@@ -249,4 +257,5 @@ enum Key {
   customerListKey,
   tranferRequestKey,
   tokenKey,
+  marginKey,
 }

@@ -4,6 +4,7 @@ import 'package:get/state_manager.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/module/product_details/widget/product_field_card.dart';
@@ -507,6 +508,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
         onTap: () async {
           if (controller.inventoryScanKey.currentState!.validate()) {
             unfocus();
+            AppLogger.error('Generate Barcode ${bodyBuilder()}');
             await controller.saveNewProduct(body: bodyBuilder());
           }
         },
@@ -528,8 +530,8 @@ class GenerateBarcodeComponent extends StatelessWidget {
     "isflavorRequired": controller.isFlavorAndWeightNotRequired.value,
     "purchase_date": parseAppDate(controller.purchaseDate.text),
     "expiry_date": parseAppDate(controller.exprieDate.text),
-    "category": controller.category.text,
-    "animal_type": controller.animalType.text,
+    "category": controller.selectedCategoryId.value,
+    "animal_type": controller.selectedAnimalTypeId.value,
     "flavour": controller.flavor.text,
     "level": controller.level.text,
     "rack": controller.rack.text,

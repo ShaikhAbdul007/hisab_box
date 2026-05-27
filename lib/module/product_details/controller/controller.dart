@@ -105,6 +105,7 @@ class ProductController extends GetxController with CacheManager {
   }
 
   void calculatePurchasePrice() {
+    double margin = double.tryParse(retrieveMarginValue() ?? '0') ?? 0;
     if (sellingPrice.text.isNotEmpty) {
       double sellingPrices = double.tryParse(sellingPrice.text) ?? 0;
       double purchasePrices = sellingPrices - (sellingPrices * 0.20);
@@ -217,7 +218,8 @@ class ProductController extends GetxController with CacheManager {
         clear();
         Get.back(result: true);
         showMessage(
-          message: response.data?.message ?? response.msg ?? somethingWentMessage,
+          message:
+              response.data?.message ?? response.msg ?? somethingWentMessage,
         );
       } else if (response.success == failed) {
         showMessage(message: response.msg ?? somethingWentMessage);

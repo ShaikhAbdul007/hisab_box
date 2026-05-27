@@ -46,8 +46,7 @@ class HomeController extends GetxController with CacheManager {
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
 
   // ================= STOCK TRANSFER =================
-  RxList<GoDownStockTransferToShopModel> pendingTransfers =
-      <GoDownStockTransferToShopModel>[].obs;
+  RxList<TransferToShopModel> pendingTransfers = <TransferToShopModel>[].obs;
 
   // ================= INIT =================
   @override

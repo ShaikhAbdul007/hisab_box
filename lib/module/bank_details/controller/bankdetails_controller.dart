@@ -35,7 +35,6 @@ class BankDetailsController extends GetxController with CacheManager {
       bankNameController.text = bankData.data?.bankName ?? "";
       accountHolderNameController.text = bankData.data?.accountHolder ?? '';
       upiIdController.text = bankData.data?.upiId ?? '';
-
       readOnly.value = true; // ✅ data hai
     } else {
       readOnly.value = false; // ❌ data nahi

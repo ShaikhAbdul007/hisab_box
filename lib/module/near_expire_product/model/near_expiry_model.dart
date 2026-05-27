@@ -61,8 +61,8 @@ class NeaExpiryItemData {
   String? productId;
   String? name;
   String? barcode;
-  num? quantity;
-  num? sellingPrice;
+  dynamic quantity;
+  dynamic sellingPrice;
   String? location;
   String? stockType;
   String? expiryDate;

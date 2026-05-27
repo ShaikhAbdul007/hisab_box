@@ -233,9 +233,9 @@ class PetShopProductViewComponent extends StatelessWidget {
                                 "expiry_date": parseAppDate(
                                   controller.exprieDate.text,
                                 ),
-                                "category_id":
+                                "category":
                                     controller.selectedCategoryId.value ?? '',
-                                "animal_type_id":
+                                "animal_type":
                                     controller.selectedAnimalTypeId.value ?? '',
                                 "flavour": controller.flavor.text,
                                 "level": controller.level.text,

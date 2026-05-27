@@ -73,6 +73,8 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                     itemCount: controller.productList.length,
                     itemBuilder: (context, index) {
                       return SellingConfirmationListText(
+                        isLooseDiscountEnable:
+                            controller.productList[index].stockType == 'loose',
                         onDiscountChanged: (value) {
                           controller.discountCalculateAsPerProduct(index);
                           controller.calculateTotalWithDiscount();

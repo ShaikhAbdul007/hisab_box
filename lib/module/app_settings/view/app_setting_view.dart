@@ -80,6 +80,96 @@ class AppSettingView extends GetView<AppSettingController> {
             ),
           ),
           setHeight(height: 20),
+          // _SectionLabel(label: 'Margin'), setHeight(height: 8),
+          // Container(
+          //   decoration: BoxDecoration(
+          //     color: Colors.white,
+          //     borderRadius: BorderRadius.circular(14.r),
+          //     boxShadow: [
+          //       BoxShadow(
+          //         color: Colors.black.withValues(alpha: 0.05),
+          //         blurRadius: 8,
+          //         offset: const Offset(0, 2),
+          //       ),
+          //     ],
+          //   ),
+          //   child: Column(
+          //     children: [
+          //       Row(
+          //         children: [
+          //           Expanded(
+          //             child: CommonTextField(
+          //               label: '',
+          //               astraIsRequred: false,
+          //               hintText: 'Enter Margin',
+          //               controller: controller.profitMarginController.value,
+          //               keyboardType: TextInputType.number,
+          //             ),
+          //           ),
+          //           Container(
+          //             height: 40.h,
+          //             width: 40.w,
+          //             margin: EdgeInsets.only(right: 10.w, top: 10.h),
+          //             decoration: BoxDecoration(
+          //               color:
+          //                   controller
+          //                           .profitMarginController
+          //                           .value
+          //                           .text
+          //                           .isNotEmpty
+          //                       ? Colors.red.shade100
+          //                       : AppColors.greenColorShade100,
+          //               borderRadius: BorderRadius.circular(14.r),
+          //               boxShadow: [
+          //                 BoxShadow(
+          //                   color: Colors.black.withValues(alpha: 0.05),
+          //                   blurRadius: 8,
+          //                   offset: const Offset(0, 2),
+          //                 ),
+          //               ],
+          //             ),
+          //             child: Obx(
+          //               () => InkWell(
+          //                 onTap: () {
+          //                   if (controller
+          //                       .profitMarginController
+          //                       .value
+          //                       .text
+          //                       .isNotEmpty) {
+          //                     controller.saveMarginValue(
+          //                       controller.profitMarginController.value.text,
+          //                     );
+          //                   } else {
+          //                     showSnackBar(error: 'Please enter margin');
+          //                   }
+          //                 },
+          //                 child: Icon(
+          //                   controller
+          //                           .profitMarginController
+          //                           .value
+          //                           .text
+          //                           .isNotEmpty
+          //                       ? CupertinoIcons.xmark_circle_fill
+          //                       : CupertinoIcons.checkmark_alt,
+          //                   size: 18.sp,
+          //                   color:
+          //                       controller
+          //                               .profitMarginController
+          //                               .value
+          //                               .text
+          //                               .isNotEmpty
+          //                           ? AppColors.redColor
+          //                           : const Color(0xFF2E7D32),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          // setHeight(height: 20),
 
           // ── Printer ──────────────────────────────────────────────────
           _SectionLabel(label: 'Printer'),
@@ -213,7 +303,7 @@ class AppSettingView extends GetView<AppSettingController> {
       final device = await FlutterBluetoothPrinter.selectDevice(context);
       if (device != null) {
         controller.savePrinterAddress(device.address);
-        showSnackBar(error: '✅ Printer saved: ${device.name}');
+        showSnackBar(error: '✅ Printer saved: ${device.name}', isError: false);
       } else {
         commonBottomSheet(
           label: 'Bluetooth Setup',

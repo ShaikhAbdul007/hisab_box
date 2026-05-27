@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -335,32 +337,52 @@ class _ProfileHeader extends StatelessWidget {
       }
 
       if (url.isNotEmpty) {
+        final bool isNetwork =
+            url.startsWith('http://') || url.startsWith('https://');
+
         return CircleAvatar(
           radius: 52.r,
           backgroundColor: Colors.white.withValues(alpha: 0.2),
           child: ClipOval(
-            child: Image.network(
-              url,
-              width: 104.w,
-              height: 104.h,
-              fit: BoxFit.cover,
-              loadingBuilder:
-                  (context, child, progress) =>
-                      progress == null
-                          ? child
-                          : const CupertinoActivityIndicator(
-                            color: Colors.white,
+            child:
+                isNetwork
+                    ? Image.network(
+                      url,
+                      width: 104.w,
+                      height: 104.h,
+                      fit: BoxFit.cover,
+                      loadingBuilder:
+                          (context, child, progress) =>
+                              progress == null
+                                  ? child
+                                  : const CupertinoActivityIndicator(
+                                    color: Colors.white,
+                                  ),
+                      errorBuilder:
+                          (_, _, _) => Text(
+                            initials,
+                            style: TextStyle(
+                              fontSize: 38.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-              errorBuilder:
-                  (_, __, ___) => Text(
-                    initials,
-                    style: TextStyle(
-                      fontSize: 38.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    )
+                    : Image.file(
+                      File(url),
+                      width: 104.w,
+                      height: 104.h,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, _, _) => Text(
+                            initials,
+                            style: TextStyle(
+                              fontSize: 38.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                     ),
-                  ),
-            ),
           ),
         );
       }

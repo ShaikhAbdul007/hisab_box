@@ -8,6 +8,7 @@ import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/common_widget/textfiled.dart';
 import 'package:inventory/helper/app_message.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/add_user/controller/all_user_detail_controller.dart';
 import 'package:inventory/module/add_user/widgets/permission_widgets.dart';
 
@@ -138,7 +139,7 @@ class AllUserDetailView extends GetView<AllUserDetailController> {
                             body["permissions"][key] = value.value;
                           });
                           String employeeId = controller.data.id ?? '';
-                          debugPrint(body.toString());
+                          AppLogger.info(body.toString());
                           await controller.updateEmployeePermission(
                             body: body,
                             employeeId: employeeId,

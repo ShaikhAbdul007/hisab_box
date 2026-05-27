@@ -6,8 +6,7 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
 
 class NotificationController extends GetxController with CacheManager {
-  RxList<GoDownStockTransferToShopModel> pendingTransfers =
-      <GoDownStockTransferToShopModel>[].obs;
+  RxList<TransferToShopModel> pendingTransfers = <TransferToShopModel>[].obs;
 
   // Variable name same rakha hai, but Supabase ID use hogi
   RxBool isTransferLoading = false.obs;
@@ -61,7 +60,7 @@ class NotificationController extends GetxController with CacheManager {
   // ==========================================
   // 🔥 ACCEPT TRANSFER (RPC TRANSACTION + HIVE SYNC)
   // ==========================================
-  Future<void> acceptTransfer(GoDownStockTransferToShopModel transfer) async {
+  Future<void> acceptTransfer(TransferToShopModel transfer) async {
     final userId = resolveUserId(isTransferLoading.value);
     if (userId == null) return;
     isTransferLoading.value = true;
@@ -111,7 +110,7 @@ class NotificationController extends GetxController with CacheManager {
   // ==========================================
   // 🔥 REJECT TRANSFER (SUPABASE + HIVE SYNC)
   // ==========================================
-  Future<void> rejectTransfer(GoDownStockTransferToShopModel transfer) async {
+  Future<void> rejectTransfer(TransferToShopModel transfer) async {
     final userId = resolveUserId(isTransferLoading.value);
     if (userId == null) return;
 

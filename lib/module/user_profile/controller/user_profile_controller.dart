@@ -60,12 +60,13 @@ class UserProfileController extends GetxController with CacheManager {
     try {
       final updatedData = {
         "name": shopNameController.text.trim(),
-        "email": emailController.text.trim(),
+
         "address": addressController.text.trim(),
         "city": cityController.text.trim(),
         "pincode": pincodeController.text.trim(),
         "state": stateController.text.trim(),
         "mobile_no": mobileController.text.trim(),
+        "profilepic": profileImage.value?.path ?? "",
         "alternate_mobile_no": alternativeMobileController.text.trim(),
       };
       var response = await userProfileRepo.updateUserDetails(body: updatedData);
@@ -93,12 +94,6 @@ class UserProfileController extends GetxController with CacheManager {
   void setUserDetails() async {
     isDataLoading.value = true;
     try {
-      final cached = retrieveUserDetail();
-      if (cached.data?.name != null && cached.data!.name!.isNotEmpty) {
-        _fillControllers(cached);
-      }
-
-      // Hamesha API call karo fresh data ke liye (image bhi aayegi)
       final response = await userProfileRepo.getUserDetails();
       if (response.success == success) {
         saveUserData(response); // Cache update karo image ke saath

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/discount/model/discount_model.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_category/model/loose_category_model.dart';
@@ -97,7 +98,10 @@ class SellListAfterScanController extends GetxController with CacheManager {
 
     perProductDiscount.value = List.generate(productList.length, (i) {
       return TextEditingController(
-        text: productList[i].discount?.toString() ?? '0',
+        text:
+            productList[i].stockType == 'loose'
+                ? '0'
+                : productList[i].discount?.toString() ?? '0',
       );
     });
 
@@ -196,7 +200,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
 
     final body = {'items': items, 'payments': payments};
 
-    print('the sale body is $body');
+    AppLogger.info('the sale body is $body');
     final response = await sellRepo.postSellData(body: body);
     isLoading.value = false;
 
@@ -221,12 +225,23 @@ class SellListAfterScanController extends GetxController with CacheManager {
   }
 
   void updateRemainingAmount() {
-    final double paid =
-        (double.tryParse(cashPaidController.text) ?? 0) +
-        (double.tryParse(upiPaidController.text) ?? 0) +
-        (double.tryParse(cardPaidController.text) ?? 0) +
-        (double.tryParse(creditPaidController.text) ?? 0) +
-        (double.tryParse(roundOffPaidController.text) ?? 0);
+    double paid = 0;
+    if (paidModes.contains('cash')) {
+      paid += (double.tryParse(cashPaidController.text) ?? 0);
+    }
+    if (paidModes.contains('upi')) {
+      paid += (double.tryParse(upiPaidController.text) ?? 0);
+    }
+    if (paidModes.contains('card')) {
+      paid += (double.tryParse(cardPaidController.text) ?? 0);
+    }
+    if (paidModes.contains('credit')) {
+      paid += (double.tryParse(creditPaidController.text) ?? 0);
+    }
+    if (paidModes.contains('round_off')) {
+      paid += (double.tryParse(roundOffPaidController.text) ?? 0);
+    }
+
     remainingAmount.value = double.parse(
       (paymentMethodTotalAmount.value - paid).toStringAsFixed(2),
     );

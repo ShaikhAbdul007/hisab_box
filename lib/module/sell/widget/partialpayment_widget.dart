@@ -263,6 +263,8 @@ class _PaymentRow extends StatelessWidget {
                         error:
                             "Amount can't exceed remaining ₹${controller.remainingAmount.value.toStringAsFixed(2)}",
                       );
+                      textEditingController.text = controller.remainingAmount.value.toStringAsFixed(2);
+                      textEditingController.selection = TextSelection.fromPosition(TextPosition(offset: textEditingController.text.length));
                     }
                   },
                   hintText: '0.00',

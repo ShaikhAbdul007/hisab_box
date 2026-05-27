@@ -31,7 +31,7 @@ class OrderView extends GetView<OrderController> {
       body: Obx(
         () =>
             controller.isInvoiceLoading.value
-                ? CommonProgressBar()
+                ? CommonProgressBar(color: AppColors.blackColor)
                 : SingleChildScrollView(
                   padding:
                       SymmetricPadding(
@@ -682,38 +682,39 @@ class _CreditWarningBanner extends StatelessWidget {
                   text: 'Tap "Save & Print Invoice" to unlock Home & Print',
                 ),
                 setHeight(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: GestureDetector(
-                    onTap: onTap,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 11.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF9800),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            CupertinoIcons.person_add_solid,
-                            color: Colors.white,
-                            size: 16.sp,
-                          ),
-                          setWidth(width: 8),
-                          Text(
-                            'Add Customer Now',
-                            style: CustomTextStyle.customPoppin(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+
+                // SizedBox(
+                //   width: double.infinity,
+                //   child: GestureDetector(
+                //     onTap: null,
+                //     child: Container(
+                //       padding: EdgeInsets.symmetric(vertical: 11.h),
+                //       decoration: BoxDecoration(
+                //         color: const Color(0xFFFF9800),
+                //         borderRadius: BorderRadius.circular(10.r),
+                //       ),
+                //       child: Row(
+                //         mainAxisAlignment: MainAxisAlignment.center,
+                //         children: [
+                //           Icon(
+                //             CupertinoIcons.person_add_solid,
+                //             color: Colors.white,
+                //             size: 16.sp,
+                //           ),
+                //           setWidth(width: 8),
+                //           Text(
+                //             'Add Customer Now',
+                //             style: CustomTextStyle.customPoppin(
+                //               fontSize: 13,
+                //               fontWeight: FontWeight.w700,
+                //               color: Colors.white,
+                //             ),
+                //           ),
+                //         ],
+                //       ),
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),

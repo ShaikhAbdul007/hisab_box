@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:inventory/helper/logger.dart';
 import 'package:inventory/module/auth/signup/widget/shop_address_widget.dart';
 import 'package:inventory/routes/routes.dart';
 import '../../../../common_widget/colors.dart';
@@ -63,7 +64,7 @@ class SignupView extends GetView<SignupController> {
                                 () => ShopAddress(
                                   notifyParent: (v) {
                                     controller.shopType.text = v;
-                                    print(v);
+                                    AppLogger.info(v);
                                   },
                                   profileImage:
                                       controller.profileImage.value ??

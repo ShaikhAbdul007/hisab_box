@@ -31,7 +31,7 @@ class NotificationView extends GetView<NotificationController> {
 }
 
 class TransferTile extends StatelessWidget {
-  final GoDownStockTransferToShopModel transfer;
+  final TransferToShopModel transfer;
   final NotificationController controller;
 
   const TransferTile({
@@ -50,13 +50,13 @@ class TransferTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              transfer.productName,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 4),
-            Text("Barcode: ${transfer.barcode}"),
-            Text("Requested Qty: ${transfer.requestedQty}"),
+            // Text(
+            //   transfer.data.,
+            //   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            // ),
+            // const SizedBox(height: 4),
+            // Text("Barcode: ${transfer.barcode}"),
+            // Text("Requested Qty: ${transfer.requestedQty}"),
             const SizedBox(height: 10),
 
             Obx(() {

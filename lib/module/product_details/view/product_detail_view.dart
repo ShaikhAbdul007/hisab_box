@@ -100,22 +100,30 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                       () => CommonButton(
                         isLoading: controller.isTransferLoading.value,
                         label: 'Transfer',
-                        onTap: () {
+                        onTap: () async {
                           if (inventoryScanKey.currentState!.validate()) {
-                            final qty = double.parse(
+                            final transferQty = int.parse(
                               controller.transferQuantityToShop.text,
                             );
-                            if (qty > controller.data['product'].quantity) {
+                            final qty = num.parse(
+                              controller.data['product'].quantity.toString(),
+                            );
+                            if (transferQty > qty) {
                               unfocus();
                               showSnackBar(
                                 error:
                                     'Quantity must be lower than available stock in godown',
                               );
                             } else {
-                              controller.requestStockTransfer(
-                                product: controller.data['product'],
-                                requestedQty: qty,
-                              );
+                              var body = {
+                                "productId": controller.data['product'].id,
+                                "quantity": transferQty,
+                                "stockType":
+                                    controller.data['product'].stockType,
+                                "price":
+                                    controller.data['product'].sellingPrice,
+                              };
+                              await controller.requestStockTransfer(body: body);
                             }
                           }
                         },
@@ -455,7 +463,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                 listItems: controller.categoryList,
                 hintText: 'Category',
                 notifyParent: (val) {
-                  print(val);
+                  AppLogger.info(val);
                   controller.selectedCategoryId.value = val;
                   final match = controller.categoryList.firstWhereOrNull(
                     (e) => e.id == val,
@@ -533,7 +541,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                 hintText: 'Color',
                 notifyParent: (val) {
                   controller.selectedColorId.value = val;
-                  print(
+                  AppLogger.info(
                     'Selected Color ID: ${controller.selectedColorId.value}',
                   );
                   final match = controller.colorOptions.firstWhereOrNull(
@@ -630,98 +638,109 @@ class ProductDetailView extends GetView<ProductDetailsController> {
       () =>
           controller.readOnly.value
               ? const SizedBox.shrink()
-              : CommonButton(
-                isLoading: controller.isSaveLoading.value,
-                label: saveButton,
-                onTap: () async {
-                  if (controller.inventoryScanKey.currentState!.validate()) {
-                    unfocus();
-                    if (!isProductLoosed) {
-                      final body =
-                          controller.shopTypeEnum == ShopType.clothingShop
-                              ? {
-                                "name": controller.productName.text,
-                                "barcodes": controller.barcode.text,
-                                "quantity":
-                                    num.tryParse(controller.quantity.text) ?? 0,
-                                "selling_price":
-                                    num.tryParse(
-                                      controller.sellingPrice.text,
-                                    ) ??
-                                    0,
-                                "purchase_price":
-                                    num.tryParse(
-                                      controller.purchasePrice.text,
-                                    ) ??
-                                    0,
-                                "location": controller.location.text,
-                                "stock_type": "clothing",
-                                "purchase_date": controller.purchaseDate.text,
-                                "category": controller.selectedCategoryId.value,
-                                "animal_type":
-                                    controller.selectedAnimalTypeId.value,
-                                "color_id": controller.selectedColorId.value,
-                                "brand": controller.brand.text,
-                                "level": controller.level.text,
-                                "rack": controller.rack.text,
-                                "discount":
-                                    num.tryParse(controller.discount.text) ?? 0,
-                              }
-                              : {
-                                "name": controller.productName.text,
-                                "barcodes": controller.barcode.text,
-                                "quantity":
-                                    num.tryParse(controller.quantity.text) ?? 0,
-                                "selling_price":
-                                    num.tryParse(
-                                      controller.sellingPrice.text,
-                                    ) ??
-                                    0,
-                                "purchase_price":
-                                    num.tryParse(
-                                      controller.purchasePrice.text,
-                                    ) ??
-                                    0,
-                                "location": controller.location.text,
-                                "stock_type": "packet",
-                                "isloosed": controller.isLoose,
-                                "isflavorRequired":
-                                    !controller
-                                        .isFlavorAndWeightNotRequired
-                                        .value,
-                                "purchase_date": controller.purchaseDate.text,
-                                "expiry_date": controller.exprieDate.text,
-                                "category": controller.category.text,
-                                "animal_type": controller.animalType.text,
-                                "flavour": controller.flavor.text,
-                                "color_id": controller.selectedColorId.value,
-                                "brand": controller.brand.text,
-                                "level": controller.level.text,
-                                "rack": controller.rack.text,
-                                "weight": controller.weight.text,
-                                "discount":
-                                    num.tryParse(controller.discount.text) ?? 0,
-                              };
-                      controller.updateProductQuantity(
-                        body: body,
-                        productId: controller.productId.value,
-                      );
-                    } else {
-                      final body = {
-                        "product_id": controller.productId.value,
-                        "quantity": controller.looseQuantity.text,
-                        "selling_price": controller.looseSellingPrice.text,
-                      };
-                      controller.updateLoosedProductQuantity(body: body);
+              : Center(
+                child: CommonButton(
+                  isLoading: controller.isSaveLoading.value,
+                  label: saveButton,
+                  onTap: () async {
+                    if (controller.inventoryScanKey.currentState!.validate()) {
+                      unfocus();
+                      if (!isProductLoosed) {
+                        final body =
+                            controller.shopTypeEnum == ShopType.clothingShop
+                                ? {
+                                  "name": controller.productName.text,
+                                  "barcodes": controller.barcode.text,
+                                  "quantity":
+                                      num.tryParse(controller.quantity.text) ??
+                                      0,
+                                  "selling_price":
+                                      num.tryParse(
+                                        controller.sellingPrice.text,
+                                      ) ??
+                                      0,
+                                  "purchase_price":
+                                      num.tryParse(
+                                        controller.purchasePrice.text,
+                                      ) ??
+                                      0,
+                                  "location": controller.location.text,
+                                  "stock_type": "clothing",
+                                  "purchase_date": controller.purchaseDate.text,
+                                  "category":
+                                      controller.selectedCategoryId.value,
+                                  "animal_type":
+                                      controller.selectedAnimalTypeId.value,
+                                  "color_id": controller.selectedColorId.value,
+                                  "brand": controller.brand.text,
+                                  "level": controller.level.text,
+                                  "rack": controller.rack.text,
+                                  "discount":
+                                      num.tryParse(controller.discount.text) ??
+                                      0,
+                                }
+                                : {
+                                  "name": controller.productName.text,
+                                  "barcodes": controller.barcode.text,
+                                  "quantity":
+                                      num.tryParse(controller.quantity.text) ??
+                                      0,
+                                  "selling_price":
+                                      num.tryParse(
+                                        controller.sellingPrice.text,
+                                      ) ??
+                                      0,
+                                  "purchase_price":
+                                      num.tryParse(
+                                        controller.purchasePrice.text,
+                                      ) ??
+                                      0,
+                                  "location": controller.location.text,
+                                  "stock_type":
+                                      controller.isLoose ? 'loose' : "packet",
+                                  "isloosed": controller.isLoose,
+                                  "isflavorRequired":
+                                      !controller
+                                          .isFlavorAndWeightNotRequired
+                                          .value,
+                                  "purchase_date": controller.purchaseDate.text,
+                                  "expiry_date": controller.exprieDate.text,
+                                  "category":
+                                      controller.selectedCategoryId.value,
+                                  "animal_type":
+                                      controller.selectedAnimalTypeId.value,
+                                  "flavour": controller.flavor.text,
+                                  "level": controller.level.text,
+                                  "rack": controller.rack.text,
+                                  "weight": controller.weight.text,
+                                  "discount":
+                                      num.tryParse(controller.discount.text) ??
+                                      0,
+                                };
+                        controller.updateProductQuantity(
+                          body: body,
+                          productId: controller.productId.value,
+                        );
+                      } else {
+                        final body = {
+                          "product_id": controller.productId.value,
+                          "quantity": controller.looseQuantity.text,
+                          "selling_price": controller.looseSellingPrice.text,
+                        };
+                        controller.updateLoosedProductQuantity(body: body);
+                      }
                     }
-                  }
-                },
+                  },
+                ),
               ),
     );
   }
 
   // ── Barcode bottom sheet ────────────────────────────────────────────────
   void showBarcode(TextEditingController qtyController) {
+    int stockQty =
+        num.parse(controller.data['product'].quantity.toString()).toInt();
+    controller.setQuantity(stockQty);
     commonBottomSheet(
       label: 'BarCode',
       onPressed: () {
@@ -788,12 +807,26 @@ class ProductDetailView extends GetView<ProductDetailsController> {
               hintText: 'How many labels to print?',
               controller: qtyController,
               keyboardType: TextInputType.number,
+              validator: (v) {
+                int stockQty =
+                    num.parse(
+                      controller.data['product'].quantity.toString(),
+                    ).toInt();
+                if (v!.isEmpty) return 'Enter quantity';
+                if (int.tryParse(v) == null || int.parse(v) <= 0) {
+                  return 'Enter a valid positive number';
+                } else if (int.parse(v) > stockQty) {
+                  return 'Quantity exceeds available stock ($stockQty)';
+                }
+                return null;
+              },
             ),
             setHeight(height: 20),
             // ── Generate button ──────────────────────────────────────
             CommonButton(
               label: 'Generate Barcode',
               onTap: () {
+                Get.back();
                 AppRoutes.navigateRoutes(
                   routeName: AppRouteName.barcodePrintView,
                   data: {
@@ -801,6 +834,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
                     'qyt': double.tryParse(qtyController.text)?.toInt() ?? 1,
                   },
                 );
+                qtyController.clear();
               },
             ),
             setHeight(height: 50),

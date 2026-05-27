@@ -1,24 +1,24 @@
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/helper.dart';
-import 'package:inventory/module/order_complete/model/customer_details_model.dart'; // 🔥 GlobalStore Connection
+import 'package:inventory/module/credits_amount/model/credit_model.dart';
+import 'package:inventory/module/credits_amount/repo/credit_repo.dart';
 
 class CredtiController extends GetxController with CacheManager {
   // 🔥 GlobalStore Reference
 
+  CreditRepo creditRepo = CreditRepo();
   RxBool customDataLoading = false.obs;
   RxString searchText = ''.obs;
-  RxList<CustomerDetails> customerDetailList = <CustomerDetails>[].obs;
+  RxList<CreditDataItem> customerDetailList = <CreditDataItem>[].obs;
   TextEditingController searchController = TextEditingController();
 
   @override
   void onInit() {
     fetchCreditReports();
-
-    // 🔥 Live Sync: Agar koi naya credit bill kat-ta hai, toh list khud update ho jayegi
-    // ever(globalStore.allSalesList, (_) => fetchCreditReports());
 
     super.onInit();
   }
@@ -34,8 +34,10 @@ class CredtiController extends GetxController with CacheManager {
   }
 
   /// ⚡ INSTANT – no invoice scan
-  double calculateTotalCredit(CustomerDetails customer) {
-    return customer.totalCredit;
+  double calculateTotalCredit(CreditDataItem customer) {
+    return customer.remainingAmount != null
+        ? double.tryParse(customer.remainingAmount!) ?? 0.0
+        : 0.0;
   }
 
   // ===================================================
@@ -44,6 +46,14 @@ class CredtiController extends GetxController with CacheManager {
   Future<void> fetchCreditReports() async {
     try {
       customDataLoading.value = true;
+      final response = await creditRepo.fetchCreditAmountData();
+      if (response.success == success) {
+        customerDetailList.value = response.data?.data ?? [];
+      } else if (response.success == failed) {
+        showSnackBar(error: response.message ?? "Update Failed!");
+      } else {
+        showSnackBar(error: response.message ?? "Update Failed!");
+      }
     } catch (e) {
       AppLogger.error('Credit report build failed', e, 'CredtiController');
       showSnackBar(error: e.toString());
