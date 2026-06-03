@@ -6,7 +6,7 @@
     "configurations": [
     
         {
-            "name": "inventory",
+            "name": "inventory (dev mode)",
             "request": "launch",
             "type": "dart",
             "args": [

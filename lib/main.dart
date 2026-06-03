@@ -41,7 +41,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
 
   await ScreenUtil.ensureScreenSize();
   // await LocalService.initHive();
@@ -59,12 +58,7 @@ void main() async {
   runApp(const MyApp());
 }
 
-Future<void> checkResponse() async {
-  // final user = Supabase.instance.client.auth.currentUser;
-  // AppLogger.info(('USER -> $user').toString());
-  // final session = Supabase.instance.client.auth.currentSession;
-  // AppLogger.info(('SESSION -> $session').toString());
-}
+Future<void> checkResponse() async {}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
