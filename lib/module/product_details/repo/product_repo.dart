@@ -83,7 +83,7 @@ class ProductRepo {
         url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.transferGodownToShop}',
         body: body,
       );
-      return TransferToShopModel.fromJson(jsonDecode(response));
+      return TransferToShopModel.fromJson(response);
     } catch (e) {
       return TransferToShopModel(success: false, message: e.toString());
     }

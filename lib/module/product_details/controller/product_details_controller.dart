@@ -213,11 +213,11 @@ class ProductDetailsController extends GetxController with CacheManager {
         productId: productId,
       );
       if (response.success == success) {
+        Get.back(result: true);
         showSnackBar(
           error: response.msg ?? "Update SuccessFully!",
           isError: false,
         );
-        Get.back(result: true);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? "Update Failed!");
       } else {
@@ -237,6 +237,8 @@ class ProductDetailsController extends GetxController with CacheManager {
     try {
       var response = await productRepo.requestStockTransfer(body: body);
       if (response.success == success) {
+        Get.back();
+        Get.back(result: true);
         showSnackBar(
           error: response.message ?? "Transfer to Shop SuccessFully!",
           isError: false,

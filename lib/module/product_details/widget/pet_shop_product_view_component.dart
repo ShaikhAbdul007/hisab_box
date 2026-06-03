@@ -340,6 +340,7 @@ class PetShopProductViewComponent extends StatelessWidget {
                 : null,
         listItems: controller.locationOptions,
         hintText: 'Location',
+        enable: !controller.isLocationLocked.value,
         notifyParent: (val) => controller.location.text = val?.toString() ?? '',
       ),
     );

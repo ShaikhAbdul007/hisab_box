@@ -81,6 +81,52 @@ void exisitngProductDialog({
   );
 }
 
+void crossLocationProductDialog({
+  required String message,
+  required String buttonLabel,
+  required VoidCallback onConfirm,
+  required VoidCallback onCancel,
+}) {
+  commonBottomSheet(
+    size: 18,
+    label: 'Product Already Exists',
+    onPressed: onCancel,
+    child: _SheetBody(
+      icon: Icons.swap_horiz_rounded,
+      iconColor: const Color(0xFF2E7D32),
+      title: 'Found In Other Location',
+      message: message,
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: onCancel,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.blackColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: CustomTextStyle.customPoppin(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+            setWidth(width: 12),
+            Expanded(child: CommonButton(label: buttonLabel, onTap: onConfirm)),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. Product not available dialog
 // ─────────────────────────────────────────────────────────────────────────────

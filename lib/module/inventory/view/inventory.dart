@@ -150,9 +150,9 @@ class InventoryView extends GetView<InventroyController> {
       _showInvalidBarcodeDialog();
       return;
     }
-    final (bool exists, BarcodeExistingData? product) = await controller
+    final (bool exists, BarcodeExistingData product) = await controller
         .existingProductInfo(scannedValue, stocktype);
-    if (!exists || product == null) {
+    if (!exists) {
       _showProductNotFoundDialog();
       return;
     }
@@ -215,18 +215,53 @@ class InventoryView extends GetView<InventroyController> {
       _showInvalidBarcodeDialog();
       return;
     }
-    final (bool exists, _) = await controller.existingProductInfo(
+    final (bool exists, BarcodeExistingData product) = await controller
+        .existingProductInfo(
       scannedValue,
       stockType,
     );
     if (exists) {
-      exisitngProductDialog(
+      final location = _normalizedLocation(product.location);
+      final message = controller.existingProductApiMessage.value.toLowerCase();
+      final hasBothLocationConflict = _hasBothLocationConflict(message);
+      final crossLocation = _getCrossLocation(location);
+
+      if (hasBothLocationConflict || crossLocation == null) {
+        exisitngProductDialog(
+          message:
+              '$scannedValue-${controller.existProductName.value}\n'
+              'Already exists. Update quantity manually from inventory.',
+          onPressed: () {
+            Get.back();
+            controller.mobileScannerController.start();
+          },
+        );
+        return;
+      }
+
+      crossLocationProductDialog(
         message:
-            '$scannedValue-${controller.existProductName.value}\n'
-            'Already exists. Update quantity manually from inventory.',
-        onPressed: () {
+            '${product.name ?? "This product"} already exists in ${location.toUpperCase()}.\n'
+            'Do you want to create same barcode product in ${crossLocation.toUpperCase()}?',
+        buttonLabel: 'Create in ${crossLocation == 'shop' ? 'Shop' : 'Godown'}',
+        onCancel: () {
           Get.back();
           controller.mobileScannerController.start();
+        },
+        onConfirm: () async {
+          Get.back();
+          controller.mobileScannerController.start();
+          final res = await AppRoutes.futureNavigationToRoute(
+            routeName: AppRouteName.productView,
+            data: {
+              'barcode': scannedValue,
+              'flag': isloosedInventory,
+              'preferredLocation': crossLocation,
+            },
+          );
+          if (res == true) {
+            controller.mobileScannerController.start();
+          }
         },
       );
       return;
@@ -242,6 +277,20 @@ class InventoryView extends GetView<InventroyController> {
     }
   }
 
+  String _normalizedLocation(String? value) => (value ?? '').trim().toLowerCase();
+
+  bool _hasBothLocationConflict(String message) {
+    return message.contains('shop') &&
+        message.contains('godown') &&
+        (message.contains('both') || message.contains('already exists'));
+  }
+
+  String? _getCrossLocation(String existingLocation) {
+    if (existingLocation == 'shop') return 'godown';
+    if (existingLocation == 'godown') return 'shop';
+    return null;
+  }
+
   Future<void> _handleLooseInventory(BarcodeCapture barcodes) async {
     final scannedValue = controller.barcodeValue.value;
     final isURL = Uri.tryParse(scannedValue)?.hasAbsolutePath ?? false;
@@ -249,9 +298,9 @@ class InventoryView extends GetView<InventroyController> {
       _showInvalidBarcodeDialog();
       return;
     }
-    final (bool exists, BarcodeExistingData? product) = await controller
+    final (bool exists, BarcodeExistingData product) = await controller
         .existingProductInfo(scannedValue, 'loose');
-    if (!exists || product == null) {
+    if (!exists) {
       _showProductNotFoundDialog();
       return;
     }
@@ -287,9 +336,9 @@ class InventoryView extends GetView<InventroyController> {
       _showInvalidBarcodeDialog();
       return;
     }
-    final (bool exists, BarcodeExistingData? product) = await controller
+    final (bool exists, BarcodeExistingData product) = await controller
         .existingProductInfo(scannedValue, 'clothing');
-    if (!exists || product == null) {
+    if (!exists) {
       _showProductNotFoundDialog();
       return;
     }

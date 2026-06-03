@@ -32,6 +32,7 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonGetResposne = await fetchResponse(response);
+      AppLogger.info(''' response: $jsonGetResposne''');
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {
@@ -63,6 +64,7 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonPostResponse = await fetchResponse(response);
+      AppLogger.info(''' response: $jsonPostResponse''');
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {
@@ -91,6 +93,7 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonDeleteResponse = await fetchResponse(response);
+      AppLogger.info(''' response: $jsonDeleteResponse''');
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {
@@ -119,6 +122,7 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonPutResponse = await fetchResponse(response);
+      AppLogger.info(''' response: $jsonPutResponse''');
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {
@@ -150,6 +154,7 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonPutResponse = await fetchResponse(response);
+      AppLogger.info(''' response: $jsonPutResponse''');
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {

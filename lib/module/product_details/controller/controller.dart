@@ -65,6 +65,7 @@ class ProductController extends GetxController with CacheManager {
   RxString shopType = ''.obs;
   RxString brandType = ''.obs;
   RxList<String> locationOptions = <String>['Shop'].obs;
+  RxBool isLocationLocked = false.obs;
   bool isLoose = false;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
@@ -85,6 +86,19 @@ class ProductController extends GetxController with CacheManager {
     final isGodownEnabled = await retrieveGodown();
     locationOptions.value =
         isGodownEnabled ? <String>['Shop', 'Godown'] : <String>['Shop'];
+    final preferredLocation = (data['preferredLocation'] ?? '').toString();
+    final normalizedPreferred = preferredLocation.toLowerCase();
+    if (normalizedPreferred == 'shop' && locationOptions.contains('Shop')) {
+      isLocationLocked.value = true;
+      location.text = 'Shop';
+      return;
+    }
+    if (normalizedPreferred == 'godown' && locationOptions.contains('Godown')) {
+      isLocationLocked.value = true;
+      location.text = 'Godown';
+      return;
+    }
+    isLocationLocked.value = false;
     if (!locationOptions.contains(location.text)) {
       location.text = locationOptions.first;
     }

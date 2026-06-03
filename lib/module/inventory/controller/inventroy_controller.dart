@@ -32,6 +32,7 @@ class InventroyController extends GetxController with CacheManager {
   String? selectedManuallySell;
   int looseOldQty = 0;
   RxString existProductName = ''.obs;
+  RxString existingProductApiMessage = ''.obs;
   RxInt stockqty = 0.obs;
   bool isLoose = false;
 
@@ -67,6 +68,7 @@ class InventroyController extends GetxController with CacheManager {
       stocktype: stocktype,
     );
     try {
+      existingProductApiMessage.value = res.msg ?? '';
       if (res.success == true &&
           res.msg!.contains('Product fetched successfully')) {
         existProductName.value = res.data?.name ?? '';

@@ -98,9 +98,12 @@ class CustomStaticDropDown extends StatelessWidget {
                       ),
                     );
                   }).toList(),
-              onChanged: (value) {
-                notifyParent(value);
-              },
+              onChanged:
+                  enable
+                      ? (value) {
+                        notifyParent(value);
+                      }
+                      : null,
             ),
           ),
         ),
@@ -202,9 +205,12 @@ class CustomDropDown extends StatelessWidget {
                       ),
                     );
                   }).toList(),
-              onChanged: (value) {
-                notifyParent(value);
-              },
+              onChanged:
+                  enable
+                      ? (value) {
+                        notifyParent(value);
+                      }
+                      : null,
             ),
           ),
         ),
