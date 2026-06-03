@@ -66,7 +66,7 @@ class ProductController extends GetxController with CacheManager {
   RxString brandType = ''.obs;
   RxList<String> locationOptions = <String>['Shop'].obs;
   RxBool isLocationLocked = false.obs;
-  bool isLoose = false;
+  RxBool isLoose = false.obs;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
   var data = Get.arguments;
@@ -79,7 +79,64 @@ class ProductController extends GetxController with CacheManager {
     await retrieveGodownValue();
     setBarcode();
     getCategoryData();
+    _prefillFromExistingProduct(); // pre-fill if cross-location copy
     super.onInit();
+  }
+
+  /// Pre-fills form with data from an existing product when creating a
+  /// cross-location copy (e.g. Shop → Godown or Godown → Shop).
+  void _prefillFromExistingProduct() {
+    final existing = data['existingProduct'];
+    if (existing == null || existing is! Map) return;
+
+    final Map<String, dynamic> p = Map<String, dynamic>.from(existing);
+    AppLogger.info("Prefilling form with existing product data: $p");
+    isLoose.value = p['isLoosed'];
+    AppLogger.info("isLoosed product data: $isLoose");
+
+    productName.text = p['name']?.toString() ?? '';
+    sellingPrice.text = p['sellingPrice']?.toString() ?? '';
+    purchasePrice.text = p['purchasePrice']?.toString() ?? '';
+    discount.text = p['discount']?.toString() ?? '0';
+    flavor.text = p['flavour']?.toString() ?? '';
+    weight.text = p['weight']?.toString() ?? '';
+    brandType.value = p['brand']?.toString() ?? '';
+    level.text = p['level']?.toString() ?? '';
+    rack.text = p['rack']?.toString() ?? '';
+    isFlavorAndWeightNotRequired.value =
+        p['isFlavorRequired'] as bool? ?? false;
+
+    final categoryName = p['categoryName']?.toString() ?? '';
+    final categoryId = p['categoryId']?.toString();
+    if (categoryName.isNotEmpty) {
+      category.text = categoryName;
+      if (categoryId != null) selectedCategoryId.value = categoryId;
+    }
+
+    final animalName = p['animalTypeName']?.toString() ?? '';
+    final animalId = p['animalTypeId']?.toString();
+    if (animalName.isNotEmpty) {
+      animalType.text = animalName;
+      if (animalId != null) selectedAnimalTypeId.value = animalId;
+    }
+
+    final colorName = p['colorName']?.toString() ?? '';
+    final colorId = p['colorId']?.toString();
+    if (colorName.isNotEmpty) {
+      color.text = colorName;
+      if (colorId != null) selectedColorId.value = colorId;
+    }
+
+    if ((p['expireDate']?.toString() ?? '').isNotEmpty) {
+      String rawDate = p['expireDate'].toString();
+      String formatted = formatDateTime(rawDate);
+      exprieDate.text = formatted;
+    }
+    if ((p['purchaseDate']?.toString() ?? '').isNotEmpty) {
+      String rawDate = p['purchaseDate'].toString();
+      String formatted = formatDateTime(rawDate);
+      purchaseDate.text = formatted;
+    }
   }
 
   Future<void> retrieveGodownValue() async {

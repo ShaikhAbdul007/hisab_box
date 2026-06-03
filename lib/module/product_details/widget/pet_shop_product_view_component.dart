@@ -222,7 +222,7 @@ class PetShopProductViewComponent extends StatelessWidget {
                                 "location":
                                     controller.location.text.toLowerCase(),
                                 "stock_type": "packet",
-                                "isloosed": controller.isLoose,
+                                "isloosed": controller.isLoose.value,
                                 "isflavorRequired":
                                     controller
                                         .isFlavorAndWeightNotRequired
@@ -324,10 +324,13 @@ class PetShopProductViewComponent extends StatelessWidget {
   }
 
   Widget _isLooseDropdown() {
-    return CustomStaticDropDown(
-      listItems: const [true, false],
-      hintText: 'Select isLoose',
-      notifyParent: (val) => controller.isLoose = val,
+    return Obx(
+      () => CustomStaticDropDown(
+        selectedDropDownItem: controller.isLoose.value,
+        listItems: const [true, false],
+        hintText: 'Select isLoose',
+        notifyParent: (val) => controller.isLoose.value = val,
+      ),
     );
   }
 

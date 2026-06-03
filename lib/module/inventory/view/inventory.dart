@@ -216,10 +216,7 @@ class InventoryView extends GetView<InventroyController> {
       return;
     }
     final (bool exists, BarcodeExistingData product) = await controller
-        .existingProductInfo(
-      scannedValue,
-      stockType,
-    );
+        .existingProductInfo(scannedValue, stockType);
     if (exists) {
       final location = _normalizedLocation(product.location);
       final message = controller.existingProductApiMessage.value.toLowerCase();
@@ -257,6 +254,28 @@ class InventoryView extends GetView<InventroyController> {
               'barcode': scannedValue,
               'flag': isloosedInventory,
               'preferredLocation': crossLocation,
+              // Pass existing product data so the form can be pre-filled
+              'existingProduct': {
+                'name': product.name,
+                'categoryName': product.categoryName,
+                'categoryId': product.categoryId,
+                'animalTypeName': product.animalTypeName,
+                'animalTypeId': product.animalTypeId,
+                'isLoosed': product.isLoosed ?? false,
+                'sellingPrice': product.sellingPrice?.toString() ?? '',
+                'purchasePrice': product.purchasePrice?.toString() ?? '',
+                'discount': product.discount?.toString() ?? '0',
+                'flavour': product.flavour?.toString() ?? '',
+                'weight': product.weight?.toString() ?? '',
+                'brand': product.brand ?? '',
+                'colorId': product.colorId,
+                'colorName': product.colorName,
+                'isFlavorRequired': product.isFlavorRequired ?? false,
+                'expireDate': product.expiryDate ?? '',
+                'purchaseDate': product.purchaseDate ?? '',
+                'level': product.level ?? '',
+                'rack': product.rack ?? '',
+              },
             },
           );
           if (res == true) {
@@ -277,7 +296,8 @@ class InventoryView extends GetView<InventroyController> {
     }
   }
 
-  String _normalizedLocation(String? value) => (value ?? '').trim().toLowerCase();
+  String _normalizedLocation(String? value) =>
+      (value ?? '').trim().toLowerCase();
 
   bool _hasBothLocationConflict(String message) {
     return message.contains('shop') &&
