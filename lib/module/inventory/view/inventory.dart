@@ -223,7 +223,12 @@ class InventoryView extends GetView<InventroyController> {
       final hasBothLocationConflict = _hasBothLocationConflict(message);
       final crossLocation = _getCrossLocation(location);
 
-      if (hasBothLocationConflict || crossLocation == null) {
+      // Cross-location dialog only when godown feature is enabled in settings
+      final bool isGodownEnabled = await controller.retrieveGodown();
+
+      if (!isGodownEnabled ||
+          hasBothLocationConflict ||
+          crossLocation == null) {
         exisitngProductDialog(
           message:
               '$scannedValue-${controller.existProductName.value}\n'
