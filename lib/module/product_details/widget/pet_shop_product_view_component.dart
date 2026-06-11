@@ -326,7 +326,10 @@ class PetShopProductViewComponent extends StatelessWidget {
   Widget _isLooseDropdown() {
     return Obx(
       () => CustomStaticDropDown(
-        selectedDropDownItem: controller.isLoose.value,
+        selectedDropDownItem:
+            controller.isProductDataExist.value
+                ? controller.isLoose.value
+                : null,
         listItems: const [true, false],
         hintText: 'Select isLoose',
         notifyParent: (val) => controller.isLoose.value = val,

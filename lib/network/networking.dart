@@ -21,7 +21,7 @@ class Networking extends BaseClient with CacheManager {
     dynamic jsonGetResposne;
     String? token;
     token = checkingTokenExpireOrNot();
-    AppLogger.info(''' url: $url ,token: $token''');
+
     try {
       var response = await http.get(
         Uri.parse(url).replace(queryParameters: body),
@@ -32,6 +32,7 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonGetResposne = await fetchResponse(response);
+      AppLogger.info(''' url: $url ,token: $token''');
       AppLogger.info(''' response: $jsonGetResposne''');
     } on SocketException {
       return Future.error(internetError);
@@ -51,7 +52,7 @@ class Networking extends BaseClient with CacheManager {
     dynamic jsonPostResponse;
     String? token;
     token = checkingTokenExpireOrNot();
-    AppLogger.info(''' url: $url ,body: $body,token: $token ''');
+
     try {
       var response = await http.post(
         Uri.parse(url),
@@ -64,7 +65,9 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonPostResponse = await fetchResponse(response);
-      AppLogger.info(''' response: $jsonPostResponse''');
+      AppLogger.info(
+        ''' url: $url ,body: $body,token: $token, response: $jsonPostResponse  ''',
+      );
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {
@@ -80,7 +83,7 @@ class Networking extends BaseClient with CacheManager {
     dynamic jsonDeleteResponse;
     String? token;
     token = checkingTokenExpireOrNot();
-    AppLogger.info(''' url: $url ,body: $body,token: $token ''');
+
     try {
       var response = await http.delete(
         Uri.parse(url),
@@ -93,7 +96,9 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonDeleteResponse = await fetchResponse(response);
-      AppLogger.info(''' response: $jsonDeleteResponse''');
+      AppLogger.info(
+        ''' url: $url ,body: $body,token: $token, response: $jsonDeleteResponse ''',
+      );
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {
@@ -109,7 +114,7 @@ class Networking extends BaseClient with CacheManager {
     dynamic jsonPutResponse;
     String? token;
     token = checkingTokenExpireOrNot();
-    AppLogger.info(''' url: $url ,body: $body,token: $token ''');
+
     try {
       var response = await http.put(
         Uri.parse(url),
@@ -122,7 +127,9 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonPutResponse = await fetchResponse(response);
-      AppLogger.info(''' response: $jsonPutResponse''');
+      AppLogger.info(
+        ''' url: $url ,body: $body,token: $token, response: $jsonPutResponse ''',
+      );
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {
@@ -141,7 +148,7 @@ class Networking extends BaseClient with CacheManager {
     dynamic jsonPutResponse;
     String? token;
     token = checkingTokenExpireOrNot();
-    AppLogger.info(''' url: $url ,body: $body,token: $token ''');
+
     try {
       var response = await http.patch(
         Uri.parse(url),
@@ -154,7 +161,9 @@ class Networking extends BaseClient with CacheManager {
       );
 
       jsonPutResponse = await fetchResponse(response);
-      AppLogger.info(''' response: $jsonPutResponse''');
+      AppLogger.info(
+        ''' url: $url ,body: $body,token: $token, response: $jsonPutResponse ''',
+      );
     } on SocketException {
       return Future.error(internetError);
     } on HttpException {

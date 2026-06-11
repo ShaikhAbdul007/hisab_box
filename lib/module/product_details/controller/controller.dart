@@ -67,6 +67,7 @@ class ProductController extends GetxController with CacheManager {
   RxList<String> locationOptions = <String>['Shop'].obs;
   RxBool isLocationLocked = false.obs;
   RxBool isLoose = false.obs;
+  RxBool isProductDataExist = false.obs;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
   var data = Get.arguments;
@@ -88,7 +89,7 @@ class ProductController extends GetxController with CacheManager {
   void _prefillFromExistingProduct() {
     final existing = data['existingProduct'];
     if (existing == null || existing is! Map) return;
-
+    isProductDataExist.value = true;
     final Map<String, dynamic> p = Map<String, dynamic>.from(existing);
     AppLogger.info("Prefilling form with existing product data: $p");
     isLoose.value = p['isLoosed'];

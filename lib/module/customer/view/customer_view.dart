@@ -94,6 +94,8 @@ class CustomerView extends GetView<CustomerController> {
                                                 controller.searchText.value,
                                               )
                                       ? _CustomerCard(
+                                        description:
+                                            customerData.description ?? '',
                                         name: customerData.name ?? '',
                                         mobile: customerData.mobileNo ?? '',
                                         address: customerData.address ?? '',
@@ -221,9 +223,11 @@ class _CustomerCard extends StatelessWidget {
   final String name;
   final String mobile;
   final String address;
+  final String description;
 
   const _CustomerCard({
     required this.name,
+    required this.description,
     required this.mobile,
     required this.address,
   });
@@ -307,11 +311,23 @@ class _CustomerCard extends StatelessWidget {
                             fontSize: 12,
                             color: AppColors.greyColor,
                           ),
-                          maxLines: 1,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
+                  ),
+                ],
+                if (description.isNotEmpty) ...[
+                  setHeight(height: 2),
+                  Text(
+                    description,
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 12,
+                      color: AppColors.greyColor,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
