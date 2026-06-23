@@ -17,16 +17,21 @@ class AllUserView extends GetView<AllUserController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: "Users",
-      firstActionChild: AppBarAddButton(
-        tooltip: 'Add User',
-        onTap: () async {
-          bool res = await AppRoutes.futureNavigationToRoute(
-            routeName: AppRouteName.addUser,
-          );
-          if (res == true) {
-            controller.getEmployees();
-          }
-        },
+      firstActionChild: Obx(
+        () =>
+            (controller.empolyeeModel.value.data?.length ?? 0) < 3
+                ? AppBarAddButton(
+                  tooltip: 'Add User',
+                  onTap: () async {
+                    bool res = await AppRoutes.futureNavigationToRoute(
+                      routeName: AppRouteName.addUser,
+                    );
+                    if (res == true) {
+                      controller.getEmployees();
+                    }
+                  },
+                )
+                : Container(),
       ),
       body: Obx(
         () =>

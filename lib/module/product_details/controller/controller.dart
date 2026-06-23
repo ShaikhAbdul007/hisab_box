@@ -1,5 +1,6 @@
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/logger.dart';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
@@ -31,6 +32,15 @@ class ProductController extends GetxController with CacheManager {
   RxnString selectedCategoryId = RxnString(null);
   RxnString selectedAnimalTypeId = RxnString(null);
   RxnString selectedColorId = RxnString(null);
+
+  // ── Clothing Matrix: multi-select colors + sizes ──────────────────────────
+  RxList<CategoryModelListData> selectedColors = <CategoryModelListData>[].obs;
+  RxList<CategoryModelListData> selectedSizes = <CategoryModelListData>[].obs;
+
+  // Each combination: { colorId, colorName, sizeId, sizeName, barcode, stock }
+  RxList<Map<String, dynamic>> variantCombinations =
+      <Map<String, dynamic>>[].obs;
+  RxBool isSavingVariants = false.obs;
 
   // Controllers
   TextEditingController productName = TextEditingController();
@@ -177,7 +187,6 @@ class ProductController extends GetxController with CacheManager {
   }
 
   void calculatePurchasePrice() {
-    double margin = double.tryParse(retrieveMarginValue() ?? '0') ?? 0;
     if (sellingPrice.text.isNotEmpty) {
       double sellingPrices = double.tryParse(sellingPrice.text) ?? 0;
       double purchasePrices = sellingPrices - (sellingPrices * 0.20);
@@ -200,7 +209,7 @@ class ProductController extends GetxController with CacheManager {
       if (cached.isNotEmpty) categoryList.value = cached;
       final response = await categoryRepo.getCategory();
       if (response.success == success) {
-        categoryList.value = response.categorymodeldata?.data ?? [];
+        categoryList.value = response.data ?? [];
         saveCategoryList(categoryList);
       }
     } catch (e) {
@@ -217,7 +226,7 @@ class ProductController extends GetxController with CacheManager {
       if (cached.isNotEmpty) animalTypeList.value = cached;
       final response = await animalCategoryRepo.getAnimalCategory();
       if (response.success == success) {
-        animalTypeList.value = response.categorymodeldata?.data ?? [];
+        animalTypeList.value = response.data ?? [];
         saveAnimalList(animalTypeList);
       }
     } catch (e) {
@@ -232,7 +241,7 @@ class ProductController extends GetxController with CacheManager {
     try {
       final response = await colorCategoryRepo.getColorCategories();
       if (response.success == success) {
-        colorList.value = response.categorymodeldata?.data ?? [];
+        colorList.value = response.data ?? [];
       }
     } catch (e) {
       AppLogger.info(("🚨 Color Error: $e").toString());
@@ -248,11 +257,14 @@ class ProductController extends GetxController with CacheManager {
       if (response.success == success) {
         clear();
         Get.back(result: true);
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(
+          error: response.msg ?? somethingWentMessage,
+          isError: false,
+        );
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       AppLogger.info(("Database Error: $e").toString());
@@ -269,11 +281,14 @@ class ProductController extends GetxController with CacheManager {
       if (response.success == success) {
         clear();
         Get.back(result: true);
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(
+          error: response.msg ?? somethingWentMessage,
+          isError: false,
+        );
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());
@@ -294,9 +309,9 @@ class ProductController extends GetxController with CacheManager {
               response.data?.message ?? response.msg ?? somethingWentMessage,
         );
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());
@@ -321,6 +336,211 @@ class ProductController extends GetxController with CacheManager {
     selectedAnimalTypeId.value = null;
     selectedColorId.value = null;
     brandType.value = '';
+    selectedColors.clear();
+    selectedSizes.clear();
+    variantCombinations.clear();
+  }
+
+  // ── Clothing Matrix helpers ───────────────────────────────────────────────
+
+  /// Toggle a color in selectedColors. Regenerates combinations after.
+  void toggleColor(CategoryModelListData color) {
+    final exists = selectedColors.any((c) => c.id == color.id);
+    if (exists) {
+      selectedColors.removeWhere((c) => c.id == color.id);
+    } else {
+      selectedColors.add(color);
+    }
+    _regenerateCombinations();
+  }
+
+  /// Toggle a size in selectedSizes. Regenerates combinations after.
+  void toggleSize(CategoryModelListData size) {
+    final exists = selectedSizes.any((s) => s.id == size.id);
+    if (exists) {
+      selectedSizes.removeWhere((s) => s.id == size.id);
+    } else {
+      selectedSizes.add(size);
+    }
+    _regenerateCombinations();
+  }
+
+  /// Auto-generates Color × Size combinations preserving existing stock/barcode edits.
+  void _regenerateCombinations() {
+    final existing = {
+      for (final c in variantCombinations) '${c['colorId']}_${c['sizeId']}': c,
+    };
+
+    final newCombinations = <Map<String, dynamic>>[];
+    for (final color in selectedColors) {
+      for (final size in selectedSizes) {
+        final key = '${color.id}_${size.id}';
+        if (existing.containsKey(key)) {
+          // Preserve user-edited stock and barcode
+          newCombinations.add(existing[key]!);
+        } else {
+          final autoBarcode = _generateBarcode(
+            productName.text,
+            color.name ?? '',
+            size.name ?? '',
+          );
+          newCombinations.add({
+            'colorId': color.id,
+            'colorName': color.name ?? '',
+            'sizeId': size.id,
+            'sizeName': size.name ?? '',
+            'barcode': autoBarcode,
+            'stock': '',
+          });
+        }
+      }
+    }
+    variantCombinations.value = newCombinations;
+  }
+
+  /// Regenerates barcodes when product name changes (only for unedited ones).
+  void onProductNameChanged(String _) {
+    _regenerateCombinations();
+  }
+
+  String _generateBarcode(String name, String color, String size) {
+    String clean(String s) {
+      final up = s.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+      return up.substring(0, up.length.clamp(0, 6));
+    }
+
+    final a = clean(name);
+    final b = clean(color);
+    final c = clean(size);
+    final combined = (a + b + c).toUpperCase();
+    final base = combined.substring(0, combined.length.clamp(0, 18));
+    final needed = 20 - base.length;
+    final rand =
+        needed > 0
+            ? List.generate(
+              needed,
+              (_) => Random().nextInt(10).toString(),
+            ).join()
+            : (Random().nextInt(90) + 10).toString();
+    return '$base$rand';
+  }
+
+  void updateVariantBarcode(int index, String barcode) {
+    final updated = Map<String, dynamic>.from(variantCombinations[index]);
+    updated['barcode'] = barcode;
+    variantCombinations[index] = updated;
+  }
+
+  void updateVariantStock(int index, String stock) {
+    final updated = Map<String, dynamic>.from(variantCombinations[index]);
+    updated['stock'] = stock;
+    variantCombinations[index] = updated;
+  }
+
+  /// Saves all variants in a single API call with variants array.
+  /// Body format:
+  /// {
+  ///   "name": "...", "selling_price": ..., "purchase_price": ...,
+  ///   "location": "shop", "stock_type": "clothing",
+  ///   "purchase_date": "...",
+  ///   "variants": [
+  ///     { "name": "... [Red]", "color_id": "uuid", "barcode": "...", "quantity": 10 }
+  ///   ]
+  /// }
+  Future<void> saveProductWithVariants() async {
+    if (variantCombinations.isEmpty) {
+      showSnackBar(error: 'Please select at least one color and size.');
+      return;
+    }
+    if (productName.text.trim().isEmpty) {
+      showSnackBar(error: 'Please enter product name.');
+      return;
+    }
+    if (sellingPrice.text.trim().isEmpty) {
+      showSnackBar(error: 'Please enter selling price.');
+      return;
+    }
+
+    // ── Stock validation — all variants must have stock ───────────────────
+    for (int i = 0; i < variantCombinations.length; i++) {
+      final v = variantCombinations[i];
+      final stockStr = v['stock']?.toString().trim() ?? '';
+      if (stockStr.isEmpty) {
+        showSnackBar(
+          error: 'Please enter stock for ${v['colorName']} - ${v['sizeName']}',
+        );
+        return;
+      }
+      final stockVal = int.tryParse(stockStr);
+      if (stockVal == null || stockVal < 0) {
+        showSnackBar(
+          error: 'Invalid stock for ${v['colorName']} - ${v['sizeName']}',
+        );
+        return;
+      }
+    }
+
+    isSavingVariants.value = true;
+
+    try {
+      // Build variants array
+      final List<Map<String, dynamic>> variantsArray =
+          variantCombinations.map((v) {
+            final colorName = v['colorName'] ?? '';
+            final sizeName = v['sizeName'] ?? '';
+            final variantName =
+                sizeName.isNotEmpty
+                    ? '${productName.text.trim()} [$colorName - $sizeName]'
+                    : '${productName.text.trim()} [$colorName]';
+
+            return {
+              "name": variantName,
+              "color_id": v['colorId'] ?? '',
+              "animal_type": v['sizeId'] ?? '',
+              "barcode": v['barcode'] ?? '',
+              "quantity": int.tryParse(v['stock']?.toString() ?? '0') ?? 0,
+              "selling_price": double.tryParse(sellingPrice.text) ?? 0.0,
+              "purchase_price": double.tryParse(purchasePrice.text) ?? 0.0,
+            };
+          }).toList();
+
+      final body = {
+        "name": productName.text.trim(),
+        "selling_price": double.tryParse(sellingPrice.text) ?? 0.0,
+        "purchase_price": double.tryParse(purchasePrice.text) ?? 0.0,
+        "location": location.text.toLowerCase(),
+        "stock_type": "clothing",
+        "category": selectedCategoryId.value ?? '',
+        "brand": brandType.value,
+        "level": level.text,
+        "rack": rack.text,
+        "discount": discount.text,
+        "purchase_date": parseAppDate(purchaseDate.text),
+        "variants": variantsArray,
+      };
+
+      // Debug: print body on save
+      AppLogger.info('=== CLOTHING VARIANTS BODY ===');
+      AppLogger.info(body.toString());
+
+      final response = await productRepo.addProduct(body: body);
+      if (response.success == success) {
+        clear();
+        Get.back(result: true);
+        showMessage(
+          message:
+              '${variantsArray.length} variant${variantsArray.length > 1 ? 's' : ''} saved successfully!',
+        );
+      } else if (response.success == failed) {
+        showSnackBar(error: response.msg ?? somethingWentMessage);
+      } else {
+        showSnackBar(error: somethingWentMessage);
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isSavingVariants.value = false;
+    }
   }
 
   @override

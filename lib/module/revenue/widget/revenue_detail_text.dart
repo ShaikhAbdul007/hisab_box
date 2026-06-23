@@ -10,10 +10,14 @@ import 'package:inventory/module/sell/model/sell_details_model.dart';
 class RevenueDetailList extends StatelessWidget {
   final SellDetailsItems revenueModel;
   final String date;
+  final VoidCallback? onExchangePressed;
+  final VoidCallback? onReturnPressed;
   const RevenueDetailList({
     super.key,
     required this.revenueModel,
     required this.date,
+    this.onExchangePressed,
+    this.onReturnPressed,
   });
 
   @override
@@ -129,6 +133,26 @@ class RevenueDetailList extends StatelessWidget {
                     ],
                   ],
                 ),
+                setHeight(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Exchange',
+                        color: AppColors.buttonGreenColor,
+                        onTap: onExchangePressed,
+                      ),
+                    ),
+                    setWidth(width: 8),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Return',
+                        color: AppColors.buttonRedColor,
+                        onTap: onReturnPressed,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -180,6 +204,37 @@ class RevenueDetailList extends StatelessWidget {
       ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8.r),
+      child: Container(
+        height: 34.h,
+        decoration: BoxDecoration(
+          color: onTap == null ? Colors.grey.shade200 : color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(
+            color: onTap == null ? Colors.grey.shade300 : color,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: CustomTextStyle.customOpenSans(
+              fontSize: 12,
+              color: onTap == null ? Colors.grey : color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

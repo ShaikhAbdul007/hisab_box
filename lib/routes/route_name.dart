@@ -21,10 +21,12 @@ class AppRouteName {
   static const String allUserDetail = '/allUserDetail';
   static const String unknwonroute = '/unknwonroute';
   static const String userRoleView = '/userRoleView';
+  static const String margin = '/margin';
   static const String privacypolicy = '/privacypolicy';
   static const String orderView = '/orderView';
   static const String termandcodition = '/termandcodition';
   static const String sellListAfterScan = '/sellListAfterScan';
+  static const String creditPaymentView = '/creditPaymentView';
   static const String nointernateConnection = '/nointernateConnection';
   static const String expense = '/expense';
   static const String discount = '/discount';

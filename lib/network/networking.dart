@@ -57,7 +57,6 @@ class Networking extends BaseClient with CacheManager {
       var response = await http.post(
         Uri.parse(url),
         headers: <String, String>{
-          //'Accept': ApiEndPoint.accept,
           'Content-Type': ApiEndPoint.contentType,
           'Authorization': "Bearer $token",
         },

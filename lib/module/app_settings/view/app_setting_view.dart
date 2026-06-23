@@ -58,6 +58,36 @@ class AppSettingView extends GetView<AppSettingController> {
                     isLast: false,
                   ),
                 ),
+                Obx(() {
+                  if (!controller.isClothingShop.value) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    children: [
+                      Divider(
+                        height: 1,
+                        indent: 68,
+                        color: Colors.grey.shade100,
+                      ),
+                      _ToggleTile(
+                        icon: CupertinoIcons.barcode_viewfinder,
+                        iconColor: const Color(0xFF8E24AA),
+                        title: 'Clothing Scan',
+                        subtitle:
+                            'Show scan option in inventory for clothing shop',
+                        value: controller.isClothingScanSelected.value,
+                        onChanged: (v) {
+                          controller.isClothingScanSelected.value = v;
+                          customMessageOrErrorPrint(
+                            message: controller.isClothingScanSelected.value,
+                          );
+                          controller.saveClothingScanValue(v);
+                        },
+                        isLast: false,
+                      ),
+                    ],
+                  );
+                }),
                 Divider(height: 1, indent: 68, color: Colors.grey.shade100),
                 Obx(
                   () => _ToggleTile(

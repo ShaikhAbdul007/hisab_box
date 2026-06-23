@@ -195,22 +195,8 @@ class AnimalCategory extends GetView<AnimalTypeController> {
                 ? Stack(
                   children: [
                     ListView.builder(
-                      controller: controller.scrollController,
-                      itemCount: controller.animalTypeList.length + 1,
+                      itemCount: controller.animalTypeList.length,
                       itemBuilder: (context, index) {
-                        if (index == controller.animalTypeList.length) {
-                          return Obx(
-                            () =>
-                                controller.isLoadingMore.value
-                                    ? const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    )
-                                    : const SizedBox.shrink(),
-                          );
-                        }
                         var list = controller.animalTypeList[index];
                         return _AnimalCategoryCard(
                           name: list.name ?? '',

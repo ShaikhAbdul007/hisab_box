@@ -76,8 +76,11 @@ class ReportController extends GetxController
 
   Future<void> fetchModeOfPaymentStats() async {
     isDashBoardOverView.value = true;
+    String d = getApiFormattedDate(salesDate.value);
     try {
-      var response = await reportDashboardOverview.getDailyOverviewData();
+      var response = await reportDashboardOverview.getDailyOverviewData(
+        date: d,
+      );
       if (response.success == success) {
         final d = response.data?.data;
         totalCash.value = (d?.cash ?? 0).toDouble();
@@ -86,9 +89,9 @@ class ReportController extends GetxController
         totalCredit.value = (d?.credit ?? 0).toDouble();
         totalRevenue.value = (d?.totalRevenue ?? 0).toDouble();
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());
@@ -99,14 +102,17 @@ class ReportController extends GetxController
 
   Future<void> fetchTopSellingProductsChart() async {
     isTopSellingProductsChart.value = true;
+    String d = getApiFormattedDate(salesDate.value);
     try {
-      var response = await reportDashboardOverview.getTopProductsGraphData();
+      var response = await reportDashboardOverview.getTopProductsGraphData(
+        date: d,
+      );
       if (response.success == success) {
         reportTopProductGraph.value = response.data ?? [];
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());
@@ -119,17 +125,19 @@ class ReportController extends GetxController
     _topProductPage = 1;
     reportTopProductList.clear();
     isTopSellingProducts.value = true;
+    String d = getApiFormattedDate(salesDate.value);
     try {
       var response = await reportDashboardOverview.getTopProductsListData(
         page: _topProductPage,
+        date: d,
       );
       if (response.success == success) {
         reportTopProductList.value = response.data ?? [];
         _topProductTotalPages = response.totalPages ?? 1;
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());
@@ -163,16 +171,16 @@ class ReportController extends GetxController
   // --- SALE TAB — reuses RevenueRepo.fetchSell (existing pattern) ---
   Future<void> fetchSales({String? date}) async {
     isSalesLoading.value = true;
-    final selectedDate = getFormattedDate(date ?? salesDate.value);
+    final selectedDate = getApiFormattedDate(date ?? salesDate.value);
     try {
       final response = await revenueRepo.fetchSell(date: selectedDate);
       if (response.success == success) {
         sellsList.value = response.data?.data ?? [];
         totalRevenue.value = (response.data?.grandTotal ?? 0).toDouble();
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());

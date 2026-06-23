@@ -59,7 +59,9 @@ import '../module/revenue/view/revenue_view.dart';
 import '../module/sell/binding/sell_binding.dart';
 import '../module/sell/view/sell.dart';
 import '../module/sell/view/sell_list_After_scan.dart';
+import '../module/margins/binding/marking_binding.dart';
 import '../module/setting/binding/setting_binding.dart';
+import '../module/margins/view/marking_view.dart';
 import '../module/setting/view/setting.dart';
 import '../module/unknown/view/nointernate_connection.dart';
 import '../module/user_profile/binding/user_profile_bindings.dart';
@@ -76,6 +78,7 @@ import '../module/loose_category/binding/loose_category_binding.dart';
 import '../module/loose_category/view/loose_category.dart';
 import '../module/sell/binding/sell_list_after_scan_binding.dart';
 import '../module/sell/view/payment_view.dart';
+import '../module/credits_amount/view/credit_payment_view.dart';
 import '../module/unknown/view/unknown_route.dart';
 import '../module/user_profile/view/user_profile_view.dart';
 import 'route_name.dart';
@@ -260,6 +263,11 @@ class AppRoutes {
       binding: AppSettingBinding(),
     ),
     GetPage(
+      name: AppRouteName.margin,
+      page: () => const MarkingView(),
+      binding: MarkingBinding(),
+    ),
+    GetPage(
       name: AppRouteName.outOfStock,
       page: () => OutOfStockView(),
       binding: OutOfStockBinding(),
@@ -283,6 +291,11 @@ class AppRoutes {
       name: AppRouteName.colorCategory,
       page: () => ColorCategoryView(),
       binding: ColorCategoryBinding(),
+    ),
+    GetPage(
+      name: AppRouteName.creditPaymentView,
+      page: () => const CreditPaymentView(),
+      binding: SellListAfterScanBinding(),
     ),
     GetPage(
       name: AppRouteName.paymentView,
@@ -394,6 +407,9 @@ class AppRoutes {
       case AppRouteName.privacypolicy:
         Get.toNamed(AppRouteName.privacypolicy, arguments: data);
         break;
+      case AppRouteName.margin:
+        Get.toNamed(AppRouteName.margin, arguments: data);
+        break;
       case AppRouteName.termandcodition:
         Get.toNamed(AppRouteName.termandcodition, arguments: data);
         break;
@@ -420,6 +436,9 @@ class AppRoutes {
         break;
       case AppRouteName.paymentView:
         Get.toNamed(AppRouteName.paymentView, arguments: data);
+        break;
+      case AppRouteName.creditPaymentView:
+        Get.toNamed(AppRouteName.creditPaymentView, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

@@ -1,14 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/state_manager.dart';
+import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/product_details/widget/product_field_card.dart';
-import '../../../common_widget/colors.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../common_widget/common_calender.dart';
 import '../../../common_widget/common_dropdown.dart';
@@ -202,66 +203,204 @@ class GenerateBarcodeComponent extends StatelessWidget {
     );
   }
 
-  // ── Clothing Shop form ────────────────────────────────────────────────────
+  // ── Clothing Shop form (Matrix Grid) ─────────────────────────────────────
   Widget _clothingForm(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Product Info
+        // ── Product Info ───────────────────────────────────────────────
         ProductFieldCard(
-          icon: CupertinoIcons.barcode,
+          icon: CupertinoIcons.tag_fill,
           iconColor: const Color(0xFF1565C0),
           title: 'Product Info',
           child: Column(
             children: [
-              InventoryBottomsheetComponentText(
-                readOnly1: true,
-                controller1: controller.barcode,
-                controller2: controller.productName,
-                label1: 'Barcode',
-                hintText1: 'Enter barcode',
-                hintText2: 'Enter product name',
-                label2: 'Product Name',
-                validator2: (v) => v!.isEmpty ? emptyProductName : null,
+              CommonTextField(
+                validator: (v) => v!.isEmpty ? emptyProductName : null,
+                hintText: 'Enter product name',
+                label: 'Product Name',
+                controller: controller.productName,
+                onChanged: controller.onProductNameChanged,
               ),
-              setHeight(height: 8),
-              Row(
-                children: [
-                  Flexible(child: _categoryDropdown()),
-                  Flexible(child: _secondaryDropdown(hint: 'Size')),
-                ],
+              setHeight(height: 10),
+              Obx(
+                () =>
+                    controller.categoryListLoading.value
+                        ? Center(
+                          child: CommonProgressBar(color: AppColors.blackColor),
+                        )
+                        : _categoryDropdown(),
               ),
-              setHeight(height: 8),
-              Row(
-                children: [
-                  Flexible(child: _colorDropdown()),
-                  Flexible(child: _brandTypeDropdown()),
-                ],
+              setHeight(height: 10),
+              Obx(
+                () => CustomStaticDropDown(
+                  selectedDropDownItem:
+                      ['Normal', 'Imp'].contains(controller.brandType.value)
+                          ? controller.brandType.value
+                          : null,
+                  listItems: const ['Normal', 'Imp'],
+                  hintText: 'Brand Type',
+                  notifyParent:
+                      (val) =>
+                          controller.brandType.value = (val ?? '').toString(),
+                ),
               ),
-              setHeight(height: 8),
-              Row(children: [Flexible(child: _stockField())]),
             ],
           ),
         ),
+
         setHeight(height: 12),
 
-        // Pricing
+        // ── Colors (multi-select) ──────────────────────────────────────
+        ProductFieldCard(
+          icon: CupertinoIcons.paintbrush_fill,
+          iconColor: const Color(0xFFE53935),
+          title: 'Select Colors',
+          child: Obx(() {
+            if (controller.colorListLoading.value) {
+              return Center(
+                child: CommonProgressBar(color: AppColors.blackColor),
+              );
+            }
+            if (controller.colorList.isEmpty) {
+              return Text(
+                'No colors found. Add colors in Settings.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              );
+            }
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  controller.colorList.map((colorItem) {
+                    final isSelected = controller.selectedColors.any(
+                      (c) => c.id == colorItem.id,
+                    );
+                    return GestureDetector(
+                      onTap: () => controller.toggleColor(colorItem),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected
+                                  ? AppColors.blackColor
+                                  : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color:
+                                isSelected
+                                    ? AppColors.blackColor
+                                    : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Text(
+                          colorItem.name ?? '',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isSelected
+                                    ? AppColors.whiteColor
+                                    : AppColors.blackColor,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            );
+          }),
+        ),
+
+        setHeight(height: 12),
+
+        // ── Sizes (multi-select) ───────────────────────────────────────
+        ProductFieldCard(
+          icon: CupertinoIcons.resize,
+          iconColor: const Color(0xFF7B1FA2),
+          title: 'Select Sizes',
+          child: Obx(() {
+            if (controller.animalCategoryListLoading.value) {
+              return Center(
+                child: CommonProgressBar(color: AppColors.blackColor),
+              );
+            }
+            if (controller.animalTypeList.isEmpty) {
+              return Text(
+                'No sizes found. Add sizes in Settings.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              );
+            }
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  controller.animalTypeList.map((size) {
+                    final isSelected = controller.selectedSizes.any(
+                      (s) => s.id == size.id,
+                    );
+                    return GestureDetector(
+                      onTap: () => controller.toggleSize(size),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected
+                                  ? AppColors.blackColor
+                                  : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color:
+                                isSelected
+                                    ? AppColors.blackColor
+                                    : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Text(
+                          size.name ?? '',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                isSelected
+                                    ? AppColors.whiteColor
+                                    : AppColors.blackColor,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            );
+          }),
+        ),
+
+        setHeight(height: 12),
+
+        // ── Pricing ───────────────────────────────────────────────────
         ProductFieldCard(
           icon: CupertinoIcons.money_dollar_circle_fill,
           iconColor: const Color(0xFF2E7D32),
-          title: 'Pricing',
+          title: 'Pricing (Same for all variants)',
           child: Column(
             children: [
               InventoryBottomsheetComponentText(
                 inputLength1: 10,
                 keyboardType1: TextInputType.number,
-                hintText1: 'Selling Price (sp)',
+                hintText1: 'Selling Price',
                 label1: 'Selling Price (₹)',
                 controller1: controller.sellingPrice,
                 validator1: (v) => v!.isEmpty ? emptyProductSellingPrice : null,
                 inputLength2: 10,
                 keyboardType2: TextInputType.number,
-                hintText2: 'Purchase Price (mrp)',
+                hintText2: 'Purchase Price',
                 label2: 'Purchase Price (₹)',
                 controller2: controller.purchasePrice,
                 validator2:
@@ -272,7 +411,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
               InventoryBottomsheetComponentText(
                 inputLength1: 2,
                 keyboardType1: TextInputType.number,
-                hintText1: 'Enter discount',
+                hintText1: 'Discount',
                 label1: 'Discount (%)',
                 controller1: controller.discount,
                 validator1: (v) => v!.isEmpty ? emptyDiscount : null,
@@ -280,21 +419,11 @@ class GenerateBarcodeComponent extends StatelessWidget {
                 label2: 'Level',
                 controller2: controller.level,
               ),
-            ],
-          ),
-        ),
-        setHeight(height: 12),
-
-        // Location & Date
-        ProductFieldCard(
-          icon: CupertinoIcons.map_pin,
-          iconColor: const Color(0xFF6A1B9A),
-          title: 'Location & Date',
-          child: Column(
-            children: [
+              setHeight(height: 8),
               Row(
                 children: [
                   Flexible(child: _locationDropdown()),
+                  const SizedBox(width: 8),
                   Flexible(child: _rackField()),
                 ],
               ),
@@ -303,8 +432,70 @@ class GenerateBarcodeComponent extends StatelessWidget {
             ],
           ),
         ),
+
+        setHeight(height: 12),
+
+        // ── Variant Combinations ───────────────────────────────────────
+        Obx(() {
+          if (controller.variantCombinations.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter Stock for Combinations:',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.blackColor,
+                ),
+              ),
+              setHeight(height: 10),
+              ...controller.variantCombinations.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final variant = entry.value;
+                return _GBVariantCard(
+                  key: ValueKey('${variant['colorId']}_${variant['sizeId']}'),
+                  productName: controller.productName.text,
+                  variant: variant,
+                  index: idx,
+                  controller: controller,
+                );
+              }),
+            ],
+          );
+        }),
+
         setHeight(height: 20),
-        _saveButton(bodyBuilder: _clothingBody),
+
+        // ── Save Button ────────────────────────────────────────────────
+        Obx(
+          () => Center(
+            child: CommonButton(
+              isLoading: controller.isSavingVariants.value,
+              label:
+                  controller.variantCombinations.isEmpty
+                      ? saveButton
+                      : 'Save Product with Variants (${controller.variantCombinations.length})',
+              onTap: () async {
+                if (!controller.inventoryScanKey.currentState!.validate()) {
+                  return;
+                }
+                unfocus();
+                if (controller.variantCombinations.isEmpty) {
+                  AppLogger.error(
+                    'Generate Barcode Clothing ${_clothingBody()}',
+                  );
+                  await controller.saveNewProduct(body: _clothingBody());
+                } else {
+                  await controller.saveProductWithVariants();
+                }
+              },
+            ),
+          ),
+        ),
+
         setHeight(height: 50),
       ],
     );
@@ -364,33 +555,6 @@ class GenerateBarcodeComponent extends StatelessWidget {
     );
   }
 
-  Widget _colorDropdown() {
-    return Obx(
-      () =>
-          controller.colorListLoading.value
-              ? Center(child: CommonProgressBar(color: AppColors.blackColor))
-              : controller.colorList.isEmpty
-              ? CustomDropDown(
-                listItems: controller.colorList,
-                hintText: 'Add Color First',
-                notifyParent: (_) {},
-              )
-              : CustomDropDown(
-                selectedDropDownItem: controller.selectedColorId.value,
-                hintText: 'Color',
-                listItems: controller.colorList,
-                notifyParent: (val) {
-                  controller.selectedColorId.value = val;
-                  final match = controller.colorList.cast<dynamic>().firstWhere(
-                    (e) => e.id == val,
-                    orElse: () => null,
-                  );
-                  controller.color.text = match?.name ?? '';
-                },
-              ),
-    );
-  }
-
   Widget _stockField() {
     return CommonTextField(
       validator: (v) => v!.isEmpty ? emptyProductQuantity : null,
@@ -408,18 +572,6 @@ class GenerateBarcodeComponent extends StatelessWidget {
       listItems: const [true, false],
       hintText: 'Select isLoose',
       notifyParent: (val) => controller.isLoose = val,
-    );
-  }
-
-  Widget _brandTypeDropdown() {
-    return CustomStaticDropDown(
-      selectedDropDownItem:
-          controller.brandType.value.isEmpty
-              ? null
-              : controller.brandType.value,
-      listItems: const ['Normal', 'Imp'],
-      hintText: 'Brand Type',
-      notifyParent: (val) => controller.brandType.value = val?.toString() ?? '',
     );
   }
 
@@ -556,4 +708,115 @@ class GenerateBarcodeComponent extends StatelessWidget {
     "purchase_date": parseAppDate(controller.purchaseDate.text),
     "discount": controller.discount.text,
   };
+}
+
+// ── Variant Combination Card for Generate Barcode ─────────────────────────────
+class _GBVariantCard extends StatefulWidget {
+  final String productName;
+  final Map<String, dynamic> variant;
+  final int index;
+  final GenerateBarcodeController controller;
+
+  const _GBVariantCard({
+    super.key,
+    required this.productName,
+    required this.variant,
+    required this.index,
+    required this.controller,
+  });
+
+  @override
+  State<_GBVariantCard> createState() => _GBVariantCardState();
+}
+
+class _GBVariantCardState extends State<_GBVariantCard> {
+  late final TextEditingController _stockCtrl;
+  late final TextEditingController _barcodeCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _stockCtrl = TextEditingController(
+      text: widget.variant['stock']?.toString() ?? '',
+    );
+    _barcodeCtrl = TextEditingController(
+      text: widget.variant['barcode']?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _stockCtrl.dispose();
+    _barcodeCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorName = widget.variant['colorName'] ?? '';
+    final sizeName = widget.variant['sizeName'] ?? '';
+    final title =
+        sizeName.isNotEmpty
+            ? '${widget.productName.trim()} [ $colorName - $sizeName ]'
+            : '${widget.productName.trim()} [ $colorName ]';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: CustomTextStyle.customNato(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Flexible(
+                child: CommonTextField(
+                  keyboardType: TextInputType.number,
+                  hintText: 'Stock',
+                  label: 'Stock',
+                  controller: _stockCtrl,
+                  onChanged:
+                      (v) =>
+                          widget.controller.updateVariantStock(widget.index, v),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: CommonTextField(
+                  readOnly: true,
+                  hintText: 'Barcode',
+                  label: 'Barcode',
+                  controller: _barcodeCtrl,
+                  onChanged:
+                      (v) => widget.controller.updateVariantBarcode(
+                        widget.index,
+                        v,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -52,9 +52,24 @@ class RevenueDetailView extends GetView<DetailsRevenueController> {
                 ? ListView.builder(
                   itemCount: controller.sellDataList.length,
                   itemBuilder: (context, index) {
+                    final item = controller.sellDataList[index];
                     return RevenueDetailList(
-                      revenueModel: controller.sellDataList[index],
+                      revenueModel: item,
                       date: controller.date.value,
+                      onExchangePressed: () {
+                        showSnackBar(
+                          error:
+                              'Exchange action for ${item.productName ?? 'item'} is not implemented yet',
+                          isError: false,
+                        );
+                      },
+                      onReturnPressed: () {
+                        showSnackBar(
+                          error:
+                              'Return action for ${item.productName ?? 'item'} is not implemented yet',
+                          isError: false,
+                        );
+                      },
                     );
                   },
                 )

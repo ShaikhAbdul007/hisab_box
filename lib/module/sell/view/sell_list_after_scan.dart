@@ -8,6 +8,7 @@ import 'package:inventory/common_widget/common_nodatafound.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/common_radio_button.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/routes/routes.dart';
 import '../../../common_widget/colors.dart';
 import '../../../helper/app_message.dart';
 import '../../../helper/textstyle.dart';
@@ -57,7 +58,10 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
           _SellFooter(
             context: context,
             controller: controller,
-            onSellTap: () => Get.toNamed(AppRouteName.paymentView),
+            onSellTap:
+                () => AppRoutes.navigateRoutes(
+                  routeName: AppRouteName.paymentView,
+                ),
           ),
         ],
         // ── Product list ─────────────────────────────────────────────────

@@ -17,6 +17,7 @@ class InventoryListController extends GetxController with CacheManager {
   RxBool isDataLoading = false.obs;
   RxBool isSaveLoading = false.obs;
   RxBool isInventoryScanSelected = false.obs;
+  RxBool isClothingScanSelected = false.obs;
   RxBool isLoose = false.obs;
   RxBool isFlavorAndWeightNotRequired = false.obs;
   RxString shopType = ''.obs;
@@ -51,12 +52,29 @@ class InventoryListController extends GetxController with CacheManager {
 
   @override
   void onInit() {
+    final user = retrieveUserDetail();
+    shopType.value = user.data?.shopType ?? '';
+    if (shopTypeEnum == ShopType.clothingShop) {
+      _loadClothingScanValue();
+    }
     isInventoryScanSelectedValue();
     _loadGodownAndInit();
     _attachScrollListeners();
-    final user = retrieveUserDetail();
-    shopType.value = user.data?.shopType ?? '';
     super.onInit();
+  }
+
+  Future<void> _loadClothingScanValue() async {
+    try {
+      final value = await retrieveClothingScan();
+      isClothingScanSelected.value = value;
+    } catch (e) {
+      AppLogger.error(
+        'Failed to load clothing scan setting',
+        e,
+        'InventoryListController',
+      );
+      isClothingScanSelected.value = false;
+    }
   }
 
   void _attachScrollListeners() {

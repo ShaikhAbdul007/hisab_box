@@ -28,4 +28,20 @@ class SellRepo {
       return SaleCompletedModel(msg: e.toString(), success: false);
     }
   }
+
+  Future<dynamic> creditAmountSelletment({
+    required dynamic creditId,
+    required Map<String, dynamic> body,
+  }) async {
+    try {
+      final response = await networking.postData(
+        url:
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.creditAmountSettlement.replaceFirst('{{creditId}}', creditId.toString())}',
+        body: body,
+      );
+      return response;
+    } catch (e) {
+      return SaleCompletedModel(msg: e.toString(), success: false);
+    }
+  }
 }

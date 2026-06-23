@@ -37,15 +37,11 @@ class SellListAfterScanController extends GetxController with CacheManager {
   TextEditingController amount = TextEditingController();
 
   // ── Payment inputs ────────────────────────────────────────────────────────
-  TextEditingController cashPaidController = TextEditingController(text: '0.0');
-  TextEditingController upiPaidController = TextEditingController(text: '0.0');
-  TextEditingController cardPaidController = TextEditingController(text: '0.0');
-  TextEditingController creditPaidController = TextEditingController(
-    text: '0.0',
-  );
-  TextEditingController roundOffPaidController = TextEditingController(
-    text: '0.0',
-  );
+  TextEditingController cashPaidController = TextEditingController();
+  TextEditingController upiPaidController = TextEditingController();
+  TextEditingController cardPaidController = TextEditingController();
+  TextEditingController creditPaidController = TextEditingController();
+  TextEditingController roundOffPaidController = TextEditingController();
   RxDouble paymentMethodTotalAmount = 0.0.obs;
   RxDouble remainingAmount = 0.0.obs;
   RxDouble upiPaid = 0.0.obs;
@@ -282,8 +278,8 @@ class SellListAfterScanController extends GetxController with CacheManager {
     updateRemainingAmount();
   }
 
-  // ── Confirm Sale enabled ONLY when remaining == 0 exactly ─────────────────
-  bool get isConfirmEnabled => remainingAmount.value == 0;
+  // ── Confirm Sale always enabled — allow any amount payment ────────────────
+  bool get isConfirmEnabled => true;
 
   // ── Cart operations ───────────────────────────────────────────────────────
 

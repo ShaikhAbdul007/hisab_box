@@ -31,9 +31,9 @@ class SellController extends GetxController with CacheManager {
       if (response.success == success) {
         sellsList.value = response.data?.data ?? [];
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       AppLogger.info("🚨 Fetch Sales Error: $e");

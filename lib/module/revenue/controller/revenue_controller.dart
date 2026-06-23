@@ -27,7 +27,7 @@ class RevenueController extends GetxController {
   Future<void> fetchSales({String? todaysDate}) async {
     isRevenueListLoading.value = true;
 
-    final selectedDate = getFormattedDate(todaysDate ?? dayDate.value);
+    final selectedDate = getApiFormattedDate(todaysDate ?? dayDate.value);
 
     try {
       var response = await revenueRepo.fetchSell(date: selectedDate);

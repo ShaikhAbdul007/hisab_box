@@ -26,43 +26,47 @@ class InventroyList extends GetView<InventoryListController> {
   Widget build(BuildContext context) {
     return CommonAppbar(
       appBarLabel: 'Product List',
-      secondActionChild: Obx(
-        () =>
-            controller.isInventoryScanSelected.value
-                ? AppPopupMenu<_InventoryModeMenu>(
-                  items: const [
-                    AppPopupItem(
-                      value: _InventoryModeMenu.scan,
-                      label: 'Scan',
-                      icon: CupertinoIcons.barcode_viewfinder,
-                      color: Color(0xFF1565C0),
-                    ),
-                    AppPopupItem(
-                      value: _InventoryModeMenu.manual,
-                      label: 'Manual',
-                      icon: CupertinoIcons.square_pencil_fill,
-                      color: Color(0xFF2E7D32),
-                      isDividerAbove: true,
-                    ),
-                  ],
-                  onSelected: (_InventoryModeMenu value) async {
-                    if (value == _InventoryModeMenu.scan) {
-                      var res = await AppRoutes.futureNavigationToRoute(
-                        routeName: AppRouteName.inventoryView,
-                        data: {'flag': true},
-                      );
-                      if (res == true) controller.fetchInventoryByTab('shop');
-                    } else {
-                      var res = await AppRoutes.futureNavigationToRoute(
-                        routeName: AppRouteName.generateBarcode,
-                        data: {'flag': true},
-                      );
-                      if (res == true) controller.fetchInventoryByTab('shop');
-                    }
-                  },
-                )
-                : const SizedBox.shrink(),
-      ),
+      secondActionChild: Obx(() {
+        final items = <AppPopupItem<_InventoryModeMenu>>[];
+        if (controller.isClothingScanSelected.value) {
+          items.add(
+            const AppPopupItem(
+              value: _InventoryModeMenu.scan,
+              label: 'Scan',
+              icon: CupertinoIcons.barcode_viewfinder,
+              color: Color(0xFF1565C0),
+            ),
+          );
+        }
+        items.add(
+          AppPopupItem(
+            value: _InventoryModeMenu.manual,
+            label: 'Manual',
+            icon: CupertinoIcons.square_pencil_fill,
+            color: const Color(0xFF2E7D32),
+            isDividerAbove: controller.isInventoryScanSelected.value,
+          ),
+        );
+
+        return AppPopupMenu<_InventoryModeMenu>(
+          items: items,
+          onSelected: (_InventoryModeMenu value) async {
+            if (value == _InventoryModeMenu.scan) {
+              var res = await AppRoutes.futureNavigationToRoute(
+                routeName: AppRouteName.inventoryView,
+                data: {'flag': true},
+              );
+              if (res == true) controller.fetchInventoryByTab('shop');
+            } else {
+              var res = await AppRoutes.futureNavigationToRoute(
+                routeName: AppRouteName.generateBarcode,
+                data: {'flag': true},
+              );
+              if (res == true) controller.fetchInventoryByTab('shop');
+            }
+          },
+        );
+      }),
       body: Column(
         children: [
           setHeight(height: 10),

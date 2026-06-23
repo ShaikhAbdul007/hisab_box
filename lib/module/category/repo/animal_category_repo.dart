@@ -1,18 +1,15 @@
 import 'package:inventory/module/category/model/category_model.dart';
+import 'package:inventory/module/category/model/create_category_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';
 
 class AnimalCategoryRepo {
   Networking networking = Networking();
 
-  Future<CategoryModel> getAnimalCategory({
-    int page = 1,
-    int pageLimit = 20,
-  }) async {
+  Future<CategoryModel> getAnimalCategory() async {
     try {
       final response = await networking.getData(
-        url:
-            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getAnimalCategories}?page=$page&limit=$pageLimit',
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getAnimalCategories}',
       );
       return CategoryModel.fromJson(response);
     } catch (e) {
@@ -20,7 +17,7 @@ class AnimalCategoryRepo {
     }
   }
 
-  Future<CategoryModel> createAnimalCategory({
+  Future<CreateCategoryModel> createAnimalCategory({
     required Map<String, dynamic> body,
   }) async {
     try {
@@ -28,21 +25,21 @@ class AnimalCategoryRepo {
         url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.createAnimalCategory}',
         body: body,
       );
-      return CategoryModel.fromJson(response);
+      return CreateCategoryModel.fromJson(response);
     } catch (e) {
-      rethrow;
+      return CreateCategoryModel(success: false, msg: e.toString());
     }
   }
 
-  Future<CategoryModel> deleteAnimalCategory({required String id}) async {
+  Future<CreateCategoryModel> deleteAnimalCategory({required String id}) async {
     try {
       final response = await networking.deleteData(
         url:
             '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.deleteAnimalCategory}/$id',
       );
-      return CategoryModel.fromJson(response);
+      return CreateCategoryModel.fromJson(response);
     } catch (e) {
-      rethrow;
+      return CreateCategoryModel(success: false, msg: e.toString());
     }
   }
 }

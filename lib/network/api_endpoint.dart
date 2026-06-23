@@ -69,6 +69,7 @@ class ApiEndPoint {
 
   static const String outOfStock = "shop/stock/out-of-stock"; // ?page=&limit=
   static const String getCreditAmountList = "credit/credits"; // ?page=&limit=
+  static const String creditAmountSettlement = "/payment"; // + credit id
 
   static const String addEmployees = "employees/add"; //
   static const String getEmployees = "employees"; //
@@ -92,4 +93,11 @@ class ApiEndPoint {
       "roles"; // ?start_date=&end_date=&page=&limit=
   static const String updateUserRoles = "roles"; //pass role id for update
   static const String deleteUserRoles = "roles"; //pass role id for delete
+
+  //------------------Expense-----------------------
+  static const String createExpense = "expenses";
+  static const String getExpense = "expenses";
+  //------------------Margin-----------------------
+  static const String getMargin = "margins";
+  static const String createMargin = "margins";
 }

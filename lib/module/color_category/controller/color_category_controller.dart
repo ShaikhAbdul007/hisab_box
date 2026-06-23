@@ -13,41 +13,20 @@ class ColorCategoryController extends GetxController with CacheManager {
   RxBool isSaveLoading = false.obs;
   RxBool isDeleteLoading = false.obs;
   RxBool isFetchLoading = false.obs;
-  RxBool isLoadingMore = false.obs;
   RxList<CategoryModelListData> colorList = <CategoryModelListData>[].obs;
-
-  final ScrollController scrollController = ScrollController();
-
-  int _page = 1;
-  int _totalPages = 1;
-  bool get hasMore => _page < _totalPages;
 
   @override
   void onInit() {
     fetchColors();
-    scrollController.addListener(_onScroll);
     super.onInit();
   }
 
-  void _onScroll() {
-    if (scrollController.position.pixels >=
-            scrollController.position.maxScrollExtent - 200 &&
-        !isLoadingMore.value &&
-        hasMore) {
-      _loadMore();
-    }
-  }
-
-  /// Fresh load — page reset
   Future<void> fetchColors() async {
-    _page = 1;
-    colorList.clear();
     isFetchLoading.value = true;
     try {
-      final response = await colorCategoryRepo.getColorCategories(page: _page);
+      final response = await colorCategoryRepo.getColorCategories();
       if (response.success == success) {
-        colorList.value = response.categorymodeldata?.data ?? [];
-        _totalPages = response.categorymodeldata?.pagination?.totalPages ?? 1;
+        colorList.value = response.data ?? [];
         saveColorCategoryList(colorList);
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
@@ -58,28 +37,6 @@ class ColorCategoryController extends GetxController with CacheManager {
       showSnackBar(error: e.toString());
     } finally {
       isFetchLoading.value = false;
-    }
-  }
-
-  /// Load next page — append
-  Future<void> _loadMore() async {
-    _page++;
-    isLoadingMore.value = true;
-    try {
-      final response = await colorCategoryRepo.getColorCategories(page: _page);
-      if (response.success == success) {
-        colorList.addAll(response.categorymodeldata?.data ?? []);
-        _totalPages =
-            response.categorymodeldata?.pagination?.totalPages ?? _totalPages;
-        saveColorCategoryList(colorList);
-      } else {
-        _page--; // revert on failure
-      }
-    } catch (e) {
-      _page--;
-      showSnackBar(error: e.toString());
-    } finally {
-      isLoadingMore.value = false;
     }
   }
 
@@ -95,9 +52,9 @@ class ColorCategoryController extends GetxController with CacheManager {
         await fetchColors();
         showSnackBar(error: 'Color added successfully', isError: false);
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       clear();
@@ -116,9 +73,9 @@ class ColorCategoryController extends GetxController with CacheManager {
         showSnackBar(error: 'Color deleted successfully', isError: false);
         await fetchColors();
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());
@@ -132,7 +89,6 @@ class ColorCategoryController extends GetxController with CacheManager {
   @override
   void onClose() {
     colorName.dispose();
-    scrollController.dispose();
     super.onClose();
   }
 }

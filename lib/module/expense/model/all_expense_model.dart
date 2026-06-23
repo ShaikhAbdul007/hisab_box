@@ -1,14 +1,19 @@
-class ExpanseModel {
+class AllExpenseModel {
   bool? success;
   String? message;
-  ExpanseData? data;
+  List<AllExpenseData>? data;
 
-  ExpanseModel({this.success, this.message, this.data});
+  AllExpenseModel({this.success, this.message, this.data});
 
-  ExpanseModel.fromJson(Map<String, dynamic> json) {
+  AllExpenseModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     message = json['message'];
-    data = json['data'] != null ? ExpanseData.fromJson(json['data']) : null;
+    if (json['data'] != null) {
+      data = <AllExpenseData>[];
+      json['data'].forEach((v) {
+        data!.add(AllExpenseData.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -16,50 +21,50 @@ class ExpanseModel {
     data['success'] = success;
     data['message'] = message;
     if (this.data != null) {
-      data['data'] = this.data!.toJson();
+      data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
     return data;
   }
 }
 
-class ExpanseData {
+class AllExpenseData {
   String? id;
-  String? createdAt;
-  String? updatedAt;
   String? userId;
   String? name;
   String? amount;
   String? paymentMode;
+  String? createdAt;
+  String? updatedAt;
 
-  ExpanseData({
+  AllExpenseData({
     this.id,
-    this.createdAt,
-    this.updatedAt,
     this.userId,
     this.name,
     this.amount,
     this.paymentMode,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  ExpanseData.fromJson(Map<String, dynamic> json) {
+  AllExpenseData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
     userId = json['user_id'];
     name = json['name'];
     amount = json['amount'];
     paymentMode = json['payment_mode'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
-    data['created_at'] = createdAt;
-    data['updated_at'] = updatedAt;
     data['user_id'] = userId;
     data['name'] = name;
     data['amount'] = amount;
     data['payment_mode'] = paymentMode;
+    data['created_at'] = createdAt;
+    data['updated_at'] = updatedAt;
 
     return data;
   }

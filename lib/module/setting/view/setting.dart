@@ -66,6 +66,16 @@ class SettingView extends GetView<SettingController> {
                     () => AppRoutes.navigateRoutes(
                       routeName: AppRouteName.allUser,
                     ),
+              ),
+              _SettingTile(
+                icon: CupertinoIcons.doc_text_fill,
+                iconColor: const Color(0xFFC62828),
+                label: 'Expense',
+                subtitle: 'Manage daily expenses',
+                onTap:
+                    () => AppRoutes.navigateRoutes(
+                      routeName: AppRouteName.expense,
+                    ),
                 isLast: true,
               ),
             ],
@@ -133,6 +143,16 @@ class SettingView extends GetView<SettingController> {
                 onTap:
                     () => AppRoutes.navigateRoutes(
                       routeName: AppRouteName.appsetting,
+                    ),
+              ),
+              _SettingTile(
+                icon: Icons.sticky_note_2,
+                iconColor: const Color(0xFF6D4C41),
+                label: 'Margin',
+                subtitle: 'Save margin text for later',
+                onTap:
+                    () => AppRoutes.navigateRoutes(
+                      routeName: AppRouteName.margin,
                     ),
               ),
               _SettingTile(

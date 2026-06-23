@@ -36,9 +36,9 @@ class UserRoleController extends GetxController with CacheManager {
         await fetchUserRole();
         showSnackBar(error: response.msg!, isError: false);
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       clear();
@@ -77,9 +77,9 @@ class UserRoleController extends GetxController with CacheManager {
         showSnackBar(error: response.msg!, isError: false);
         await fetchUserRole();
       } else if (response.success == failed) {
-        showMessage(message: response.msg ?? somethingWentMessage);
+        showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
-        showMessage(message: somethingWentMessage);
+        showSnackBar(error: somethingWentMessage);
       }
     } catch (e) {
       showSnackBar(error: e.toString());

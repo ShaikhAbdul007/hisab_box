@@ -154,28 +154,8 @@ class ColorCategoryView extends GetView<ColorCategoryController> {
                 ? Stack(
                   children: [
                     ListView.builder(
-                      controller: controller.scrollController,
-                      itemCount: controller.colorList.length + 1,
+                      itemCount: controller.colorList.length,
                       itemBuilder: (context, index) {
-                        // Bottom loader
-                        if (index == controller.colorList.length) {
-                          return Obx(
-                            () =>
-                                controller.isLoadingMore.value
-                                    ? const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      child: Center(
-                                        child: CommonProgressBar(
-                                          size: 30,
-                                          color: AppColors.blackColor,
-                                        ),
-                                      ),
-                                    )
-                                    : const SizedBox(height: 16),
-                          );
-                        }
                         final item = controller.colorList[index];
                         return _ColorCategoryCard(
                           name: item.name ?? '',

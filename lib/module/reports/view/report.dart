@@ -1,9 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_bottom_sheet.dart';
+import 'package:inventory/common_widget/common_calender.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -20,6 +22,35 @@ class ReportView extends GetView<ReportController> {
     return CommonAppbar(
       isleadingButtonRequired: false,
       appBarLabel: 'Reports',
+      secondActionChild: Obx(
+        () => InkWell(
+          onTap: () {
+            customDatePicker(
+              context: context,
+              selectedDate: DateTime.now(),
+              controller: controller.salesDate,
+              onDatePicked: () {
+                controller.fetchModeOfPaymentStats();
+                controller.fetchTopSellingProductsChart();
+                controller.fetchTopSellingProducts();
+                controller.fetchSales();
+              },
+            );
+          },
+          child: Row(
+            children: [
+              Icon(CupertinoIcons.calendar),
+              setWidth(width: 5),
+              Text(
+                controller.salesDate.value,
+                style: CustomTextStyle.customPoppin(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       firstActionChild: Obx(
         () =>
             controller.reportLabels.isNotEmpty
@@ -39,20 +70,20 @@ class ReportView extends GetView<ReportController> {
                             controller.isExporting.value = true;
                             // (String, List<String>, Function(dynamic) mapper)
                             // getReportlabel =( '',[],(){});
-                            
+
                             // controller.getLabelValue(
                             //   reportLabelIndex:
                             //       controller.reportDownloadGroupValue.value,
                             // );
                             var resList = [];
-                            
+
                             // await controller.fetchProductReport(
                             //   label: controller.reportLabels.value,
                             //   reportType: getReportlabel.$1,
                             // );
                             var date = '';
-                            
-                           // controller.getDateRange(
+
+                            // controller.getDateRange(
                             //   label: controller.reportLabels.value,
                             //   customStartDate: '',
                             //   customEndDate: '',

@@ -1,18 +1,15 @@
 import 'package:inventory/module/category/model/category_model.dart';
+import 'package:inventory/module/category/model/create_category_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';
 
 class ColorCategoryRepo {
   Networking networking = Networking();
 
-  Future<CategoryModel> getColorCategories({
-    int page = 1,
-    int pageLimit = 20,
-  }) async {
+  Future<CategoryModel> getColorCategories() async {
     try {
       final response = await networking.getData(
-        url:
-            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getColorCategories}?page=$page&limit=$pageLimit',
+        url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getColorCategories}',
       );
       return CategoryModel.fromJson(response);
     } catch (e) {
@@ -20,7 +17,7 @@ class ColorCategoryRepo {
     }
   }
 
-  Future<CategoryModel> createColorCategory({
+  Future<CreateCategoryModel> createColorCategory({
     required Map<String, dynamic> body,
   }) async {
     try {
@@ -28,20 +25,20 @@ class ColorCategoryRepo {
         url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.createColorCategory}',
         body: body,
       );
-      return CategoryModel.fromJson(response);
+      return CreateCategoryModel.fromJson(response);
     } catch (e) {
-      return CategoryModel(success: false, msg: e.toString());
+      return CreateCategoryModel(success: false, msg: e.toString());
     }
   }
 
-  Future<CategoryModel> deleteColorCategory({required String id}) async {
+  Future<CreateCategoryModel> deleteColorCategory({required String id}) async {
     try {
       final response = await networking.deleteData(
         url: '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.deleteColorCategory}/$id',
       );
-      return CategoryModel.fromJson(response);
+      return CreateCategoryModel.fromJson(response);
     } catch (e) {
-      return CategoryModel(success: false, msg: e.toString());
+      return CreateCategoryModel(success: false, msg: e.toString());
     }
   }
 }

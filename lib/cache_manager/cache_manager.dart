@@ -42,6 +42,10 @@ mixin class CacheManager {
     box.write(Key.inventoryScan.toString(), value);
   }
 
+  void saveClothingScanValue(bool value) {
+    box.write(Key.clothingScan.toString(), value);
+  }
+
   void saveMarginValue(String value) {
     box.write(Key.marginKey.toString(), value);
   }
@@ -109,6 +113,11 @@ mixin class CacheManager {
   Future<bool> retrieveInventoryScan() async {
     box.writeIfNull(Key.inventoryScan.toString(), false);
     return box.read(Key.inventoryScan.toString());
+  }
+
+  Future<bool> retrieveClothingScan() async {
+    box.writeIfNull(Key.clothingScan.toString(), false);
+    return box.read(Key.clothingScan.toString());
   }
 
   Future<bool> retrieveGodown() async {
@@ -258,4 +267,5 @@ enum Key {
   tranferRequestKey,
   tokenKey,
   marginKey,
+  clothingScan,
 }

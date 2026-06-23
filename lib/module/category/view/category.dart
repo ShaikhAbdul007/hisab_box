@@ -193,22 +193,8 @@ class Category extends GetView<CategoryController> {
                 ? Stack(
                   children: [
                     ListView.builder(
-                      controller: controller.scrollController,
-                      itemCount: controller.categoryList.length + 1,
+                      itemCount: controller.categoryList.length,
                       itemBuilder: (context, index) {
-                        if (index == controller.categoryList.length) {
-                          return Obx(
-                            () =>
-                                controller.isLoadingMore.value
-                                    ? const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    )
-                                    : const SizedBox.shrink(),
-                          );
-                        }
                         var list = controller.categoryList[index];
 
                         return _CategoryCard(

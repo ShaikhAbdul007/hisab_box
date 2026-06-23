@@ -11,7 +11,7 @@ String todayApiDate() {
   return DateFormat('yyyy-MM-dd').format(DateTime.now());
 }
 
-String getFormattedDate(String date) {
+String getApiFormattedDate(String date) {
   final parsedDate = DateFormat('dd-MM-yyyy').parseStrict(date);
   return DateFormat('yyyy/MM/dd').format(parsedDate);
 }

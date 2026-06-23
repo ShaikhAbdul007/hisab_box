@@ -14,7 +14,19 @@ import '../controller/sell_list_after_scan_controller.dart';
 // ── Main payment widget — StatefulWidget to avoid setState-during-build ────────
 class PartailPaymentWidget extends StatefulWidget {
   final SellListAfterScanController controller;
-  const PartailPaymentWidget({super.key, required this.controller});
+  final double initialAmount;
+  final String confirmLabel;
+  final VoidCallback? onConfirm;
+  final bool showConfirmButton;
+
+  const PartailPaymentWidget({
+    super.key,
+    required this.controller,
+    this.initialAmount = 0.0,
+    this.confirmLabel = 'Confirm Sale',
+    this.onConfirm,
+    this.showConfirmButton = true,
+  });
 
   @override
   State<PartailPaymentWidget> createState() => _PartailPaymentWidgetState();
@@ -29,7 +41,9 @@ class _PartailPaymentWidgetState extends State<PartailPaymentWidget> {
     // Defer state mutation until after the first frame — fixes
     // "setState() called during build" error from Obx
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      c.openPaymentDialog(c.finalTotal.value);
+      c.openPaymentDialog(
+        widget.initialAmount > 0 ? widget.initialAmount : c.finalTotal.value,
+      );
     });
   }
 
@@ -157,32 +171,38 @@ class _PartailPaymentWidgetState extends State<PartailPaymentWidget> {
                     setHeight(height: 20),
 
                     // ── Confirm Sale ───────────────────────────────
-                    Obx(() {
-                      final enabled = c.isConfirmEnabled;
-                      return Opacity(
-                        opacity: enabled ? 1.0 : 0.4,
-                        child: CommonButton(
-                          isLoading: c.isPartailLoading.value,
-                          label: 'Confirm Sale',
-                          onTap:
-                              enabled
-                                  ? () async {
-                                    await c.saleConfirmed(
-                                      isLoading: c.isPartailLoading,
-                                    );
-                                    c.clearPaymentInputs();
-                                    Get.back();
-                                  }
-                                  : () {
-                                    showMessage(
-                                      message:
-                                          'Please pay full amount before continuing!',
-                                    );
-                                  },
-                        ),
-                      );
-                    }),
-                    setHeight(height: 30),
+                    if (widget.showConfirmButton) ...[
+                      Obx(() {
+                        final enabled = c.isConfirmEnabled;
+                        return Opacity(
+                          opacity: enabled ? 1.0 : 0.4,
+                          child: CommonButton(
+                            isLoading: c.isPartailLoading.value,
+                            label: widget.confirmLabel,
+                            onTap:
+                                enabled
+                                    ? () async {
+                                      if (widget.onConfirm != null) {
+                                        widget.onConfirm!();
+                                        return;
+                                      }
+                                      await c.saleConfirmed(
+                                        isLoading: c.isPartailLoading,
+                                      );
+                                      c.clearPaymentInputs();
+                                      Get.back();
+                                    }
+                                    : () {
+                                      showMessage(
+                                        message:
+                                            'Enter payment amount to continue.',
+                                      );
+                                    },
+                          ),
+                        );
+                      }),
+                      setHeight(height: 30),
+                    ],
                   ]),
                 ),
               ),
@@ -263,8 +283,14 @@ class _PaymentRow extends StatelessWidget {
                         error:
                             "Amount can't exceed remaining ₹${controller.remainingAmount.value.toStringAsFixed(2)}",
                       );
-                      textEditingController.text = controller.remainingAmount.value.toStringAsFixed(2);
-                      textEditingController.selection = TextSelection.fromPosition(TextPosition(offset: textEditingController.text.length));
+                      textEditingController.text = controller
+                          .remainingAmount
+                          .value
+                          .toStringAsFixed(2);
+                      textEditingController
+                          .selection = TextSelection.fromPosition(
+                        TextPosition(offset: textEditingController.text.length),
+                      );
                     }
                   },
                   hintText: '0.00',

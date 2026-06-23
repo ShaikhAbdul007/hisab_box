@@ -275,7 +275,7 @@ class MobileScreen extends StatelessWidget {
               title: Text(
                 'Customers',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 3 ? 13 : 12,
+                  fontSize: controller.index.value == 3 ? 12 : 12,
                   color:
                       controller.index.value == 3
                           ? AppColors.blackColor

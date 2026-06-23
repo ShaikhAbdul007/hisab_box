@@ -1,19 +1,15 @@
-class CategoryModel {
+class CreateCategoryModel {
   bool? success;
   String? msg;
-  List<CategoryModelListData>? data;
+  CreateCategoryData? data;
 
-  CategoryModel({this.success, this.msg, this.data});
+  CreateCategoryModel({this.success, this.msg, this.data});
 
-  CategoryModel.fromJson(Map<String, dynamic> json) {
+  CreateCategoryModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     msg = json['message'];
-    if (json['data'] != null) {
-      data = <CategoryModelListData>[];
-      json['data'].forEach((v) {
-        data!.add(CategoryModelListData.fromJson(v));
-      });
-    }
+    data =
+        json['data'] != null ? CreateCategoryData.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -21,20 +17,20 @@ class CategoryModel {
     data['success'] = success;
     data['message'] = msg;
     if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
+      data['data'] = this.data!.toJson();
     }
     return data;
   }
 }
 
-class CategoryModelListData {
+class CreateCategoryData {
   String? id;
   String? userId;
   String? name;
   String? createdAt;
   dynamic time;
 
-  CategoryModelListData({
+  CreateCategoryData({
     this.id,
     this.userId,
     this.name,
@@ -42,7 +38,7 @@ class CategoryModelListData {
     this.time,
   });
 
-  CategoryModelListData.fromJson(Map<String, dynamic> json) {
+  CreateCategoryData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     userId = json['user_id'];
     name = json['name'];
