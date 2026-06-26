@@ -335,6 +335,34 @@ class SellListAfterScanController extends GetxController with CacheManager {
     return total;
   }
 
+  Future<void> creditAmountSelletment({
+    required String creditId,
+    required Map<String, dynamic> body,
+  }) async {
+    isPartailLoading.value = true;
+    try {
+      final response = await sellRepo.creditAmountSelletment(
+        creditId: creditId,
+        body: body,
+      );
+      if (response.success == success) {
+        Get.back(result: true);
+        showSnackBar(
+          error: response.message ?? 'Payment successful!',
+          isError: false,
+        );
+      } else if (response.success == failed) {
+        showSnackBar(error: response.message ?? 'Payment failed!');
+      } else {
+        showSnackBar(error: response.message ?? 'Payment failed!');
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isPartailLoading.value = false;
+    }
+  }
+
   // ── Discounts fetch ───────────────────────────────────────────────────────
 
   Future<void> fetchDiscounts() async {

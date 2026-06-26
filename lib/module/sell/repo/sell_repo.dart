@@ -1,3 +1,4 @@
+import 'package:inventory/module/credits_amount/model/credit_settlement_model.dart';
 import 'package:inventory/module/sell/model/sell_completed_model.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
@@ -29,19 +30,19 @@ class SellRepo {
     }
   }
 
-  Future<dynamic> creditAmountSelletment({
-    required dynamic creditId,
+  Future<CreditSettlementModel> creditAmountSelletment({
+    required String creditId,
     required Map<String, dynamic> body,
   }) async {
     try {
       final response = await networking.postData(
         url:
-            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.creditAmountSettlement.replaceFirst('{{creditId}}', creditId.toString())}',
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getCreditAmountList}/$creditId${ApiEndPoint.creditAmountSettlement}',
         body: body,
       );
-      return response;
+      return CreditSettlementModel.fromJson(response);
     } catch (e) {
-      return SaleCompletedModel(msg: e.toString(), success: false);
+      return CreditSettlementModel(message: e.toString(), success: false);
     }
   }
 }

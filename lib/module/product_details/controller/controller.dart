@@ -437,16 +437,6 @@ class ProductController extends GetxController with CacheManager {
     variantCombinations[index] = updated;
   }
 
-  /// Saves all variants in a single API call with variants array.
-  /// Body format:
-  /// {
-  ///   "name": "...", "selling_price": ..., "purchase_price": ...,
-  ///   "location": "shop", "stock_type": "clothing",
-  ///   "purchase_date": "...",
-  ///   "variants": [
-  ///     { "name": "... [Red]", "color_id": "uuid", "barcode": "...", "quantity": 10 }
-  ///   ]
-  /// }
   Future<void> saveProductWithVariants() async {
     if (variantCombinations.isEmpty) {
       showSnackBar(error: 'Please select at least one color and size.');

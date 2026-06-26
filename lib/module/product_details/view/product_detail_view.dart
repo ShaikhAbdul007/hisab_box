@@ -459,6 +459,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
           controller.categoryList.isEmpty
               ? Center(child: CommonProgressBar(color: AppColors.blackColor))
               : CustomDropDown(
+                enable: !controller.readOnly.value,
                 selectedDropDownItem: controller.selectedCategoryId.value,
                 listItems: controller.categoryList,
                 hintText: 'Category',
@@ -481,6 +482,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
           controller.animalTypeList.isEmpty
               ? Center(child: CommonProgressBar(color: AppColors.blackColor))
               : CustomDropDown(
+                enable: !controller.readOnly.value,
                 hintText: hint,
                 selectedDropDownItem: controller.selectedAnimalTypeId.value,
                 listItems: controller.animalTypeList,
@@ -570,6 +572,7 @@ class ProductDetailView extends GetView<ProductDetailsController> {
   Widget _locationDropdown() {
     return Obx(
       () => CustomStaticDropDown(
+        enable: !controller.readOnly.value,
         selectedDropDownItem:
             controller.locationOptions.contains(controller.location.text)
                 ? controller.location.text

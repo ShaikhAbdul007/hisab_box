@@ -136,12 +136,16 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     try {
       // Cache first
       final cached = await retrieveCategory();
-      if (cached.isNotEmpty) categoryList.value = cached;
+      if (cached.isNotEmpty) {
+        categoryList.value = cached;
+      }
       // Always fetch fresh from API
-      final response = await categoryRepo.getCategory();
-      if (response.success == success) {
-        categoryList.value = response.data ?? [];
-        saveCategoryList(categoryList);
+      else {
+        final response = await categoryRepo.getCategory();
+        if (response.success == success) {
+          categoryList.value = response.data ?? [];
+          saveCategoryList(categoryList);
+        }
       }
     } catch (e) {
       AppLogger.info(("🚨 Category Error: $e").toString());
@@ -155,12 +159,16 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     try {
       // Cache first
       final cached = await retrieveAnimalCategory();
-      if (cached.isNotEmpty) animalTypeList.value = cached;
+      if (cached.isNotEmpty) {
+        animalTypeList.value = cached;
+      }
       // Always fetch fresh from API
-      final response = await animalCategoryRepo.getAnimalCategory();
-      if (response.success == success) {
-        animalTypeList.value = response.data ?? [];
-        saveAnimalList(animalTypeList);
+      else {
+        final response = await animalCategoryRepo.getAnimalCategory();
+        if (response.success == success) {
+          animalTypeList.value = response.data ?? [];
+          saveAnimalList(animalTypeList);
+        }
       }
     } catch (e) {
       AppLogger.info(("🚨 Animal Error: $e").toString());
@@ -172,9 +180,14 @@ class GenerateBarcodeController extends GetxController with CacheManager {
   Future<void> fetchColorCategories() async {
     colorListLoading.value = true;
     try {
-      final response = await colorCategoryRepo.getColorCategories();
-      if (response.success == success) {
-        colorList.value = response.data ?? [];
+      final cached = await retrieveColorCategory();
+      if (cached.isNotEmpty) {
+        colorList.value = cached;
+      } else {
+        final response = await colorCategoryRepo.getColorCategories();
+        if (response.success == success) {
+          colorList.value = response.data ?? [];
+        }
       }
     } catch (e) {
       AppLogger.info(("🚨 Color Error: $e").toString());

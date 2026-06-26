@@ -96,45 +96,17 @@ class CreditView extends GetView<CredtiController> {
                                           remainingAmount:
                                               customerData.remainingAmount ??
                                               '0.0',
-                                          onTap: () {
-                                            AppRoutes.navigateRoutes(
-                                              routeName:
-                                                  AppRouteName
-                                                      .creditPaymentView,
-                                              data: customerData,
-                                            );
-
-                                            // Get.toNamed(
-                                            //   AppRouteName.creditPaymentView,
-                                            //   arguments: {
-                                            //     // 'remainingAmount':
-                                            //     //     customerData
-                                            //     //         .remainingAmount ??
-                                            //     //     '0.0',
-                                            //     // 'customerName':
-                                            //     //     customerData
-                                            //     //         .customer
-                                            //     //         ?.name ??
-                                            //     //     '',
-                                            //     // 'customerMobile':
-                                            //     //     customerData
-                                            //     //         .customer
-                                            //     //         ?.mobileNo ??
-                                            //     //     '',
-                                            //     // 'customerAddress':
-                                            //     //     customerData
-                                            //     //         .customer
-                                            //     //         ?.address ??
-                                            //     //     '',
-                                            //     // 'creditId':
-                                            //     //     customerData.id ?? '',
-                                            //     // 'billNo':
-                                            //     //     customerData.billNo ?? '',
-                                            //     // 'dateOfCredit':
-                                            //     //     customerData.dateOfCredit ??
-                                            //     //     '',
-                                            //   },
-                                            // );
+                                          onTap: () async {
+                                            var res =
+                                                await AppRoutes.futureNavigationToRoute(
+                                                  routeName:
+                                                      AppRouteName
+                                                          .creditPaymentView,
+                                                  data: customerData,
+                                                );
+                                            if (res == true) {
+                                              controller.fetchCreditReports();
+                                            }
                                           },
                                         )
                                         : Container(),
@@ -400,9 +372,9 @@ class _CreditCard extends StatelessWidget with CacheManager {
     final shopName = user.data?.name ?? 'Hisab Box';
 
     final message =
-        'Credit Payment Reminder\n\n'
+        'Credit Payment Reminder from $shopName\n\n'
         'Dear $name,\n\n'
-        'This is a gentle reminder regarding your outstanding credit from $shopName:\n\n'
+        'This is a gentle reminder regarding your outstanding credit:\n\n'
         '📱 Bill No: $billNo\n'
         '💰 Outstanding Amount: ₹$amount\n\n'
         'We kindly request you to settle this payment at your earliest convenience.\n'

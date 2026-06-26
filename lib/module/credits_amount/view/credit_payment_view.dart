@@ -162,27 +162,16 @@ class CreditPaymentView extends GetView<SellListAfterScanController> {
                 final paymentMode =
                     selectedModes.length == 1 ? selectedModes.first : 'split';
 
-                controller.sellRepo
-                    .creditAmountSelletment(
-                      creditId: arguments.id,
-                      body: {
-                        'amount': totalAmount,
-                        'payment_mode': paymentMode,
-                        'cash_amount': cashAmount,
-                        'upi_amount': upiAmount,
-                        'card_amount': cardAmount,
-                      },
-                    )
-                    .then((response) {
-                      showMessage(
-                        message: response.msg ?? 'Payment successful!',
-                      );
-                    })
-                    .catchError((error) {
-                      showMessage(
-                        message: 'An error occurred: ${error.toString()}',
-                      );
-                    });
+                controller.creditAmountSelletment(
+                  creditId: arguments.id.toString(),
+                  body: {
+                    'amount': totalAmount,
+                    'payment_mode': paymentMode,
+                    'cash_amount': cashAmount,
+                    'upi_amount': upiAmount,
+                    'card_amount': cardAmount,
+                  },
+                );
               },
             ),
           ),

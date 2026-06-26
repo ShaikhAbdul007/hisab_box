@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/shop_type.dart';
+import 'package:inventory/module/category/repo/animal_category_repo.dart';
+import 'package:inventory/module/category/repo/category_repo.dart';
+import 'package:inventory/module/color_category/repo/color_category_repo.dart';
 import 'package:inventory/module/inventorylist/model/inventory_model.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/repo/product_repo.dart';
@@ -14,6 +17,9 @@ import '../../category/model/category_model.dart';
 
 class ProductDetailsController extends GetxController with CacheManager {
   ProductRepo productRepo = ProductRepo();
+  CategoryRepo categoryRepo = CategoryRepo();
+  AnimalCategoryRepo animalCategoryRepo = AnimalCategoryRepo();
+  ColorCategoryRepo colorCategoryRepo = ColorCategoryRepo();
   final inventoryScanKey = GlobalKey<FormState>();
   RxList<CategoryModelListData> categoryList = <CategoryModelListData>[].obs;
   RxList<CategoryModelListData> animalTypeList = <CategoryModelListData>[].obs;
@@ -285,6 +291,14 @@ class ProductDetailsController extends GetxController with CacheManager {
       if (cached.isNotEmpty) {
         categoryList.value = cached;
       }
+      // Always fetch fresh from API
+      else {
+        final response = await categoryRepo.getCategory();
+        if (response.success == success) {
+          categoryList.value = response.data ?? [];
+          saveCategoryList(categoryList);
+        }
+      }
     } catch (e) {
       AppLogger.info(("🚨 Category Error: $e").toString());
       showSnackBar(error: e.toString());
@@ -298,6 +312,12 @@ class ProductDetailsController extends GetxController with CacheManager {
       final cached = await retrieveColorCategory();
       if (cached.isNotEmpty) {
         colorOptions.value = cached;
+      } else {
+        final response = await colorCategoryRepo.getColorCategories();
+        if (response.success == success) {
+          colorOptions.value = response.data ?? [];
+          saveColorCategoryList(colorOptions);
+        }
       }
     } catch (e) {
       AppLogger.info(("🚨 Color Error: $e").toString());
@@ -310,9 +330,17 @@ class ProductDetailsController extends GetxController with CacheManager {
   // 🔥 FETCH ANIMAL CATEGORIES
   Future<void> fetchAnimalCategories() async {
     try {
-      var cached = await retrieveAnimalCategory();
+      final cached = await retrieveAnimalCategory();
       if (cached.isNotEmpty) {
         animalTypeList.value = cached;
+      }
+      // Always fetch fresh from API
+      else {
+        final response = await animalCategoryRepo.getAnimalCategory();
+        if (response.success == success) {
+          animalTypeList.value = response.data ?? [];
+          saveAnimalList(animalTypeList);
+        }
       }
     } catch (e) {
       AppLogger.info(("🚨 Animal Error: $e").toString());
