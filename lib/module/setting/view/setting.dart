@@ -145,16 +145,16 @@ class SettingView extends GetView<SettingController> {
                       routeName: AppRouteName.appsetting,
                     ),
               ),
-              _SettingTile(
-                icon: Icons.sticky_note_2,
-                iconColor: const Color(0xFF6D4C41),
-                label: 'Margin',
-                subtitle: 'Save margin text for later',
-                onTap:
-                    () => AppRoutes.navigateRoutes(
-                      routeName: AppRouteName.margin,
-                    ),
-              ),
+              // _SettingTile(
+              //   icon: Icons.sticky_note_2,
+              //   iconColor: const Color(0xFF6D4C41),
+              //   label: 'Margin',
+              //   subtitle: 'Save margin text for later',
+              //   onTap:
+              //       () => AppRoutes.navigateRoutes(
+              //         routeName: AppRouteName.margin,
+              //       ),
+              // ),
               _SettingTile(
                 icon: Icons.support_agent_rounded,
                 iconColor: const Color(0xFF0277BD),
