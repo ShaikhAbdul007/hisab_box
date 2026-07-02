@@ -9,9 +9,15 @@ import '../../../routes/route_name.dart';
 
 class BottomNavigationController extends GetxController {
   RxInt index = 0.obs;
+  RxInt desktopIndex = 0.obs;
   StreamSubscription? subscription;
+
   void setBottomIndex(int value) {
     index.value = value;
+  }
+
+  void setDesktopIndex(int value) {
+    desktopIndex.value = value;
   }
 
   @override
@@ -40,7 +46,7 @@ class BottomNavigationController extends GetxController {
 
   Future<void> checkInitialConnectivity() async {
     var result = await Connectivity().checkConnectivity();
-    if (result == ConnectivityResult.none) {
+    if (result.isEmpty || result.first == ConnectivityResult.none) {
       AppRoutes.navigateRoutes(routeName: AppRouteName.nointernateConnection);
     } else {
       bool internet = await isInternetAvailable();

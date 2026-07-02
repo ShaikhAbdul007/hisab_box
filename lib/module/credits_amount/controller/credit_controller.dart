@@ -15,6 +15,7 @@ class CredtiController extends GetxController with CacheManager {
   RxString searchText = ''.obs;
   RxList<CreditDataItem> customerDetailList = <CreditDataItem>[].obs;
   TextEditingController searchController = TextEditingController();
+  final Rxn<CreditDataItem> selectedCredit = Rxn<CreditDataItem>();
 
   @override
   void onInit() {

@@ -1,6 +1,7 @@
 import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -21,6 +22,212 @@ class UserProfileView extends GetView<UserProfileController> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop(context)) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: const Text('Profile'),
+          leading: IconButton(
+            icon: const Icon(CupertinoIcons.back),
+            onPressed: () => Get.back(),
+          ),
+          actions: [
+            Obx(
+              () => InkWell(
+                onTap: () => controller.readOnly.toggle(),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: controller.readOnly.value
+                        ? Colors.grey.shade100
+                        : AppColors.blackColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    controller.readOnly.value
+                        ? CupertinoIcons.pencil
+                        : CupertinoIcons.checkmark_alt,
+                    size: 20,
+                    color: controller.readOnly.value
+                        ? AppColors.greyColor
+                        : AppColors.blackColor,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 20),
+          ],
+          surfaceTintColor: AppColors.greyColorShade100,
+          backgroundColor: AppColors.greyColorShade100,
+        ),
+        body: Obx(() {
+          if (controller.isDataLoading.value) {
+            return const Center(
+              child: CommonProgressBar(color: AppColors.blackColor),
+            );
+          }
+          return Form(
+            key: userProfile,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left Pane (flex 2): Profile Hero Card & Info Banner
+                  Expanded(
+                    flex: 2,
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        _ProfileHeader(controller: controller),
+                        const SizedBox(height: 16),
+                        EditModeBanner(
+                          readOnly: controller.readOnly,
+                          readOnlyMessage:
+                              'Tap the edit icon (top right) to update your profile.',
+                          editingMessage:
+                              'You are in edit mode. Make changes and tap Save.',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  // Right Pane (flex 3): Details Forms
+                  Expanded(
+                    flex: 3,
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        _FormCard(
+                          icon: CupertinoIcons.building_2_fill,
+                          iconColor: const Color(0xFF1565C0),
+                          title: 'Shop Information',
+                          children: [
+                            CommonTextField(
+                              readOnly: true,
+                              label: 'Shop Name',
+                              hintText: 'Shop Name',
+                              controller: controller.shopNameController,
+                            ),
+                            const SizedBox(height: 12),
+                            CommonTextField(
+                              readOnly: true,
+                              label: 'Shop Type',
+                              hintText: 'Shop Type',
+                              controller: controller.shopType,
+                            ),
+                            const SizedBox(height: 12),
+                            CommonTextField(
+                              readOnly: true,
+                              label: 'Email',
+                              hintText: 'Email',
+                              controller: controller.emailController,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Obx(
+                          () => _FormCard(
+                            icon: CupertinoIcons.phone_fill,
+                            iconColor: const Color(0xFF2E7D32),
+                            title: 'Contact',
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Mobile No',
+                                      hintText: 'Mobile No',
+                                      controller: controller.mobileController,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Alternative No',
+                                      hintText: 'Alternative No',
+                                      controller: controller.alternativeMobileController,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Obx(
+                          () => _FormCard(
+                            icon: CupertinoIcons.map_pin,
+                            iconColor: const Color(0xFFE65100),
+                            title: 'Address',
+                            children: [
+                              CommonTextField(
+                                readOnly: controller.readOnly.value,
+                                label: 'Address',
+                                hintText: 'Full Address',
+                                controller: controller.addressController,
+                              ),
+                              const SizedBox(height: 12),
+                              CommonTextField(
+                                readOnly: controller.readOnly.value,
+                                label: 'State',
+                                hintText: 'State',
+                                controller: controller.stateController,
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'City',
+                                      hintText: 'City',
+                                      controller: controller.cityController,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Pincode',
+                                      hintText: 'Pincode',
+                                      controller: controller.pincodeController,
+                                      keyboardType: TextInputType.number,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Obx(
+                          () => controller.readOnly.value
+                              ? const SizedBox.shrink()
+                              : CommonButton(
+                                  isLoading: controller.isLoading.value,
+                                  label: 'Save Changes',
+                                  onTap: () => controller.updateUserDetails(),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      );
+    }
+
     return CommonAppbar(
       appBarLabel: 'Profile',
       firstActionChild: Obx(
@@ -328,7 +535,7 @@ class _ProfileHeader extends StatelessWidget {
       final name = controller.shopNameController.text;
       final initials = name.isNotEmpty ? name[0].toUpperCase() : 'HB';
 
-      if (file != null && file.existsSync()) {
+      if (!kIsWeb && file != null && file.existsSync()) {
         return CircleAvatar(
           radius: 52.r,
           backgroundImage: FileImage(file),
@@ -368,13 +575,23 @@ class _ProfileHeader extends StatelessWidget {
                             ),
                           ),
                     )
-                    : Image.file(
-                      File(url),
-                      width: 104.w,
-                      height: 104.h,
-                      fit: BoxFit.cover,
-                      errorBuilder:
-                          (_, _, _) => Text(
+                    : (!kIsWeb)
+                        ? Image.file(
+                          File(url),
+                          width: 104.w,
+                          height: 104.h,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, _, _) => Text(
+                                initials,
+                                style: TextStyle(
+                                  fontSize: 38.sp,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                        )
+                        : Text(
                             initials,
                             style: TextStyle(
                               fontSize: 38.sp,
@@ -382,7 +599,6 @@ class _ProfileHeader extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                    ),
           ),
         );
       }

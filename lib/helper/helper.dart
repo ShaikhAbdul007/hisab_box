@@ -110,6 +110,8 @@ void showSnackBar({required String error, bool isError = true}) {
     backgroundColor:
         isError ? AppColors.buttonRedColor : AppColors.buttonGreenColor,
     colorText: AppColors.whiteColor,
+    maxWidth: 450,
+    margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
   );
 }
 

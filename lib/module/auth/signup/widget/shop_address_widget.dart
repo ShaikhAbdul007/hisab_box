@@ -32,10 +32,15 @@ class ShopAddress extends StatelessWidget {
     required this.notifyParent,
   });
 
+  double _w(double width) => ScreenUtil().screenWidth > 600 ? width : width.w;
+  double _h(double height) => ScreenUtil().screenWidth > 600 ? height : height.h;
+  double _r(double radius) => ScreenUtil().screenWidth > 600 ? radius : radius.r;
+  double _sp(double sp) => ScreenUtil().screenWidth > 600 ? sp : sp.sp;
+
   Widget commonSuffixIcon(IconData icon) {
     return CustomPadding(
       paddingOption: OnlyPadding(right: 10),
-      child: Icon(icon, size: 18.sp, color: Colors.grey.shade500),
+      child: Icon(icon, size: _sp(18), color: Colors.grey.shade500),
     );
   }
 
@@ -44,16 +49,16 @@ class ShopAddress extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: _h(8)),
 
         // ── Profile avatar ─────────────────────────────────────────────
         _buildAvatarSection(),
 
-        SizedBox(height: 24.h),
+        SizedBox(height: _h(24)),
 
         // ── Shop info section ──────────────────────────────────────────
         _sectionLabel('Shop Information'),
-        SizedBox(height: 12.h),
+        SizedBox(height: _h(12)),
 
         _modernField(
           child: CommonTextField(
@@ -69,36 +74,36 @@ class ShopAddress extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 14.h),
+        SizedBox(height: _h(14)),
 
         // Shop Type dropdown
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(_r(14)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(_r(14)),
             child: CustomStaticDropDown(
-              listItems: ['Pet Shop', 'Clothing Shop'],
+              listItems: const ['Pet Shop', 'Clothing Shop'],
               hintText: 'Shop type',
               notifyParent: notifyParent,
             ),
           ),
         ),
 
-        SizedBox(height: 24.h),
+        SizedBox(height: _h(24)),
 
         // ── Address section ────────────────────────────────────────────
         _sectionLabel('Shop Address'),
-        SizedBox(height: 12.h),
+        SizedBox(height: _h(12)),
 
         _modernField(
           child: CommonTextField(
@@ -114,7 +119,7 @@ class ShopAddress extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 14.h),
+        SizedBox(height: _h(14)),
 
         // City & State in a row
         Row(
@@ -134,7 +139,7 @@ class ShopAddress extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: _w(12)),
             Expanded(
               child: _modernField(
                 child: CommonTextField(
@@ -153,7 +158,7 @@ class ShopAddress extends StatelessWidget {
           ],
         ),
 
-        SizedBox(height: 14.h),
+        SizedBox(height: _h(14)),
 
         _modernField(
           child: CommonTextField(
@@ -171,7 +176,7 @@ class ShopAddress extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 20.h),
+        SizedBox(height: _h(20)),
       ],
     );
   }
@@ -184,7 +189,7 @@ class ShopAddress extends StatelessWidget {
         children: [
           // Avatar ring
           Container(
-            padding: EdgeInsets.all(3.w),
+            padding: EdgeInsets.all(_w(3)),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
@@ -194,40 +199,39 @@ class ShopAddress extends StatelessWidget {
               ),
             ),
             child: CircleAvatar(
-              radius: 52.r,
+              radius: _r(52),
               backgroundColor: Colors.grey.shade200,
               backgroundImage:
                   profileImage.path.isNotEmpty ? FileImage(profileImage) : null,
-              child:
-                  profileImage.path.isEmpty
-                      ? Text(
-                        'H',
-                        style: TextStyle(
-                          fontSize: 38.sp,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade500,
-                        ),
-                      )
-                      : null,
+              child: profileImage.path.isEmpty
+                  ? Text(
+                      'H',
+                      style: TextStyle(
+                        fontSize: _sp(38),
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade500,
+                      ),
+                    )
+                  : null,
             ),
           ),
 
           // Edit button
           Positioned(
             bottom: 0,
-            right: -4.w,
+            right: -_w(4),
             child: GestureDetector(
               onTap: onPressed,
               child: Container(
-                width: 34.w,
-                height: 34.h,
+                width: _w(34),
+                height: _h(34),
                 decoration: BoxDecoration(
                   color: AppColors.blackColor,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -236,7 +240,7 @@ class ShopAddress extends StatelessWidget {
                 child: Icon(
                   Icons.camera_alt_rounded,
                   color: Colors.white,
-                  size: 16.sp,
+                  size: _sp(16),
                 ),
               ),
             ),
@@ -250,14 +254,14 @@ class ShopAddress extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 3.w,
-          height: 16.h,
+          width: _w(3),
+          height: _h(16),
           decoration: BoxDecoration(
             color: AppColors.blackColor,
-            borderRadius: BorderRadius.circular(2.r),
+            borderRadius: BorderRadius.circular(_r(2)),
           ),
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: _w(8)),
         Text(
           label,
           style: CustomTextStyle.customPoppin(
@@ -274,16 +278,16 @@ class ShopAddress extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(_r(14)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: ClipRRect(borderRadius: BorderRadius.circular(14.r), child: child),
+      child: ClipRRect(borderRadius: BorderRadius.circular(_r(14)), child: child),
     );
   }
 }

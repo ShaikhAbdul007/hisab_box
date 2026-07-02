@@ -1,3 +1,4 @@
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -14,6 +15,11 @@ class SplashView extends GetView<SplashController> {
     // because Future.delayed only fires once.
     controller.movetoNextScreen();
 
+    final desktop = isDesktop(context);
+    final logoSize = desktop ? 120.0 : 120.w;
+    final iconSize = desktop ? 80.0 : 80.sp;
+    final loaderSize = desktop ? 22.0 : 22.w;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -28,15 +34,15 @@ class SplashView extends GetView<SplashController> {
                   // Logo
                   Image.asset(
                     'assets/hisabboxlogo.png',
-                    width: 120.w,
-                    height: 120.h,
+                    width: logoSize,
+                    height: logoSize,
                     fit: BoxFit.contain,
                     errorBuilder:
                         (_, _, _) =>
-                            Icon(Icons.inventory_2_rounded, size: 80.sp),
+                            Icon(Icons.inventory_2_rounded, size: iconSize),
                   ),
 
-                  SizedBox(height: 20.h),
+                  const SizedBox(height: 20),
 
                   // App name
                   Text(
@@ -48,7 +54,7 @@ class SplashView extends GetView<SplashController> {
                     ),
                   ),
 
-                  SizedBox(height: 6.h),
+                  const SizedBox(height: 6),
 
                   // Tagline
                   Text(
@@ -59,12 +65,12 @@ class SplashView extends GetView<SplashController> {
                     ),
                   ),
 
-                  SizedBox(height: 40.h),
+                  const SizedBox(height: 40),
 
                   // Loading indicator
                   SizedBox(
-                    width: 22.w,
-                    height: 22.h,
+                    width: loaderSize,
+                    height: loaderSize,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: Colors.grey.shade400,
@@ -77,7 +83,7 @@ class SplashView extends GetView<SplashController> {
 
           // ── Bottom — version ─────────────────────────────────────────
           Padding(
-            padding: EdgeInsets.only(bottom: 24.h),
+            padding: EdgeInsets.only(bottom: desktop ? 24.0 : 24.h),
             child: Column(
               children: [
                 Text(
@@ -87,16 +93,16 @@ class SplashView extends GetView<SplashController> {
                     color: Colors.grey.shade400,
                   ),
                 ),
-                SizedBox(height: 6.h),
+                const SizedBox(height: 6),
                 Obx(
                   () => Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 4.h,
+                      horizontal: desktop ? 12.0 : 12.w,
+                      vertical: desktop ? 4.0 : 4.h,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.grey.shade200),
                     ),
                     child: Text(

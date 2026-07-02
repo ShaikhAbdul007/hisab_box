@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -27,6 +27,75 @@ class SignupView extends GetView<SignupController> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop(context)) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Container(
+              width: 560,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Obx(
+                () => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildHeader(context),
+                    _buildStepIndicator(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                      child: Form(
+                        key: shopAddress,
+                        child: controller.isShopDetailFilled.value
+                            ? Obx(
+                                () => ShopAddress(
+                                  notifyParent: (v) {
+                                    controller.shopType.text = v;
+                                    AppLogger.info(v);
+                                  },
+                                  profileImage: controller.profileImage.value ??
+                                      File(controller.profileImage.value?.path ?? ''),
+                                  onPressed: () => controller.pickImage(),
+                                  shopName: controller.name,
+                                  address: controller.address,
+                                  city: controller.city,
+                                  state: controller.state,
+                                  pincode: controller.pinCode,
+                                ),
+                              )
+                            : ShopDetails(
+                                password: controller.password,
+                                confirmpassword: controller.confirmpassword,
+                                mobileNo: controller.mobileNo,
+                                email: controller.email,
+                                alternateMobileNo: controller.alternateMobileNo,
+                                obscureText: controller.obscureTextValue.value,
+                                onTap: () {
+                                  controller.togglePasswordVisibility();
+                                },
+                              ),
+                      ),
+                    ),
+                    _buildBottomActions(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -107,13 +176,25 @@ class SignupView extends GetView<SignupController> {
 
   // ── Header ────────────────────────────────────────────────────────────────
   Widget _buildHeader(BuildContext context) {
+    final desktop = isDesktop(context);
     return Container(
-      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
+      padding: EdgeInsets.fromLTRB(
+        desktop ? 20.0 : 20.w,
+        desktop ? 16.0 : 16.h,
+        desktop ? 20.0 : 20.w,
+        desktop ? 20.0 : 20.h,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: desktop
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              )
+            : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -128,20 +209,20 @@ class SignupView extends GetView<SignupController> {
               if (shouldPop) Get.back();
             },
             child: Container(
-              width: 40.w,
-              height: 40.h,
+              width: desktop ? 40.0 : 40.w,
+              height: desktop ? 40.0 : 40.h,
               decoration: BoxDecoration(
                 color: const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(desktop ? 12.0 : 12.r),
               ),
               child: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                size: 16.sp,
+                size: desktop ? 16.0 : 16.sp,
                 color: AppColors.blackColor,
               ),
             ),
           ),
-          SizedBox(width: 14.w),
+          SizedBox(width: desktop ? 14.0 : 14.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +239,7 @@ class SignupView extends GetView<SignupController> {
                     ),
                   ),
                 ),
-                SizedBox(height: 2.h),
+                const SizedBox(height: 2),
                 Text(
                   createAccountSubtitle,
                   style: CustomTextStyle.customOpenSans(
@@ -176,10 +257,16 @@ class SignupView extends GetView<SignupController> {
 
   // ── Step indicator ────────────────────────────────────────────────────────
   Widget _buildStepIndicator() {
+    final desktop = isDesktop(Get.context!);
     return Obx(
       () => Container(
         color: Colors.white,
-        padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 16.h),
+        padding: EdgeInsets.fromLTRB(
+          desktop ? 24.0 : 24.w,
+          0,
+          desktop ? 24.0 : 24.w,
+          desktop ? 16.0 : 16.h,
+        ),
         child: Row(
           children: [
             _stepDot(
@@ -204,6 +291,7 @@ class SignupView extends GetView<SignupController> {
     required bool isActive,
     required bool isDone,
   }) {
+    final desktop = isDesktop(Get.context!);
     final Color activeColor = AppColors.blackColor;
     final Color inactiveColor = Colors.grey.shade300;
 
@@ -212,30 +300,29 @@ class SignupView extends GetView<SignupController> {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            width: 28.w,
-            height: 28.h,
+            width: desktop ? 28.0 : 28.w,
+            height: desktop ? 28.0 : 28.h,
             decoration: BoxDecoration(
               color: isActive ? activeColor : inactiveColor,
               shape: BoxShape.circle,
             ),
             child: Center(
-              child:
-                  isDone
-                      ? Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 14.sp,
-                      )
-                      : Icon(
-                        isActive
-                            ? Icons.radio_button_checked_rounded
-                            : Icons.circle_outlined,
-                        color: isActive ? Colors.white : Colors.grey.shade400,
-                        size: 14.sp,
-                      ),
+              child: isDone
+                  ? Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: desktop ? 14.0 : 14.sp,
+                    )
+                  : Icon(
+                      isActive
+                          ? Icons.radio_button_checked_rounded
+                          : Icons.circle_outlined,
+                      color: isActive ? Colors.white : Colors.grey.shade400,
+                      size: desktop ? 14.0 : 14.sp,
+                    ),
             ),
           ),
-          SizedBox(height: 4.h),
+          const SizedBox(height: 4),
           Text(
             label,
             style: CustomTextStyle.customNato(
@@ -250,15 +337,16 @@ class SignupView extends GetView<SignupController> {
   }
 
   Widget _stepLine(bool isActive) {
+    final desktop = isDesktop(Get.context!);
     return Expanded(
       child: Padding(
-        padding: EdgeInsets.only(bottom: 18.h),
+        padding: EdgeInsets.only(bottom: desktop ? 18.0 : 18.h),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          height: 2.h,
+          height: desktop ? 2.0 : 2.h,
           decoration: BoxDecoration(
             color: isActive ? AppColors.blackColor : Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(2.r),
+            borderRadius: BorderRadius.circular(desktop ? 2.0 : 2.r),
           ),
         ),
       ),
@@ -267,13 +355,25 @@ class SignupView extends GetView<SignupController> {
 
   // ── Bottom actions ────────────────────────────────────────────────────────
   Widget _buildBottomActions() {
+    final desktop = isDesktop(Get.context!);
     return Container(
-      padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 24.h),
+      padding: EdgeInsets.fromLTRB(
+        desktop ? 24.0 : 24.w,
+        desktop ? 16.0 : 16.h,
+        desktop ? 24.0 : 24.w,
+        desktop ? 24.0 : 24.h,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: desktop
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              )
+            : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -3),
           ),
@@ -286,7 +386,7 @@ class SignupView extends GetView<SignupController> {
           Obx(
             () => SizedBox(
               width: double.infinity,
-              height: 52.h,
+              height: desktop ? 52.0 : 52.h,
               child: ElevatedButton(
                 onPressed:
                     controller.signUpLoading.value
@@ -308,14 +408,14 @@ class SignupView extends GetView<SignupController> {
                   disabledBackgroundColor: Colors.grey.shade300,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+                    borderRadius: BorderRadius.circular(desktop ? 14.0 : 14.r),
                   ),
                 ),
                 child:
                     controller.signUpLoading.value
                         ? SizedBox(
-                          width: 22.w,
-                          height: 22.h,
+                          width: desktop ? 22.0 : 22.w,
+                          height: desktop ? 22.0 : 22.h,
                           child: const CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2.5,
@@ -335,7 +435,7 @@ class SignupView extends GetView<SignupController> {
             ),
           ),
 
-          SizedBox(height: 14.h),
+          const SizedBox(height: 14),
 
           // Login link
           GestureDetector(

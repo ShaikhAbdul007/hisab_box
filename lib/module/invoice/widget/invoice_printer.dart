@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/helper/logger.dart';
 import 'package:inventory/helper/shop_type.dart';
@@ -176,12 +176,24 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                     ),
                                   ),
                             )
-                            : Image.file(
-                              File(user.data!.profilepic!),
-                              fit: BoxFit.cover,
-                              filterQuality: FilterQuality.high,
-                              errorBuilder:
-                                  (_, _, _) => Center(
+                            : (!kIsWeb)
+                                ? Image.file(
+                                  File(user.data!.profilepic!),
+                                  fit: BoxFit.cover,
+                                  filterQuality: FilterQuality.high,
+                                  errorBuilder:
+                                      (_, _, _) => Center(
+                                        child: Text(
+                                          initials,
+                                          style: CustomTextStyle.customPoppin(
+                                            color: Colors.white,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                )
+                                : Center(
                                     child: Text(
                                       initials,
                                       style: CustomTextStyle.customPoppin(
@@ -191,7 +203,6 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                       ),
                                     ),
                                   ),
-                            ),
                   )
                   : Center(
                     child: Text(

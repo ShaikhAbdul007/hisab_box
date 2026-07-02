@@ -1,6 +1,8 @@
+import 'package:inventory/module/bottom_navigation/controller/bottom_navigation_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:get/get.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
@@ -50,10 +52,318 @@ class DeskTopScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CommonAppbar(
-      appBarLabel: 'Home',
-      isleadingButtonRequired: false,
-      body: const SizedBox.shrink(),
+    final user = controller.retrieveUserDetail();
+    final shopName = user.data?.name ?? 'HisaabBox';
+    final shopType = controller.shopType.value;
+
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      body: Obx(() {
+        if (controller.isListLoading.value) {
+          return const Center(
+            child: CommonProgressBar(
+              color: AppColors.blackColor,
+              size: 50,
+            ),
+          );
+        }
+        return ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          children: [
+            // Header Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome back! 👋',
+                      style: CustomTextStyle.customPoppin(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.blackColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$shopName • $shopType POS Dashboard',
+                      style: CustomTextStyle.customOpenSans(
+                        fontSize: 14,
+                        color: AppColors.greyColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(CupertinoIcons.calendar, size: 16, color: AppColors.greyColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        formatDateTime(
+                          DateTime.now().toIso8601String(),
+                          showDate: true,
+                          showTime: false,
+                        ),
+                        style: CustomTextStyle.customOpenSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.blackColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Metrics Cards Row (using custom grid widget layout with 4 items side-by-side)
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                childAspectRatio: 2.2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: controller.lis.length,
+              itemBuilder: (context, index) {
+                final item = controller.lis[index];
+                final color = _StatsGrid._colors[index % _StatsGrid._colors.length];
+                final icon = item.icon ?? _StatsGrid._icons[index % _StatsGrid._icons.length];
+                return _StatCard(
+                  model: item,
+                  color: color,
+                  icon: icon,
+                  onTap: () {
+                    final nav = Get.find<BottomNavigationController>();
+                    if (item.routeName == AppRouteName.inventroyList) {
+                      nav.setDesktopIndex(2); // Inventory
+                    } else if (item.routeName == AppRouteName.outOfStock) {
+                      nav.setDesktopIndex(2); // Inventory
+                    } else if (item.routeName == AppRouteName.revenueView) {
+                      nav.setDesktopIndex(5); // Reports
+                    } else if (item.routeName == AppRouteName.looseSell) {
+                      nav.setDesktopIndex(1); // POS Billing
+                    }
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Quick Actions & Split Layout
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left Column: Recent Sells / Activities (Flex 2)
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionHeader(
+                        title: 'Recent Activities',
+                        trailing: controller.sellsList.isNotEmpty
+                            ? Text(
+                                '${controller.sellsList.length} items',
+                                style: CustomTextStyle.customOpenSans(
+                                  fontSize: 12,
+                                  color: AppColors.greyColor,
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                      const SizedBox(height: 12),
+                      controller.sellsList.isEmpty
+                          ? Container(
+                              height: 320,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: const Center(
+                                child: CommonNoDataFound(
+                                  message: 'No recent activity found',
+                                ),
+                              ),
+                            )
+                          : _ActivitiesCard(controller: controller),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 24),
+
+                // Right Column: Quick actions panel (Flex 1)
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _SectionHeader(title: 'Quick Shortcuts'),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            _QuickActionTile(
+                              icon: Icons.receipt_long_rounded,
+                              title: 'Create POS Invoice',
+                              subtitle: 'Start new customer billing',
+                              color: AppColors.deepPurple,
+                              onTap: () {
+                                final nav = Get.find<BottomNavigationController>();
+                                nav.setDesktopIndex(1); // POS Billing
+                              },
+                            ),
+                            const Divider(height: 24),
+                            _QuickActionTile(
+                              icon: CupertinoIcons.add_circled_solid,
+                              title: 'Add New Products',
+                              subtitle: 'Quick upload items to stock',
+                              color: const Color(0xFF1565C0),
+                              onTap: () {
+                                final nav = Get.find<BottomNavigationController>();
+                                nav.setDesktopIndex(2); // Inventory list
+                              },
+                            ),
+                            const Divider(height: 24),
+                            _QuickActionTile(
+                              icon: CupertinoIcons.money_dollar_circle_fill,
+                              title: 'Credit Ledger',
+                              subtitle: 'Manage customer due balance',
+                              color: const Color(0xFFC62828),
+                              onTap: () {
+                                final nav = Get.find<BottomNavigationController>();
+                                nav.setDesktopIndex(3); // Credits ledger
+                              },
+                            ),
+                            const Divider(height: 24),
+                            _QuickActionTile(
+                              icon: CupertinoIcons.person_2_fill,
+                              title: 'Customer List',
+                              subtitle: 'Manage client accounts',
+                              color: const Color(0xFF2E7D32),
+                              onTap: () {
+                                final nav = Get.find<BottomNavigationController>();
+                                nav.setDesktopIndex(4); // Customer directory
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+class _QuickActionTile extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  State<_QuickActionTile> createState() => _QuickActionTileState();
+}
+
+class _QuickActionTileState extends State<_QuickActionTile> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: widget.onTap,
+      onHover: (hovered) {
+        setState(() {
+          _isHovered = hovered;
+        });
+      },
+      hoverColor: Colors.transparent,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: widget.color.withValues(alpha: _isHovered ? 0.15 : 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(widget.icon, color: widget.color, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: CustomTextStyle.customPoppin(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _isHovered ? widget.color : AppColors.blackColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.subtitle,
+                    style: CustomTextStyle.customOpenSans(
+                      fontSize: 12,
+                      color: AppColors.greyColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              CupertinoIcons.chevron_right,
+              size: 14,
+              color: _isHovered ? widget.color : AppColors.greyColor.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -411,14 +721,15 @@ class _StatCardState extends State<_StatCard>
 
   @override
   Widget build(BuildContext context) {
+    final bool desktop = isDesktop(context);
     return InkWell(
       onTap: widget.onTap,
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(desktop ? 14 : 14.r),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(desktop ? 14 : 14.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
@@ -435,17 +746,17 @@ class _StatCardState extends State<_StatCard>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  width: 32.w,
-                  height: 32.h,
+                  width: desktop ? 32 : 32.w,
+                  height: desktop ? 32 : 32.h,
                   decoration: BoxDecoration(
                     color: widget.color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(desktop ? 8 : 8.r),
                   ),
-                  child: Icon(widget.icon, color: widget.color, size: 16.sp),
+                  child: Icon(widget.icon, color: widget.color, size: desktop ? 16 : 16.sp),
                 ),
                 Icon(
                   CupertinoIcons.chevron_right,
-                  size: 12.sp,
+                  size: desktop ? 12 : 12.sp,
                   color: AppColors.greyColor,
                 ),
               ],
@@ -764,6 +1075,7 @@ class _ActivityTileState extends State<_ActivityTile>
   @override
   Widget build(BuildContext context) {
     final activity = widget.activity;
+    final bool desktop = isDesktop(context);
     return FadeTransition(
       opacity: _fade,
       child: SlideTransition(
@@ -775,13 +1087,13 @@ class _ActivityTileState extends State<_ActivityTile>
             children: [
               // Icon
               Container(
-                width: 38.w,
-                height: 38.h,
+                width: desktop ? 38 : 38.w,
+                height: desktop ? 38 : 38.h,
                 decoration: BoxDecoration(
                   color: _color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(desktop ? 10 : 10.r),
                 ),
-                child: Icon(_icon, color: _color, size: 18.sp),
+                child: Icon(_icon, color: _color, size: desktop ? 18 : 18.sp),
               ),
               setWidth(width: 12),
 
@@ -811,7 +1123,7 @@ class _ActivityTileState extends State<_ActivityTile>
                               ),
                               decoration: BoxDecoration(
                                 color: _color.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(4.r),
+                                borderRadius: BorderRadius.circular(desktop ? 4 : 4.r),
                               ),
                               child: Text(
                                 activity.referenceNo!,
@@ -822,13 +1134,13 @@ class _ActivityTileState extends State<_ActivityTile>
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                              ),
+                                                    ),
                             ),
                           ),
                         const Spacer(),
                         Icon(
                           CupertinoIcons.calendar,
-                          size: 10.sp,
+                          size: desktop ? 10 : 10.sp,
                           color: AppColors.greyColor,
                         ),
                         setWidth(width: 3),

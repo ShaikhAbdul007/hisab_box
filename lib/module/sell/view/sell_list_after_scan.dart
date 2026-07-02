@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:get/get.dart';
+import 'package:inventory/module/sell/widget/partialpayment_widget.dart';
 import 'package:inventory/common_widget/common_appbar.dart';
 import 'package:inventory/common_widget/common_button.dart';
 import 'package:inventory/common_widget/common_nodatafound.dart';
@@ -21,6 +23,163 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop(context)) {
+      // Initialize payment details for desktop when building
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.openPaymentDialog(controller.finalTotal.value);
+      });
+
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: Text(
+            sellingProduct,
+            style: CustomTextStyle.customNato(fontSize: 16),
+          ),
+          actionsPadding: const EdgeInsets.only(right: 20),
+          actions: [
+            // Manual barcode scanner input for desktop
+            Container(
+              width: 320,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Type Barcode & press Enter',
+                  prefixIcon: const Icon(CupertinoIcons.barcode_viewfinder, color: AppColors.greyColor, size: 18),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.deepPurple),
+                  ),
+                ),
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty) {
+                    controller.addProductByBarcodeManual(value.trim());
+                  }
+                },
+              ),
+            ),
+          ],
+          surfaceTintColor: AppColors.greyColorShade100,
+          backgroundColor: AppColors.greyColorShade100,
+        ),
+        body: Obx(() {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left panel: Cart items
+              Expanded(
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'Cart Items (${controller.productList.length})',
+                            style: CustomTextStyle.customPoppin(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.blackColor,
+                            ),
+                          ),
+                        ),
+                        const Divider(height: 1),
+                        Expanded(
+                          child: controller.productList.isEmpty
+                              ? const Center(
+                                  child: CommonNoDataFound(
+                                    message: 'No product added to cart. Use the search bar above to scan/type barcodes.',
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  itemCount: controller.productList.length,
+                                  itemBuilder: (context, index) {
+                                    return SellingConfirmationListText(
+                                      isLooseDiscountEnable: controller.productList[index].stockType == 'loose',
+                                      onDiscountChanged: (value) {
+                                        controller.discountCalculateAsPerProduct(index);
+                                        controller.calculateTotalWithDiscount();
+                                        // Update payment total in sync
+                                        controller.openPaymentDialog(controller.finalTotal.value);
+                                      },
+                                      dicountController: controller.perProductDiscount[index],
+                                      sellingPrices: Obx(
+                                        () => Text(
+                                          controller.sellingPriceList[index].toStringAsFixed(2),
+                                          style: CustomTextStyle.customPoppin(
+                                            color: AppColors.whiteColor,
+                                          ),
+                                        ),
+                                      ),
+                                      removeOnTap: () {
+                                        controller.deleteProductFromCart(index);
+                                        controller.openPaymentDialog(controller.finalTotal.value);
+                                      },
+                                      minusOnTap: () {
+                                        controller.updateQuantity(false, index);
+                                        controller.openPaymentDialog(controller.finalTotal.value);
+                                      },
+                                      plusOnTap: () {
+                                        controller.updateQuantity(true, index);
+                                        controller.openPaymentDialog(controller.finalTotal.value);
+                                      },
+                                      inventoryModel: controller.productList[index],
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Right panel: Payment details
+              Container(
+                width: 420,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(left: BorderSide(color: Colors.grey.shade200)),
+                ),
+                child: controller.productList.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Add items to cart to proceed with checkout',
+                          style: TextStyle(color: AppColors.greyColor),
+                        ),
+                      )
+                    : PartailPaymentWidget(
+                        controller: controller,
+                        showConfirmButton: true,
+                        confirmLabel: 'Confirm POS Sale',
+                      ),
+              ),
+            ],
+          );
+        }),
+      );
+    }
+
     return Obx(
       () => CommonAppbar(
         appBarLabel: sellingProduct,

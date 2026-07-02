@@ -17,12 +17,14 @@ class CustomerController extends GetxController with CacheManager {
   RxString searchText = ''.obs;
 
   RxList<CustomerItem> customerList = <CustomerItem>[].obs;
+  final Rxn<CustomerItem> selectedCustomer = Rxn<CustomerItem>();
 
   TextEditingController searchController = TextEditingController();
   TextEditingController mobileController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController addressController = TextEditingController();
   TextEditingController nameController = TextEditingController();
+  final customerFormKey = GlobalKey<FormState>();
 
   @override
   void onInit() {

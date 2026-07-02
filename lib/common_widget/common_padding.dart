@@ -5,6 +5,14 @@ sealed class PaddingOption {
   EdgeInsets getPadding();
 }
 
+bool _isDesktop() {
+  try {
+    return ScreenUtil().screenWidth > 600;
+  } catch (_) {
+    return false;
+  }
+}
+
 class SymmetricPadding extends PaddingOption {
   final double horizontal;
   final double vertical;
@@ -13,6 +21,9 @@ class SymmetricPadding extends PaddingOption {
 
   @override
   EdgeInsets getPadding() {
+    if (_isDesktop()) {
+      return EdgeInsets.symmetric(horizontal: horizontal, vertical: vertical);
+    }
     return EdgeInsets.symmetric(horizontal: horizontal.w, vertical: vertical.h);
   }
 }
@@ -24,6 +35,9 @@ class AllPadding extends PaddingOption {
 
   @override
   EdgeInsets getPadding() {
+    if (_isDesktop()) {
+      return EdgeInsets.all(all);
+    }
     return EdgeInsets.all(all.r);
   }
 }
@@ -38,6 +52,9 @@ class OnlyPadding extends PaddingOption {
 
   @override
   EdgeInsets getPadding() {
+    if (_isDesktop()) {
+      return EdgeInsets.only(left: left, top: top, right: right, bottom: bottom);
+    }
     return EdgeInsets.only(
       left: left.w,
       top: top.h,

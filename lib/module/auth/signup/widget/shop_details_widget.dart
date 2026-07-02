@@ -28,6 +28,11 @@ class ShopDetails extends StatelessWidget {
     required this.onTap,
   });
 
+  double _w(double width) => ScreenUtil().screenWidth > 600 ? width : width.w;
+  double _h(double height) => ScreenUtil().screenWidth > 600 ? height : height.h;
+  double _r(double radius) => ScreenUtil().screenWidth > 600 ? radius : radius.r;
+  double _sp(double sp) => ScreenUtil().screenWidth > 600 ? sp : sp.sp;
+
   Widget commonSuffixIcon({required Widget child}) {
     return CustomPadding(paddingOption: OnlyPadding(right: 10), child: child);
   }
@@ -37,11 +42,11 @@ class ShopDetails extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 8.h),
+        SizedBox(height: _h(8)),
 
         // ── Section label ──────────────────────────────────────────────
         _sectionLabel('Contact Information'),
-        SizedBox(height: 12.h),
+        SizedBox(height: _h(12)),
 
         // ── Email ──────────────────────────────────────────────────────
         _modernField(
@@ -54,7 +59,7 @@ class ShopDetails extends StatelessWidget {
             suffixIcon: commonSuffixIcon(
               child: Icon(
                 CupertinoIcons.mail,
-                size: 18.sp,
+                size: _sp(18),
                 color: Colors.grey.shade500,
               ),
             ),
@@ -66,7 +71,7 @@ class ShopDetails extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 14.h),
+        SizedBox(height: _h(14)),
 
         // ── Mobile No ──────────────────────────────────────────────────
         _modernField(
@@ -80,7 +85,7 @@ class ShopDetails extends StatelessWidget {
             suffixIcon: commonSuffixIcon(
               child: Icon(
                 CupertinoIcons.phone,
-                size: 18.sp,
+                size: _sp(18),
                 color: Colors.grey.shade500,
               ),
             ),
@@ -92,7 +97,7 @@ class ShopDetails extends StatelessWidget {
           ),
         ),
 
-        SizedBox(height: 14.h),
+        SizedBox(height: _h(14)),
 
         // ── Alternate Mobile No ────────────────────────────────────────
         _modernField(
@@ -107,14 +112,14 @@ class ShopDetails extends StatelessWidget {
             suffixIcon: commonSuffixIcon(
               child: Icon(
                 CupertinoIcons.phone,
-                size: 18.sp,
+                size: _sp(18),
                 color: Colors.grey.shade500,
               ),
             ),
           ),
         ),
 
-        SizedBox(height: 20.h),
+        SizedBox(height: _h(20)),
 
         // ── Info chip ──────────────────────────────────────────────────
         _infoChip(
@@ -123,7 +128,7 @@ class ShopDetails extends StatelessWidget {
               'Your contact details will be used for account verification and communication.',
         ),
 
-        SizedBox(height: 8.h),
+        SizedBox(height: _h(8)),
       ],
     );
   }
@@ -132,14 +137,14 @@ class ShopDetails extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 3.w,
-          height: 16.h,
+          width: _w(3),
+          height: _h(16),
           decoration: BoxDecoration(
             color: AppColors.blackColor,
-            borderRadius: BorderRadius.circular(2.r),
+            borderRadius: BorderRadius.circular(_r(2)),
           ),
         ),
-        SizedBox(width: 8.w),
+        SizedBox(width: _w(8)),
         Text(
           label,
           style: CustomTextStyle.customPoppin(
@@ -156,32 +161,32 @@ class ShopDetails extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(_r(14)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: ClipRRect(borderRadius: BorderRadius.circular(14.r), child: child),
+      child: ClipRRect(borderRadius: BorderRadius.circular(_r(14)), child: child),
     );
   }
 
   Widget _infoChip({required IconData icon, required String text}) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: _w(14), vertical: _h(12)),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(_r(12)),
         border: Border.all(color: Colors.blue.shade100),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16.sp, color: Colors.blue.shade400),
-          SizedBox(width: 8.w),
+          Icon(icon, size: _sp(16), color: Colors.blue.shade400),
+          SizedBox(width: _w(8)),
           Expanded(
             child: Text(
               text,

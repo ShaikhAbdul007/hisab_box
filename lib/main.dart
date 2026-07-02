@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -125,9 +126,16 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     // ScreenUtilInit ko properly configure kiya gaya hai orientation handle karne ke liye
+    final view = PlatformDispatcher.instance.views.first;
+    final double physicalWidth = view.physicalSize.width;
+    final double physicalHeight = view.physicalSize.height;
+    final double ratio = view.devicePixelRatio;
+    final double width = ratio > 0 ? physicalWidth / ratio : 375.0;
+    final double height = ratio > 0 ? physicalHeight / ratio : 812.0;
+    final Size calculatedDesignSize = width >= 800 ? Size(width, height) : const Size(375, 812);
 
     return ScreenUtilInit(
-      designSize: const Size(375, 812), // Aapke design ka base size
+      designSize: calculatedDesignSize, // Adapted dynamically for web/desktop to neutralize scaling issues
       splitScreenMode: true,
       minTextAdapt: true,
       // useInheritedMediaQuery zaroori hai orientation changes ke liye

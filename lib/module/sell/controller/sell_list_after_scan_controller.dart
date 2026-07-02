@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bluetooth_printer/flutter_bluetooth_printer.dart';
 import 'package:get/get.dart';
+import 'package:inventory/module/inventory/repo/inventory_repo.dart';
 import 'package:inventory/cache_manager/cache_manager.dart';
 import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/helper.dart';
@@ -393,5 +394,63 @@ class SellListAfterScanController extends GetxController with CacheManager {
     totalAmount.value = 0.0;
     discountPrice.value = 0.0;
     discountDifferenceAmount = 0.0;
+  }
+
+  Future<void> addProductByBarcodeManual(String barcode, {String sellType = 'packet'}) async {
+    isStockLoading.value = true;
+    try {
+      final repo = InventoryScanRepo();
+      final res = await repo.fetchProductByBarcode(barcode: barcode, stocktype: sellType);
+      if (res.success != success || res.data == null) {
+        showSnackBar(error: "❌ Product Not Found");
+        return;
+      }
+      
+      final product = res.data!;
+      if ((product.location ?? '').toLowerCase() != 'shop') {
+        showSnackBar(error: 'Product should be in shop to sell.');
+        return;
+      }
+      
+      double availableQty = (product.quantity ?? 0).toDouble();
+      if (availableQty <= 0) {
+        showSnackBar(error: 'Product is out of stock.');
+        return;
+      }
+      
+      final index = productList.indexWhere(
+        (p) => p.barcode == barcode && p.stockType == sellType,
+      );
+      
+      if (index != -1) {
+        final double currentQty = double.tryParse(productList[index].quantity?.toString() ?? '0') ?? 0;
+        if (currentQty >= availableQty) {
+          showSnackBar(error: 'No more stock available in shop.');
+          return;
+        }
+        productList[index].quantity = (currentQty + 1).toString();
+      } else {
+        productList.add(
+          InventoryItem(
+            barcode: barcode,
+            id: product.id,
+            name: product.name,
+            sellingPrice: product.sellingPrice.toString(),
+            discount: product.discount,
+            quantity: '1.0',
+            packetQuantity: availableQty.toString(),
+            stockType: sellType,
+            location: product.location,
+          ),
+        );
+      }
+      saveCartProductList(productList);
+      setProductData();
+      showMessage(message: 'Product added successfully!');
+    } catch (e) {
+      showSnackBar(error: 'Error: ${e.toString()}');
+    } finally {
+      isStockLoading.value = false;
+    }
   }
 }

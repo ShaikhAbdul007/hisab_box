@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -22,6 +23,146 @@ class AddUserView extends GetView<AddUserController> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop(context)) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: const Text('Add User'),
+          leading: IconButton(
+            icon: const Icon(CupertinoIcons.back),
+            onPressed: () => Get.back(),
+          ),
+          surfaceTintColor: AppColors.greyColorShade100,
+          backgroundColor: AppColors.greyColorShade100,
+        ),
+        body: Form(
+          key: inventoryScanKey,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Left Column (flex 3): User Form Details
+                Expanded(
+                  flex: 3,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      _FormCard(
+                        icon: CupertinoIcons.person_fill,
+                        iconColor: const Color(0xFF1565C0),
+                        title: 'Staff Information',
+                        children: [
+                          CommonTextField(
+                            label: 'Staff Name',
+                            hintText: 'e.g. Rahul Sharma',
+                            controller: controller.nameController,
+                            validator: (v) {
+                              if (v!.isEmpty) return emptyName;
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          CommonTextField(
+                            textCapitalization: TextCapitalization.none,
+                            label: 'Email',
+                            hintText: 'e.g. rahul@example.com',
+                            controller: controller.emailController,
+                            validator: (v) {
+                              if (v!.isEmpty) return emptyEmail;
+                              if (!GetUtils.isEmail(v)) return invalidEmail;
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          CommonTextField(
+                            label: 'Mobile No',
+                            hintText: '10-digit mobile number',
+                            controller: controller.mobileController,
+                            keyboardType: TextInputType.phone,
+                            inputLength: 10,
+                            validator: (v) {
+                              if (v!.isEmpty) return emptyMobileNo;
+                              if (v.length < 10) return mobileLength;
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _FormCard(
+                        icon: CupertinoIcons.person_badge_plus_fill,
+                        iconColor: const Color(0xFF6A1B9A),
+                        title: 'Assign Role',
+                        children: [
+                          Obx(
+                            () => controller.isFetchUserRole.value
+                                ? const CommonProgressBar()
+                                : controller.userRoleList.isEmpty
+                                    ? CustomDropDown(
+                                        listItems: controller.userRoleList,
+                                        hintText: 'Add a user role first in Settings',
+                                        notifyParent: (v) {
+                                          controller.selectedRole.value = v ?? '';
+                                          unfocus();
+                                        },
+                                      )
+                                    : CustomDropDown(
+                                        listItems: controller.userRoleList,
+                                        hintText: 'Select Role',
+                                        notifyParent: (v) {
+                                          controller.selectedRole.value = v!;
+                                          unfocus();
+                                        },
+                                      ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Obx(
+                        () => CommonButton(
+                          isLoading: controller.isSaveLoading.value,
+                          label: 'Create User',
+                          onTap: () async {
+                            if (inventoryScanKey.currentState!.validate()) {
+                              final Map<String, dynamic> permissionData = {};
+                              controller.permissions.forEach((key, value) {
+                                permissionData[key] = value.value;
+                              });
+                              final Map<String, dynamic> finalData = {
+                                'name': controller.nameController.text.trim(),
+                                'email': controller.emailController.text.trim(),
+                                'mobile_no': controller.mobileController.text.trim(),
+                                'password': 'Password@123',
+                                'role_id': controller.selectedRole.value,
+                                'permissions': permissionData,
+                              };
+                              await controller.addUserRole(body: finalData);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 24),
+                // Right Column (flex 2): Permissions Checklist
+                Expanded(
+                  flex: 2,
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      _PermissionsSection(controller: controller),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return CommonAppbar(
       appBarLabel: 'Add User',
       body: Form(
@@ -159,11 +300,12 @@ class _FormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool desktop = isDesktop(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(desktop ? 14 : 14.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -178,15 +320,15 @@ class _FormCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36.w,
-                height: 36.h,
+                width: desktop ? 36 : 36.w,
+                height: desktop ? 36 : 36.h,
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(desktop ? 10 : 10.r),
                 ),
-                child: Icon(icon, color: iconColor, size: 18.sp),
+                child: Icon(icon, color: iconColor, size: desktop ? 18 : 18.sp),
               ),
-              setWidth(width: 10),
+              desktop ? const SizedBox(width: 10) : setWidth(width: 10),
               Text(
                 title,
                 style: CustomTextStyle.customPoppin(
@@ -196,7 +338,7 @@ class _FormCard extends StatelessWidget {
               ),
             ],
           ),
-          setHeight(height: 14),
+          desktop ? const SizedBox(height: 14) : setHeight(height: 14),
           ...children,
         ],
       ),
@@ -211,10 +353,11 @@ class _PermissionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool desktop = isDesktop(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(desktop ? 14 : 14.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -231,19 +374,19 @@ class _PermissionsSection extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 36.w,
-                  height: 36.h,
+                  width: desktop ? 36 : 36.w,
+                  height: desktop ? 36 : 36.h,
                   decoration: BoxDecoration(
                     color: const Color(0xFF00695C).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(desktop ? 10 : 10.r),
                   ),
                   child: Icon(
                     CupertinoIcons.lock_shield_fill,
                     color: const Color(0xFF00695C),
-                    size: 18.sp,
+                    size: desktop ? 18 : 18.sp,
                   ),
                 ),
-                setWidth(width: 10),
+                desktop ? const SizedBox(width: 10) : setWidth(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -307,7 +450,7 @@ class _PermissionsSection extends StatelessWidget {
             keys: ['p_add_user', 'p_add_bank_details', 'p_edit_profile'],
             permissions: controller.permissions,
           ),
-          setHeight(height: 8),
+          desktop ? const SizedBox(height: 8) : setHeight(height: 8),
         ],
       ),
     );

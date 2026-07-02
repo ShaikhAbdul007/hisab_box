@@ -71,8 +71,13 @@ class CommonTextField extends StatelessWidget {
           margin:
               marginPadding ?? SymmetricPadding(horizontal: 10).getPadding(),
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.greyColor, width: 0.5.w),
-            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: AppColors.greyColor,
+              width: ScreenUtil().screenWidth > 600 ? 0.5 : 0.5.w,
+            ),
+            borderRadius: BorderRadius.circular(
+              ScreenUtil().screenWidth > 600 ? 10.0 : 10.r,
+            ),
           ),
           child: TextFormField(
             textCapitalization: textCapitalization,
@@ -85,7 +90,7 @@ class CommonTextField extends StatelessWidget {
             keyboardType: keyboardType,
             controller: controller,
             autocorrect: true,
-            cursorHeight: 14.sp,
+            cursorHeight: ScreenUtil().screenWidth > 600 ? 14.0 : 14.sp,
 
             // cursorColor: AppColors.blackColor,
             style: CustomTextStyle.customOpenSans(

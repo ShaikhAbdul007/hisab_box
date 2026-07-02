@@ -16,6 +16,7 @@ import 'package:inventory/helper/capitalization_strings.dart';
 import 'package:inventory/helper/helper.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/expense/model/all_expense_model.dart';
+import 'package:inventory/responsive_layout/dimension.dart';
 import '../../../common_widget/common_button.dart';
 import '../../../helper/app_message.dart';
 import 'package:inventory/helper/textstyle.dart';
@@ -35,17 +36,18 @@ class _SheetInfoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool desktop = isDesktop(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: iconColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(desktop ? 10 : 10.r),
         border: Border.all(color: iconColor.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18.sp, color: iconColor),
-          setWidth(width: 10),
+          Icon(icon, size: desktop ? 18 : 18.sp, color: iconColor),
+          desktop ? const SizedBox(width: 10) : setWidth(width: 10),
           Expanded(
             child: Text(
               message,
@@ -68,12 +70,19 @@ class _ExpenseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool desktop = isDesktop(context);
     return Container(
-      margin: SymmetricPadding(horizontal: 12, vertical: 5).getPadding(),
-      padding: SymmetricPadding(horizontal: 12, vertical: 10).getPadding(),
+      margin:
+          desktop
+              ? const EdgeInsets.symmetric(horizontal: 12, vertical: 5)
+              : SymmetricPadding(horizontal: 12, vertical: 5).getPadding(),
+      padding:
+          desktop
+              ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+              : SymmetricPadding(horizontal: 12, vertical: 10).getPadding(),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(desktop ? 12 : 12.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -86,19 +95,19 @@ class _ExpenseCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 44.w,
-            height: 44.h,
+            width: desktop ? 44 : 44.w,
+            height: desktop ? 44 : 44.h,
             decoration: BoxDecoration(
               color: AppColors.deepPurple.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10.r),
+              borderRadius: BorderRadius.circular(desktop ? 10 : 10.r),
             ),
             child: Icon(
               CupertinoIcons.money_dollar_circle_fill,
               color: AppColors.deepPurple,
-              size: 22.sp,
+              size: desktop ? 22 : 22.sp,
             ),
           ),
-          setWidth(width: 10),
+          desktop ? const SizedBox(width: 10) : setWidth(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +136,7 @@ class _ExpenseCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                setHeight(height: 3),
+                desktop ? const SizedBox(height: 3) : setHeight(height: 3),
                 Row(
                   children: [
                     if (expense.paymentMode != null &&
@@ -139,7 +148,9 @@ class _ExpenseCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.deepPurple.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4.r),
+                          borderRadius: BorderRadius.circular(
+                            desktop ? 4 : 4.r,
+                          ),
                         ),
                         child: Text(
                           expense.paymentMode.toCapitalized(),
@@ -150,14 +161,14 @@ class _ExpenseCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      setWidth(width: 8),
+                      desktop ? const SizedBox(width: 8) : setWidth(width: 8),
                     ],
                     Icon(
                       CupertinoIcons.calendar,
-                      size: 11.sp,
+                      size: desktop ? 11 : 11.sp,
                       color: AppColors.greyColor,
                     ),
-                    setWidth(width: 3),
+                    desktop ? const SizedBox(width: 3) : setWidth(width: 3),
                     Text(
                       formatDateTime(expense.createdAt ?? ''),
                       style: CustomTextStyle.customOpenSans(
@@ -165,7 +176,7 @@ class _ExpenseCard extends StatelessWidget {
                         color: AppColors.greyColor,
                       ),
                     ),
-                    setWidth(width: 6),
+                    desktop ? const SizedBox(width: 6) : setWidth(width: 6),
                     Text(
                       formatDateTime(
                         expense.createdAt ?? '',
@@ -179,18 +190,6 @@ class _ExpenseCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // if (expense.name != null && expense.name!.isNotEmpty) ...[
-                //   setHeight(height: 4),
-                //   Text(
-                //     expense.name!,
-                //     style: CustomTextStyle.customOpenSans(
-                //       fontSize: 11,
-                //       color: AppColors.greyColor,
-                //     ),
-                //     maxLines: 2,
-                //     overflow: TextOverflow.ellipsis,
-                //   ),
-                // ],
               ],
             ),
           ),
@@ -205,6 +204,158 @@ class Expense extends GetView<ExpenseController> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop(context)) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: Text(
+            'Expense',
+            style: CustomTextStyle.customNato(fontSize: 16),
+          ),
+          leading: IconButton(
+            icon: const Icon(CupertinoIcons.back),
+            onPressed: () => Get.back(),
+          ),
+          surfaceTintColor: AppColors.greyColorShade100,
+          backgroundColor: AppColors.greyColorShade100,
+        ),
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left pane: list of expenses
+            Expanded(
+              flex: 3,
+              child: Container(
+                margin: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Obx(
+                  () =>
+                      controller.isExpenseLoading.value
+                          ? Center(
+                              child: CommonProgressBar(
+                                color: AppColors.blackColor,
+                                size: 30,
+                              ),
+                            )
+                          : controller.expenseList.isNotEmpty
+                          ? ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: controller.expenseList.length,
+                            itemBuilder: (context, index) {
+                              var list = controller.expenseList[index];
+                              return _ExpenseCard(expense: list);
+                            },
+                          )
+                          : const CommonNoDataFound(
+                            message: 'No expense found',
+                          ),
+                ),
+              ),
+            ),
+
+            // Right pane: add expense form
+            Expanded(
+              flex: 2,
+              child: Container(
+                margin: const EdgeInsets.only(top: 24, bottom: 24, right: 24),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Form(
+                  key: expenseKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Record New Expense',
+                        style: CustomTextStyle.customPoppin(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.blackColor,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _SheetInfoBanner(
+                        icon: CupertinoIcons.money_dollar_circle_fill,
+                        iconColor: AppColors.deepPurple,
+                        message: 'Enter details for the new expense',
+                      ),
+                      const SizedBox(height: 20),
+                      CommonTextField(
+                        hintText: 'e.g. Rent, Electricity, Tea',
+                        label: 'Expense Name',
+                        controller: controller.expensionName,
+                        validator: (val) {
+                          if (val!.isEmpty) return emptyExpenseName;
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      CommonTextField(
+                        hintText: 'e.g. 500',
+                        label: 'Amount',
+                        keyboardType: TextInputType.number,
+                        inputLength: 10,
+                        controller: controller.amount,
+                        validator: (val) {
+                          if (val!.isEmpty) return emptyExpenseAmount;
+                          if (double.tryParse(val) == null) {
+                            return 'Please enter a valid amount';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      CustomStaticDropDown(
+                        listItems: const ['Cash', 'UPI'],
+                        hintText: 'Payment Mode',
+                        notifyParent: (value) {
+                          controller.selectedPaymentMode.value = value;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      Obx(
+                        () => CommonButton(
+                          isLoading: controller.isExpenseSaveLoading.value,
+                          label: saveButton,
+                          onTap: () async {
+                            if (expenseKey.currentState!.validate()) {
+                              var body = {
+                                "name": controller.expensionName.text,
+                                "amount": controller.amount.text,
+                                "payment_mode":
+                                    controller.selectedPaymentMode.value
+                                        .toLowerCase(),
+                              };
+                              await controller.saveExpense(body);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return CommonAppbar(
       appBarLabel: 'Expense',
       firstActionChild: AppBarAddButton(

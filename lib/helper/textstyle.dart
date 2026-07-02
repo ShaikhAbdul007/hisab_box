@@ -4,6 +4,28 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:inventory/common_widget/colors.dart';
 
 class CustomTextStyle {
+  static double _getFontSize(double size) {
+    try {
+      if (ScreenUtil().screenWidth > 600) {
+        return size;
+      }
+    } catch (_) {
+      return size;
+    }
+    return size.sp;
+  }
+
+  static double _getLetterSpacing(double spacing) {
+    try {
+      if (ScreenUtil().screenWidth > 600) {
+        return spacing;
+      }
+    } catch (_) {
+      return spacing;
+    }
+    return spacing.sp;
+  }
+
   static TextStyle customPoppin({
     Color color = AppColors.blackColor,
     FontWeight fontWeight = FontWeight.normal,
@@ -14,8 +36,9 @@ class CustomTextStyle {
     return GoogleFonts.poppins(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize.sp,
-      letterSpacing: letterSpacing.sp,
+      fontSize: _getFontSize(fontSize),
+      letterSpacing: _getLetterSpacing(letterSpacing),
+      decoration: decoration,
     );
   }
 
@@ -29,9 +52,9 @@ class CustomTextStyle {
     return GoogleFonts.arOneSans(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize.sp,
+      fontSize: _getFontSize(fontSize),
       decoration: decoration,
-      letterSpacing: letterSpacing.sp,
+      letterSpacing: _getLetterSpacing(letterSpacing),
     );
   }
 
@@ -45,10 +68,9 @@ class CustomTextStyle {
     return GoogleFonts.raleway(
       color: color,
       fontWeight: fontWeight,
-
-      fontSize: fontSize.sp,
+      fontSize: _getFontSize(fontSize),
       decoration: decoration,
-      letterSpacing: letterSpacing.sp,
+      letterSpacing: _getLetterSpacing(letterSpacing),
     );
   }
 
@@ -62,9 +84,9 @@ class CustomTextStyle {
     return GoogleFonts.openSans(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize.sp,
+      fontSize: _getFontSize(fontSize),
       decoration: decoration,
-      letterSpacing: letterSpacing,
+      letterSpacing: _getLetterSpacing(letterSpacing),
     );
   }
 
@@ -78,9 +100,9 @@ class CustomTextStyle {
     return GoogleFonts.montserrat(
       color: color,
       fontWeight: fontWeight,
-      fontSize: fontSize.sp,
+      fontSize: _getFontSize(fontSize),
       decoration: decoration,
-      letterSpacing: letterSpacing.sp,
+      letterSpacing: _getLetterSpacing(letterSpacing),
     );
   }
 }

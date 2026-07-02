@@ -13,6 +13,7 @@ import 'package:inventory/module/product_details/repo/product_repo.dart';
 import '../../../helper/helper.dart';
 import '../../../helper/set_format_date.dart';
 import 'package:get/get.dart';
+import 'package:inventory/module/inventorylist/controller/inventory_list_controller.dart';
 
 class GenerateBarcodeController extends GetxController with CacheManager {
   ProductRepo productRepo = ProductRepo();
@@ -209,6 +210,9 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     try {
       var response = await productRepo.addProduct(body: body);
       if (response.success == success) {
+        if (Get.isRegistered<InventoryListController>()) {
+          Get.find<InventoryListController>().fetchInventoryByTab('shop');
+        }
         Get.back(result: true);
         showSnackBar(
           error: response.msg ?? somethingWentMessage,
@@ -415,6 +419,9 @@ class GenerateBarcodeController extends GetxController with CacheManager {
 
       final response = await productRepo.addProduct(body: body);
       if (response.success == success) {
+        if (Get.isRegistered<InventoryListController>()) {
+          Get.find<InventoryListController>().fetchInventoryByTab('shop');
+        }
         clear();
         Get.back(result: true);
         showMessage(

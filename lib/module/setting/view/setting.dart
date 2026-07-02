@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -22,17 +24,193 @@ class SettingView extends GetView<SettingController> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop(context)) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: Text(
+            'System Settings',
+            style: CustomTextStyle.customNato(fontSize: 16),
+          ),
+          surfaceTintColor: AppColors.greyColorShade100,
+          backgroundColor: AppColors.greyColorShade100,
+        ),
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left pane: Profile, Version & Logout
+            Container(
+              width: 320,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(right: BorderSide(color: Colors.grey.shade200)),
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  _ProfileCard(controller: controller),
+                  const SizedBox(height: 30),
+                  const Spacer(),
+                  _AppVersionCard(),
+                  const SizedBox(height: 20),
+                  _LogoutButton(onTap: () => _logoutDialog()),
+                ],
+              ),
+            ),
+
+            // Right pane: Settings Categories
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(32),
+                children: [
+                  // Account Section
+                  _SectionLabel(label: 'Account Settings'),
+                  const SizedBox(height: 10),
+                  _SettingsGroup(
+                    items: [
+                      _SettingTile(
+                        icon: Icons.account_balance_rounded,
+                        iconColor: const Color(0xFF1565C0),
+                        label: 'Bank Details',
+                        subtitle: 'Manage your bank & UPI info',
+                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.bankDetails),
+                      ),
+                      _SettingTile(
+                        icon: CupertinoIcons.person_badge_plus_fill,
+                        iconColor: const Color(0xFF6A1B9A),
+                        label: 'Add User Role',
+                        subtitle: 'Create and manage staff roles',
+                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.userRoleView),
+                      ),
+                      _SettingTile(
+                        icon: CupertinoIcons.person_2_fill,
+                        iconColor: const Color(0xFF00695C),
+                        label: 'Add User',
+                        subtitle: 'Manage staff accounts',
+                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.allUser),
+                      ),
+                      _SettingTile(
+                        icon: CupertinoIcons.doc_text_fill,
+                        iconColor: const Color(0xFFC62828),
+                        label: 'Expense',
+                        subtitle: 'Manage daily expenses',
+                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.expense),
+                        isLast: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Inventory Section
+                  _SectionLabel(label: 'Inventory Preferences'),
+                  const SizedBox(height: 10),
+                  Obx(() {
+                    final supportsColor = controller.shopTypeEnum.config.supportsColorModule;
+                    return _SettingsGroup(
+                      items: [
+                        _SettingTile(
+                          icon: CupertinoIcons.circle_grid_3x3_fill,
+                          iconColor: const Color(0xFFE65100),
+                          label: 'Category',
+                          subtitle: 'Manage product categories',
+                          onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.category),
+                        ),
+                        _SettingTile(
+                          icon: CupertinoIcons.tag_fill,
+                          iconColor: const Color(0xFF2E7D32),
+                          label: controller.shopTypeEnum.config.categoryLabel,
+                          subtitle: 'Manage ${controller.shopTypeEnum.config.categoryLabel.toLowerCase()}s',
+                          onTap: () => AppRoutes.navigateRoutes(
+                            routeName: AppRouteName.animalCategory,
+                            data: controller.shoptype.value,
+                          ),
+                          isLast: !supportsColor,
+                        ),
+                        if (supportsColor)
+                          _SettingTile(
+                            icon: CupertinoIcons.paintbrush_fill,
+                            iconColor: const Color(0xFF6A1B9A),
+                            label: 'Color Category',
+                            subtitle: 'Manage color options',
+                            onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.colorCategory),
+                            isLast: true,
+                          ),
+                      ],
+                    );
+                  }),
+                  const SizedBox(height: 30),
+
+                  // App Section
+                  _SectionLabel(label: 'App & Support'),
+                  const SizedBox(height: 10),
+                  _SettingsGroup(
+                    items: [
+                      _SettingTile(
+                        icon: CupertinoIcons.gear_alt_fill,
+                        iconColor: const Color(0xFF37474F),
+                        label: 'App Settings',
+                        subtitle: 'Scanner, godown & printer settings',
+                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.appsetting),
+                      ),
+                      _SettingTile(
+                        icon: Icons.support_agent_rounded,
+                        iconColor: const Color(0xFF0277BD),
+                        label: 'Support Assistance',
+                        subtitle: 'Get assistance from our team',
+                        onTap: () {
+                          commonBottomSheet(
+                            label: 'Customer Support',
+                            onPressed: () => Get.back(),
+                            child: CustomerSupport(
+                              emailOnTap: () => controller.emailLauncher(),
+                              phoneOnTap: () => controller.phoneluancher(),
+                            ),
+                          );
+                        },
+                        isLast: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Legal Section
+                  _SectionLabel(label: 'Legal & Policies'),
+                  const SizedBox(height: 10),
+                  _SettingsGroup(
+                    items: [
+                      _SettingTile(
+                        icon: CupertinoIcons.lock_fill,
+                        iconColor: const Color(0xFF455A64),
+                        label: 'Privacy Policy',
+                        subtitle: 'How we handle your details',
+                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.privacypolicy),
+                      ),
+                      _SettingTile(
+                        icon: CupertinoIcons.doc_text_fill,
+                        iconColor: const Color(0xFF455A64),
+                        label: 'Terms & Conditions',
+                        subtitle: 'Terms of service agreement',
+                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.termandcodition),
+                        isLast: true,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return CommonAppbar(
       appBarLabel: 'Settings',
       isleadingButtonRequired: false,
       body: ListView(
         padding: SymmetricPadding(horizontal: 16, vertical: 12).getPadding(),
         children: [
-          // ── Profile Card ─────────────────────────────────────────────
           _ProfileCard(controller: controller),
           setHeight(height: 20),
-
-          // ── Account Section ──────────────────────────────────────────
           _SectionLabel(label: 'Account'),
           setHeight(height: 8),
           _SettingsGroup(
@@ -81,8 +259,6 @@ class SettingView extends GetView<SettingController> {
             ],
           ),
           setHeight(height: 20),
-
-          // ── Inventory Section ─────────────────────────────────────────
           _SectionLabel(label: 'Inventory'),
           setHeight(height: 8),
           Obx(() {
@@ -129,8 +305,6 @@ class SettingView extends GetView<SettingController> {
             );
           }),
           setHeight(height: 20),
-
-          // ── App Section ───────────────────────────────────────────────
           _SectionLabel(label: 'App'),
           setHeight(height: 8),
           _SettingsGroup(
@@ -145,16 +319,6 @@ class SettingView extends GetView<SettingController> {
                       routeName: AppRouteName.appsetting,
                     ),
               ),
-              // _SettingTile(
-              //   icon: Icons.sticky_note_2,
-              //   iconColor: const Color(0xFF6D4C41),
-              //   label: 'Margin',
-              //   subtitle: 'Save margin text for later',
-              //   onTap:
-              //       () => AppRoutes.navigateRoutes(
-              //         routeName: AppRouteName.margin,
-              //       ),
-              // ),
               _SettingTile(
                 icon: Icons.support_agent_rounded,
                 iconColor: const Color(0xFF0277BD),
@@ -175,8 +339,6 @@ class SettingView extends GetView<SettingController> {
             ],
           ),
           setHeight(height: 20),
-
-          // ── Legal Section ─────────────────────────────────────────────
           _SectionLabel(label: 'Legal'),
           setHeight(height: 8),
           _SettingsGroup(
@@ -205,12 +367,8 @@ class SettingView extends GetView<SettingController> {
             ],
           ),
           setHeight(height: 20),
-
-          // ── Logout ────────────────────────────────────────────────────
           _LogoutButton(onTap: () => _logoutDialog()),
           setHeight(height: 20),
-
-          // ── App Version ───────────────────────────────────────────────
           _AppVersionCard(),
           setHeight(height: 30),
         ],
@@ -307,7 +465,7 @@ class _ProfileCard extends StatelessWidget {
       final file = controller.profileImage.value;
 
       Widget avatar;
-      if (file != null && file.existsSync()) {
+      if (!kIsWeb && file != null && file.existsSync()) {
         avatar = CircleAvatar(radius: 32.r, backgroundImage: FileImage(file));
       } else if (url.isNotEmpty) {
         final bool isNetwork =
@@ -333,20 +491,28 @@ class _ProfileCard extends StatelessWidget {
                             ),
                           ),
                     )
-                    : Image.file(
-                      File(url),
-                      width: 64.w,
-                      height: 64.h,
-                      fit: BoxFit.cover,
-                      errorBuilder:
-                          (_, _, _) => Text(
+                    : (!kIsWeb)
+                        ? Image.file(
+                          File(url),
+                          width: 64.w,
+                          height: 64.h,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (_, _, _) => Text(
+                                'HB',
+                                style: TextStyle(
+                                  fontSize: 20.sp,
+                                  color: Colors.white,
+                                ),
+                              ),
+                        )
+                        : Text(
                             'HB',
                             style: TextStyle(
                               fontSize: 20.sp,
                               color: Colors.white,
                             ),
                           ),
-                    ),
           ),
         );
       } else {
@@ -489,6 +655,7 @@ class _SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool desktop = isDesktop(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -497,8 +664,8 @@ class _SettingTile extends StatelessWidget {
           borderRadius:
               isLast
                   ? BorderRadius.only(
-                    bottomLeft: Radius.circular(14.r),
-                    bottomRight: Radius.circular(14.r),
+                    bottomLeft: Radius.circular(desktop ? 14 : 14.r),
+                    bottomRight: Radius.circular(desktop ? 14 : 14.r),
                   )
                   : BorderRadius.zero,
           child: Padding(
@@ -506,13 +673,13 @@ class _SettingTile extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 38.w,
-                  height: 38.h,
+                  width: desktop ? 38 : 38.w,
+                  height: desktop ? 38 : 38.h,
                   decoration: BoxDecoration(
                     color: iconColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(desktop ? 10 : 10.r),
                   ),
-                  child: Icon(icon, color: iconColor, size: 20.sp),
+                  child: Icon(icon, color: iconColor, size: desktop ? 20 : 20.sp),
                 ),
                 setWidth(width: 14),
                 Expanded(
@@ -538,7 +705,7 @@ class _SettingTile extends StatelessWidget {
                 ),
                 Icon(
                   CupertinoIcons.chevron_right,
-                  size: 16.sp,
+                  size: desktop ? 16 : 16.sp,
                   color: AppColors.greyColor,
                 ),
               ],

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/helper/textstyle.dart';
+import 'package:inventory/responsive_layout/dimension.dart';
 import 'colors.dart';
 
 class CommonSearch extends StatelessWidget {
@@ -29,11 +30,12 @@ class CommonSearch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool desktop = isDesktop(context);
     return Container(
-      height: 48.h,
+      height: desktop ? 48 : 48.h,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(desktop ? 14 : 14.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -52,30 +54,33 @@ class CommonSearch extends StatelessWidget {
         decoration: InputDecoration(
           // ── Leading search icon ──────────────────────────────────
           prefixIcon: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            padding: EdgeInsets.symmetric(horizontal: desktop ? 12 : 12.w),
             child: Icon(
               CupertinoIcons.search,
-              size: 18.sp,
+              size: desktop ? 18 : 18.sp,
               color: AppColors.greyColor,
             ),
           ),
           prefixIconConstraints: BoxConstraints(
-            minWidth: 44.w,
-            minHeight: 44.h,
+            minWidth: desktop ? 44 : 44.w,
+            minHeight: desktop ? 44 : 44.h,
           ),
 
           // ── Trailing icon (clear / custom) ───────────────────────
           suffixIcon:
               icon != null
-                  ? Padding(padding: EdgeInsets.only(right: 8.w), child: icon)
+                  ? Padding(
+                      padding: EdgeInsets.only(right: desktop ? 8 : 8.w),
+                      child: icon,
+                    )
                   : null,
           suffixIconConstraints: BoxConstraints(
-            minWidth: 40.w,
-            minHeight: 40.h,
+            minWidth: desktop ? 40 : 40.w,
+            minHeight: desktop ? 40 : 40.h,
           ),
 
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(vertical: 14.h),
+          contentPadding: EdgeInsets.symmetric(vertical: desktop ? 14 : 14.h),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,

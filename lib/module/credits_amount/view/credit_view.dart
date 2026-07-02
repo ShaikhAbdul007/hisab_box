@@ -1,3 +1,6 @@
+import 'package:inventory/responsive_layout/dimension.dart';
+import 'package:inventory/module/sell/controller/sell_list_after_scan_controller.dart';
+import 'package:inventory/module/sell/widget/partialpayment_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,6 +27,342 @@ class CreditView extends GetView<CredtiController> {
 
   @override
   Widget build(BuildContext context) {
+    if (isDesktop(context)) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          title: Text(
+            'Credit Ledger',
+            style: CustomTextStyle.customNato(fontSize: 16),
+          ),
+          surfaceTintColor: AppColors.greyColorShade100,
+          backgroundColor: AppColors.greyColorShade100,
+        ),
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left pane: Credits list & Search
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    // Search bar
+                    CommonSearch(
+                      icon: Obx(
+                        () =>
+                            controller.searchText.value.isNotEmpty
+                                ? InkWell(
+                                  onTap: () {
+                                    controller.clear();
+                                    unfocus();
+                                  },
+                                  child: Icon(
+                                    CupertinoIcons.clear_circled_solid,
+                                    size: 20.sp,
+                                    color: AppColors.blackColor,
+                                  ),
+                                )
+                                : const SizedBox.shrink(),
+                      ),
+                      label: 'Search Ledger',
+                      hintText: 'Search by customer name...',
+                      controller: controller.searchController,
+                      onChanged: (val) => controller.searchProduct(val),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Customers list
+                    Expanded(
+                      child: Obx(() {
+                        if (controller.customDataLoading.value) {
+                          return const Center(
+                            child: CommonProgressBar(
+                              color: AppColors.blackColor,
+                            ),
+                          );
+                        }
+                        if (controller.customerDetailList.isEmpty) {
+                          return const Center(
+                            child: CommonNoDataFound(
+                              message: 'No credit ledger logs found',
+                            ),
+                          );
+                        }
+
+                        final filtered =
+                            controller.customerDetailList.where((item) {
+                              final name = item.customer?.name ?? '';
+                              return name.toLowerCase().contains(
+                                controller.searchText.value.toLowerCase(),
+                              );
+                            }).toList();
+
+                        if (filtered.isEmpty) {
+                          return Center(
+                            child: CommonNoDataFound(
+                              message:
+                                  'No results for "${controller.searchText.value}"',
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final customerData = filtered[index];
+                            return Obx(() {
+                              final isSelected =
+                                  controller.selectedCredit.value?.id ==
+                                  customerData.id;
+                              return Container(
+                                decoration: BoxDecoration(
+                                  border:
+                                      isSelected
+                                          ? Border.all(
+                                            color: AppColors.deepPurple,
+                                            width: 1.5,
+                                          )
+                                          : null,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: _CreditCard(
+                                  date: customerData.dateOfCredit ?? 'N/A',
+                                  mobile: customerData.customer!.mobileNo ?? '',
+                                  name: customerData.customer!.name ?? '',
+                                  address: customerData.customer!.address ?? '',
+                                  billNo: customerData.billNo ?? '',
+                                  remainingAmount:
+                                      customerData.remainingAmount ?? '0.0',
+                                  onTap: () {
+                                    controller.selectedCredit.value =
+                                        customerData;
+                                    final rem =
+                                        double.tryParse(
+                                          customerData.remainingAmount
+                                                  ?.toString() ??
+                                              '',
+                                        ) ??
+                                        0.0;
+                                    Get.find<SellListAfterScanController>()
+                                        .openPaymentDialog(rem);
+                                  },
+                                ),
+                              );
+                            });
+                          },
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Right pane: Credit payment settlement form
+            Container(
+              width: 440,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(left: BorderSide(color: Colors.grey.shade200)),
+              ),
+              child: Obx(() {
+                final credit = controller.selectedCredit.value;
+                if (credit == null) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.square_list,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Select a customer from the left ledger to manage outstanding balances and record settlements.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final remainingAmount =
+                    double.tryParse(credit.remainingAmount?.toString() ?? '') ??
+                    0.0;
+                final customerName = credit.nameOfCustomer ?? '';
+                final customerMobile = credit.mobileNo?.toString() ?? '';
+                final customerAddress =
+                    credit.customer?.address?.toString() ?? '';
+                final billNo = credit.billNo?.toString() ?? '';
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Details summary
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade200),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Credit Settle Form',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: AppColors.greyColor,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  CupertinoIcons.clear_circled_solid,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  controller.selectedCredit.value = null;
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            customerName.isNotEmpty
+                                ? customerName
+                                : 'Unknown Customer',
+                            style: CustomTextStyle.customPoppin(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (customerMobile.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Mobile: $customerMobile',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                          if (customerAddress.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Address: $customerAddress',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                          if (billNo.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.blackColor,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Invoice: #$billNo',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    // Payment inputs
+                    Expanded(
+                      child: PartailPaymentWidget(
+                        controller: Get.find<SellListAfterScanController>(),
+                        initialAmount: remainingAmount,
+                        confirmLabel: 'Confirm Settle Payment',
+                        onConfirm: () async {
+                          final sellController =
+                              Get.find<SellListAfterScanController>();
+                          final cashAmount =
+                              double.tryParse(
+                                sellController.cashPaidController.text,
+                              ) ??
+                              0.0;
+                          final upiAmount =
+                              double.tryParse(
+                                sellController.upiPaidController.text,
+                              ) ??
+                              0.0;
+                          final cardAmount =
+                              double.tryParse(
+                                sellController.cardPaidController.text,
+                              ) ??
+                              0.0;
+                          final totalAmount =
+                              cashAmount + upiAmount + cardAmount;
+
+                          if (totalAmount == 0.0) {
+                            showMessage(
+                              message:
+                                  'Please enter at least one payment amount.',
+                            );
+                            return;
+                          }
+
+                          final selectedModes = <String>[];
+                          if (cashAmount > 0) selectedModes.add('cash');
+                          if (upiAmount > 0) selectedModes.add('upi');
+                          if (cardAmount > 0) selectedModes.add('card');
+                          final paymentMode =
+                              selectedModes.length == 1
+                                  ? selectedModes.first
+                                  : 'split';
+
+                          await sellController.creditAmountSelletment(
+                            creditId: credit.id.toString(),
+                            body: {
+                              'amount': totalAmount,
+                              'payment_mode': paymentMode,
+                              'cash_amount': cashAmount,
+                              'upi_amount': upiAmount,
+                              'card_amount': cardAmount,
+                            },
+                          );
+                          // Clear selection and refresh lists
+                          controller.selectedCredit.value = null;
+                          controller.fetchCreditReports();
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ],
+        ),
+      );
+    }
+
     return CommonAppbar(
       isleadingButtonRequired: false,
       appBarLabel: "Credits",
@@ -97,15 +436,31 @@ class CreditView extends GetView<CredtiController> {
                                               customerData.remainingAmount ??
                                               '0.0',
                                           onTap: () async {
-                                            var res =
-                                                await AppRoutes.futureNavigationToRoute(
-                                                  routeName:
-                                                      AppRouteName
-                                                          .creditPaymentView,
-                                                  data: customerData,
-                                                );
-                                            if (res == true) {
-                                              controller.fetchCreditReports();
+                                            if (isDesktop(context)) {
+                                              controller.selectedCredit.value =
+                                                  customerData;
+                                              final rem =
+                                                  double.tryParse(
+                                                    customerData.remainingAmount
+                                                            ?.toString() ??
+                                                        '',
+                                                  ) ??
+                                                  0.0;
+                                              Get.find<
+                                                    SellListAfterScanController
+                                                  >()
+                                                  .openPaymentDialog(rem);
+                                            } else {
+                                              var res =
+                                                  await AppRoutes.futureNavigationToRoute(
+                                                    routeName:
+                                                        AppRouteName
+                                                            .creditPaymentView,
+                                                    data: customerData,
+                                                  );
+                                              if (res == true) {
+                                                controller.fetchCreditReports();
+                                              }
                                             }
                                           },
                                         )
