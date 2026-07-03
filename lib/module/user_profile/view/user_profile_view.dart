@@ -39,9 +39,10 @@ class UserProfileView extends GetView<UserProfileController> {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: controller.readOnly.value
-                        ? Colors.grey.shade100
-                        : AppColors.blackColor.withValues(alpha: 0.08),
+                    color:
+                        controller.readOnly.value
+                            ? Colors.grey.shade100
+                            : AppColors.blackColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -49,9 +50,10 @@ class UserProfileView extends GetView<UserProfileController> {
                         ? CupertinoIcons.pencil
                         : CupertinoIcons.checkmark_alt,
                     size: 20,
-                    color: controller.readOnly.value
-                        ? AppColors.greyColor
-                        : AppColors.blackColor,
+                    color:
+                        controller.readOnly.value
+                            ? AppColors.greyColor
+                            : AppColors.blackColor,
                   ),
                 ),
               ),
@@ -151,7 +153,9 @@ class UserProfileView extends GetView<UserProfileController> {
                                       readOnly: controller.readOnly.value,
                                       label: 'Alternative No',
                                       hintText: 'Alternative No',
-                                      controller: controller.alternativeMobileController,
+                                      controller:
+                                          controller
+                                              .alternativeMobileController,
                                       keyboardType: TextInputType.phone,
                                     ),
                                   ),
@@ -207,15 +211,111 @@ class UserProfileView extends GetView<UserProfileController> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        Obx(
+                          () => _FormCard(
+                            icon: CupertinoIcons.person_3_fill,
+                            iconColor: const Color(0xFF6A1B9A),
+                            title: 'Staff & Child Details',
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Staff Name',
+                                      hintText: 'Staff Name',
+                                      controller:
+                                          controller.staffNameController,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Staff Number',
+                                      hintText: 'Staff Number',
+                                      controller:
+                                          controller.staffNumberController,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Staff Mobile',
+                                      hintText: 'Staff Mobile',
+                                      controller:
+                                          controller.staffMobileController,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Staff Email',
+                                      hintText: 'Staff Email',
+                                      controller:
+                                          controller.staffEmailController,
+                                      keyboardType: TextInputType.emailAddress,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              CommonTextField(
+                                readOnly: controller.readOnly.value,
+                                label: 'Staff Email ID',
+                                hintText: 'Staff Email ID',
+                                controller: controller.staffEmailIdController,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Child Name',
+                                      hintText: 'Child Name',
+                                      controller:
+                                          controller.childNameController,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: CommonTextField(
+                                      readOnly: controller.readOnly.value,
+                                      label: 'Child Mobile',
+                                      hintText: 'Child Mobile',
+                                      controller:
+                                          controller.childMobileController,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 24),
                         Obx(
-                          () => controller.readOnly.value
-                              ? const SizedBox.shrink()
-                              : CommonButton(
-                                  isLoading: controller.isLoading.value,
-                                  label: 'Save Changes',
-                                  onTap: () => controller.updateUserDetails(),
-                                ),
+                          () =>
+                              controller.readOnly.value
+                                  ? const SizedBox.shrink()
+                                  : CommonButton(
+                                    isLoading: controller.isLoading.value,
+                                    label: 'Save Changes',
+                                    onTap: () => controller.updateUserDetails(),
+                                  ),
                         ),
                       ],
                     ),
@@ -391,6 +491,49 @@ class UserProfileView extends GetView<UserProfileController> {
                           ),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+              setHeight(height: 16),
+
+              // ── Staff & Child card ───────────────────────────────────
+              Obx(
+                () => _FormCard(
+                  icon: CupertinoIcons.person_3_fill,
+                  iconColor: const Color(0xFF6A1B9A),
+                  title: 'Staff & Child Details',
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CommonTextField(
+                            readOnly: controller.readOnly.value,
+                            label: 'Staff Name',
+                            hintText: 'Staff Name',
+                            controller: controller.staffNameController,
+                          ),
+                        ),
+                        setWidth(width: 10),
+                        Expanded(
+                          child: CommonTextField(
+                            readOnly: controller.readOnly.value,
+                            label: 'Staff Mobile',
+                            hintText: 'Staff Mobile',
+                            controller: controller.staffMobileController,
+                            keyboardType: TextInputType.phone,
+                          ),
+                        ),
+                      ],
+                    ),
+                    setHeight(height: 8),
+                    CommonTextField(
+                      readOnly: controller.readOnly.value,
+                      label: 'Staff Email ID',
+                      hintText: 'Staff Email ID',
+                      controller: controller.staffEmailIdController,
+                      keyboardType: TextInputType.emailAddress,
                     ),
                   ],
                 ),
@@ -576,22 +719,13 @@ class _ProfileHeader extends StatelessWidget {
                           ),
                     )
                     : (!kIsWeb)
-                        ? Image.file(
-                          File(url),
-                          width: 104.w,
-                          height: 104.h,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (_, _, _) => Text(
-                                initials,
-                                style: TextStyle(
-                                  fontSize: 38.sp,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                        )
-                        : Text(
+                    ? Image.file(
+                      File(url),
+                      width: 104.w,
+                      height: 104.h,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, _, _) => Text(
                             initials,
                             style: TextStyle(
                               fontSize: 38.sp,
@@ -599,6 +733,15 @@ class _ProfileHeader extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                    )
+                    : Text(
+                      initials,
+                      style: TextStyle(
+                        fontSize: 38.sp,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
           ),
         );
       }

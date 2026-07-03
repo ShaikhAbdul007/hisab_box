@@ -10,6 +10,7 @@ class ProductFieldCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
+  final Widget? trailing;
   final Widget child;
 
   const ProductFieldCard({
@@ -17,6 +18,7 @@ class ProductFieldCard extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.title,
+    this.trailing,
     required this.child,
   });
 
@@ -51,13 +53,16 @@ class ProductFieldCard extends StatelessWidget {
                 child: Icon(icon, color: iconColor, size: desktop ? 17 : 17.sp),
               ),
               setWidth(width: 10),
-              Text(
-                title,
-                style: CustomTextStyle.customPoppin(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  title,
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+              if (trailing != null) trailing!,
             ],
           ),
           setHeight(height: 12),

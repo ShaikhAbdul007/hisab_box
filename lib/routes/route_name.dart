@@ -27,6 +27,7 @@ class AppRouteName {
   static const String termandcodition = '/termandcodition';
   static const String sellListAfterScan = '/sellListAfterScan';
   static const String creditPaymentView = '/creditPaymentView';
+  static const String creditPaymentConfirmView = '/creditPaymentConfirmView';
   static const String nointernateConnection = '/nointernateConnection';
   static const String expense = '/expense';
   static const String discount = '/discount';

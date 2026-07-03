@@ -134,25 +134,25 @@ class RevenueDetailList extends StatelessWidget {
                   ],
                 ),
                 setHeight(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionButton(
-                        label: 'Exchange',
-                        color: AppColors.buttonGreenColor,
-                        onTap: onExchangePressed,
-                      ),
-                    ),
-                    setWidth(width: 8),
-                    Expanded(
-                      child: _buildActionButton(
-                        label: 'Return',
-                        color: AppColors.buttonRedColor,
-                        onTap: onReturnPressed,
-                      ),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: _buildActionButton(
+                //         label: 'Exchange',
+                //         color: AppColors.buttonGreenColor,
+                //         onTap: onExchangePressed,
+                //       ),
+                //     ),
+                //     setWidth(width: 8),
+                //     Expanded(
+                //       child: _buildActionButton(
+                //         label: 'Return',
+                //         color: AppColors.buttonRedColor,
+                //         onTap: onReturnPressed,
+                //       ),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           ),

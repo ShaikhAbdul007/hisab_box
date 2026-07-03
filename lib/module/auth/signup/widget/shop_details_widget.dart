@@ -29,8 +29,10 @@ class ShopDetails extends StatelessWidget {
   });
 
   double _w(double width) => ScreenUtil().screenWidth > 600 ? width : width.w;
-  double _h(double height) => ScreenUtil().screenWidth > 600 ? height : height.h;
-  double _r(double radius) => ScreenUtil().screenWidth > 600 ? radius : radius.r;
+  double _h(double height) =>
+      ScreenUtil().screenWidth > 600 ? height : height.h;
+  double _r(double radius) =>
+      ScreenUtil().screenWidth > 600 ? radius : radius.r;
   double _sp(double sp) => ScreenUtil().screenWidth > 600 ? sp : sp.sp;
 
   Widget commonSuffixIcon({required Widget child}) {
@@ -91,7 +93,7 @@ class ShopDetails extends StatelessWidget {
             ),
             validator: (value) {
               if (value!.isEmpty) return emptyMobileNo;
-              if (value.length < 10) return shortPassword;
+              if (value.length < 10) return mobileLength;
               return null;
             },
           ),
@@ -170,7 +172,10 @@ class ShopDetails extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(borderRadius: BorderRadius.circular(_r(14)), child: child),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(_r(14)),
+        child: child,
+      ),
     );
   }
 

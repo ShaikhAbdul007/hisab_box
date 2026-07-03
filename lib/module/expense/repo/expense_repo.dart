@@ -30,20 +30,15 @@ class ExpenseRepo {
     }
   }
 
-  Future<dynamic> deleteExpense({
-    required dynamic body,
-    required String expenseId,
-  }) async {
+  Future<ExpanseModel> deleteExpense({required String expenseId}) async {
     try {
       final response = await networking.deleteData(
         url:
             '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.createExpense}/$expenseId',
-
-        body: body,
       );
-      return response;
+      return ExpanseModel.fromJson(response);
     } catch (e) {
-      return null;
+      return ExpanseModel(message: e.toString(), success: false);
     }
   }
 }

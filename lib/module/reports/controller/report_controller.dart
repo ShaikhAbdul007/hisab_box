@@ -66,12 +66,27 @@ class ReportController extends GetxController
   @override
   void onInit() {
     tabController = TabController(length: 2, vsync: this);
+    tabController?.addListener(() {
+      if (tabController != null && !tabController!.indexIsChanging) {
+        if (selectedTab.value != tabController!.index) {
+          selectedTab.value = tabController!.index;
+          refreshReportData();
+        }
+      }
+    });
     salesDate.value = setFormateDate();
     fetchModeOfPaymentStats();
     fetchTopSellingProductsChart();
     fetchTopSellingProducts();
     fetchSales();
     super.onInit();
+  }
+
+  void refreshReportData() {
+    fetchModeOfPaymentStats();
+    fetchTopSellingProductsChart();
+    fetchTopSellingProducts();
+    fetchSales();
   }
 
   Future<void> fetchModeOfPaymentStats() async {

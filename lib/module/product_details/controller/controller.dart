@@ -40,6 +40,7 @@ class ProductController extends GetxController with CacheManager {
   // Each combination: { colorId, colorName, sizeId, sizeName, barcode, stock }
   RxList<Map<String, dynamic>> variantCombinations =
       <Map<String, dynamic>>[].obs;
+  RxBool isSizeRequired = true.obs;
   RxBool isSavingVariants = false.obs;
 
   // Controllers
@@ -351,7 +352,7 @@ class ProductController extends GetxController with CacheManager {
     } else {
       selectedColors.add(color);
     }
-    _regenerateCombinations();
+    regenerateCombinations();
   }
 
   /// Toggle a size in selectedSizes. Regenerates combinations after.
@@ -362,19 +363,24 @@ class ProductController extends GetxController with CacheManager {
     } else {
       selectedSizes.add(size);
     }
-    _regenerateCombinations();
+    regenerateCombinations();
   }
 
   /// Auto-generates Color × Size combinations preserving existing stock/barcode edits.
-  void _regenerateCombinations() {
+  void regenerateCombinations() {
     final existing = {
       for (final c in variantCombinations) '${c['colorId']}_${c['sizeId']}': c,
     };
 
     final newCombinations = <Map<String, dynamic>>[];
+    final List<CategoryModelListData?> sizesToUse =
+        (!isSizeRequired.value && selectedSizes.isEmpty) ? [null] : selectedSizes;
+
     for (final color in selectedColors) {
-      for (final size in selectedSizes) {
-        final key = '${color.id}_${size.id}';
+      for (final size in sizesToUse) {
+        final sizeId = size?.id ?? '';
+        final sizeName = size?.name ?? '';
+        final key = '${color.id}_$sizeId';
         if (existing.containsKey(key)) {
           // Preserve user-edited stock and barcode
           newCombinations.add(existing[key]!);
@@ -382,13 +388,13 @@ class ProductController extends GetxController with CacheManager {
           final autoBarcode = _generateBarcode(
             productName.text,
             color.name ?? '',
-            size.name ?? '',
+            sizeName,
           );
           newCombinations.add({
             'colorId': color.id,
             'colorName': color.name ?? '',
-            'sizeId': size.id,
-            'sizeName': size.name ?? '',
+            'sizeId': sizeId,
+            'sizeName': sizeName,
             'barcode': autoBarcode,
             'stock': '',
           });
@@ -400,7 +406,7 @@ class ProductController extends GetxController with CacheManager {
 
   /// Regenerates barcodes when product name changes (only for unedited ones).
   void onProductNameChanged(String _) {
-    _regenerateCombinations();
+    regenerateCombinations();
   }
 
   String _generateBarcode(String name, String color, String size) {
@@ -438,8 +444,20 @@ class ProductController extends GetxController with CacheManager {
   }
 
   Future<void> saveProductWithVariants() async {
+    if (selectedColors.isEmpty) {
+      showSnackBar(error: 'Please select at least one color.');
+      return;
+    }
+    if (isSizeRequired.value && selectedSizes.isEmpty) {
+      showSnackBar(error: 'Please select at least one size.');
+      return;
+    }
     if (variantCombinations.isEmpty) {
-      showSnackBar(error: 'Please select at least one color and size.');
+      showSnackBar(
+        error: isSizeRequired.value
+            ? 'Please select at least one color and size.'
+            : 'Please select at least one color.',
+      );
       return;
     }
     if (productName.text.trim().isEmpty) {

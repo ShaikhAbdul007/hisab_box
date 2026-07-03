@@ -70,6 +70,7 @@ class _ExpenseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<ExpenseController>();
     final bool desktop = isDesktop(context);
     return Container(
       margin:
@@ -193,6 +194,30 @@ class _ExpenseCard extends StatelessWidget {
               ],
             ),
           ),
+          desktop ? const SizedBox(width: 12) : setWidth(width: 12),
+          Obx(
+            () => InkWell(
+              onTap: controller.isDeleteExpense.value
+                  ? null
+                  : () async {
+                      await controller.deleteExpense(expense.id ?? '');
+                    },
+              borderRadius: BorderRadius.circular(desktop ? 8 : 8.r),
+              child: Container(
+                width: desktop ? 36 : 36.w,
+                height: desktop ? 36 : 36.h,
+                decoration: BoxDecoration(
+                  color: AppColors.redColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(desktop ? 8 : 8.r),
+                ),
+                child: Icon(
+                  CupertinoIcons.delete,
+                  size: desktop ? 18 : 18.sp,
+                  color: AppColors.redColor,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -233,7 +258,8 @@ class Expense extends GetView<ExpenseController> {
                   border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Obx(
-                  () =>
+                  () => Stack(
+                    children: [
                       controller.isExpenseLoading.value
                           ? Center(
                               child: CommonProgressBar(
@@ -253,6 +279,20 @@ class Expense extends GetView<ExpenseController> {
                           : const CommonNoDataFound(
                             message: 'No expense found',
                           ),
+                      if (controller.isDeleteExpense.value)
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            child: const Center(
+                              child: CommonProgressBar(
+                                color: AppColors.blackColor,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -365,9 +405,12 @@ class Expense extends GetView<ExpenseController> {
         },
       ),
       body: Obx(
-        () =>
+        () => Stack(
+          children: [
             controller.isExpenseLoading.value
-                ? CommonProgressBar(color: AppColors.blackColor, size: 30)
+                ? const Center(
+                    child: CommonProgressBar(color: AppColors.blackColor, size: 30),
+                  )
                 : controller.expenseList.isNotEmpty
                 ? ListView.builder(
                   itemCount: controller.expenseList.length,
@@ -377,7 +420,23 @@ class Expense extends GetView<ExpenseController> {
                     return _ExpenseCard(expense: list);
                   },
                 )
-                : CommonNoDataFound(message: 'No expense found'),
+                : const Center(
+                    child: CommonNoDataFound(message: 'No expense found'),
+                  ),
+            if (controller.isDeleteExpense.value)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  child: const Center(
+                    child: CommonProgressBar(
+                      color: AppColors.blackColor,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

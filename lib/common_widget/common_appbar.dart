@@ -61,6 +61,10 @@ class CommonAppbar extends StatelessWidget {
               isleadingButtonRequired
                   ? IconButton(
                     onPressed: () async {
+                      if (onBack != null) {
+                        await onBack!(context);
+                        return;
+                      }
                       customMessageOrErrorPrint(message: appBarLabel);
                       var cache = CacheManager();
                       // var cacheProductList =

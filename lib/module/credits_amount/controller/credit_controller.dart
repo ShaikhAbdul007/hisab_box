@@ -7,6 +7,8 @@ import 'package:inventory/helper/helper.dart';
 import 'package:inventory/module/credits_amount/model/credit_model.dart';
 import 'package:inventory/module/credits_amount/repo/credit_repo.dart';
 
+import 'package:inventory/module/credits_amount/model/credit_customer_details_model.dart';
+
 class CredtiController extends GetxController with CacheManager {
   // 🔥 GlobalStore Reference
 
@@ -16,6 +18,25 @@ class CredtiController extends GetxController with CacheManager {
   RxList<CreditDataItem> customerDetailList = <CreditDataItem>[].obs;
   TextEditingController searchController = TextEditingController();
   final Rxn<CreditDataItem> selectedCredit = Rxn<CreditDataItem>();
+
+  RxBool isDetailsLoading = false.obs;
+  Rxn<CreditCustomerDetailsData> creditCustomerDetails = Rxn<CreditCustomerDetailsData>();
+
+  Future<void> fetchCustomerCreditDetails(String customerId) async {
+    try {
+      isDetailsLoading.value = true;
+      final response = await creditRepo.fetchCreditCustomerDetails(customerId);
+      if (response.success == success) {
+        creditCustomerDetails.value = response.data;
+      } else {
+        showSnackBar(error: response.message ?? "Failed to fetch credit details");
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isDetailsLoading.value = false;
+    }
+  }
 
   @override
   void onInit() {

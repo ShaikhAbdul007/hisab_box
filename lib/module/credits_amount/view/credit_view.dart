@@ -412,6 +412,7 @@ class CreditView extends GetView<CredtiController> {
                             itemBuilder: (context, index) {
                               var customerData =
                                   controller.customerDetailList[index];
+
                               return Obx(
                                 () =>
                                     customerData.customer!.name!
@@ -424,12 +425,12 @@ class CreditView extends GetView<CredtiController> {
                                               customerData.dateOfCredit ??
                                               'N/A',
                                           mobile:
-                                              customerData.customer!.mobileNo ??
+                                              customerData.customer?.mobileNo ??
                                               '',
                                           name:
-                                              customerData.customer!.name ?? '',
+                                              customerData.customer?.name ?? '',
                                           address:
-                                              customerData.customer!.address ??
+                                              customerData.customer?.address ??
                                               '',
                                           billNo: customerData.billNo ?? '',
                                           remainingAmount:
@@ -607,27 +608,28 @@ class _CreditCard extends StatelessWidget with CacheManager {
                         ),
                       ],
                     ),
+                  ],
+                  if (mobile.isNotEmpty) ...[
                     setHeight(height: 3),
-                    if (mobile.isNotEmpty)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            CupertinoIcons.phone_fill,
-                            size: 11.sp,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.phone_fill,
+                          size: 11.sp,
+                          color: AppColors.greyColor,
+                        ),
+                        setWidth(width: 4),
+                        Text(
+                          mobile,
+                          style: CustomTextStyle.customOpenSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.greyColor,
                           ),
-                          setWidth(width: 4),
-                          Text(
-                            mobile,
-                            style: CustomTextStyle.customOpenSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.greyColor,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                   ],
                 ],
               ),

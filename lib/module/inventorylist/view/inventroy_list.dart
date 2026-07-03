@@ -242,6 +242,9 @@ class InventroyList extends GetView<InventoryListController> {
     return CommonAppbar(
       appBarLabel: 'Product List',
       secondActionChild: Obx(() {
+        if (!controller.isInventoryScanSelected.value) {
+          return const SizedBox.shrink();
+        }
         final items = <AppPopupItem<_InventoryModeMenu>>[];
         if (controller.isClothingScanSelected.value) {
           items.add(

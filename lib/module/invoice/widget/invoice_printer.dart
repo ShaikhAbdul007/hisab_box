@@ -44,8 +44,8 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
     final isClothing = shopType == ShopType.clothingShop;
 
     final String initials =
-        user.data?.name?.isNotEmpty == true
-            ? user.data!.name!.substring(0, 1).toUpperCase()
+        user.data?.shopName?.isNotEmpty == true
+            ? user.data!.shopName!.substring(0, 1).toUpperCase()
             : 'HB';
 
     final (date, time) = splitDateTime(printInvoiceModel.dateTime ?? '');
@@ -177,23 +177,12 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                   ),
                             )
                             : (!kIsWeb)
-                                ? Image.file(
-                                  File(user.data!.profilepic!),
-                                  fit: BoxFit.cover,
-                                  filterQuality: FilterQuality.high,
-                                  errorBuilder:
-                                      (_, _, _) => Center(
-                                        child: Text(
-                                          initials,
-                                          style: CustomTextStyle.customPoppin(
-                                            color: Colors.white,
-                                            fontSize: 26,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                )
-                                : Center(
+                            ? Image.file(
+                              File(user.data!.profilepic!),
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                              errorBuilder:
+                                  (_, _, _) => Center(
                                     child: Text(
                                       initials,
                                       style: CustomTextStyle.customPoppin(
@@ -203,6 +192,17 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
                                       ),
                                     ),
                                   ),
+                            )
+                            : Center(
+                              child: Text(
+                                initials,
+                                style: CustomTextStyle.customPoppin(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                   )
                   : Center(
                     child: Text(

@@ -316,73 +316,81 @@ class GenerateBarcodeComponent extends StatelessWidget {
           }),
         ),
 
-        setHeight(height: 12),
-
         // ── Sizes (multi-select) ───────────────────────────────────────
-        ProductFieldCard(
-          icon: CupertinoIcons.resize,
-          iconColor: const Color(0xFF7B1FA2),
-          title: 'Select Sizes',
-          child: Obx(() {
-            if (controller.animalCategoryListLoading.value) {
-              return Center(
-                child: CommonProgressBar(color: AppColors.blackColor),
-              );
-            }
-            if (controller.animalTypeList.isEmpty) {
-              return Text(
-                'No sizes found. Add sizes in Settings.',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-              );
-            }
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-                  controller.animalTypeList.map((size) {
-                    final isSelected = controller.selectedSizes.any(
-                      (s) => s.id == size.id,
-                    );
-                    return GestureDetector(
-                      onTap: () => controller.toggleSize(size),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isSelected
+        Obx(
+          () => ProductFieldCard(
+            icon: CupertinoIcons.resize,
+            iconColor: const Color(0xFF7B1FA2),
+            title: controller.isSizeRequired.value ? 'Select Sizes' : 'Select Sizes (Optional)',
+            trailing: CupertinoSwitch(
+              activeColor: const Color(0xFF7B1FA2),
+              value: controller.isSizeRequired.value,
+              onChanged: (val) {
+                controller.isSizeRequired.value = val;
+                if (!val) {
+                  controller.selectedSizes.clear();
+                }
+                controller.regenerateCombinations();
+              },
+            ),
+            child: controller.isSizeRequired.value
+                ? Obx(() {
+                    if (controller.animalCategoryListLoading.value) {
+                      return Center(
+                        child: CommonProgressBar(color: AppColors.blackColor),
+                      );
+                    }
+                    if (controller.animalTypeList.isEmpty) {
+                      return Text(
+                        'No sizes found. Add sizes in Settings.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      );
+                    }
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: controller.animalTypeList.map((size) {
+                        final isSelected = controller.selectedSizes.any(
+                          (s) => s.id == size.id,
+                        );
+                        return GestureDetector(
+                          onTap: () => controller.toggleSize(size),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
                                   ? AppColors.blackColor
                                   : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color:
-                                isSelected
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
                                     ? AppColors.blackColor
                                     : Colors.grey.shade300,
+                              ),
+                            ),
+                            child: Text(
+                              size.name ?? '',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSelected
+                                      ? AppColors.whiteColor
+                                      : AppColors.blackColor),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          size.name ?? '',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isSelected
-                                    ? AppColors.whiteColor
-                                    : AppColors.blackColor,
-                          ),
-                        ),
-                      ),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
-            );
-          }),
+                  })
+                : const SizedBox.shrink(),
+          ),
         ),
 
-        setHeight(height: 12),
+      setHeight(height: 12),
 
         // ── Pricing ───────────────────────────────────────────────────
         ProductFieldCard(
@@ -483,14 +491,23 @@ class GenerateBarcodeComponent extends StatelessWidget {
                   return;
                 }
                 unfocus();
-                if (controller.variantCombinations.isEmpty) {
-                  AppLogger.error(
-                    'Generate Barcode Clothing ${_clothingBody()}',
-                  );
-                  await controller.saveNewProduct(body: _clothingBody());
-                } else {
-                  await controller.saveProductWithVariants();
+                if (controller.selectedColors.isEmpty) {
+                  showSnackBar(error: 'Please select at least one color');
+                  return;
                 }
+                if (controller.isSizeRequired.value && controller.selectedSizes.isEmpty) {
+                  showSnackBar(error: 'Please select at least one size');
+                  return;
+                }
+                if (controller.variantCombinations.isEmpty) {
+                  showSnackBar(
+                    error: controller.isSizeRequired.value
+                        ? 'Please select at least one color and size'
+                        : 'Please select at least one color',
+                  );
+                  return;
+                }
+                await controller.saveProductWithVariants();
               },
             ),
           ),
@@ -691,23 +708,7 @@ class GenerateBarcodeComponent extends StatelessWidget {
     "discount": controller.discount.text,
   };
 
-  Map<String, dynamic> _clothingBody() => {
-    "name": controller.productName.text,
-    "barcodes": controller.barcode.text,
-    "quantity": parsePrice(controller.quantity.text),
-    "selling_price": parsePrice(controller.sellingPrice.text),
-    "purchase_price": parsePrice(controller.purchasePrice.text),
-    "location": controller.location.text.toLowerCase(),
-    "stock_type": "clothing",
-    "category": controller.selectedCategoryId.value,
-    "animal_type": controller.selectedAnimalTypeId.value,
-    "color_id": controller.selectedColorId.value,
-    "brand": controller.brandType.value,
-    "level": controller.level.text,
-    "rack": controller.rack.text,
-    "purchase_date": parseAppDate(controller.purchaseDate.text),
-    "discount": controller.discount.text,
-  };
+
 }
 
 // ── Variant Combination Card for Generate Barcode ─────────────────────────────

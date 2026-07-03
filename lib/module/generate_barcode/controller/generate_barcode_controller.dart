@@ -67,6 +67,7 @@ class GenerateBarcodeController extends GetxController with CacheManager {
   RxList<CategoryModelListData> selectedSizes = <CategoryModelListData>[].obs;
   RxList<Map<String, dynamic>> variantCombinations =
       <Map<String, dynamic>>[].obs;
+  RxBool isSizeRequired = true.obs;
   RxBool isSavingVariants = false.obs;
 
   ShopType get shopTypeEnum => ShopType.fromString(shopType.value);
@@ -261,7 +262,7 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     } else {
       selectedColors.add(colorItem);
     }
-    _regenerateCombinations();
+    regenerateCombinations();
   }
 
   void toggleSize(CategoryModelListData size) {
@@ -271,30 +272,35 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     } else {
       selectedSizes.add(size);
     }
-    _regenerateCombinations();
+    regenerateCombinations();
   }
 
-  void _regenerateCombinations() {
+  void regenerateCombinations() {
     final existing = {
       for (final c in variantCombinations) '${c['colorId']}_${c['sizeId']}': c,
     };
 
     final newCombinations = <Map<String, dynamic>>[];
+    final List<CategoryModelListData?> sizesToUse =
+        (!isSizeRequired.value && selectedSizes.isEmpty) ? [null] : selectedSizes;
+
     for (final colorItem in selectedColors) {
-      for (final size in selectedSizes) {
-        final key = '${colorItem.id}_${size.id}';
+      for (final size in sizesToUse) {
+        final sizeId = size?.id ?? '';
+        final sizeName = size?.name ?? '';
+        final key = '${colorItem.id}_$sizeId';
         if (existing.containsKey(key)) {
           newCombinations.add(existing[key]!);
         } else {
           newCombinations.add({
             'colorId': colorItem.id,
             'colorName': colorItem.name ?? '',
-            'sizeId': size.id,
-            'sizeName': size.name ?? '',
+            'sizeId': sizeId,
+            'sizeName': sizeName,
             'barcode': _generateVariantBarcode(
               productName.text,
               colorItem.name ?? '',
-              size.name ?? '',
+              sizeName,
             ),
             'stock': '',
           });
@@ -304,7 +310,7 @@ class GenerateBarcodeController extends GetxController with CacheManager {
     variantCombinations.value = newCombinations;
   }
 
-  void onProductNameChanged(String _) => _regenerateCombinations();
+  void onProductNameChanged(String _) => regenerateCombinations();
 
   String _generateVariantBarcode(
     String name,
@@ -348,8 +354,20 @@ class GenerateBarcodeController extends GetxController with CacheManager {
   }
 
   Future<void> saveProductWithVariants() async {
+    if (selectedColors.isEmpty) {
+      showSnackBar(error: 'Please select at least one color.');
+      return;
+    }
+    if (isSizeRequired.value && selectedSizes.isEmpty) {
+      showSnackBar(error: 'Please select at least one size.');
+      return;
+    }
     if (variantCombinations.isEmpty) {
-      showSnackBar(error: 'Please select at least one color and size.');
+      showSnackBar(
+        error: isSizeRequired.value
+            ? 'Please select at least one color and size.'
+            : 'Please select at least one color.',
+      );
       return;
     }
     if (productName.text.trim().isEmpty) {

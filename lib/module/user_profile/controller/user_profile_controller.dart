@@ -29,6 +29,13 @@ class UserProfileController extends GetxController with CacheManager {
   final pincodeController = TextEditingController();
   final stateController = TextEditingController();
   final shopType = TextEditingController();
+  final staffNameController = TextEditingController();
+  final staffNumberController = TextEditingController();
+  final staffMobileController = TextEditingController();
+  final staffEmailController = TextEditingController();
+  final staffEmailIdController = TextEditingController();
+  final childNameController = TextEditingController();
+  final childMobileController = TextEditingController();
 
   @override
   void onInit() {
@@ -60,7 +67,6 @@ class UserProfileController extends GetxController with CacheManager {
     try {
       final updatedData = {
         "name": shopNameController.text.trim(),
-
         "address": addressController.text.trim(),
         "city": cityController.text.trim(),
         "pincode": pincodeController.text.trim(),
@@ -68,6 +74,13 @@ class UserProfileController extends GetxController with CacheManager {
         "mobile_no": mobileController.text.trim(),
         "profilepic": profileImage.value?.path ?? "",
         "alternate_mobile_no": alternativeMobileController.text.trim(),
+        "staff_name": staffNameController.text.trim(),
+        "staff_number": staffNumberController.text.trim(),
+        "staff_mobile": staffMobileController.text.trim(),
+        "staff_email": staffEmailController.text.trim(),
+        "staff_email_id": staffEmailIdController.text.trim(),
+        "child_name": childNameController.text.trim(),
+        "child_mobile": childMobileController.text.trim(),
       };
       var response = await userProfileRepo.updateUserDetails(body: updatedData);
       if (response.success == success) {
@@ -107,7 +120,7 @@ class UserProfileController extends GetxController with CacheManager {
   }
 
   void _fillControllers(UserModel user) {
-    shopNameController.text = user.data?.name ?? '';
+    shopNameController.text = user.data?.shopName ?? '';
     mobileController.text = user.data?.mobileNo ?? '';
     alternativeMobileController.text = user.data?.alternateMobileNo ?? '';
     pincodeController.text = user.data?.pincode ?? '';
@@ -116,6 +129,15 @@ class UserProfileController extends GetxController with CacheManager {
     cityController.text = user.data?.city ?? '';
     emailController.text = user.data?.email ?? '';
     shopType.text = user.data?.shopType ?? '';
+
+    staffNameController.text = user.data?.staffName ?? '';
+    staffNumberController.text = user.data?.staffNumber ?? '';
+    staffMobileController.text = user.data?.staffMobile ?? '';
+    staffEmailController.text = user.data?.staffEmail ?? '';
+    staffEmailIdController.text = user.data?.staffEmailId ?? '';
+    childNameController.text = user.data?.childName ?? '';
+    childMobileController.text = user.data?.childMobile ?? '';
+
     final image = user.data?.profilepic ?? '';
     if (image.isNotEmpty) {
       profileImageUrl.value = image;
@@ -132,6 +154,15 @@ class UserProfileController extends GetxController with CacheManager {
     cityController.dispose();
     pincodeController.dispose();
     stateController.dispose();
+
+    staffNameController.dispose();
+    staffNumberController.dispose();
+    staffMobileController.dispose();
+    staffEmailController.dispose();
+    staffEmailIdController.dispose();
+    childNameController.dispose();
+    childMobileController.dispose();
+
     super.onClose();
   }
 }

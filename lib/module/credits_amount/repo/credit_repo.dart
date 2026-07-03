@@ -1,4 +1,5 @@
 import 'package:inventory/module/credits_amount/model/credit_model.dart';
+import 'package:inventory/module/credits_amount/model/credit_customer_details_model.dart';
 import 'package:inventory/network/api_endpoint.dart';
 import 'package:inventory/network/networking.dart';
 
@@ -17,6 +18,20 @@ class CreditRepo {
       return CreditModel.fromJson(response);
     } catch (e) {
       return CreditModel(message: e.toString(), success: false);
+    }
+  }
+
+  Future<CreditCustomerDetailsModel> fetchCreditCustomerDetails(
+    String customerId,
+  ) async {
+    try {
+      final response = await networking.getData(
+        url:
+            '${ApiEndPoint.fullBaseUrl}${ApiEndPoint.getCreditCustomerDetails}$customerId',
+      );
+      return CreditCustomerDetailsModel.fromJson(response);
+    } catch (e) {
+      return CreditCustomerDetailsModel(message: e.toString(), success: false);
     }
   }
 }

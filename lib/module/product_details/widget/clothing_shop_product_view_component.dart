@@ -153,73 +153,82 @@ class ClothingShopProductViewComponent extends StatelessWidget {
               }),
             ),
 
-            setHeight(height: 12),
-
             // ── 3. Sizes (multi-select chips) ────────────────────────────
-            ProductFieldCard(
-              icon: CupertinoIcons.resize,
-              iconColor: const Color(0xFF7B1FA2),
-              title: 'Select Sizes',
-              child: Obx(() {
-                if (controller.animalCategoryListLoading.value) {
-                  return Center(
-                    child: CommonProgressBar(color: AppColors.blackColor),
-                  );
-                }
-                if (controller.animalTypeList.isEmpty) {
-                  return Text(
-                    'No sizes found. Add sizes in Settings → Size Category.',
-                    style: CustomTextStyle.customRaleway(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
-                  );
-                }
-                return Wrap(
-                  spacing: 8.w,
-                  runSpacing: 8.h,
-                  children:
-                      controller.animalTypeList.map((size) {
-                        final isSelected = controller.selectedSizes.any(
-                          (s) => s.id == size.id,
-                        );
-                        return GestureDetector(
-                          onTap: () => controller.toggleSize(size),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 14.w,
-                              vertical: 7.h,
+            Obx(
+              () => ProductFieldCard(
+                icon: CupertinoIcons.resize,
+                iconColor: const Color(0xFF7B1FA2),
+                title: controller.isSizeRequired.value ? 'Select Sizes' : 'Select Sizes (Optional)',
+                trailing: CupertinoSwitch(
+                  activeColor: const Color(0xFF7B1FA2),
+                  value: controller.isSizeRequired.value,
+                  onChanged: (val) {
+                    controller.isSizeRequired.value = val;
+                    if (!val) {
+                      controller.selectedSizes.clear();
+                    }
+                    controller.regenerateCombinations();
+                  },
+                ),
+                child: controller.isSizeRequired.value
+                    ? Obx(() {
+                        if (controller.animalCategoryListLoading.value) {
+                          return Center(
+                            child: CommonProgressBar(color: AppColors.blackColor),
+                          );
+                        }
+                        if (controller.animalTypeList.isEmpty) {
+                          return Text(
+                            'No sizes found. Add sizes in Settings → Size Category.',
+                            style: CustomTextStyle.customRaleway(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
                             ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
+                          );
+                        }
+                        return Wrap(
+                          spacing: 8.w,
+                          runSpacing: 8.h,
+                          children: controller.animalTypeList.map((size) {
+                            final isSelected = controller.selectedSizes.any(
+                              (s) => s.id == size.id,
+                            );
+                            return GestureDetector(
+                              onTap: () => controller.toggleSize(size),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 14.w,
+                                  vertical: 7.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
                                       ? AppColors.blackColor
                                       : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(20.r),
-                              border: Border.all(
-                                color:
-                                    isSelected
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  border: Border.all(
+                                    color: isSelected
                                         ? AppColors.blackColor
                                         : Colors.grey.shade300,
-                              ),
-                            ),
-                            child: Text(
-                              size.name ?? '',
-                              style: CustomTextStyle.customRaleway(
-                                fontSize: 13,
-                                color:
-                                    isSelected
+                                  ),
+                                ),
+                                child: Text(
+                                  size.name ?? '',
+                                  style: CustomTextStyle.customRaleway(
+                                    fontSize: 13,
+                                    color: isSelected
                                         ? AppColors.whiteColor
                                         : AppColors.blackColor,
-                                fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          }).toList(),
                         );
-                      }).toList(),
-                );
-              }),
+                      })
+                    : const SizedBox.shrink(),
+              ),
             ),
 
             setHeight(height: 12),
@@ -357,31 +366,19 @@ class ClothingShopProductViewComponent extends StatelessWidget {
                       return;
                     }
                     unfocus();
-                    if (controller.variantCombinations.isEmpty) {
-                      // Fallback: single product save (no variants selected)
-                      await controller.saveNewProduct(
-                        body: {
-                          "name": controller.productName.text,
-                          "barcodes": controller.barcode.text,
-                          "quantity": '0',
-                          "selling_price": controller.sellingPrice.text,
-                          "purchase_price": controller.purchasePrice.text,
-                          "location": controller.location.text.toLowerCase(),
-                          "stock_type": "clothing",
-                          "category": controller.selectedCategoryId.value ?? '',
-                          "animal_type":
-                              controller.selectedAnimalTypeId.value ?? '',
-                          "color_id": controller.selectedColorId.value ?? '',
-                          "brand": controller.brandType.value,
-                          "level": controller.level.text,
-                          "rack": controller.rack.text,
-                          "discount": controller.discount.text,
-                          "purchase_date": controller.purchaseDate.text,
-                        },
-                      );
-                    } else {
-                      await controller.saveProductWithVariants();
+                    if (controller.selectedColors.isEmpty) {
+                      showSnackBar(error: 'Please select at least one color');
+                      return;
                     }
+                    if (controller.selectedSizes.isEmpty) {
+                      showSnackBar(error: 'Please select at least one size');
+                      return;
+                    }
+                    if (controller.variantCombinations.isEmpty) {
+                      showSnackBar(error: 'Please select at least one color and size');
+                      return;
+                    }
+                    await controller.saveProductWithVariants();
                   },
                 ),
               ),

@@ -79,6 +79,7 @@ import '../module/loose_category/view/loose_category.dart';
 import '../module/sell/binding/sell_list_after_scan_binding.dart';
 import '../module/sell/view/payment_view.dart';
 import '../module/credits_amount/view/credit_payment_view.dart';
+import '../module/credits_amount/view/credit_payment_confirm_view.dart';
 import '../module/unknown/view/unknown_route.dart';
 import '../module/user_profile/view/user_profile_view.dart';
 import 'route_name.dart';
@@ -299,6 +300,10 @@ class AppRoutes {
     GetPage(
       name: AppRouteName.creditPaymentView,
       page: () => const CreditPaymentView(),
+    ),
+    GetPage(
+      name: AppRouteName.creditPaymentConfirmView,
+      page: () => const CreditPaymentConfirmView(),
       binding: SellListAfterScanBinding(),
     ),
     GetPage(
@@ -443,6 +448,9 @@ class AppRoutes {
         break;
       case AppRouteName.creditPaymentView:
         Get.toNamed(AppRouteName.creditPaymentView, arguments: data);
+        break;
+      case AppRouteName.creditPaymentConfirmView:
+        Get.toNamed(AppRouteName.creditPaymentConfirmView, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
 import 'package:inventory/routes/routes.dart';
+import 'package:inventory/module/reports/controller/report_controller.dart';
 
 import '../../../routes/route_name.dart';
 
@@ -14,10 +15,20 @@ class BottomNavigationController extends GetxController {
 
   void setBottomIndex(int value) {
     index.value = value;
+    if (value == 2) {
+      if (Get.isRegistered<ReportController>()) {
+        Get.find<ReportController>().refreshReportData();
+      }
+    }
   }
 
   void setDesktopIndex(int value) {
     desktopIndex.value = value;
+    if (value == 6) {
+      if (Get.isRegistered<ReportController>()) {
+        Get.find<ReportController>().refreshReportData();
+      }
+    }
   }
 
   @override

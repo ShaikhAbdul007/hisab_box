@@ -70,7 +70,7 @@ class ApiEndPoint {
   static const String outOfStock = "shop/stock/out-of-stock"; // ?page=&limit=
   static const String getCreditAmountList = "credit/credits"; // ?page=&limit=
   static const String creditAmountSettlement = "/payment"; // + credit id
-
+  static const String getCreditCustomerDetails = "credit-customers/";
   static const String addEmployees = "employees/add"; //
   static const String getEmployees = "employees"; //
   static const String updateEmployeesPermissions = "permissions"; //

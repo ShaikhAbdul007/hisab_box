@@ -97,7 +97,7 @@ class BardcodeController extends GetxController
       bytes += gen.barcode(
         Barcode.code128(barcodeData.split('')),
         height: 55,
-        width: 2,
+        width: 1,
         align: PosAlign.center,
         textPos: BarcodeText.none,
       );

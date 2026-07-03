@@ -15,6 +15,7 @@ class ExpenseController extends GetxController {
 
   RxBool isExpenseLoading = false.obs;
   RxBool isExpenseSaveLoading = false.obs;
+  RxBool isDeleteExpense = false.obs;
   RxString selectedPaymentMode = ''.obs;
   RxList<AllExpenseData> expenseList = <AllExpenseData>[].obs;
 
@@ -33,7 +34,10 @@ class ExpenseController extends GetxController {
         Get.back();
         clear();
         getAllExpenses();
-        showSnackBar(error: response.message ?? "Expense Added Successfully!");
+        showSnackBar(
+          error: response.message ?? "Expense Added Successfully!",
+          isError: false,
+        );
       } else if (response.success == failed) {
         showSnackBar(error: response.message ?? "Failed to add expense!");
       } else {
@@ -60,6 +64,28 @@ class ExpenseController extends GetxController {
       }
     } finally {
       isExpenseLoading.value = false;
+    }
+  }
+
+  Future<void> deleteExpense(String expenseId) async {
+    isDeleteExpense.value = true;
+    try {
+      final response = await expenseRepo.deleteExpense(expenseId: expenseId);
+      if (response.success == success) {
+        getAllExpenses();
+        showSnackBar(
+          error: response.message ?? "Expense Deleted Successfully!",
+          isError: false,
+        );
+      } else if (response.success == failed) {
+        showSnackBar(error: response.message ?? "Failed to delete expense!");
+      } else {
+        showSnackBar(error: response.message ?? "Failed to delete expense!");
+      }
+    } catch (e) {
+      showSnackBar(error: e.toString());
+    } finally {
+      isDeleteExpense.value = false;
     }
   }
 
