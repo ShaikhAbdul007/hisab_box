@@ -46,4 +46,5 @@ class AppRouteName {
   static const String notificationView = '/notificationView';
   static const String colorCategory = '/colorCategory';
   static const String paymentView = '/paymentView';
+  static const String exchangeView = '/exchangeView';
 }

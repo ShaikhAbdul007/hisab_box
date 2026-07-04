@@ -56,6 +56,7 @@ class ReportOverviewData {
   num? credit;
   num? creditUnpaid;
   num? totalRevenue;
+  num? expenses;
 
   ReportOverviewData({
     this.cash,
@@ -64,6 +65,7 @@ class ReportOverviewData {
     this.credit,
     this.creditUnpaid,
     this.totalRevenue,
+    this.expenses,
   });
 
   ReportOverviewData.fromJson(Map<String, dynamic> json) {
@@ -73,6 +75,7 @@ class ReportOverviewData {
     credit = json['credit'];
     creditUnpaid = json['creditUnpaid'];
     totalRevenue = json['totalRevenue'];
+    expenses = json['expenses'];
   }
 
   Map<String, dynamic> toJson() {
@@ -83,6 +86,7 @@ class ReportOverviewData {
     data['credit'] = credit;
     data['creditUnpaid'] = creditUnpaid;
     data['totalRevenue'] = totalRevenue;
+    data['expenses'] = expenses;
     return data;
   }
 }

@@ -49,6 +49,8 @@ class ApiEndPoint {
   static const String sellProduct = "shop/sell";
   static const String sell = "sales";
   static const String getInvoice = "sales/invoice";
+  static const String salesReturn = "sales/return";
+  static const String salesExchange = "sales/exchange";
 
   // ---------------- BANK ----------------
   static const String getBankDetails = "shop/bank-details";

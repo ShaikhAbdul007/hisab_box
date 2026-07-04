@@ -7,6 +7,7 @@ import 'package:inventory/common_widget/size.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/home/model/dashboard_model.dart';
+import 'package:inventory/module/revenue/model/revenue_list_model.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
 
 class RecentActivitiesListText extends StatelessWidget {
@@ -163,7 +164,7 @@ class RecentActivitiesListText extends StatelessWidget {
 }
 
 class RevenueListText extends StatelessWidget {
-  final SellItemData sellItemData;
+  final RevenueListItemData sellItemData;
   const RevenueListText({super.key, required this.sellItemData});
 
   @override

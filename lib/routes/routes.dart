@@ -21,6 +21,7 @@ import 'package:inventory/module/order_complete/binding/order_binding.dart';
 import 'package:inventory/module/order_complete/view/order_view.dart';
 import 'package:inventory/module/revenue/binding/revenue_detail_binding.dart';
 import 'package:inventory/module/revenue/view/revenue_detail_view.dart';
+import 'package:inventory/module/revenue/view/exchange_view.dart';
 import 'package:inventory/module/security/privacy_policy.dart';
 import 'package:inventory/module/security/term_and_condition.dart';
 import 'package:inventory/module/product_details/binding/product_details_binding.dart';
@@ -258,6 +259,10 @@ class AppRoutes {
       binding: RevenueDetailBinding(),
     ),
     GetPage(
+      name: AppRouteName.exchangeView,
+      page: () => ExchangeView(item: Get.arguments),
+    ),
+    GetPage(
       name: AppRouteName.looseCategory,
       page: () => LooseCategory(),
       binding: LooseCategoryBinding(),
@@ -451,6 +456,9 @@ class AppRoutes {
         break;
       case AppRouteName.creditPaymentConfirmView:
         Get.toNamed(AppRouteName.creditPaymentConfirmView, arguments: data);
+        break;
+      case AppRouteName.exchangeView:
+        Get.toNamed(AppRouteName.exchangeView, arguments: data);
         break;
       default:
         Get.toNamed(AppRouteName.unknwonroute);

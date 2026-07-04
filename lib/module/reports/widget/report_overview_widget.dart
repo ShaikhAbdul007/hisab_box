@@ -82,23 +82,40 @@ class ReportOverviewWidget extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (controller.totalRoundOff.value != 0.0) ...[
-                          setHeight(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _PaymentStatCard(
-                                  label: 'Round Off',
-                                  value: controller.totalRoundOff.value,
-                                  icon: CupertinoIcons.arrow_2_circlepath,
-                                  color: const Color(0xFFE65100),
-                                ),
+                        setHeight(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Obx(
+                                () =>
+                                    controller.totalExpenses.value != 0.0
+                                        ? _PaymentStatCard(
+                                          label: 'Expenses',
+                                          value: controller.totalExpenses.value,
+                                          icon:
+                                              CupertinoIcons.minus_circle_fill,
+                                          color: const Color(0xFFD84315),
+                                        )
+                                        : const SizedBox.shrink(),
                               ),
-                              setWidth(width: 10),
-                              const Expanded(child: SizedBox.shrink()),
-                            ],
-                          ),
-                        ],
+                            ),
+                            setWidth(width: 10),
+                            Expanded(
+                              child: Obx(
+                                () =>
+                                    controller.totalRoundOff.value != 0.0
+                                        ? _PaymentStatCard(
+                                          label: 'Round Off',
+                                          value: controller.totalRoundOff.value,
+                                          icon:
+                                              CupertinoIcons.arrow_2_circlepath,
+                                          color: const Color(0xFF795548),
+                                        )
+                                        : const SizedBox.shrink(),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
           ),

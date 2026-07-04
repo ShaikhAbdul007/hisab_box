@@ -9,6 +9,7 @@ import 'package:inventory/helper/device_info.dart';
 import 'package:inventory/helper/set_format_date.dart';
 import 'package:inventory/module/reports/model/report_over_view_model.dart';
 import 'package:inventory/module/reports/repo/report_dashboard_overview.dart';
+import 'package:inventory/module/revenue/model/revenue_list_model.dart';
 import 'package:inventory/module/revenue/repo/revenue_repo.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:open_file/open_file.dart';
@@ -29,6 +30,7 @@ class ReportController extends GetxController
   RxDouble totalUpi = 0.0.obs;
   RxDouble totalCard = 0.0.obs;
   RxDouble totalCredit = 0.0.obs;
+  RxDouble totalExpenses = 0.0.obs;
   RxDouble totalRoundOff = 0.0.obs;
   RxInt reportDownloadGroupValue = (-1).obs;
   RxBool reportDownloadButtonEnable = false.obs;
@@ -41,7 +43,7 @@ class ReportController extends GetxController
   RxList<ReportTopProductData> reportTopModel = <ReportTopProductData>[].obs;
   RxList<ReportTopProductData> reportTopChart = <ReportTopProductData>[].obs;
   RxList<ProductReportModel> productStockInList = <ProductReportModel>[].obs;
-  var sellsList = <SellItemData>[].obs;
+  var sellsList = <RevenueListItemData>[].obs;
   Rx<ReportOverviewData> reportOverViewStats = ReportOverviewData().obs;
   RxList<ReportTopProductData> reportTopProductGraph =
       <ReportTopProductData>[].obs;
@@ -103,6 +105,7 @@ class ReportController extends GetxController
         totalCard.value = (d?.card ?? 0).toDouble();
         totalCredit.value = (d?.credit ?? 0).toDouble();
         totalRevenue.value = (d?.totalRevenue ?? 0).toDouble();
+        totalExpenses.value = (d?.expenses ?? 0).toDouble();
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
@@ -190,7 +193,7 @@ class ReportController extends GetxController
     try {
       final response = await revenueRepo.fetchSell(date: selectedDate);
       if (response.success == success) {
-        sellsList.value = response.data?.data ?? [];
+        //  sellsList.value = response.data?.data ?? [];
         totalRevenue.value = (response.data?.grandTotal ?? 0).toDouble();
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);

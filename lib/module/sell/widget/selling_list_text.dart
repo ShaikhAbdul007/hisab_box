@@ -106,7 +106,7 @@ class SellingListText extends StatelessWidget {
                 ),
                 setHeight(height: 5),
                 Text(
-                  saleModel.barcode??'',
+                  saleModel.barcode ?? '',
                   style: CustomTextStyle.customPoppin(
                     color: AppColors.greyColor,
                   ),
@@ -193,10 +193,8 @@ class RecentActivitySellingListText extends StatelessWidget {
               ],
             ),
           ),
-        
         ],
       ),
     );
-
   }
 }

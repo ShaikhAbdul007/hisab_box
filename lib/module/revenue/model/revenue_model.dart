@@ -190,17 +190,14 @@ class SellItem {
     quantity = _toInt(json['quantity'] ?? json['qty']);
     originalPrice = _toDouble(json['originalPrice'] ?? json['original_price']);
     originalDiscount = _toInt(json['originalDiscount']);
-    discount =
-        _toInt(
-          json['discount'] ??
-              json['applied_discount_percent'] ??
-              json['default_discount_percent'],
-        );
+    discount = _toInt(
+      json['discount'] ??
+          json['applied_discount_percent'] ??
+          json['default_discount_percent'],
+    );
     finalPrice = _toDouble(json['finalPrice'] ?? json['final_price']);
     category =
-        json['category']?.toString() ??
-        categoriesMap['name']?.toString() ??
-        '';
+        json['category']?.toString() ?? categoriesMap['name']?.toString() ?? '';
     barcode =
         json['barcode']?.toString() ??
         ((productBarcodes != null && productBarcodes.isNotEmpty)

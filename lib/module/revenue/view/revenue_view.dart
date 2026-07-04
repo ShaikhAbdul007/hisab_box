@@ -91,20 +91,39 @@ class RevenueView extends GetView<RevenueController> {
                   ? CommonProgressBar(size: 50, color: AppColors.blackColor)
                   : controller.sellsList.isNotEmpty
                   ? ListView.builder(
-                    itemCount: controller.sellsList.length,
-                    itemBuilder: (context, index) {
-                      var data = controller.sellsList[index];
-                      return InkWell(
-                        onTap: () {
-                          AppRoutes.navigateRoutes(
-                            routeName: AppRouteName.revenueDetailView,
-                            data: data,
+                      controller: controller.scrollController,
+                      itemCount: controller.sellsList.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == controller.sellsList.length) {
+                          return Obx(
+                            () =>
+                                controller.isLoadingMore.value
+                                    ? const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.blackColor,
+                                          strokeWidth: 3,
+                                        ),
+                                      ),
+                                    )
+                                    : const SizedBox.shrink(),
                           );
-                        },
-                        child: RevenueListText(sellItemData: data),
-                      );
-                    },
-                  )
+                        }
+                        var data = controller.sellsList[index];
+                        return InkWell(
+                          onTap: () {
+                            AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.revenueDetailView,
+                              data: data,
+                            );
+                          },
+                          child: RevenueListText(sellItemData: data),
+                        );
+                      },
+                    )
                   : CommonNoDataFound(message: 'No sell data found'),
         ),
       ),

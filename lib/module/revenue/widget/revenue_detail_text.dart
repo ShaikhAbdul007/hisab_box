@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/common_widget/common_padding.dart';
 import 'package:inventory/common_widget/size.dart';
+import 'package:inventory/helper/app_message.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/sell/model/sell_details_model.dart';
 
@@ -12,12 +13,14 @@ class RevenueDetailList extends StatelessWidget {
   final String date;
   final VoidCallback? onExchangePressed;
   final VoidCallback? onReturnPressed;
+  final String? status;
   const RevenueDetailList({
     super.key,
     required this.revenueModel,
     required this.date,
     this.onExchangePressed,
     this.onReturnPressed,
+    this.status,
   });
 
   @override
@@ -133,26 +136,28 @@ class RevenueDetailList extends StatelessWidget {
                     ],
                   ],
                 ),
-                setHeight(height: 10),
-                // Row(
-                //   children: [
-                //     Expanded(
-                //       child: _buildActionButton(
-                //         label: 'Exchange',
-                //         color: AppColors.buttonGreenColor,
-                //         onTap: onExchangePressed,
-                //       ),
-                //     ),
-                //     setWidth(width: 8),
-                //     Expanded(
-                //       child: _buildActionButton(
-                //         label: 'Return',
-                //         color: AppColors.buttonRedColor,
-                //         onTap: onReturnPressed,
-                //       ),
-                //     ),
-                //   ],
-                // ),
+                if (status != returnedStatus) ...[
+                  setHeight(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildActionButton(
+                          label: 'Exchange',
+                          color: AppColors.buttonGreenColor,
+                          onTap: onExchangePressed,
+                        ),
+                      ),
+                      setWidth(width: 8),
+                      Expanded(
+                        child: _buildActionButton(
+                          label: 'Return',
+                          color: AppColors.buttonRedColor,
+                          onTap: onReturnPressed,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

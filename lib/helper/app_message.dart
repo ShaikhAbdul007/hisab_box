@@ -82,4 +82,5 @@ const bool success = true;
 const String otpSentSuccessfully = 'OTP sent successfully';
 const String otpVerificationFailed = 'OTP verification failed, please try again with correct OTP';
 const String updateProfileSuccessfull = 'Profile updated successfully';
+const String returnedStatus = 'returned';
 
