@@ -66,7 +66,8 @@ class _CreditPaymentViewState extends State<CreditPaymentView> {
             }).toList();
 
         // Check if there is any pending amount
-        final totalPending = summary?.totalPending ?? 0.0;
+        final totalPending =
+            double.tryParse(summary?.totalPending ?? '0') ?? 0.0;
         final hasPending = totalPending > 0;
 
         return Column(
@@ -259,8 +260,9 @@ class _CreditPaymentViewState extends State<CreditPaymentView> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 child: CommonButton(
-                  label: 'Pay Remaining (₹${totalPending})',
+                  label: 'Pay Remaining (₹$totalPending)',
                   onTap: () async {
+                    arguments.remainingAmount = totalPending.toString();
                     // Navigate to confirm view which has payment method split controllers
                     var res = await Get.toNamed(
                       AppRouteName.creditPaymentConfirmView,

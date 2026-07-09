@@ -38,23 +38,21 @@ class SellView extends GetView<SellController> {
           ),
         ),
       ),
-      body: Container(),
-
-      // Obx(
-      //   () =>
-      //       controller.isSellListLoading.value
-      //           ? CommonProgressBar(size: 50, color: AppColors.blackColor)
-      //           : controller.sellsList.isNotEmpty
-      //           ? ListView.builder(
-      //             itemCount: controller.sellsList.length,
-      //             itemBuilder: (context, index) {
-      //               return SellingListText(
-      //                 saleModel: controller.sellsList[index],
-      //               );
-      //             },
-      //           )
-      //           : CommonNoDataFound(message: 'No sale found'),
-      // ),
+      body: Obx(
+        () =>
+            controller.isSellListLoading.value
+                ? CommonProgressBar(size: 50, color: AppColors.blackColor)
+                : controller.sellsList.isNotEmpty
+                ? ListView.builder(
+                  itemCount: controller.sellsList.length,
+                  itemBuilder: (context, index) {
+                    return SellingListText(
+                      saleModel: controller.sellsList[index],
+                    );
+                  },
+                )
+                : CommonNoDataFound(message: 'No sale found'),
+      ),
     );
   }
 }

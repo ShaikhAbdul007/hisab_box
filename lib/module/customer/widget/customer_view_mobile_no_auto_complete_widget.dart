@@ -25,9 +25,9 @@ class CustomerViewDetailsMobileAutoCompleteWidget extends StatelessWidget {
           return const Iterable<CustomerItem>.empty();
         }
         return controller.customerList.where((e) {
-          final name = e.name!.toLowerCase();
-          final mobile = e.mobileNo!;
-          final address = e.address!.toLowerCase();
+          final name = e.name?.toLowerCase() ?? '';
+          final mobile = e.mobileNo ?? '';
+          final address = e.address?.toLowerCase() ?? '';
           final query = tController.text.toLowerCase();
 
           return name.contains(query) ||

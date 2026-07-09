@@ -369,7 +369,7 @@ class InvoicePrinterView extends StatelessWidget with CacheManager {
   }
 
   Widget _buildItemRow(InvoiceDataItems item) {
-    final discount = item.discountPercent ?? 0;
+    final discount = item.discountGiven ?? 0;
     final hasDiscount = discount > 0;
 
     return Padding(

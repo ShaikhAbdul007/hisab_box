@@ -61,10 +61,7 @@ class DeskTopScreen extends StatelessWidget {
       body: Obx(() {
         if (controller.isListLoading.value) {
           return const Center(
-            child: CommonProgressBar(
-              color: AppColors.blackColor,
-              size: 50,
-            ),
+            child: CommonProgressBar(color: AppColors.blackColor, size: 50),
           );
         }
         return ListView(
@@ -97,7 +94,10 @@ class DeskTopScreen extends StatelessWidget {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -105,7 +105,11 @@ class DeskTopScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(CupertinoIcons.calendar, size: 16, color: AppColors.greyColor),
+                      const Icon(
+                        CupertinoIcons.calendar,
+                        size: 16,
+                        color: AppColors.greyColor,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         formatDateTime(
@@ -139,8 +143,11 @@ class DeskTopScreen extends StatelessWidget {
               itemCount: controller.lis.length,
               itemBuilder: (context, index) {
                 final item = controller.lis[index];
-                final color = _StatsGrid._colors[index % _StatsGrid._colors.length];
-                final icon = item.icon ?? _StatsGrid._icons[index % _StatsGrid._icons.length];
+                final color =
+                    _StatsGrid._colors[index % _StatsGrid._colors.length];
+                final icon =
+                    item.icon ??
+                    _StatsGrid._icons[index % _StatsGrid._icons.length];
                 return _StatCard(
                   model: item,
                   color: color,
@@ -149,12 +156,10 @@ class DeskTopScreen extends StatelessWidget {
                     final nav = Get.find<BottomNavigationController>();
                     if (item.routeName == AppRouteName.inventroyList) {
                       nav.setDesktopIndex(2); // Inventory
-                    } else if (item.routeName == AppRouteName.outOfStock) {
-                      nav.setDesktopIndex(2); // Inventory
-                    } else if (item.routeName == AppRouteName.revenueView) {
-                      nav.setDesktopIndex(5); // Reports
                     } else if (item.routeName == AppRouteName.looseSell) {
                       nav.setDesktopIndex(1); // POS Billing
+                    } else if (item.routeName != null) {
+                      AppRoutes.navigateRoutes(routeName: item.routeName!);
                     }
                   },
                 );
@@ -174,31 +179,32 @@ class DeskTopScreen extends StatelessWidget {
                     children: [
                       _SectionHeader(
                         title: 'Recent Activities',
-                        trailing: controller.sellsList.isNotEmpty
-                            ? Text(
-                                '${controller.sellsList.length} items',
-                                style: CustomTextStyle.customOpenSans(
-                                  fontSize: 12,
-                                  color: AppColors.greyColor,
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                        trailing:
+                            controller.sellsList.isNotEmpty
+                                ? Text(
+                                  '${controller.sellsList.length} items',
+                                  style: CustomTextStyle.customOpenSans(
+                                    fontSize: 12,
+                                    color: AppColors.greyColor,
+                                  ),
+                                )
+                                : const SizedBox.shrink(),
                       ),
                       const SizedBox(height: 12),
                       controller.sellsList.isEmpty
                           ? Container(
-                              height: 320,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.grey.shade200),
+                            height: 320,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: const Center(
+                              child: CommonNoDataFound(
+                                message: 'No recent activity found',
                               ),
-                              child: const Center(
-                                child: CommonNoDataFound(
-                                  message: 'No recent activity found',
-                                ),
-                              ),
-                            )
+                            ),
+                          )
                           : _ActivitiesCard(controller: controller),
                     ],
                   ),
@@ -235,7 +241,8 @@ class DeskTopScreen extends StatelessWidget {
                               subtitle: 'Start new customer billing',
                               color: AppColors.deepPurple,
                               onTap: () {
-                                final nav = Get.find<BottomNavigationController>();
+                                final nav =
+                                    Get.find<BottomNavigationController>();
                                 nav.setDesktopIndex(1); // POS Billing
                               },
                             ),
@@ -246,7 +253,8 @@ class DeskTopScreen extends StatelessWidget {
                               subtitle: 'Quick upload items to stock',
                               color: const Color(0xFF1565C0),
                               onTap: () {
-                                final nav = Get.find<BottomNavigationController>();
+                                final nav =
+                                    Get.find<BottomNavigationController>();
                                 nav.setDesktopIndex(2); // Inventory list
                               },
                             ),
@@ -257,7 +265,8 @@ class DeskTopScreen extends StatelessWidget {
                               subtitle: 'Manage customer due balance',
                               color: const Color(0xFFC62828),
                               onTap: () {
-                                final nav = Get.find<BottomNavigationController>();
+                                final nav =
+                                    Get.find<BottomNavigationController>();
                                 nav.setDesktopIndex(3); // Credits ledger
                               },
                             ),
@@ -268,7 +277,8 @@ class DeskTopScreen extends StatelessWidget {
                               subtitle: 'Manage client accounts',
                               color: const Color(0xFF2E7D32),
                               onTap: () {
-                                final nav = Get.find<BottomNavigationController>();
+                                final nav =
+                                    Get.find<BottomNavigationController>();
                                 nav.setDesktopIndex(4); // Customer directory
                               },
                             ),
@@ -359,7 +369,10 @@ class _QuickActionTileState extends State<_QuickActionTile> {
             Icon(
               CupertinoIcons.chevron_right,
               size: 14,
-              color: _isHovered ? widget.color : AppColors.greyColor.withValues(alpha: 0.5),
+              color:
+                  _isHovered
+                      ? widget.color
+                      : AppColors.greyColor.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -752,7 +765,11 @@ class _StatCardState extends State<_StatCard>
                     color: widget.color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(desktop ? 8 : 8.r),
                   ),
-                  child: Icon(widget.icon, color: widget.color, size: desktop ? 16 : 16.sp),
+                  child: Icon(
+                    widget.icon,
+                    color: widget.color,
+                    size: desktop ? 16 : 16.sp,
+                  ),
                 ),
                 Icon(
                   CupertinoIcons.chevron_right,
@@ -860,7 +877,7 @@ class _QuickActionsRow extends StatelessWidget {
         setWidth(width: 10),
         Expanded(
           child: _QuickActionCard(
-            label: 'Scan Product',
+            label: 'Sell Product',
             icon: CupertinoIcons.barcode_viewfinder,
             color: const Color(0xFF1565C0),
             onTap:
@@ -1123,7 +1140,9 @@ class _ActivityTileState extends State<_ActivityTile>
                               ),
                               decoration: BoxDecoration(
                                 color: _color.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(desktop ? 4 : 4.r),
+                                borderRadius: BorderRadius.circular(
+                                  desktop ? 4 : 4.r,
+                                ),
                               ),
                               child: Text(
                                 activity.referenceNo!,
@@ -1134,7 +1153,7 @@ class _ActivityTileState extends State<_ActivityTile>
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                                    ),
+                              ),
                             ),
                           ),
                         const Spacer(),

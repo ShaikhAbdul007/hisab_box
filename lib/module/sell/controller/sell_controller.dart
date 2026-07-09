@@ -16,7 +16,7 @@ class SellController extends GetxController with CacheManager {
   @override
   void onInit() {
     dayDates.value = setFormateDate();
-    //fetchSales();
+    fetchSales();
     super.onInit();
   }
 

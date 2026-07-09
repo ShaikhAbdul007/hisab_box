@@ -31,8 +31,8 @@ class CreditSettlementData {
   String? customerId;
   String? mobileNo;
   String? creditAmount;
-  int? paidAmount;
-  int? remainingAmount;
+  String? paidAmount;
+  String? remainingAmount;
   String? dateOfCredit;
   String? billNo;
   String? nameOfCustomer;

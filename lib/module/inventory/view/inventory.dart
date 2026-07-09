@@ -426,6 +426,7 @@ class InventoryView extends GetView<InventroyController> {
       afterProductAdding: () {
         productSavingDialog(
           label: 'Scanning Done, product added',
+          productCount: controller.scannedProductDetails.length,
           scanAgainOnTap: () async {
             Get.back();
             controller.mobileScannerController.start();

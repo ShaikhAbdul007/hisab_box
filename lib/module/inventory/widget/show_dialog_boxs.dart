@@ -15,6 +15,7 @@ Widget _SheetBody({
   required String title,
   required String message,
   required List<Widget> actions,
+  Widget? underIconWidget,
 }) {
   return Padding(
     padding: EdgeInsets.fromLTRB(20.w, 8, 20.w, 0),
@@ -31,6 +32,7 @@ Widget _SheetBody({
           ),
           child: Icon(icon, color: iconColor, size: 26.sp),
         ),
+        if (underIconWidget != null) ...[setHeight(height: 8), underIconWidget],
         setHeight(height: 12),
         // Title
         Text(
@@ -229,6 +231,7 @@ void productSavingDialog({
   required String label,
   required void Function() scanAgainOnTap,
   required void Function() scanccingDoneOnTap,
+  int? productCount,
 }) {
   commonBottomSheet(
     label: 'Product Added',
@@ -241,10 +244,24 @@ void productSavingDialog({
         iconColor: const Color(0xFF2E7D32),
         title: 'Added to Cart',
         message: label,
+        underIconWidget:
+            productCount != null
+                ? Text(
+                  productCount == 1
+                      ? '1 product added'
+                      : '$productCount products added',
+                  style: CustomTextStyle.customPoppin(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.greenColor,
+                  ),
+                )
+                : null,
         actions: [
           Row(
             children: [
               Expanded(
+                flex: 3,
                 child: OutlinedButton(
                   onPressed: scanAgainOnTap,
                   style: OutlinedButton.styleFrom(
@@ -255,16 +272,18 @@ void productSavingDialog({
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                   ),
                   child: Text(
-                    'Scan Again',
+                    'Scan different product',
+                    maxLines: 2,
                     style: CustomTextStyle.customPoppin(
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 13.sp,
                     ),
                   ),
                 ),
               ),
               setWidth(width: 12),
               Expanded(
+                flex: 2,
                 child: CommonButton(label: 'Done', onTap: scanccingDoneOnTap),
               ),
             ],

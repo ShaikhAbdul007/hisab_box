@@ -216,8 +216,8 @@ class InvoiceDataItems {
     discountAmount = json['discountAmount'];
     discountGiven = json['discountGiven'];
     finalPrice = json['finalPrice'];
-    totalPrice = json['totalPrice'] ?? json['total_price'];
-    stockType = json['stockType'] ?? json['stock_type'];
+    totalPrice = json['totalPrice'];
+    stockType = json['stockType'];
     location = json['location'];
     barcode = json['barcode'];
     flavour = json['flavour'];

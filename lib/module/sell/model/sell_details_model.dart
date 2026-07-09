@@ -61,13 +61,21 @@ class SellDetailsData {
     dateTime = json['dateTime'];
     paymentType = json['paymentType'];
     totalAmount = json['totalAmount'];
-    roundOff = json['roundOff'];
+    roundOff = json['roundOff'] != null ? int.tryParse(json['roundOff'].toString()) : null;
     finalTotal = json['finalTotal'];
     status = json['status'];
     orderSummary =
         json['orderSummary'] != null
             ? OrderSummary.fromJson(json['orderSummary'])
             : null;
+
+    // Map fields from orderSummary for backward compatibility if root fields are null
+    if (orderSummary != null) {
+      totalAmount ??= orderSummary?.subtotal;
+      roundOff ??= double.tryParse(orderSummary?.roundOff ?? '')?.toInt();
+      finalTotal ??= orderSummary?.finalAmount;
+    }
+
     if (json['items'] != null) {
       items = <SellDetailsItems>[];
       json['items'].forEach((v) {

@@ -9,6 +9,8 @@ import 'package:inventory/module/revenue/repo/revenue_repo.dart';
 import 'package:inventory/module/inventory/repo/inventory_repo.dart';
 import 'package:inventory/module/revenue/model/exchange_response_model.dart';
 import 'package:inventory/module/sell/model/sell_details_model.dart';
+import 'package:inventory/routes/route_name.dart';
+import 'package:inventory/routes/routes.dart';
 
 class DetailsRevenueController extends GetxController {
   RevenueRepo revenueRepo = RevenueRepo();
@@ -18,6 +20,7 @@ class DetailsRevenueController extends GetxController {
   RxBool isReturnSaving = false.obs;
   RxBool isExchangeSaving = false.obs;
   RxList<SellDetailsItems> sellDataList = <SellDetailsItems>[].obs;
+  Rx<SellDetailsData?> sellDetails = Rx<SellDetailsData?>(null);
   var data = Get.arguments;
   RxString date = ''.obs;
 
@@ -69,6 +72,7 @@ class DetailsRevenueController extends GetxController {
       var response = await revenueRepo.fetchSellById(saleId: saleId);
 
       if (response.success == success) {
+        sellDetails.value = response.data;
         sellDataList.value = response.data?.items ?? [];
         date.value = response.data?.dateTime ?? '';
         status.value = response.data?.status ?? '';
@@ -180,12 +184,14 @@ class DetailsRevenueController extends GetxController {
 
       final response = await revenueRepo.exchangeSale(body: body);
       if (response.success == success) {
-        Get.back();
         showSnackBar(
           error: response.message ?? "Exchange completed successfully!",
           isError: false,
         );
-        await fetchSales(saleId: data.saleId);
+        AppRoutes.navigateRoutes(
+          routeName: AppRouteName.orderView,
+          data: response.data?.invoiceNo,
+        );
       } else if (response.success == failed) {
         showSnackBar(error: response.message ?? "Failed to exchange items!");
       } else {

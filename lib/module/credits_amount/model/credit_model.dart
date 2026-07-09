@@ -158,7 +158,7 @@ class Customer {
 }
 
 class Summary {
-  int? totalPendingAmount;
+  String? totalPendingAmount;
 
   Summary({this.totalPendingAmount});
 

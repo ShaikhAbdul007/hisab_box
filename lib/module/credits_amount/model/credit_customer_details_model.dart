@@ -8,7 +8,10 @@ class CreditCustomerDetailsModel {
   CreditCustomerDetailsModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
     message = json['message'];
-    data = json['data'] != null ? CreditCustomerDetailsData.fromJson(json['data']) : null;
+    data =
+        json['data'] != null
+            ? CreditCustomerDetailsData.fromJson(json['data'])
+            : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -31,7 +34,10 @@ class CreditCustomerDetailsData {
 
   CreditCustomerDetailsData.fromJson(Map<String, dynamic> json) {
     customerId = json['customer_id'];
-    summary = json['summary'] != null ? CreditCustomerSummary.fromJson(json['summary']) : null;
+    summary =
+        json['summary'] != null
+            ? CreditCustomerSummary.fromJson(json['summary'])
+            : null;
     if (json['transactions'] != null) {
       transactions = <CreditCustomerTransaction>[];
       json['transactions'].forEach((v) {
@@ -54,9 +60,9 @@ class CreditCustomerDetailsData {
 }
 
 class CreditCustomerSummary {
-  num? totalCredit;
-  num? totalPaid;
-  num? totalPending;
+  String? totalCredit;
+  String? totalPaid;
+  String? totalPending;
 
   CreditCustomerSummary({this.totalCredit, this.totalPaid, this.totalPending});
 
