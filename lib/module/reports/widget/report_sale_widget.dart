@@ -102,16 +102,36 @@ class ReportSaleWidget extends StatelessWidget {
                       return CommonNoDataFound(message: 'No sales found');
                     }
                     return ListView.builder(
+                      controller: controller.salesScrollController,
                       padding:
                           SymmetricPadding(
                             horizontal: 0,
                             vertical: 6,
                           ).getPadding(),
-                      itemCount: controller.sellsList.length,
-                      itemBuilder:
-                          (context, index) => RevenueListText(
-                            sellItemData: controller.sellsList[index],
-                          ),
+                      itemCount: controller.sellsList.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == controller.sellsList.length) {
+                          return Obx(
+                            () =>
+                                controller.isLoadingMoreSales.value
+                                    ? const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      child: Center(
+                                        child: CommonProgressBar(
+                                          color: AppColors.blackColor,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    )
+                                    : const SizedBox.shrink(),
+                          );
+                        }
+                        return RevenueListText(
+                          sellItemData: controller.sellsList[index],
+                        );
+                      },
                     );
                   }),
                 ),

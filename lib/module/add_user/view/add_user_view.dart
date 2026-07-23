@@ -96,25 +96,27 @@ class AddUserView extends GetView<AddUserController> {
                         title: 'Assign Role',
                         children: [
                           Obx(
-                            () => controller.isFetchUserRole.value
-                                ? const CommonProgressBar()
-                                : controller.userRoleList.isEmpty
+                            () =>
+                                controller.isFetchUserRole.value
+                                    ? const CommonProgressBar()
+                                    : controller.userRoleList.isEmpty
                                     ? CustomDropDown(
-                                        listItems: controller.userRoleList,
-                                        hintText: 'Add a user role first in Settings',
-                                        notifyParent: (v) {
-                                          controller.selectedRole.value = v ?? '';
-                                          unfocus();
-                                        },
-                                      )
+                                      listItems: controller.userRoleList,
+                                      hintText:
+                                          'Add a user role first in Settings',
+                                      notifyParent: (v) {
+                                        controller.selectedRole.value = v ?? '';
+                                        unfocus();
+                                      },
+                                    )
                                     : CustomDropDown(
-                                        listItems: controller.userRoleList,
-                                        hintText: 'Select Role',
-                                        notifyParent: (v) {
-                                          controller.selectedRole.value = v!;
-                                          unfocus();
-                                        },
-                                      ),
+                                      listItems: controller.userRoleList,
+                                      hintText: 'Select Role',
+                                      notifyParent: (v) {
+                                        controller.selectedRole.value = v!;
+                                        unfocus();
+                                      },
+                                    ),
                           ),
                         ],
                       ),
@@ -132,7 +134,8 @@ class AddUserView extends GetView<AddUserController> {
                               final Map<String, dynamic> finalData = {
                                 'name': controller.nameController.text.trim(),
                                 'email': controller.emailController.text.trim(),
-                                'mobile_no': controller.mobileController.text.trim(),
+                                'mobile_no':
+                                    controller.mobileController.text.trim(),
                                 'password': 'Password@123',
                                 'role_id': controller.selectedRole.value,
                                 'permissions': permissionData,
@@ -151,9 +154,7 @@ class AddUserView extends GetView<AddUserController> {
                   flex: 2,
                   child: ListView(
                     padding: EdgeInsets.zero,
-                    children: [
-                      _PermissionsSection(controller: controller),
-                    ],
+                    children: [_PermissionsSection(controller: controller)],
                   ),
                 ),
               ],

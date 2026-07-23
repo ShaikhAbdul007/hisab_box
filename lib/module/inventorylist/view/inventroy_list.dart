@@ -87,7 +87,9 @@ class InventroyList extends GetView<InventoryListController> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.blackColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
@@ -107,19 +109,20 @@ class InventroyList extends GetView<InventoryListController> {
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
                     child: CommonSearch(
                       icon: Obx(
-                        () => controller.searchText.value.isNotEmpty
-                            ? InkWell(
-                                onTap: () {
-                                  controller.clear();
-                                  unfocus();
-                                },
-                                child: Icon(
-                                  CupertinoIcons.clear_circled_solid,
-                                  size: 20.sp,
-                                  color: AppColors.blackColor,
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                        () =>
+                            controller.searchText.value.isNotEmpty
+                                ? InkWell(
+                                  onTap: () {
+                                    controller.clear();
+                                    unfocus();
+                                  },
+                                  child: Icon(
+                                    CupertinoIcons.clear_circled_solid,
+                                    size: 20.sp,
+                                    color: AppColors.blackColor,
+                                  ),
+                                )
+                                : const SizedBox.shrink(),
                       ),
                       label: 'Search',
                       hintText: 'Search products by barcode, name or weight...',
@@ -134,7 +137,10 @@ class InventroyList extends GetView<InventoryListController> {
                       return const SizedBox.shrink();
                     }
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
                       child: _ObxTabBar(controller: controller),
                     );
                   }),
@@ -152,7 +158,8 @@ class InventroyList extends GetView<InventoryListController> {
                             ),
                           );
                         }
-                        final isGodown = controller.isGodownEnabled.value &&
+                        final isGodown =
+                            controller.isGodownEnabled.value &&
                             controller.selectedTab.value == 1;
 
                         // Desktop specific grid layout
@@ -216,7 +223,11 @@ class InventroyList extends GetView<InventoryListController> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(CupertinoIcons.lightbulb_fill, color: Colors.amber, size: 24),
+                        const Icon(
+                          CupertinoIcons.lightbulb_fill,
+                          color: Colors.amber,
+                          size: 24,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -502,10 +513,13 @@ class _ProductListTab extends StatelessWidget {
             child: InventroyListText(
               onTap: () async {
                 customMessageOrErrorPrint(message: "List id: ${item.id}");
-                await AppRoutes.futureNavigationToRoute(
+                var res = await AppRoutes.futureNavigationToRoute(
                   routeName: AppRouteName.productDetailView,
                   data: {'product': item, 'isProductLoosed': false},
                 );
+                if (res == true) {
+                  controller.fetchInventoryByTab(type);
+                }
               },
               isInventoryScanSelected: controller.isInventoryScanSelected.value,
               inventoryModel: item,
@@ -527,21 +541,27 @@ class _ProductGridTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isShop = type == 'shop';
-    final list = isShop ? controller.shopProductList : controller.goDownProductList;
-    final scrollCtrl = isShop ? controller.shopScrollController : controller.godownScrollController;
-    final emptyMsg = isShop ? 'No product found in SHOP.' : 'No product found in GODOWN.';
+    final list =
+        isShop ? controller.shopProductList : controller.goDownProductList;
+    final scrollCtrl =
+        isShop
+            ? controller.shopScrollController
+            : controller.godownScrollController;
+    final emptyMsg =
+        isShop ? 'No product found in SHOP.' : 'No product found in GODOWN.';
 
     return Obx(() {
       if (list.isEmpty) return CommonNoDataFound(message: emptyMsg);
 
       final q = controller.searchText.value.toLowerCase();
-      final filtered = q.isEmpty
-          ? list.toList()
-          : list.where((item) {
-              return (item.name ?? '').toLowerCase().contains(q) ||
-                  (item.barcode ?? '').toLowerCase().contains(q) ||
-                  (item.weight ?? '').toLowerCase().contains(q);
-            }).toList();
+      final filtered =
+          q.isEmpty
+              ? list.toList()
+              : list.where((item) {
+                return (item.name ?? '').toLowerCase().contains(q) ||
+                    (item.barcode ?? '').toLowerCase().contains(q) ||
+                    (item.weight ?? '').toLowerCase().contains(q);
+              }).toList();
 
       if (filtered.isEmpty) {
         return CommonNoDataFound(

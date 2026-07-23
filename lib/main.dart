@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -132,10 +131,12 @@ class _MyAppState extends State<MyApp> {
     final double ratio = view.devicePixelRatio;
     final double width = ratio > 0 ? physicalWidth / ratio : 375.0;
     final double height = ratio > 0 ? physicalHeight / ratio : 812.0;
-    final Size calculatedDesignSize = width >= 800 ? Size(width, height) : const Size(375, 812);
+    final Size calculatedDesignSize =
+        width >= 800 ? Size(width, height) : const Size(375, 812);
 
     return ScreenUtilInit(
-      designSize: calculatedDesignSize, // Adapted dynamically for web/desktop to neutralize scaling issues
+      designSize:
+          calculatedDesignSize, // Adapted dynamically for web/desktop to neutralize scaling issues
       splitScreenMode: true,
       minTextAdapt: true,
       // useInheritedMediaQuery zaroori hai orientation changes ke liye

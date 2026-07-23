@@ -11,7 +11,6 @@ import 'package:inventory/module/reports/model/report_over_view_model.dart';
 import 'package:inventory/module/reports/repo/report_dashboard_overview.dart';
 import 'package:inventory/module/revenue/model/revenue_list_model.dart';
 import 'package:inventory/module/revenue/repo/revenue_repo.dart';
-import 'package:inventory/module/sell/model/sell_model.dart';
 import 'package:open_file/open_file.dart';
 import '../../../helper/helper.dart';
 import '../../revenue/model/revenue_model.dart';
@@ -55,6 +54,14 @@ class ReportController extends GetxController
   int _topProductTotalPages = 1;
   RxBool isLoadingMoreTopProducts = false.obs;
   bool get topProductHasMore => _topProductPage < _topProductTotalPages;
+
+  // Pagination for sales list
+  final ScrollController salesScrollController = ScrollController();
+  int _salesPage = 1;
+  int _salesTotalPages = 1;
+  RxBool isLoadingMoreSales = false.obs;
+  bool get salesHasMore => _salesPage < _salesTotalPages;
+
   RxBool isSalesLoading = false.obs;
   RxString salesDate = ''.obs;
   List<String> daysOtionLabel = ['Today', 'Week', 'Month'];
@@ -77,11 +84,26 @@ class ReportController extends GetxController
       }
     });
     salesDate.value = setFormateDate();
+    _setupSalesScrollController();
     fetchModeOfPaymentStats();
     fetchTopSellingProductsChart();
     fetchTopSellingProducts();
     fetchSales();
     super.onInit();
+  }
+
+  void _setupSalesScrollController() {
+    salesScrollController.addListener(() {
+      if (_isSalesNearBottom() && !isLoadingMoreSales.value && salesHasMore) {
+        loadMoreSales();
+      }
+    });
+  }
+
+  bool _isSalesNearBottom() {
+    if (!salesScrollController.hasClients) return false;
+    return salesScrollController.position.pixels >=
+        salesScrollController.position.maxScrollExtent - 200;
   }
 
   void refreshReportData() {
@@ -188,13 +210,19 @@ class ReportController extends GetxController
 
   // --- SALE TAB — reuses RevenueRepo.fetchSell (existing pattern) ---
   Future<void> fetchSales({String? date}) async {
+    _salesPage = 1;
+    sellsList.clear();
     isSalesLoading.value = true;
     final selectedDate = getApiFormattedDate(date ?? salesDate.value);
     try {
-      final response = await revenueRepo.fetchSell(date: selectedDate);
+      final response = await revenueRepo.fetchSell(
+        date: selectedDate,
+        page: _salesPage,
+      );
       if (response.success == success) {
-        //  sellsList.value = response.data?.data ?? [];
+        sellsList.value = response.data?.data ?? [];
         totalRevenue.value = (response.data?.grandTotal ?? 0).toDouble();
+        _salesTotalPages = response.data?.pagination?.totalPages ?? 1;
       } else if (response.success == failed) {
         showSnackBar(error: response.msg ?? somethingWentMessage);
       } else {
@@ -204,6 +232,30 @@ class ReportController extends GetxController
       showSnackBar(error: e.toString());
     } finally {
       isSalesLoading.value = false;
+    }
+  }
+
+  Future<void> loadMoreSales() async {
+    if (!salesHasMore || isLoadingMoreSales.value) return;
+    _salesPage++;
+    isLoadingMoreSales.value = true;
+    final selectedDate = getApiFormattedDate(salesDate.value);
+    try {
+      final response = await revenueRepo.fetchSell(
+        date: selectedDate,
+        page: _salesPage,
+      );
+      if (response.success == success) {
+        sellsList.addAll(response.data?.data ?? []);
+        _salesTotalPages = response.data?.pagination?.totalPages ?? _salesTotalPages;
+      } else {
+        _salesPage--;
+      }
+    } catch (e) {
+      _salesPage--;
+      showSnackBar(error: e.toString());
+    } finally {
+      isLoadingMoreSales.value = false;
     }
   }
 
@@ -407,5 +459,11 @@ class ReportController extends GetxController
       showSnackBar(error: e.toString());
       return [];
     }
+  }
+
+  @override
+  void onClose() {
+    salesScrollController.dispose();
+    super.onClose();
   }
 }

@@ -78,7 +78,7 @@ class ProductDetailsController extends GetxController with CacheManager {
   @override
   void onInit() {
     dayDate.value = setFormateDate();
-    getCategoryData();
+    getData();
     retrieveGodownValue();
     AppLogger.info('setdata');
     super.onInit();
@@ -93,7 +93,7 @@ class ProductDetailsController extends GetxController with CacheManager {
     }
   }
 
-  void getCategoryData() async {
+  void getData() async {
     isDataLoading.value = true;
     final user = retrieveUserDetail();
     shopType.value = user.data?.shopType ?? '';
@@ -137,7 +137,7 @@ class ProductDetailsController extends GetxController with CacheManager {
       final match = animalTypeList.firstWhereOrNull((e) => e.name == value);
       if (match != null) {
         animalType.text = match.name ?? '';
-        selectedAnimalTypeId.value = match.id;
+        selectedAnimalTypeId.value = match.id ?? '';
       }
     } catch (e) {
       return null;
