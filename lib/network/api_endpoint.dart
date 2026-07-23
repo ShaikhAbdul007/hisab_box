@@ -102,4 +102,5 @@ class ApiEndPoint {
   //------------------Margin-----------------------
   static const String getMargin = "margins";
   static const String createMargin = "margins";
+  static const String registerFcmToken = "notification/register-token";
 }

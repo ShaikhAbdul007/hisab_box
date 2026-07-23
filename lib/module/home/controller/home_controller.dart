@@ -10,6 +10,7 @@ import 'package:inventory/module/home/model/dashboard_model.dart';
 import 'package:inventory/module/home/repo/home_repo.dart';
 import 'package:inventory/module/loose_sell/model/loose_model.dart';
 import 'package:inventory/module/product_details/model/go_down_stock_transfer_to_shop_model.dart';
+import 'package:inventory/module/push_notification/local_notification_service.dart';
 import 'package:inventory/module/sell/model/sell_model.dart';
 import '../../../routes/route_name.dart';
 import '../../../routes/routes.dart';
@@ -53,6 +54,7 @@ class HomeController extends GetxController with CacheManager {
   void onInit() {
     setShopType();
     loadDashboard();
+    getFcmToken();
     super.onInit();
   }
 
@@ -90,6 +92,28 @@ class HomeController extends GetxController with CacheManager {
     } finally {
       getDashBoardList();
       isListLoading.value = false;
+    }
+  }
+
+  void getFcmToken() async {
+    try {
+      final fcmToken = await retrieveFcmtokenValue();
+      if (fcmToken == true) {
+        return;
+      } else {
+        final String deviceToken = await NotificationServices.getDeviceToken();
+        final response = await homeRepo.saveFcmokenData(deviceToken);
+        if (response.success == success) {
+          saveFcmToken(true);
+        } else if (response.success == failed) {
+          //  showSnackBar(error: response.message ?? '');
+        } else {
+          // showSnackBar(error: response.message ?? '');
+        }
+      }
+    } catch (e) {
+      AppLogger.info((e).toString());
+      showSnackBar(error: e.toString());
     }
   }
 

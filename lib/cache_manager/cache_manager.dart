@@ -14,6 +14,10 @@ mixin class CacheManager {
     box.write(Key.userLoginIn.toString(), value);
   }
 
+  void saveFcmToken(bool token) {
+    box.write(Key.fcmTokenKey.toString(), token);
+  }
+
   void saveToken(String token) {
     box.write(Key.tokenKey.toString(), token);
   }
@@ -123,6 +127,11 @@ mixin class CacheManager {
   Future<bool> retrieveGodown() async {
     box.writeIfNull(Key.godown.toString(), false);
     return box.read(Key.godown.toString());
+  }
+
+   Future<bool> retrieveFcmtokenValue() async {
+    box.writeIfNull(Key.fcmTokenKey.toString(), false);
+    return box.read(Key.fcmTokenKey.toString());
   }
 
   UserModel retrieveUserDetail() {
@@ -268,4 +277,5 @@ enum Key {
   tokenKey,
   marginKey,
   clothingScan,
+  fcmTokenKey,
 }

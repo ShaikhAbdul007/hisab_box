@@ -40,10 +40,9 @@ class NotificationServices {
   }
 
   static Future<String> getDeviceToken() async {
-    // String? getDeviceToken = await messaging.getToken();
-    String? getDeviceToken = '';
+    String? getDeviceToken = await messaging.getToken();
     AppLogger.info('getDeviceToken is $getDeviceToken');
-    return getDeviceToken ?? 'No Device Token Found';
+    return getDeviceToken ?? '';
   }
 
   static Future<void> initLocalNotification(
