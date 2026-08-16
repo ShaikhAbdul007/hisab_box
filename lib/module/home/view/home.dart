@@ -18,6 +18,7 @@ import '../../../common_widget/colors.dart';
 import '../../../helper/set_format_date.dart';
 import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
+import 'package:inventory/module/home/widget/manual_sell_sheet.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -880,11 +881,7 @@ class _QuickActionsRow extends StatelessWidget {
             label: 'Sell Product',
             icon: CupertinoIcons.barcode_viewfinder,
             color: const Color(0xFF1565C0),
-            onTap:
-                () => AppRoutes.futureNavigationToRoute(
-                  routeName: AppRouteName.inventoryView,
-                  data: {'flag': false},
-                ),
+            onTap: () => showSellOptionBottomSheet(context),
           ),
         ),
       ],

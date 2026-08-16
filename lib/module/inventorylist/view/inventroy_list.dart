@@ -1,3 +1,4 @@
+import 'package:inventory/helper/shop_type.dart';
 import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -257,7 +258,8 @@ class InventroyList extends GetView<InventoryListController> {
           return const SizedBox.shrink();
         }
         final items = <AppPopupItem<_InventoryModeMenu>>[];
-        if (controller.isClothingScanSelected.value) {
+        if (controller.shopTypeEnum != ShopType.clothingShop ||
+            controller.isClothingScanSelected.value) {
           items.add(
             const AppPopupItem(
               value: _InventoryModeMenu.scan,

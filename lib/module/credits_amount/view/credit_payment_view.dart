@@ -264,9 +264,9 @@ class _CreditPaymentViewState extends State<CreditPaymentView> {
                   onTap: () async {
                     arguments.remainingAmount = totalPending.toString();
                     // Navigate to confirm view which has payment method split controllers
-                    var res = await Get.toNamed(
-                      AppRouteName.creditPaymentConfirmView,
-                      arguments: arguments,
+                    var res = await AppRoutes.futureNavigationToRoute(
+                      routeName: AppRouteName.creditPaymentConfirmView,
+                      data: arguments,
                     );
                     if (res == true) {
                       paymentMade = true;

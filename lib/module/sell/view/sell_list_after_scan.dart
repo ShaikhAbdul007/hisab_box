@@ -17,6 +17,7 @@ import '../../../helper/textstyle.dart';
 import '../../../routes/route_name.dart';
 import '../controller/sell_list_after_scan_controller.dart';
 import '../widget/selling_confirmatio_list_text.dart';
+import 'package:inventory/module/home/widget/manual_sell_sheet.dart';
 
 class SellListAfterScan extends GetView<SellListAfterScanController> {
   const SellListAfterScan({super.key});
@@ -45,10 +46,17 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Type Barcode & press Enter',
-                  prefixIcon: const Icon(CupertinoIcons.barcode_viewfinder, color: AppColors.greyColor, size: 18),
+                  prefixIcon: const Icon(
+                    CupertinoIcons.barcode_viewfinder,
+                    color: AppColors.greyColor,
+                    size: 18,
+                  ),
                   filled: true,
                   fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: Colors.grey.shade200),
@@ -104,49 +112,82 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                         ),
                         const Divider(height: 1),
                         Expanded(
-                          child: controller.productList.isEmpty
-                              ? const Center(
-                                  child: CommonNoDataFound(
-                                    message: 'No product added to cart. Use the search bar above to scan/type barcodes.',
-                                  ),
-                                )
-                              : ListView.builder(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  itemCount: controller.productList.length,
-                                  itemBuilder: (context, index) {
-                                    return SellingConfirmationListText(
-                                      isLooseDiscountEnable: controller.productList[index].stockType == 'loose',
-                                      onDiscountChanged: (value) {
-                                        controller.discountCalculateAsPerProduct(index);
-                                        controller.calculateTotalWithDiscount();
-                                        // Update payment total in sync
-                                        controller.openPaymentDialog(controller.finalTotal.value);
-                                      },
-                                      dicountController: controller.perProductDiscount[index],
-                                      sellingPrices: Obx(
-                                        () => Text(
-                                          controller.sellingPriceList[index].toStringAsFixed(2),
-                                          style: CustomTextStyle.customPoppin(
-                                            color: AppColors.whiteColor,
+                          child:
+                              controller.productList.isEmpty
+                                  ? const Center(
+                                    child: CommonNoDataFound(
+                                      message:
+                                          'No product added to cart. Use the search bar above to scan/type barcodes.',
+                                    ),
+                                  )
+                                  : ListView.builder(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    itemCount: controller.productList.length,
+                                    itemBuilder: (context, index) {
+                                      return SellingConfirmationListText(
+                                        isLooseDiscountEnable:
+                                            controller
+                                                .productList[index]
+                                                .stockType ==
+                                            'loose',
+                                        onDiscountChanged: (value) {
+                                          controller
+                                              .discountCalculateAsPerProduct(
+                                                index,
+                                              );
+                                          controller
+                                              .calculateTotalWithDiscount();
+                                          // Update payment total in sync
+                                          controller.openPaymentDialog(
+                                            controller.finalTotal.value,
+                                          );
+                                        },
+                                        dicountController:
+                                            controller
+                                                .perProductDiscount[index],
+                                        sellingPrices: Obx(
+                                          () => Text(
+                                            controller.sellingPriceList[index]
+                                                .toStringAsFixed(2),
+                                            style: CustomTextStyle.customPoppin(
+                                              color: AppColors.whiteColor,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      removeOnTap: () {
-                                        controller.deleteProductFromCart(index);
-                                        controller.openPaymentDialog(controller.finalTotal.value);
-                                      },
-                                      minusOnTap: () {
-                                        controller.updateQuantity(false, index);
-                                        controller.openPaymentDialog(controller.finalTotal.value);
-                                      },
-                                      plusOnTap: () {
-                                        controller.updateQuantity(true, index);
-                                        controller.openPaymentDialog(controller.finalTotal.value);
-                                      },
-                                      inventoryModel: controller.productList[index],
-                                    );
-                                  },
-                                ),
+                                        removeOnTap: () {
+                                          controller.deleteProductFromCart(
+                                            index,
+                                          );
+                                          controller.openPaymentDialog(
+                                            controller.finalTotal.value,
+                                          );
+                                        },
+                                        minusOnTap: () {
+                                          controller.updateQuantity(
+                                            false,
+                                            index,
+                                          );
+                                          controller.openPaymentDialog(
+                                            controller.finalTotal.value,
+                                          );
+                                        },
+                                        plusOnTap: () {
+                                          controller.updateQuantity(
+                                            true,
+                                            index,
+                                          );
+                                          controller.openPaymentDialog(
+                                            controller.finalTotal.value,
+                                          );
+                                        },
+                                        inventoryModel:
+                                            controller.productList[index],
+                                      );
+                                    },
+                                  ),
                         ),
                       ],
                     ),
@@ -161,18 +202,19 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
                   color: Colors.white,
                   border: Border(left: BorderSide(color: Colors.grey.shade200)),
                 ),
-                child: controller.productList.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Add items to cart to proceed with checkout',
-                          style: TextStyle(color: AppColors.greyColor),
+                child:
+                    controller.productList.isEmpty
+                        ? const Center(
+                          child: Text(
+                            'Add items to cart to proceed with checkout',
+                            style: TextStyle(color: AppColors.greyColor),
+                          ),
+                        )
+                        : PartailPaymentWidget(
+                          controller: controller,
+                          showConfirmButton: true,
+                          confirmLabel: 'Confirm POS Sale',
                         ),
-                      )
-                    : PartailPaymentWidget(
-                        controller: controller,
-                        showConfirmButton: true,
-                        confirmLabel: 'Confirm POS Sale',
-                      ),
               ),
             ],
           );
@@ -180,94 +222,84 @@ class SellListAfterScan extends GetView<SellListAfterScanController> {
       );
     }
 
-    return Obx(
-      () => CommonAppbar(
-        appBarLabel: sellingProduct,
-        firstActionChild: InkWell(
-          onTap: () async {
-            Get.offNamed(
-              AppRouteName.inventoryView,
-              arguments: {'flag': false},
-            );
-          },
-          borderRadius: BorderRadius.circular(10.r),
-          child: Container(
-            height: 36.h,
-            width: 36.w,
-            decoration: BoxDecoration(
-              color: AppColors.blackColor,
-              borderRadius: BorderRadius.circular(10.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              CupertinoIcons.barcode_viewfinder,
-              color: Colors.white,
-              size: 18.sp,
-            ),
+    return CommonAppbar(
+      appBarLabel: sellingProduct,
+      firstActionChild: InkWell(
+        onTap: () => showSellOptionBottomSheet(context, isFromReview: true),
+        borderRadius: BorderRadius.circular(10.r),
+        child: Container(
+          height: 36.h,
+          width: 36.w,
+          decoration: BoxDecoration(
+            color: AppColors.blackColor,
+            borderRadius: BorderRadius.circular(10.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            CupertinoIcons.barcode_viewfinder,
+            color: Colors.white,
+            size: 18.sp,
           ),
         ),
-        // ── Footer ──────────────────────────────────────────────────────
-        persistentFooterButtons: [
-          _SellFooter(
-            context: context,
-            controller: controller,
-            onSellTap:
-                () => AppRoutes.navigateRoutes(
-                  routeName: AppRouteName.paymentView,
-                ),
-          ),
-        ],
-        // ── Product list ─────────────────────────────────────────────────
-        body: Obx(
-          () =>
-              controller.productList.isNotEmpty
-                  ? ListView.builder(
-                    padding:
-                        SymmetricPadding(
-                          horizontal: 12,
-                          vertical: 8,
-                        ).getPadding(),
-                    itemCount: controller.productList.length,
-                    itemBuilder: (context, index) {
-                      return SellingConfirmationListText(
-                        isLooseDiscountEnable:
-                            controller.productList[index].stockType == 'loose',
-                        onDiscountChanged: (value) {
-                          controller.discountCalculateAsPerProduct(index);
-                          controller.calculateTotalWithDiscount();
-                        },
-                        dicountController: controller.perProductDiscount[index],
-                        sellingPrices: Obx(
-                          () => Text(
-                            controller.sellingPriceList[index].toStringAsFixed(
-                              2,
-                            ),
-                            style: CustomTextStyle.customPoppin(
-                              color: AppColors.whiteColor,
-                            ),
+      ),
+      // ── Footer ──────────────────────────────────────────────────────
+      persistentFooterButtons: [
+        _SellFooter(
+          context: context,
+          controller: controller,
+          onSellTap:
+              () =>
+                  AppRoutes.navigateRoutes(routeName: AppRouteName.paymentView),
+        ),
+      ],
+      // ── Product list ─────────────────────────────────────────────────
+      body: Obx(
+        () =>
+            controller.productList.isNotEmpty
+                ? ListView.builder(
+                  padding:
+                      SymmetricPadding(
+                        horizontal: 12,
+                        vertical: 8,
+                      ).getPadding(),
+                  itemCount: controller.productList.length,
+                  itemBuilder: (context, index) {
+                    return SellingConfirmationListText(
+                      isLooseDiscountEnable:
+                          controller.productList[index].stockType == 'loose',
+                      onDiscountChanged: (value) {
+                        controller.discountCalculateAsPerProduct(index);
+                        controller.calculateTotalWithDiscount();
+                      },
+                      dicountController: controller.perProductDiscount[index],
+                      sellingPrices: Obx(
+                        () => Text(
+                          controller.sellingPriceList[index].toStringAsFixed(2),
+                          style: CustomTextStyle.customPoppin(
+                            color: AppColors.whiteColor,
                           ),
                         ),
-                        removeOnTap: () {
-                          controller.deleteProductFromCart(index);
-                        },
-                        minusOnTap: () {
-                          controller.updateQuantity(false, index);
-                        },
-                        plusOnTap: () {
-                          controller.updateQuantity(true, index);
-                        },
-                        inventoryModel: controller.productList[index],
-                      );
-                    },
-                  )
-                  : CommonNoDataFound(message: 'No product found for sell'),
-        ),
+                      ),
+                      removeOnTap: () {
+                        controller.deleteProductFromCart(index);
+                      },
+                      minusOnTap: () {
+                        controller.updateQuantity(false, index);
+                      },
+                      plusOnTap: () {
+                        controller.updateQuantity(true, index);
+                      },
+                      inventoryModel: controller.productList[index],
+                    );
+                  },
+                )
+                : CommonNoDataFound(message: 'No product found for sell'),
       ),
     );
   }
@@ -287,40 +319,40 @@ class _SellFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Discount chips ─────────────────────────────────────────
-          if (controller.discountPerProduct.value)
-            _DiscountRow(controller: controller),
+    return Obx(() {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Discount chips ─────────────────────────────────────────
+            if (controller.discountPerProduct.value)
+              _DiscountRow(controller: controller),
 
-          // ── Price summary + Sell button ────────────────────────────
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Price info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Original price (strikethrough)
-                      Obx(
-                        () => Row(
+            // ── Price summary + Sell button ────────────────────────────
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Price info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Original price (strikethrough)
+                        Row(
                           children: [
                             Text(
                               'MRP  ',
@@ -339,11 +371,9 @@ class _SellFooter extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ),
-                      setHeight(height: 4),
-                      // Final total
-                      Obx(
-                        () => Row(
+                        setHeight(height: 4),
+                        // Final total
+                        Row(
                           children: [
                             Text(
                               'Total  ',
@@ -362,23 +392,23 @@ class _SellFooter extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                // Sell button
-                CommonButton(
-                  height: 48,
-                  width: 130,
-                  label: 'Sell  →',
-                  onTap: onSellTap,
-                ),
-              ],
+                  // Sell button
+                  CommonButton(
+                    height: 48,
+                    width: 130,
+                    label: 'Sell  →',
+                    onTap: onSellTap,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 

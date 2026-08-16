@@ -73,8 +73,8 @@ class CommonAppbar extends StatelessWidget {
                         customMessageOrErrorPrint(message: 'sellingProduct');
                         cache.removeCartProductList();
                       }
-                      customMessageOrErrorPrint(message: 'back pressed');
                       Get.back(result: true);
+                      customMessageOrErrorPrint(message: 'back pressed');
                     },
                     icon: Icon(CupertinoIcons.back),
                   )

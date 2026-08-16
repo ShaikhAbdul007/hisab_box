@@ -1,3 +1,4 @@
+import 'package:inventory/common_widget/common_progressbar.dart';
 import 'package:inventory/responsive_layout/dimension.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -590,21 +591,26 @@ class LoginView extends GetView<LoginController> {
                       color: Colors.grey.shade500,
                     ),
                   ),
-                  c.canResend.value
-                      ? GestureDetector(
-                        onTap: () async {
-                          await c.sendOtp();
-                          c.startResendTimer();
-                        },
-                        child: Text(
-                          'Resend',
-                          style: CustomTextStyle.customOpenSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                 c.loginLoading.value
+                          ? CommonProgressBar(
                             color: AppColors.blackColor,
-                          ),
-                        ),
-                      )
+                            size: 18,
+                          )
+                          :  c.canResend.value
+                      ? GestureDetector(
+                            onTap: () async {
+                              await c.sendOtp();
+                              c.startResendTimer();
+                            },
+                            child: Text(
+                              'Resend',
+                              style: CustomTextStyle.customOpenSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.blackColor,
+                              ),
+                            ),
+                          )
                       : Text(
                         'Resend in ${_formatTimer(c.resendSeconds.value)}',
                         style: CustomTextStyle.customOpenSans(

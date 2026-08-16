@@ -108,6 +108,7 @@ class SellListAfterScanController extends GetxController with CacheManager {
     );
 
     calculateTotalWithDiscount();
+    openPaymentDialog(finalTotal.value);
   }
 
   // ── Quantity ──────────────────────────────────────────────────────────────
