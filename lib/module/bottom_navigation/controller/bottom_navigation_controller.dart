@@ -15,7 +15,7 @@ class BottomNavigationController extends GetxController {
 
   void setBottomIndex(int value) {
     index.value = value;
-    if (value == 2) {
+    if (value == 3) {
       if (Get.isRegistered<ReportController>()) {
         Get.find<ReportController>().refreshReportData();
       }

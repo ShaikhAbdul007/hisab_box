@@ -9,6 +9,7 @@ import 'package:inventory/common_widget/colors.dart';
 import 'package:inventory/helper/textstyle.dart';
 import 'package:inventory/module/credits_amount/view/credit_view.dart';
 import 'package:inventory/module/customer/view/customer_view.dart';
+import 'package:inventory/module/easy_billing/view/easy_billing_view.dart';
 import 'package:inventory/module/reports/view/report.dart';
 import 'package:inventory/module/setting/view/setting.dart';
 import 'package:inventory/responsive_layout/responsive_layout.dart';
@@ -394,10 +395,11 @@ class MobileScreen extends StatelessWidget {
           index: controller.index.value,
           children: [
             HomeView(),
+            EasyBillingView(),
             CreditView(),
             ReportView(),
             CustomerView(),
-            SettingView(),
+            //SettingView(),
           ],
         ),
       ),
@@ -434,13 +436,36 @@ class MobileScreen extends StatelessWidget {
               ),
             ),
             BottomBarItem(
-              icon: Icon(CupertinoIcons.money_dollar_circle, size: 13.sp),
+              icon: Icon(
+                CupertinoIcons.cart,
+                size: 13.sp,
+                color: AppColors.greyColor,
+              ),
               title: Text(
-                'Credits',
+                'Easy Bill',
                 style: CustomTextStyle.customPoppin(
                   fontSize: controller.index.value == 1 ? 13 : 12,
                   color:
                       controller.index.value == 1
+                          ? AppColors.blackColor
+                          : AppColors.greyColor,
+                ),
+              ),
+              unSelectedColor: AppColors.greyColor,
+              selectedIcon: Icon(
+                CupertinoIcons.cart_fill,
+                color: AppColors.blackColor,
+                size: 20.sp,
+              ),
+            ),
+            BottomBarItem(
+              icon: Icon(CupertinoIcons.money_dollar_circle, size: 13.sp),
+              title: Text(
+                'Credits',
+                style: CustomTextStyle.customPoppin(
+                  fontSize: controller.index.value == 2 ? 13 : 12,
+                  color:
+                      controller.index.value == 2
                           ? AppColors.blackColor
                           : AppColors.greyColor,
                 ),
@@ -456,9 +481,9 @@ class MobileScreen extends StatelessWidget {
               title: Text(
                 'Reports',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 2 ? 13 : 12,
+                  fontSize: controller.index.value == 3 ? 13 : 12,
                   color:
-                      controller.index.value == 2
+                      controller.index.value == 3
                           ? AppColors.blackColor
                           : AppColors.greyColor,
                 ),
@@ -478,9 +503,9 @@ class MobileScreen extends StatelessWidget {
               title: Text(
                 'Customers',
                 style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 3 ? 12 : 12,
+                  fontSize: controller.index.value == 4 ? 12 : 12,
                   color:
-                      controller.index.value == 3
+                      controller.index.value == 4
                           ? AppColors.blackColor
                           : AppColors.greyColor,
                 ),
@@ -492,32 +517,28 @@ class MobileScreen extends StatelessWidget {
                 size: 20.sp,
               ),
             ),
-            BottomBarItem(
-              icon: Icon(CupertinoIcons.gear_alt, size: 13),
-              title: Text(
-                'Setting',
-                style: CustomTextStyle.customPoppin(
-                  fontSize: controller.index.value == 4 ? 13 : 12,
-                  color:
-                      controller.index.value == 4
-                          ? AppColors.blackColor
-                          : AppColors.greyColor,
-                ),
-              ),
-              selectedIcon: Icon(
-                CupertinoIcons.gear_alt_fill,
-                color: AppColors.blackColor,
-                size: 20.sp,
-              ),
-            ),
+            // BottomBarItem(
+            //   icon: Icon(CupertinoIcons.gear_alt, size: 13),
+            //   title: Text(
+            //     'Setting',
+            //     style: CustomTextStyle.customPoppin(
+            //       fontSize: controller.index.value == 5 ? 13 : 12,
+            //       color:
+            //           controller.index.value == 5
+            //               ? AppColors.blackColor
+            //               : AppColors.greyColor,
+            //     ),
+            //   ),
+            //   selectedIcon: Icon(
+            //     CupertinoIcons.gear_alt_fill,
+            //     color: AppColors.blackColor,
+            //     size: 20.sp,
+            //   ),
+            // ),
           ],
-          //hasNotch: true,
-          // notchStyle: NotchStyle.circle,
-          // fabLocation: StylishBarFabLocation.center,
           option: AnimatedBarOptions(iconStyle: IconStyle.Default),
         ),
       ),
-
       // floatingActionButton: FloatingActionButton(
       //   onPressed: () {
       //     AppRoutes.navigateRoutes(

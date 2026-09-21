@@ -26,6 +26,7 @@ class AppRouteName {
   static const String orderView = '/orderView';
   static const String termandcodition = '/termandcodition';
   static const String sellListAfterScan = '/sellListAfterScan';
+  static const String manuallSellListAfterScan = '/manuallSellListAfterScan';
   static const String creditPaymentView = '/creditPaymentView';
   static const String creditPaymentConfirmView = '/creditPaymentConfirmView';
   static const String nointernateConnection = '/nointernateConnection';
@@ -47,4 +48,5 @@ class AppRouteName {
   static const String colorCategory = '/colorCategory';
   static const String paymentView = '/paymentView';
   static const String exchangeView = '/exchangeView';
+  static const String easyBilling = '/easyBilling';
 }

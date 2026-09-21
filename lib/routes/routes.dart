@@ -77,6 +77,8 @@ import '../module/home/binding/home_binding.dart';
 import '../module/home/view/home.dart';
 import '../module/loose_category/binding/loose_category_binding.dart';
 import '../module/loose_category/view/loose_category.dart';
+import '../module/easy_billing/binding/easy_billing_binding.dart';
+import '../module/easy_billing/view/easy_billing_view.dart';
 import '../module/sell/binding/sell_list_after_scan_binding.dart';
 import '../module/sell/view/payment_view.dart';
 import '../module/credits_amount/view/credit_payment_view.dart';
@@ -88,6 +90,12 @@ import 'route_name.dart';
 class AppRoutes {
   static final String initialRoute = AppRouteName.splash;
   static List<GetPage> getPage = [
+    GetPage(
+      name: AppRouteName.easyBilling,
+      page: () => const EasyBillingView(),
+      binding: EasyBillingBinding(),
+    ),
+
     GetPage(
       name: AppRouteName.splash,
       page: () => SplashView(),
@@ -112,7 +120,7 @@ class AppRoutes {
       binding: BottomNavigationBinding(),
       bindings: [
         HomeBinding(),
-        SettingBinding(),
+
         CreditBinding(),
         CustomerBinding(),
         ReportBinding(),
@@ -330,6 +338,9 @@ class AppRoutes {
       case AppRouteName.sell:
         Get.toNamed(AppRouteName.sell, arguments: data);
         break;
+      case AppRouteName.setting:
+        Get.toNamed(AppRouteName.setting, arguments: data);
+        break;
       case AppRouteName.inventoryView:
         Get.toNamed(AppRouteName.inventoryView, arguments: data);
         break;
@@ -370,7 +381,7 @@ class AppRoutes {
         Get.offAllNamed(AppRouteName.login, arguments: data);
         break;
       case AppRouteName.sellListAfterScan:
-        Get.offNamed(AppRouteName.sellListAfterScan, arguments: data);
+        Get.toNamed(AppRouteName.sellListAfterScan, arguments: data);
         break;
       case AppRouteName.signup:
         Get.toNamed(AppRouteName.signup, arguments: data);

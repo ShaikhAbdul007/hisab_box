@@ -44,15 +44,83 @@ class InventroyController extends GetxController with CacheManager {
   @override
   void onInit() {
     setShopType();
-    flag = data['flag'];
-    navigate = data['navigate'];
+    flag = data != null ? data['flag'] : null;
+    navigate = data != null ? data['navigate'] : null;
 
     mobileScannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
       formats: [BarcodeFormat.all],
     );
     player = AudioPlayer();
+    loadInitialCart();
     super.onInit();
+  }
+
+  Future<void> loadInitialCart() async {
+    final cartList = await retrieveCartProductList();
+    scannedProductDetails.assignAll(cartList);
+  }
+
+  Future<void> playScanSound() async {
+    try {
+      await player?.stop();
+      await player?.play(AssetSource('beepsound.mp3'));
+    } catch (e) {
+      AppLogger.info('Audio play error: $e');
+    }
+  }
+
+  double get grandTotalAmount {
+    double total = 0.0;
+    for (var item in scannedProductDetails) {
+      double price = double.tryParse(item.sellingPrice?.toString() ?? '0') ?? 0.0;
+      double qty = double.tryParse(item.quantity?.toString() ?? '0') ?? 0.0;
+      double discount = double.tryParse(item.discount?.toString() ?? '0') ?? 0.0;
+      total += (price - discount) * qty;
+    }
+    return total;
+  }
+
+  Future<void> incrementItemQuantity(int index) async {
+    if (index < 0 || index >= scannedProductDetails.length) return;
+    final item = scannedProductDetails[index];
+    double currentQty = double.tryParse(item.quantity?.toString() ?? '0') ?? 0;
+    double availableQty = double.tryParse(item.packetQuantity?.toString() ?? '999999') ?? 999999;
+    if (currentQty >= availableQty) {
+      showSnackBar(error: 'Maximum available stock reached (${availableQty.toInt()})');
+      return;
+    }
+    item.quantity = (currentQty + 1).toString();
+    scannedProductDetails[index] = item;
+    scannedProductDetails.refresh();
+    saveCartProductList(scannedProductDetails);
+  }
+
+  Future<void> decrementItemQuantity(int index) async {
+    if (index < 0 || index >= scannedProductDetails.length) return;
+    final item = scannedProductDetails[index];
+    double currentQty = double.tryParse(item.quantity?.toString() ?? '0') ?? 0;
+    if (currentQty <= 1) {
+      await removeCartItem(index);
+    } else {
+      item.quantity = (currentQty - 1).toString();
+      scannedProductDetails[index] = item;
+      scannedProductDetails.refresh();
+      saveCartProductList(scannedProductDetails);
+    }
+  }
+
+  Future<void> removeCartItem(int index) async {
+    if (index < 0 || index >= scannedProductDetails.length) return;
+    scannedProductDetails.removeAt(index);
+    scannedProductDetails.refresh();
+    saveCartProductList(scannedProductDetails);
+  }
+
+  Future<void> clearAllCartItems() async {
+    scannedProductDetails.clear();
+    scannedProductDetails.refresh();
+    saveCartProductList([]);
   }
 
   void setShopType() {
@@ -157,6 +225,7 @@ class InventroyController extends GetxController with CacheManager {
       saveCartProductList(cartList);
       scannedProductDetails.assignAll(cartList);
       scannedProductDetails.refresh();
+      await playScanSound();
       afterProductAdding();
     } catch (e) {
       AppLogger.info(("🚨 Scan Error: $e").toString());

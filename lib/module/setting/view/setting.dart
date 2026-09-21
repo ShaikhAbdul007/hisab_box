@@ -73,28 +73,40 @@ class SettingView extends GetView<SettingController> {
                         iconColor: const Color(0xFF1565C0),
                         label: 'Bank Details',
                         subtitle: 'Manage your bank & UPI info',
-                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.bankDetails),
+                        onTap:
+                            () => AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.bankDetails,
+                            ),
                       ),
                       _SettingTile(
                         icon: CupertinoIcons.person_badge_plus_fill,
                         iconColor: const Color(0xFF6A1B9A),
                         label: 'Add User Role',
                         subtitle: 'Create and manage staff roles',
-                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.userRoleView),
+                        onTap:
+                            () => AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.userRoleView,
+                            ),
                       ),
                       _SettingTile(
                         icon: CupertinoIcons.person_2_fill,
                         iconColor: const Color(0xFF00695C),
                         label: 'Add User',
                         subtitle: 'Manage staff accounts',
-                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.allUser),
+                        onTap:
+                            () => AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.allUser,
+                            ),
                       ),
                       _SettingTile(
                         icon: CupertinoIcons.doc_text_fill,
                         iconColor: const Color(0xFFC62828),
                         label: 'Expense',
                         subtitle: 'Manage daily expenses',
-                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.expense),
+                        onTap:
+                            () => AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.expense,
+                            ),
                         isLast: true,
                       ),
                     ],
@@ -105,7 +117,8 @@ class SettingView extends GetView<SettingController> {
                   _SectionLabel(label: 'Inventory Preferences'),
                   const SizedBox(height: 10),
                   Obx(() {
-                    final supportsColor = controller.shopTypeEnum.config.supportsColorModule;
+                    final supportsColor =
+                        controller.shopTypeEnum.config.supportsColorModule;
                     return _SettingsGroup(
                       items: [
                         _SettingTile(
@@ -113,17 +126,22 @@ class SettingView extends GetView<SettingController> {
                           iconColor: const Color(0xFFE65100),
                           label: 'Category',
                           subtitle: 'Manage product categories',
-                          onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.category),
+                          onTap:
+                              () => AppRoutes.navigateRoutes(
+                                routeName: AppRouteName.category,
+                              ),
                         ),
                         _SettingTile(
                           icon: CupertinoIcons.tag_fill,
                           iconColor: const Color(0xFF2E7D32),
                           label: controller.shopTypeEnum.config.categoryLabel,
-                          subtitle: 'Manage ${controller.shopTypeEnum.config.categoryLabel.toLowerCase()}s',
-                          onTap: () => AppRoutes.navigateRoutes(
-                            routeName: AppRouteName.animalCategory,
-                            data: controller.shoptype.value,
-                          ),
+                          subtitle:
+                              'Manage ${controller.shopTypeEnum.config.categoryLabel.toLowerCase()}s',
+                          onTap:
+                              () => AppRoutes.navigateRoutes(
+                                routeName: AppRouteName.animalCategory,
+                                data: controller.shoptype.value,
+                              ),
                           isLast: !supportsColor,
                         ),
                         if (supportsColor)
@@ -132,7 +150,10 @@ class SettingView extends GetView<SettingController> {
                             iconColor: const Color(0xFF6A1B9A),
                             label: 'Color Category',
                             subtitle: 'Manage color options',
-                            onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.colorCategory),
+                            onTap:
+                                () => AppRoutes.navigateRoutes(
+                                  routeName: AppRouteName.colorCategory,
+                                ),
                             isLast: true,
                           ),
                       ],
@@ -150,7 +171,10 @@ class SettingView extends GetView<SettingController> {
                         iconColor: const Color(0xFF37474F),
                         label: 'App Settings',
                         subtitle: 'Scanner, godown & printer settings',
-                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.appsetting),
+                        onTap:
+                            () => AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.appsetting,
+                            ),
                       ),
                       _SettingTile(
                         icon: Icons.support_agent_rounded,
@@ -183,14 +207,20 @@ class SettingView extends GetView<SettingController> {
                         iconColor: const Color(0xFF455A64),
                         label: 'Privacy Policy',
                         subtitle: 'How we handle your details',
-                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.privacypolicy),
+                        onTap:
+                            () => AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.privacypolicy,
+                            ),
                       ),
                       _SettingTile(
                         icon: CupertinoIcons.doc_text_fill,
                         iconColor: const Color(0xFF455A64),
                         label: 'Terms & Conditions',
                         subtitle: 'Terms of service agreement',
-                        onTap: () => AppRoutes.navigateRoutes(routeName: AppRouteName.termandcodition),
+                        onTap:
+                            () => AppRoutes.navigateRoutes(
+                              routeName: AppRouteName.termandcodition,
+                            ),
                         isLast: true,
                       ),
                     ],
@@ -205,7 +235,7 @@ class SettingView extends GetView<SettingController> {
 
     return CommonAppbar(
       appBarLabel: 'Settings',
-      isleadingButtonRequired: false,
+      isleadingButtonRequired: true,
       body: ListView(
         padding: SymmetricPadding(horizontal: 16, vertical: 12).getPadding(),
         children: [
@@ -492,27 +522,24 @@ class _ProfileCard extends StatelessWidget {
                           ),
                     )
                     : (!kIsWeb)
-                        ? Image.file(
-                          File(url),
-                          width: 64.w,
-                          height: 64.h,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (_, _, _) => Text(
-                                'HB',
-                                style: TextStyle(
-                                  fontSize: 20.sp,
-                                  color: Colors.white,
-                                ),
-                              ),
-                        )
-                        : Text(
+                    ? Image.file(
+                      File(url),
+                      width: 64.w,
+                      height: 64.h,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, _, _) => Text(
                             'HB',
                             style: TextStyle(
                               fontSize: 20.sp,
                               color: Colors.white,
                             ),
                           ),
+                    )
+                    : Text(
+                      'HB',
+                      style: TextStyle(fontSize: 20.sp, color: Colors.white),
+                    ),
           ),
         );
       } else {
@@ -679,7 +706,11 @@ class _SettingTile extends StatelessWidget {
                     color: iconColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(desktop ? 10 : 10.r),
                   ),
-                  child: Icon(icon, color: iconColor, size: desktop ? 20 : 20.sp),
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: desktop ? 20 : 20.sp,
+                  ),
                 ),
                 setWidth(width: 14),
                 Expanded(
